@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import GiveawayBanner from "@/components/GiveawayBanner";
 
 const LAUNCH_DATE = new Date("2026-06-05T10:00:00+02:00").getTime();
 
@@ -229,6 +230,10 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+
+      {/* NYEREMÉNYJÁTÉK BANNER */}
+      <GiveawayBanner />
 
       {/* HANGULAT szekció */}
       <section className="border-y border-border">
