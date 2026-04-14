@@ -68,6 +68,14 @@ const Giveaway = () => {
     setResult(isWinner ? "won" : "lost");
     if (isWinner) {
       toast.success("GRATULÁLUNK! Nyertél! 🎉🎉🎉");
+      // Send winner notification email
+      supabase.functions.invoke('send-transactional-email', {
+        body: {
+          templateName: 'giveaway-winner',
+          recipientEmail: trimmed,
+          idempotencyKey: `giveaway-winner-${trimmed}`,
+        },
+      });
     } else {
       toast.info("Sajnos most nem nyertél, de köszönjük a részvételt!");
     }
