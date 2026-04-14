@@ -1,0 +1,1 @@
+DROP POLICY "No one can read subscribers" ON public.launch_subscribers;
