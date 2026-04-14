@@ -57,6 +57,7 @@ const App = () => (
             <Route path="/community" element={<Community />} />
             <Route path="/wishlist/shared/:token" element={<SharedWishlist />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
+            <Route path="/email-unsubscribe" element={<EmailUnsubscribe />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
