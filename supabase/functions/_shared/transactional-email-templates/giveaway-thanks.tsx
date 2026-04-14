@@ -5,22 +5,25 @@ import {
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
-const SITE_NAME = "Egyszer de Nagyszeru"
+const SITE_NAME = "Egyszerű de Nagyszerű"
 
 const GiveawayThanksEmail = () => (
   <Html lang="hu" dir="ltr">
     <Head />
-    <Preview>Köszönjük a részvételt a {SITE_NAME} nyereményjátékán!</Preview>
+    <Preview>Sikeresen feliratkoztál a {SITE_NAME} nyereményjátékára!</Preview>
     <Body style={main}>
       <Container style={container}>
         <Heading style={h1}>
-          Köszönjük a részvételt! 🎲
+          Sikeresen feliratkoztál! 🎡
         </Heading>
         <Text style={text}>
-          Részt vettél a {SITE_NAME} nyereményjátékán. Sajnos most nem nyertél, de köszönjük, hogy játszottál velünk!
+          Bekerültél a sorsolókerékbe! Az e-mail címed regisztráltuk a {SITE_NAME} nyereményjátékára.
         </Text>
         <Text style={text}>
-          Nézd meg a termékeinket kedvezményes áron — hátha találsz valamit, ami tetszik!
+          A sorsolás <strong>2026. június 4-én</strong> zárul — utána véletlenszerűen választunk 1 nyertest a sorsolókerékkel. Ha Te leszel a szerencsés, e-mailben értesítünk!
+        </Text>
+        <Text style={text}>
+          Addig is nézd meg a termékeinket!
         </Text>
         <Button href="https://egyszerudenagyszeru.com/shop" style={button}>
           NÉZD MEG A TERMÉKEINKET
@@ -33,8 +36,8 @@ const GiveawayThanksEmail = () => (
 
 export const template = {
   component: GiveawayThanksEmail,
-  subject: 'Köszönjük a részvételt a nyereményjátékunkon!',
-  displayName: 'Nyereményjáték részvétel értesítő',
+  subject: 'Bekerültél a sorsolókerékbe! 🎡',
+  displayName: 'Nyereményjáték feliratkozás megerősítés',
   previewData: {},
 } satisfies TemplateEntry
 
