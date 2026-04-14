@@ -49,6 +49,10 @@ serve(async (req) => {
       throw new Error(`Order creation failed: ${orderError.message}`);
     }
 
+    // Stripe treats HUF as 2-decimal currency (fillér) in newer API versions.
+    // Prices in DB are in whole HUF, so multiply by 100 for Stripe.
+    const toStripeAmount = (huf: number) => Math.round(huf * 100);
+
     // Build line items for Stripe
     const lineItems = orderData.items.map((item: any) => ({
       price_data: {
@@ -57,7 +61,7 @@ serve(async (req) => {
           name: item.name,
           description: [item.size, item.color].filter(Boolean).join(" / ") || undefined,
         },
-        unit_amount: Math.round(item.price),
+        unit_amount: toStripeAmount(item.price),
       },
       quantity: item.quantity,
     }));
@@ -68,20 +72,20 @@ serve(async (req) => {
         price_data: {
           currency: "huf",
           product_data: { name: "Ajándékcsomagolás" },
-          unit_amount: Math.round(orderData.gift_wrap_price),
+          unit_amount: toStripeAmount(orderData.gift_wrap_price),
         },
         quantity: 1,
       });
     }
 
-    // Calculate total before discount
-    let totalBeforeDiscount = lineItems.reduce((sum: number, li: any) => sum + li.price_data.unit_amount * li.quantity, 0);
-    const discountAmt = orderData.discount_amount && orderData.discount_amount > 0 ? Math.round(orderData.discount_amount) : 0;
-    const netTotal = totalBeforeDiscount - discountAmt;
+    // Calculate total in HUF before discount
+    const totalHuf = orderData.items.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0)
+      + (orderData.gift_wrap_price || 0);
+    const discountHuf = orderData.discount_amount && orderData.discount_amount > 0 ? orderData.discount_amount : 0;
+    const netTotalHuf = totalHuf - discountHuf;
 
     // Stripe minimum for HUF is 175
-    if (netTotal < 175) {
-      // Clean up the order we just created
+    if (netTotalHuf < 175) {
       await supabase.from("orders").delete().eq("id", order.id);
       return new Response(JSON.stringify({ error: "A rendelés összege legalább 175 Ft kell legyen." }), {
         status: 400,
@@ -91,9 +95,9 @@ serve(async (req) => {
 
     // Add discount as a coupon if present
     const discounts: any[] = [];
-    if (discountAmt > 0) {
+    if (discountHuf > 0) {
       const coupon = await stripe.coupons.create({
-        amount_off: discountAmt,
+        amount_off: toStripeAmount(discountHuf),
         currency: "huf",
         duration: "once",
         name: orderData.coupon_code || "Kedvezmény",
