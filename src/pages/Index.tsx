@@ -139,36 +139,6 @@ const Index = () => {
                   </div>
                 </div>
 
-                {/* EMAIL FORM */}
-                {!subscribed ? (
-                  <form onSubmit={handleSubscribe} className="mt-8 flex flex-col sm:flex-row gap-3 max-w-md">
-                    <div className="relative flex-1">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="email"
-                        placeholder="E-mail címed"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10 h-14 rounded-none bg-secondary border-border text-foreground placeholder:text-muted-foreground"
-                        required
-                      />
-                    </div>
-                    <Button
-                      type="submit"
-                      disabled={subscribing}
-                      className="h-14 px-8 rounded-none uppercase tracking-[0.15em] text-xs bg-accent text-accent-foreground hover:bg-accent/90 font-bold"
-                    >
-                      {subscribing ? "..." : "Értesítést kérek"}
-                    </Button>
-                  </form>
-                ) : (
-                  <div className="mt-8 flex items-center gap-3 bg-accent/10 border border-accent/30 px-5 py-4">
-                    <CheckCircle className="h-5 w-5 text-accent flex-shrink-0" />
-                    <p className="text-sm text-foreground">
-                      Feliratkoztál! Értesítünk, amint megnyitunk. 🎉
-                    </p>
-                  </div>
-                )}
               </>
             )}
 
