@@ -1,18 +1,48 @@
 import Layout from "@/components/Layout";
-import { useState } from "react";
-import { Gift, Mail, Trophy, Sparkles } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Gift, Mail, Trophy, Sparkles, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { toast } from "sonner";
 
+// Giveaway end date: 51 days from 2026-04-14
+const GIVEAWAY_END = new Date("2026-06-04T23:59:59");
+
 const Giveaway = () => {
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [ended, setEnded] = useState(false);
+
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date();
+      const diff = GIVEAWAY_END.getTime() - now.getTime();
+      if (diff <= 0) {
+        setEnded(true);
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+      setTimeLeft({
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((diff / (1000 * 60)) % 60),
+        seconds: Math.floor((diff / 1000) % 60),
+      });
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleEnter = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (ended) {
+      toast.error("A nyereményjáték már lezárult!");
+      return;
+    }
     const trimmed = email.trim();
     if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
       toast.error("Kérlek adj meg egy érvényes e-mail címet!");
@@ -21,7 +51,6 @@ const Giveaway = () => {
 
     setSubmitting(true);
 
-    // Check if already entered
     const { data: existing } = await supabase
       .from("giveaway_entries")
       .select("id")
@@ -54,7 +83,6 @@ const Giveaway = () => {
     setDone(true);
     toast.success("Sikeresen feliratkoztál! 🎉");
 
-    // Send confirmation email
     supabase.functions.invoke('send-transactional-email', {
       body: {
         templateName: 'giveaway-thanks',
@@ -63,6 +91,13 @@ const Giveaway = () => {
       },
     });
   };
+
+  const CountdownBlock = ({ value, label }: { value: number; label: string }) => (
+    <div className="bg-secondary border border-border p-3 min-w-[60px] text-center">
+      <p className="text-2xl md:text-3xl font-bold text-accent tabular-nums">{String(value).padStart(2, "0")}</p>
+      <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold mt-1">{label}</p>
+    </div>
+  );
 
   return (
     <Layout>
@@ -86,15 +121,31 @@ const Giveaway = () => {
             </h1>
 
             <p className="mt-5 text-sm md:text-base text-muted-foreground leading-relaxed max-w-sm mx-auto">
-              Iratkozz fel az e-mail címeddel és ha nyersz,
-              <span className="text-accent font-bold"> mindenből 1 darabot kapsz ingyen</span> a teljes kínálatból.
+              Iratkozz fel az e-mail címeddel és a sorsolás végén véletlenszerűen választunk egy nyertest, aki
+              <span className="text-accent font-bold"> mindenből 1 darabot kap ingyen</span> a teljes kínálatból.
             </p>
+          </div>
+
+          {/* Countdown */}
+          <div className="mb-8">
+            <div className="flex items-center justify-center gap-1.5 mb-3">
+              <Clock className="h-4 w-4 text-accent" />
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
+                {ended ? "A sorsolás lezárult!" : "Hátralévő idő a sorsolásig"}
+              </p>
+            </div>
+            <div className="flex justify-center gap-2">
+              <CountdownBlock value={timeLeft.days} label="Nap" />
+              <CountdownBlock value={timeLeft.hours} label="Óra" />
+              <CountdownBlock value={timeLeft.minutes} label="Perc" />
+              <CountdownBlock value={timeLeft.seconds} label="Mp" />
+            </div>
           </div>
 
           {/* Prizes */}
           <div className="grid grid-cols-3 gap-3 mb-8">
             {[
-              { icon: Trophy, label: "Sorsolás hamarosan" },
+              { icon: Trophy, label: "1 nyertes" },
               { icon: Gift, label: "Minden termékből 1 db" },
               { icon: Sparkles, label: "Teljesen ingyen" },
             ].map(({ icon: Icon, label }) => (
@@ -107,8 +158,24 @@ const Giveaway = () => {
             ))}
           </div>
 
-          {/* Form or Done */}
-          {!done ? (
+          {/* Form or Done or Ended */}
+          {ended ? (
+            <div className="bg-secondary border border-border p-8 text-center">
+              <Trophy className="h-10 w-10 text-accent mx-auto mb-3" />
+              <p className="text-lg font-bold text-foreground mb-2">
+                A nyereményjáték lezárult!
+              </p>
+              <p className="text-sm text-muted-foreground mb-4">
+                A nyertest hamarosan kisorsolják. Ha nyertél, e-mailben értesítünk!
+              </p>
+              <Button
+                className="rounded-none uppercase tracking-[0.15em] text-xs bg-accent text-accent-foreground hover:bg-accent/90 font-bold"
+                onClick={() => window.location.href = "/shop"}
+              >
+                Vásárlás
+              </Button>
+            </div>
+          ) : !done ? (
             <form onSubmit={handleEnter} className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -135,7 +202,7 @@ const Giveaway = () => {
                 ✅ Sikeresen feliratkoztál!
               </p>
               <p className="text-sm text-muted-foreground mb-4">
-                Ha nyersz, e-mailben értesítünk. Addig is nézd meg a termékeinket!
+                Ha nyersz, e-mailben értesítünk a sorsolás után. Addig is nézd meg a termékeinket!
               </p>
               <Button
                 className="rounded-none uppercase tracking-[0.15em] text-xs bg-accent text-accent-foreground hover:bg-accent/90 font-bold"
@@ -148,7 +215,7 @@ const Giveaway = () => {
 
           <div className="mt-6 space-y-1">
             <p className="text-[10px] text-muted-foreground">
-              ⏳ A nyereményjáték korlátlan ideig tart — amíg le nem zárjuk!
+              ⏳ A sorsolás 2026. június 4-én zárul — utána véletlenszerűen választunk 1 nyertest!
             </p>
             <p className="text-[10px] text-muted-foreground">
               📧 Ha nyertél, e-mailben keresünk a megadott címen — nem kell mást tenned!
