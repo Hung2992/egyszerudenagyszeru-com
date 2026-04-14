@@ -186,6 +186,7 @@ interface ProfileRow {
   city: string | null;
   preferred_payment: string | null;
   created_at: string;
+  user_id: string | null;
 }
 
 interface BusinessHoursDay {
