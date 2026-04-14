@@ -1062,6 +1062,7 @@ const Admin = () => {
     { key: "categories", label: "Kategóriák", icon: ListChecks },
     { key: "banners", label: "Bannerek", icon: Image },
     { key: "promotions", label: "Akciók", icon: Gift },
+    { key: "giveaway_wheel", label: "Sorsolókerék", icon: Trophy },
     { key: "payment_methods", label: "Fizetés", icon: CreditCard },
     { key: "analytics", label: "Analitika", icon: TrendingUp },
     { key: "email_templates", label: "Email sablonok", icon: Mail },
