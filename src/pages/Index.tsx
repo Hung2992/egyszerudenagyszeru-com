@@ -10,51 +10,13 @@ const LAUNCH_DATE = new Date("2026-06-05T10:00:00+02:00").getTime();
 const Index = () => {
   const navigate = useNavigate();
   const [now, setNow] = useState(Date.now());
-  const [email, setEmail] = useState("");
-  const [subscribing, setSubscribing] = useState(false);
-  const [subscribed, setSubscribed] = useState(false);
 
   const isLaunched = now >= LAUNCH_DATE;
 
-  // Tick every second
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
-
-  // Countdown to launch OR 24h after launch
-  const targetTime = isLaunched ? LAUNCH_DATE + 24 * 60 * 60 * 1000 : LAUNCH_DATE;
-  const diff = Math.max(0, targetTime - now);
-  const days = Math.floor(diff / 86400000);
-  const hours = Math.floor((diff % 86400000) / 3600000);
-  const minutes = Math.floor((diff % 3600000) / 60000);
-  const seconds = Math.floor((diff % 60000) / 1000);
-  const pad = (n: number) => n.toString().padStart(2, "0");
-
-  const saleExpired = isLaunched && diff <= 0;
-
-  const handleSubscribe = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = email.trim();
-    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      toast.error("Kérlek adj meg egy érvényes e-mail címet!");
-      return;
-    }
-    setSubscribing(true);
-    const { error } = await supabase.from("launch_subscribers").insert({ email: trimmed });
-    setSubscribing(false);
-    if (error) {
-      if (error.code === "23505") {
-        toast.info("Már feliratkoztál! 🎉");
-        setSubscribed(true);
-      } else {
-        toast.error("Hiba történt, próbáld újra!");
-      }
-    } else {
-      setSubscribed(true);
-      toast.success("Sikeres feliratkozás! 🎉 Értesítünk a nyitásról.");
-    }
-  };
 
   return (
     <Layout>
