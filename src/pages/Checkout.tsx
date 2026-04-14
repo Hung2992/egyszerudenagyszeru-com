@@ -214,7 +214,7 @@ const Checkout = () => {
     // If card payment, create embedded checkout session
     if (paymentMethod === "card") {
       try {
-        const { data, error } = await supabase.functions.invoke("create-checkout-session", {
+        const checkoutPromise = supabase.functions.invoke("create-checkout-session", {
           body: {
             orderData: {
               user_id: user?.id || null,
@@ -234,25 +234,35 @@ const Checkout = () => {
           },
         });
 
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          window.setTimeout(() => {
+            reject(new Error("A fizetési szolgáltató nem válaszol. Próbáld újra pár másodperc múlva."));
+          }, 15000);
+        });
+
+        const { data, error } = await Promise.race([checkoutPromise, timeoutPromise]) as Awaited<ReturnType<typeof supabase.functions.invoke>>;
+
         if (error) throw error;
-        if (data?.clientSecret) {
-          setStripeClientSecret(data.clientSecret);
-          setShowStripeCheckout(true);
-          setSubmitting(false);
-          if (appliedCoupon) {
-            await (supabase.rpc as any)("increment_coupon_usage", { coupon_code_input: appliedCoupon }).catch(() => {});
-          }
-          clearCart();
-          return;
-        } else {
+        if (data?.error) throw new Error(data.error);
+        if (!data?.clientSecret) {
           throw new Error("Nem sikerült a fizetési munkamenet létrehozása");
         }
+
+        setStripeClientSecret(data.clientSecret);
+        setShowStripeCheckout(true);
+
+        if (appliedCoupon) {
+          await (supabase.rpc as any)("increment_coupon_usage", { coupon_code_input: appliedCoupon }).catch(() => {});
+        }
+
+        return;
       } catch (err: any) {
         console.error("Checkout error:", err);
-        const msg = err?.message || err?.context?.message || "Próbáld újra később.";
+        const msg = err?.message || err?.context?.message || err?.details || "Próbáld újra később.";
         toast({ title: "Fizetési hiba", description: msg, variant: "destructive" });
-        setSubmitting(false);
         return;
+      } finally {
+        setSubmitting(false);
       }
     }
 

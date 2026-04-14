@@ -4,8 +4,14 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const jsonResponse = (body: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -16,10 +22,7 @@ serve(async (req) => {
     const { orderData, returnUrl, environment } = await req.json();
 
     if (!orderData || !orderData.items || orderData.items.length === 0) {
-      return new Response(JSON.stringify({ error: "No items provided" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "No items provided", fallback: false }, 400);
     }
 
     const env = (environment || "sandbox") as StripeEnv;
@@ -87,10 +90,7 @@ serve(async (req) => {
     // Stripe minimum for HUF is 175
     if (netTotalHuf < 175) {
       await supabase.from("orders").delete().eq("id", order.id);
-      return new Response(JSON.stringify({ error: "A rendelés összege legalább 175 Ft kell legyen." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "A rendelés összege legalább 175 Ft kell legyen.", fallback: false }, 200);
     }
 
     // Add discount as a coupon if present
@@ -116,16 +116,10 @@ serve(async (req) => {
       },
     });
 
-    return new Response(JSON.stringify({ clientSecret: session.client_secret, order_id: order.id }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ clientSecret: session.client_secret, order_id: order.id });
   } catch (error: unknown) {
     console.error("Checkout session error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: message, fallback: true }, 200);
   }
 });
