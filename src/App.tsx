@@ -25,6 +25,7 @@ import Community from "./pages/Community.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import SharedWishlist from "./pages/SharedWishlist.tsx";
 import Unsubscribe from "./pages/Unsubscribe.tsx";
+import EmailUnsubscribe from "./pages/EmailUnsubscribe.tsx";
 
 const queryClient = new QueryClient();
 
