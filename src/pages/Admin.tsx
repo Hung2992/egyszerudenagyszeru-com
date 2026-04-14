@@ -2458,6 +2458,7 @@ const Admin = () => {
           </div>
         )}
 
+        {tab === "giveaway_wheel" && <GiveawayWheel />}
         {tab === "shipping_mgmt" && <AdminShippingTab />}
         {tab === "inventory" && <AdminInventoryTab />}
         {tab === "seo_marketing" && <AdminSeoMarketingTab />}
