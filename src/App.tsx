@@ -28,6 +28,8 @@ import Unsubscribe from "./pages/Unsubscribe.tsx";
 import EmailUnsubscribe from "./pages/EmailUnsubscribe.tsx";
 import Giveaway from "./pages/Giveaway.tsx";
 import GiveawayPopup from "./components/GiveawayPopup.tsx";
+import CheckoutReturn from "./pages/CheckoutReturn.tsx";
+import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner.tsx";
 
 const queryClient = new QueryClient();
 
