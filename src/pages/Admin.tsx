@@ -1691,7 +1691,7 @@ const Admin = () => {
             </div>
             <div className="space-y-2">
               {filteredUsers.map(u => (
-                <div key={u.id} className="border bg-card p-4">
+                <div key={u.id} className="border bg-card p-4 cursor-pointer hover:border-accent/30 transition-colors" onClick={() => setSelectedUser(u)}>
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="text-sm font-semibold text-foreground">{u.display_name || "Névtelen"}</span>
