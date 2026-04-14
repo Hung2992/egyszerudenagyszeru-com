@@ -74,11 +74,26 @@ serve(async (req) => {
       });
     }
 
+    // Calculate total before discount
+    let totalBeforeDiscount = lineItems.reduce((sum: number, li: any) => sum + li.price_data.unit_amount * li.quantity, 0);
+    const discountAmt = orderData.discount_amount && orderData.discount_amount > 0 ? Math.round(orderData.discount_amount) : 0;
+    const netTotal = totalBeforeDiscount - discountAmt;
+
+    // Stripe minimum for HUF is 175
+    if (netTotal < 175) {
+      // Clean up the order we just created
+      await supabase.from("orders").delete().eq("id", order.id);
+      return new Response(JSON.stringify({ error: "A rendelés összege legalább 175 Ft kell legyen." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Add discount as a coupon if present
     const discounts: any[] = [];
-    if (orderData.discount_amount && orderData.discount_amount > 0) {
+    if (discountAmt > 0) {
       const coupon = await stripe.coupons.create({
-        amount_off: Math.round(orderData.discount_amount),
+        amount_off: discountAmt,
         currency: "huf",
         duration: "once",
         name: orderData.coupon_code || "Kedvezmény",
