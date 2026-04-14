@@ -1,0 +1,21 @@
+
+ALTER TABLE public.store_settings
+  ADD COLUMN IF NOT EXISTS analytics_enabled boolean DEFAULT true,
+  ADD COLUMN IF NOT EXISTS analytics_meta_pixel_id text,
+  ADD COLUMN IF NOT EXISTS analytics_gtm_id text,
+  ADD COLUMN IF NOT EXISTS analytics_tiktok_pixel_id text,
+  ADD COLUMN IF NOT EXISTS analytics_fb_conversions_token text,
+  ADD COLUMN IF NOT EXISTS analytics_custom_head_code text,
+  ADD COLUMN IF NOT EXISTS analytics_custom_body_code text,
+  ADD COLUMN IF NOT EXISTS cookie_analytics_enabled boolean DEFAULT true,
+  ADD COLUMN IF NOT EXISTS cookie_marketing_enabled boolean DEFAULT true,
+  ADD COLUMN IF NOT EXISTS cookie_functional_enabled boolean DEFAULT true,
+  ADD COLUMN IF NOT EXISTS cookie_privacy_url text,
+  ADD COLUMN IF NOT EXISTS cookie_expiry_days integer DEFAULT 365,
+  ADD COLUMN IF NOT EXISTS notification_slack_webhook text,
+  ADD COLUMN IF NOT EXISTS notification_new_user boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS notification_cancelled_order boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS notification_daily_summary boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS maintenance_return_date text,
+  ADD COLUMN IF NOT EXISTS maintenance_ip_whitelist text,
+  ADD COLUMN IF NOT EXISTS maintenance_banner_text text;

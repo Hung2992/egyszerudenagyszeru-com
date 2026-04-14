@@ -1,0 +1,17 @@
+ALTER TABLE public.store_settings
+  ADD COLUMN IF NOT EXISTS compare_enabled boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS compare_max_products integer DEFAULT 4,
+  ADD COLUMN IF NOT EXISTS compare_show_differences_only boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS return_auto_approve boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS return_deadline_days integer DEFAULT 14,
+  ADD COLUMN IF NOT EXISTS return_reasons jsonb DEFAULT '["Nem megfelelő méret","Hibás termék","Nem tetszik","Egyéb"]'::jsonb,
+  ADD COLUMN IF NOT EXISTS return_refund_method text DEFAULT 'original',
+  ADD COLUMN IF NOT EXISTS giftcard_enabled boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS giftcard_min_amount numeric DEFAULT 1000,
+  ADD COLUMN IF NOT EXISTS giftcard_max_amount numeric DEFAULT 50000,
+  ADD COLUMN IF NOT EXISTS giftcard_expiry_months integer DEFAULT 12,
+  ADD COLUMN IF NOT EXISTS giftcard_custom_design boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS i18n_auto_translate boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS i18n_default_language text DEFAULT 'hu',
+  ADD COLUMN IF NOT EXISTS i18n_supported_languages jsonb DEFAULT '["hu"]'::jsonb,
+  ADD COLUMN IF NOT EXISTS i18n_show_switcher boolean DEFAULT false;
