@@ -221,7 +221,8 @@ const Checkout = () => {
     // If card payment, create embedded checkout session
     if (paymentMethod === "card") {
       try {
-        const checkoutPromise = supabase.functions.invoke("create-checkout-session", {
+        console.log("[Checkout] Starting card payment flow...");
+        const response = await supabase.functions.invoke("create-checkout-session", {
           body: {
             orderData: {
               user_id: user?.id || null,
@@ -241,23 +242,26 @@ const Checkout = () => {
           },
         });
 
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          window.setTimeout(() => {
-            reject(new Error("A fizetési szolgáltató nem válaszol. Próbáld újra pár másodperc múlva."));
-          }, 15000);
-        });
+        console.log("[Checkout] Edge function response:", JSON.stringify(response));
 
-        const { data, error } = await Promise.race([checkoutPromise, timeoutPromise]) as {
-          data: CheckoutSessionResponse | null;
-          error: { message?: string; context?: { message?: string }; details?: string } | null;
-        };
+        const { data, error } = response;
 
-        if (error) throw error;
-        if (data?.error) throw new Error(data.error);
-        if (!data?.clientSecret) {
-          throw new Error("Nem sikerült a fizetési munkamenet létrehozása");
+        if (error) {
+          console.error("[Checkout] Invoke error:", error);
+          throw new Error(error.message || "Hálózati hiba történt");
         }
 
+        if (!data || data.error) {
+          console.error("[Checkout] Data error:", data);
+          throw new Error(data?.error || "Nem sikerült a fizetési munkamenet létrehozása");
+        }
+
+        if (!data?.clientSecret) {
+          console.error("[Checkout] Missing clientSecret in response:", data);
+          throw new Error("Hiányzó fizetési token");
+        }
+
+        console.log("[Checkout] Got clientSecret, showing Stripe checkout...");
         setStripeClientSecret(data.clientSecret);
         setShowStripeCheckout(true);
 
@@ -268,7 +272,7 @@ const Checkout = () => {
         return;
       } catch (err: any) {
         console.error("Checkout error:", err);
-        const msg = err?.message || err?.context?.message || err?.details || "Próbáld újra később.";
+        const msg = typeof err === 'string' ? err : (err?.message || "Próbáld újra később.");
         toast({ title: "Fizetési hiba", description: msg, variant: "destructive" });
         return;
       } finally {
