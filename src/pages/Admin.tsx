@@ -541,6 +541,8 @@ const Admin = () => {
   // Users state
   const [users, setUsers] = useState<ProfileRow[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<ProfileRow | null>(null);
 
   // Settings state
   const [settings, setSettings] = useState<StoreSettings | null>(null);
