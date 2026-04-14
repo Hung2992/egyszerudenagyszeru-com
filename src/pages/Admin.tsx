@@ -1467,7 +1467,7 @@ const Admin = () => {
             </div>
             <div className="space-y-3">
               {orders.map(o => (
-                <div key={o.id} className="border bg-card p-4 space-y-3">
+                <div key={o.id} className="border bg-card p-4 space-y-3 cursor-pointer hover:border-accent/30 transition-colors" onClick={() => setSelectedOrderId(o.id)}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-muted-foreground font-mono">#{o.id.slice(0, 8)}</span>
