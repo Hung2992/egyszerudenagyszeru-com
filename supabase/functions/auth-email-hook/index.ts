@@ -36,17 +36,17 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "strong-simple-store"
-const SENDER_DOMAIN = "notify.kvamtom.tech"
-const ROOT_DOMAIN = "kvamtom.tech"
-const FROM_DOMAIN = "kvamtom.tech" // Domain shown in From address (may be root or sender subdomain)
+const SITE_NAME = "strong-easy-shop"
+const SENDER_DOMAIN = "notify.egyszerudenagyszeru.com"
+const ROOT_DOMAIN = "egyszerudenagyszeru.com"
+const FROM_DOMAIN = "egyszerudenagyszeru.com" // Domain shown in From address (may be root or sender subdomain)
 
 // Sample data for preview mode ONLY (not used in actual email sending).
 // URLs are baked in at scaffold time from the project's real data.
 // The sample email uses a fixed placeholder (RFC 6761 .test TLD) so the Go backend
 // can always find-and-replace it with the actual recipient when sending test emails,
 // even if the project's domain has changed since the template was scaffolded.
-const SAMPLE_PROJECT_URL = "https://strong-simple-store.lovable.app"
+const SAMPLE_PROJECT_URL = "https://strong-easy-shop.lovable.app"
 const SAMPLE_EMAIL = "user@example.test"
 const SAMPLE_DATA: Record<string, object> = {
   signup: {
