@@ -83,7 +83,7 @@ const Auth = () => {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     setLoading(false);
-    if (error) toast({ title: "Hiba", description: error.message, variant: "destructive" });
+    if (error) toast({ title: "Hiba", description: translateAuthError(error.message), variant: "destructive" });
     else toast({ title: "Elküldtük!", description: "Nézd meg az email fiókodat." });
   };
 
