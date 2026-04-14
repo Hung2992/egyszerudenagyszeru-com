@@ -22,22 +22,22 @@ export const RecoveryEmail = ({
   siteName,
   confirmationUrl,
 }: RecoveryEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="hu" dir="ltr">
     <Head />
-    <Preview>Reset your password for {siteName}</Preview>
+    <Preview>Jelszó visszaállítás – {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Reset your password</Heading>
+        <Heading style={h1}>Jelszó visszaállítása</Heading>
         <Text style={text}>
-          We received a request to reset your password for {siteName}. Click
-          the button below to choose a new password.
+          Kaptunk egy kérést a jelszavad visszaállítására a {siteName} oldalon.
+          Kattints az alábbi gombra az új jelszó megadásához.
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Reset Password
+          Jelszó visszaállítása
         </Button>
         <Text style={footer}>
-          If you didn't request a password reset, you can safely ignore this
-          email. Your password will not be changed.
+          Ha nem te kérted a jelszó visszaállítást, nyugodtan figyelmen kívül
+          hagyhatod ezt az üzenetet. A jelszavad nem fog megváltozni.
         </Text>
       </Container>
     </Body>
@@ -46,7 +46,7 @@ export const RecoveryEmail = ({
 
 export default RecoveryEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
+const main = { backgroundColor: '#ffffff', fontFamily: "'Space Grotesk', Arial, sans-serif" }
 const container = { padding: '20px 25px' }
 const h1 = {
   fontSize: '22px',
@@ -64,7 +64,7 @@ const button = {
   backgroundColor: '#000000',
   color: '#ffffff',
   fontSize: '14px',
-  borderRadius: '8px',
+  borderRadius: '0px',
   padding: '12px 20px',
   textDecoration: 'none',
 }

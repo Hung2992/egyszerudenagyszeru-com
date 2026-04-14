@@ -25,26 +25,26 @@ export const InviteEmail = ({
   siteUrl,
   confirmationUrl,
 }: InviteEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="hu" dir="ltr">
     <Head />
-    <Preview>You've been invited to join {siteName}</Preview>
+    <Preview>Meghívást kaptál – {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>You've been invited</Heading>
+        <Heading style={h1}>Meghívó</Heading>
         <Text style={text}>
-          You've been invited to join{' '}
+          Meghívást kaptál a{' '}
           <Link href={siteUrl} style={link}>
             <strong>{siteName}</strong>
-          </Link>
-          . Click the button below to accept the invitation and create your
-          account.
+          </Link>{' '}
+          oldalra. Kattints az alábbi gombra a meghívás elfogadásához és a fiókod
+          létrehozásához.
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Accept Invitation
+          Meghívás elfogadása
         </Button>
         <Text style={footer}>
-          If you weren't expecting this invitation, you can safely ignore this
-          email.
+          Ha nem vártad ezt a meghívót, nyugodtan figyelmen kívül hagyhatod ezt
+          az üzenetet.
         </Text>
       </Container>
     </Body>
@@ -53,7 +53,7 @@ export const InviteEmail = ({
 
 export default InviteEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
+const main = { backgroundColor: '#ffffff', fontFamily: "'Space Grotesk', Arial, sans-serif" }
 const container = { padding: '20px 25px' }
 const h1 = {
   fontSize: '22px',
@@ -72,7 +72,7 @@ const button = {
   backgroundColor: '#000000',
   color: '#ffffff',
   fontSize: '14px',
-  borderRadius: '8px',
+  borderRadius: '0px',
   padding: '12px 20px',
   textDecoration: 'none',
 }
