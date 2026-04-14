@@ -125,6 +125,9 @@ import AdminPersonalizedRecommendationsTab from "@/components/admin/AdminPersona
 import ProductImageGallery from "@/components/admin/ProductImageGallery";
 import ProductLinkImport from "@/components/admin/ProductLinkImport";
 import AdminAiAssistant from "@/components/admin/AdminAiAssistant";
+import AdminDashboardEnhanced from "@/components/admin/AdminDashboardEnhanced";
+import AdminOrderDetail from "@/components/admin/AdminOrderDetail";
+import AdminUserProfile from "@/components/admin/AdminUserProfile";
 import { Textarea } from "@/components/ui/textarea";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
