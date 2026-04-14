@@ -211,7 +211,7 @@ const Checkout = () => {
       quantity: i.quantity,
     }));
 
-    // If card payment, redirect to Stripe
+    // If card payment, create embedded checkout session
     if (paymentMethod === "card") {
       try {
         const { data, error } = await supabase.functions.invoke("create-checkout-session", {
@@ -230,19 +230,22 @@ const Checkout = () => {
               items: orderItems,
             },
             returnUrl: window.location.origin,
+            environment: getStripeEnvironment(),
           },
         });
 
         if (error) throw error;
-        if (data?.url) {
+        if (data?.clientSecret) {
           if (appliedCoupon) {
             await (supabase.rpc as any)("increment_coupon_usage", { coupon_code_input: appliedCoupon }).catch(() => {});
           }
           clearCart();
-          window.location.href = data.url;
+          setStripeClientSecret(data.clientSecret);
+          setShowStripeCheckout(true);
+          setSubmitting(false);
           return;
         } else {
-          throw new Error("No checkout URL returned");
+          throw new Error("Nem sikerült a fizetési munkamenet létrehozása");
         }
       } catch (err: any) {
         toast({ title: "Fizetési hiba", description: err.message || "Próbáld újra később.", variant: "destructive" });
