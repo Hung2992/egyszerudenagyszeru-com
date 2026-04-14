@@ -281,6 +281,7 @@ export type Database = {
           discount_amount: number | null
           id: string
           items: Json | null
+          notes: string | null
           payment_method: string | null
           procurement_status: string | null
           shipping_address: string | null
@@ -298,6 +299,7 @@ export type Database = {
           discount_amount?: number | null
           id?: string
           items?: Json | null
+          notes?: string | null
           payment_method?: string | null
           procurement_status?: string | null
           shipping_address?: string | null
@@ -315,6 +317,7 @@ export type Database = {
           discount_amount?: number | null
           id?: string
           items?: Json | null
+          notes?: string | null
           payment_method?: string | null
           procurement_status?: string | null
           shipping_address?: string | null

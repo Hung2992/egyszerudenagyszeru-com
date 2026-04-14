@@ -236,19 +236,21 @@ const Checkout = () => {
 
         if (error) throw error;
         if (data?.clientSecret) {
+          setStripeClientSecret(data.clientSecret);
+          setShowStripeCheckout(true);
+          setSubmitting(false);
           if (appliedCoupon) {
             await (supabase.rpc as any)("increment_coupon_usage", { coupon_code_input: appliedCoupon }).catch(() => {});
           }
           clearCart();
-          setStripeClientSecret(data.clientSecret);
-          setShowStripeCheckout(true);
-          setSubmitting(false);
           return;
         } else {
           throw new Error("Nem sikerült a fizetési munkamenet létrehozása");
         }
       } catch (err: any) {
-        toast({ title: "Fizetési hiba", description: err.message || "Próbáld újra később.", variant: "destructive" });
+        console.error("Checkout error:", err);
+        const msg = err?.message || err?.context?.message || "Próbáld újra később.";
+        toast({ title: "Fizetési hiba", description: msg, variant: "destructive" });
         setSubmitting(false);
         return;
       }
