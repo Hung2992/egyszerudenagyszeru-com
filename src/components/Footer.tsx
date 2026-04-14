@@ -1,10 +1,11 @@
+import { forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
 
-const Footer = () => {
+const Footer = forwardRef<HTMLElement>((_, ref) => {
   const navigate = useNavigate();
 
   return (
-    <footer className="border-t border-border mt-auto">
+    <footer ref={ref} className="border-t border-border mt-auto">
       <div className="mx-auto max-w-6xl px-4 py-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           <div>
@@ -40,6 +41,8 @@ const Footer = () => {
       </div>
     </footer>
   );
-};
+});
+
+Footer.displayName = "Footer";
 
 export default Footer;
