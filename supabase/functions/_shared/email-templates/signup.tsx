@@ -27,31 +27,31 @@ export const SignupEmail = ({
   recipient,
   confirmationUrl,
 }: SignupEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="hu" dir="ltr">
     <Head />
-    <Preview>Confirm your email for {siteName}</Preview>
+    <Preview>Erősítsd meg az e-mail címed – {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Confirm your email</Heading>
+        <Heading style={h1}>E-mail cím megerősítése</Heading>
         <Text style={text}>
-          Thanks for signing up for{' '}
+          Köszönjük, hogy regisztráltál a{' '}
           <Link href={siteUrl} style={link}>
             <strong>{siteName}</strong>
-          </Link>
-          !
+          </Link>{' '}
+          oldalon!
         </Text>
         <Text style={text}>
-          Please confirm your email address (
+          Kérjük, erősítsd meg az e-mail címed (
           <Link href={`mailto:${recipient}`} style={link}>
             {recipient}
           </Link>
-          ) by clicking the button below:
+          ) az alábbi gombra kattintva:
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Verify Email
+          E-mail megerősítése
         </Button>
         <Text style={footer}>
-          If you didn't create an account, you can safely ignore this email.
+          Ha nem te hoztál létre fiókot, nyugodtan figyelmen kívül hagyhatod ezt az üzenetet.
         </Text>
       </Container>
     </Body>
@@ -60,7 +60,7 @@ export const SignupEmail = ({
 
 export default SignupEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
+const main = { backgroundColor: '#ffffff', fontFamily: "'Space Grotesk', Arial, sans-serif" }
 const container = { padding: '20px 25px' }
 const h1 = {
   fontSize: '22px',
@@ -79,7 +79,7 @@ const button = {
   backgroundColor: '#000000',
   color: '#ffffff',
   fontSize: '14px',
-  borderRadius: '8px',
+  borderRadius: '0px',
   padding: '12px 20px',
   textDecoration: 'none',
 }
