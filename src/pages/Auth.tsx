@@ -11,6 +11,23 @@ import { Eye, EyeOff } from "lucide-react";
 
 type AuthMode = "login" | "register" | "forgot";
 
+const translateAuthError = (msg: string): string => {
+  const map: Record<string, string> = {
+    "Invalid login credentials": "Hibás email cím vagy jelszó.",
+    "Email not confirmed": "Az email cím még nincs megerősítve. Ellenőrizd a postaládádat.",
+    "User already registered": "Ez az email cím már regisztrálva van.",
+    "Password is known to be weak and easy to guess, please choose a different one.": "Ez a jelszó túl gyenge vagy kiszivárgott adatbázisban szerepel. Kérlek válassz másikat.",
+    "Signup requires a valid password": "Érvényes jelszó szükséges a regisztrációhoz.",
+    "For security purposes, you can only request this after": "Biztonsági okokból csak később kérheted újra.",
+    "Email rate limit exceeded": "Túl sok kérés. Próbáld újra később.",
+    "Unable to validate email address: invalid format": "Érvénytelen email cím formátum.",
+  };
+  for (const [en, hu] of Object.entries(map)) {
+    if (msg.includes(en)) return hu;
+  }
+  return msg;
+};
+
 const Auth = () => {
   const navigate = useNavigate();
   const [mode, setMode] = useState<AuthMode>("login");
