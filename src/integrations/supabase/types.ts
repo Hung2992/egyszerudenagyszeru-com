@@ -199,6 +199,30 @@ export type Database = {
         }
         Relationships: []
       }
+      giveaway_entries: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          is_winner: boolean
+          prize_claimed: boolean
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          is_winner?: boolean
+          prize_claimed?: boolean
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          is_winner?: boolean
+          prize_claimed?: boolean
+        }
+        Relationships: []
+      }
       homepage_banners: {
         Row: {
           button_text: string | null

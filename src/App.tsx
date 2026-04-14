@@ -26,6 +26,8 @@ import NotFound from "./pages/NotFound.tsx";
 import SharedWishlist from "./pages/SharedWishlist.tsx";
 import Unsubscribe from "./pages/Unsubscribe.tsx";
 import EmailUnsubscribe from "./pages/EmailUnsubscribe.tsx";
+import Giveaway from "./pages/Giveaway.tsx";
+import GiveawayPopup from "./components/GiveawayPopup.tsx";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +40,7 @@ const App = () => (
         <BrowserRouter>
           <CartDrawer />
           <AbandonedCartReminder />
+          <GiveawayPopup />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
@@ -58,6 +61,7 @@ const App = () => (
             <Route path="/wishlist/shared/:token" element={<SharedWishlist />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/email-unsubscribe" element={<EmailUnsubscribe />} />
+            <Route path="/nyeremenyjatek" element={<Giveaway />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
