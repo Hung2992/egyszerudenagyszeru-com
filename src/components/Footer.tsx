@@ -1,6 +1,7 @@
+import { forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
 
-const Footer = () => {
+const Footer = forwardRef<HTMLElement>((_, ref) => {
   const navigate = useNavigate();
 
   return (
