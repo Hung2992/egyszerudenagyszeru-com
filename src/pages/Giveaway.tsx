@@ -78,6 +78,13 @@ const Giveaway = () => {
       });
     } else {
       toast.info("Sajnos most nem nyertél, de köszönjük a részvételt!");
+      supabase.functions.invoke('send-transactional-email', {
+        body: {
+          templateName: 'giveaway-thanks',
+          recipientEmail: trimmed,
+          idempotencyKey: `giveaway-thanks-${trimmed}`,
+        },
+      });
     }
   };
 

@@ -14,6 +14,7 @@ import { template as welcome } from './welcome.tsx'
 import { template as orderConfirmation } from './order-confirmation.tsx'
 import { template as shippingNotification } from './shipping-notification.tsx'
 import { template as giveawayWinner } from './giveaway-winner.tsx'
+import { template as giveawayThanks } from './giveaway-thanks.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'contact-confirmation': contactConfirmation,
@@ -21,4 +22,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'order-confirmation': orderConfirmation,
   'shipping-notification': shippingNotification,
   'giveaway-winner': giveawayWinner,
+  'giveaway-thanks': giveawayThanks,
 }
