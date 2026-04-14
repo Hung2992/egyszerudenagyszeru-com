@@ -1255,95 +1255,16 @@ const Admin = () => {
 
         {/* ─── DASHBOARD TAB ─── */}
         {tab === "dashboard" && (
-          <div className="space-y-6">
-            <h2 className="text-lg font-bold uppercase tracking-wider">Áttekintés</h2>
-            
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="border bg-card p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <DollarSign className="h-4 w-4 text-accent" />
-                  <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Bevétel</span>
-                </div>
-                <p className="text-xl font-bold text-foreground">{totalRevenue.toLocaleString()} <span className="text-sm text-muted-foreground">Ft</span></p>
-              </div>
-              <div className="border bg-card p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <ShoppingCart className="h-4 w-4 text-accent" />
-                  <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Rendelések</span>
-                </div>
-                <p className="text-xl font-bold text-foreground">{totalOrders}</p>
-              </div>
-            </div>
-
-            {/* Profit & Procurement Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="border bg-card p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="h-4 w-4 text-green-500" />
-                  <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Profit</span>
-                </div>
-                <p className={`text-xl font-bold ${totalProfit >= 0 ? "text-green-500" : "text-destructive"}`}>{totalProfit.toLocaleString()} <span className="text-sm text-muted-foreground">Ft</span></p>
-              </div>
-              <div className="border bg-card p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Beszerzési költség</span>
-                </div>
-                <p className="text-xl font-bold text-foreground">{totalProcurementCost.toLocaleString()} <span className="text-sm text-muted-foreground">Ft</span></p>
-              </div>
-              <div className="border bg-card p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="h-4 w-4 text-accent" />
-                  <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Profit %</span>
-                </div>
-                <p className="text-xl font-bold text-foreground">{profitMargin}%</p>
-              </div>
-              <div className="border bg-card p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <ShoppingCart className="h-4 w-4 text-yellow-500" />
-                  <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Beszerzésre vár</span>
-                </div>
-                <p className="text-xl font-bold text-foreground">{pendingProcurement}</p>
-              </div>
-              <div className="border bg-card p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Package className="h-4 w-4 text-accent" />
-                  <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Aktív termékek</span>
-                </div>
-                <p className="text-xl font-bold text-foreground">{activeProducts}</p>
-              </div>
-              <div className="border bg-card p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Users className="h-4 w-4 text-accent" />
-                  <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Felhasználók</span>
-                </div>
-                <p className="text-xl font-bold text-foreground">{totalUsers}</p>
-              </div>
-            </div>
-
-            {/* Recent Orders */}
-            <div>
-              <h3 className="text-sm font-bold uppercase tracking-wider mb-3">Utolsó rendelések</h3>
-              <div className="space-y-2">
-                {orders.slice(0, 5).map(o => (
-                  <div key={o.id} className="flex items-center justify-between border bg-card p-3">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-muted-foreground font-mono">#{o.id.slice(0, 8)}</span>
-                      <span className="text-sm text-foreground">{o.shipping_name || "—"}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-semibold text-accent">{o.total_amount.toLocaleString()} Ft</span>
-                      <StatusBadge status={o.status} />
-                    </div>
-                  </div>
-                ))}
-                {orders.length === 0 && (
-                  <p className="text-center text-sm text-muted-foreground py-4">Még nincsenek rendelések.</p>
-                )}
-              </div>
-            </div>
-          </div>
+          <AdminDashboardEnhanced
+            orders={orders}
+            products={products}
+            totalRevenue={totalRevenue}
+            totalOrders={totalOrders}
+            totalUsers={totalUsers}
+            totalProfit={totalProfit}
+            profitMargin={profitMargin}
+            onViewOrder={(id) => setSelectedOrderId(id)}
+          />
         )}
 
         {/* ─── PRODUCTS TAB ─── */}
