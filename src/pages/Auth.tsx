@@ -42,7 +42,7 @@ const Auth = () => {
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) toast({ title: "Hiba", description: error.message, variant: "destructive" });
+    if (error) toast({ title: "Hiba", description: translateAuthError(error.message), variant: "destructive" });
     else { toast({ title: "Sikeres bejelentkezés!" }); navigate("/"); }
   };
 
