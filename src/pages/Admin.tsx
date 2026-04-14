@@ -642,7 +642,7 @@ const Admin = () => {
   };
 
   const fetchUsers = async () => {
-    const { data } = await supabase.from("profiles").select("id, display_name, email, phone, city, preferred_payment, created_at").order("created_at", { ascending: false });
+    const { data } = await supabase.from("profiles").select("id, display_name, email, phone, city, preferred_payment, created_at, user_id").order("created_at", { ascending: false });
     if (data) setUsers(data as any);
   };
 
