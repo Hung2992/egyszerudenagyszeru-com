@@ -5259,6 +5259,23 @@ const Admin = () => {
         )}
       </div>
       <AdminAiAssistant />
+
+      {/* Order Detail Modal */}
+      {selectedOrderId && (
+        <AdminOrderDetail
+          order={orders.find(o => o.id === selectedOrderId)!}
+          onClose={() => setSelectedOrderId(null)}
+          onUpdate={() => { fetchOrders(); setSelectedOrderId(null); }}
+        />
+      )}
+
+      {/* User Profile Modal */}
+      {selectedUser && (
+        <AdminUserProfile
+          user={selectedUser}
+          onClose={() => setSelectedUser(null)}
+        />
+      )}
     </div>
   );
 };
