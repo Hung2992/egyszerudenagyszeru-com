@@ -201,6 +201,9 @@ const Giveaway = () => {
               <p className="text-lg font-bold text-foreground mb-2">
                 ✅ Sikeresen feliratkoztál!
               </p>
+              <p className="text-sm text-muted-foreground mb-1">
+                Bekerültél a sorsolókerékbe! 🎡
+              </p>
               <p className="text-sm text-muted-foreground mb-4">
                 Ha nyersz, e-mailben értesítünk a sorsolás után. Addig is nézd meg a termékeinket!
               </p>
