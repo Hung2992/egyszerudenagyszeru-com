@@ -14,6 +14,104 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_procurement_orders: {
+        Row: {
+          created_at: string
+          currency: string | null
+          id: string
+          linked_order_id: string | null
+          notes: string | null
+          payment_method: string | null
+          product_name: string
+          profit_amount: number | null
+          quantity: number
+          selling_price: number
+          status: string | null
+          supplier_name: string | null
+          unit_cost: number
+        }
+        Insert: {
+          created_at?: string
+          currency?: string | null
+          id?: string
+          linked_order_id?: string | null
+          notes?: string | null
+          payment_method?: string | null
+          product_name: string
+          profit_amount?: number | null
+          quantity?: number
+          selling_price?: number
+          status?: string | null
+          supplier_name?: string | null
+          unit_cost?: number
+        }
+        Update: {
+          created_at?: string
+          currency?: string | null
+          id?: string
+          linked_order_id?: string | null
+          notes?: string | null
+          payment_method?: string | null
+          product_name?: string
+          profit_amount?: number | null
+          quantity?: number
+          selling_price?: number
+          status?: string | null
+          supplier_name?: string | null
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_procurement_orders_linked_order_id_fkey"
+            columns: ["linked_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupons: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          discount_amount: number | null
+          discount_percent: number | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          used_count: number
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          discount_amount?: number | null
+          discount_percent?: number | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          used_count?: number
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          discount_amount?: number | null
+          discount_percent?: number | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          used_count?: number
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -101,6 +199,39 @@ export type Database = {
         }
         Relationships: []
       }
+      homepage_banners: {
+        Row: {
+          button_text: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          link_url: string | null
+          sort_order: number
+          subtitle: string | null
+          title: string
+        }
+        Insert: {
+          button_text?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          link_url?: string | null
+          sort_order?: number
+          subtitle?: string | null
+          title: string
+        }
+        Update: {
+          button_text?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          link_url?: string | null
+          sort_order?: number
+          subtitle?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       launch_subscribers: {
         Row: {
           created_at: string
@@ -116,6 +247,289 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          coupon_code: string | null
+          created_at: string
+          discount_amount: number | null
+          id: string
+          items: Json | null
+          payment_method: string | null
+          procurement_status: string | null
+          shipping_address: string | null
+          shipping_city: string | null
+          shipping_name: string | null
+          shipping_phone: string | null
+          shipping_zip: string | null
+          status: string
+          total_amount: number
+          user_id: string | null
+        }
+        Insert: {
+          coupon_code?: string | null
+          created_at?: string
+          discount_amount?: number | null
+          id?: string
+          items?: Json | null
+          payment_method?: string | null
+          procurement_status?: string | null
+          shipping_address?: string | null
+          shipping_city?: string | null
+          shipping_name?: string | null
+          shipping_phone?: string | null
+          shipping_zip?: string | null
+          status?: string
+          total_amount?: number
+          user_id?: string | null
+        }
+        Update: {
+          coupon_code?: string | null
+          created_at?: string
+          discount_amount?: number | null
+          id?: string
+          items?: Json | null
+          payment_method?: string | null
+          procurement_status?: string | null
+          shipping_address?: string | null
+          shipping_city?: string | null
+          shipping_name?: string | null
+          shipping_phone?: string | null
+          shipping_zip?: string | null
+          status?: string
+          total_amount?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      product_categories: {
+        Row: {
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      product_images: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string
+          is_primary: boolean
+          product_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url: string
+          is_primary?: boolean
+          product_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string
+          is_primary?: boolean
+          product_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_images_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "shop_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_reviews: {
+        Row: {
+          admin_reply: string | null
+          comment: string | null
+          created_at: string
+          id: string
+          is_approved: boolean
+          product_id: string
+          rating: number
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          admin_reply?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_approved?: boolean
+          product_id: string
+          rating?: number
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          admin_reply?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_approved?: boolean
+          product_id?: string
+          rating?: number
+          title?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "shop_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          city: string | null
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          phone: string | null
+          preferred_payment: string | null
+          user_id: string | null
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          phone?: string | null
+          preferred_payment?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          city?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          phone?: string | null
+          preferred_payment?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      promotions: {
+        Row: {
+          applicable_categories: string[] | null
+          created_at: string
+          description: string | null
+          discount_value: number
+          id: string
+          is_active: boolean
+          min_order_amount: number
+          min_quantity: number
+          name: string
+          promo_type: string
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          applicable_categories?: string[] | null
+          created_at?: string
+          description?: string | null
+          discount_value?: number
+          id?: string
+          is_active?: boolean
+          min_order_amount?: number
+          min_quantity?: number
+          name: string
+          promo_type?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          applicable_categories?: string[] | null
+          created_at?: string
+          description?: string | null
+          discount_value?: number
+          id?: string
+          is_active?: boolean
+          min_order_amount?: number
+          min_quantity?: number
+          name?: string
+          promo_type?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
+      shop_products: {
+        Row: {
+          category: string
+          colors: string[] | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          original_price: number | null
+          price: number
+          sizes: string[] | null
+          stock: number
+        }
+        Insert: {
+          category?: string
+          colors?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          original_price?: number | null
+          price?: number
+          sizes?: string[] | null
+          stock?: number
+        }
+        Update: {
+          category?: string
+          colors?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          original_price?: number | null
+          price?: number
+          sizes?: string[] | null
+          stock?: number
         }
         Relationships: []
       }
