@@ -1,11 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
-import { ArrowRight, Flame, Clock, Mail, CheckCircle } from "lucide-react";
+import { ArrowRight, Flame, Clock } from "lucide-react";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/untyped-client";
-import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
 import GiveawayBanner from "@/components/GiveawayBanner";
 
 const LAUNCH_DATE = new Date("2026-06-05T10:00:00+02:00").getTime();
@@ -13,19 +10,14 @@ const LAUNCH_DATE = new Date("2026-06-05T10:00:00+02:00").getTime();
 const Index = () => {
   const navigate = useNavigate();
   const [now, setNow] = useState(Date.now());
-  const [email, setEmail] = useState("");
-  const [subscribing, setSubscribing] = useState(false);
-  const [subscribed, setSubscribed] = useState(false);
 
   const isLaunched = now >= LAUNCH_DATE;
 
-  // Tick every second
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
 
-  // Countdown to launch OR 24h after launch
   const targetTime = isLaunched ? LAUNCH_DATE + 24 * 60 * 60 * 1000 : LAUNCH_DATE;
   const diff = Math.max(0, targetTime - now);
   const days = Math.floor(diff / 86400000);
@@ -33,31 +25,7 @@ const Index = () => {
   const minutes = Math.floor((diff % 3600000) / 60000);
   const seconds = Math.floor((diff % 60000) / 1000);
   const pad = (n: number) => n.toString().padStart(2, "0");
-
   const saleExpired = isLaunched && diff <= 0;
-
-  const handleSubscribe = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = email.trim();
-    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      toast.error("Kérlek adj meg egy érvényes e-mail címet!");
-      return;
-    }
-    setSubscribing(true);
-    const { error } = await supabase.from("launch_subscribers").insert({ email: trimmed });
-    setSubscribing(false);
-    if (error) {
-      if (error.code === "23505") {
-        toast.info("Már feliratkoztál! 🎉");
-        setSubscribed(true);
-      } else {
-        toast.error("Hiba történt, próbáld újra!");
-      }
-    } else {
-      setSubscribed(true);
-      toast.success("Sikeres feliratkozás! 🎉 Értesítünk a nyitásról.");
-    }
-  };
 
   return (
     <Layout>
@@ -139,36 +107,6 @@ const Index = () => {
                   </div>
                 </div>
 
-                {/* EMAIL FORM */}
-                {!subscribed ? (
-                  <form onSubmit={handleSubscribe} className="mt-8 flex flex-col sm:flex-row gap-3 max-w-md">
-                    <div className="relative flex-1">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="email"
-                        placeholder="E-mail címed"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10 h-14 rounded-none bg-secondary border-border text-foreground placeholder:text-muted-foreground"
-                        required
-                      />
-                    </div>
-                    <Button
-                      type="submit"
-                      disabled={subscribing}
-                      className="h-14 px-8 rounded-none uppercase tracking-[0.15em] text-xs bg-accent text-accent-foreground hover:bg-accent/90 font-bold"
-                    >
-                      {subscribing ? "..." : "Értesítést kérek"}
-                    </Button>
-                  </form>
-                ) : (
-                  <div className="mt-8 flex items-center gap-3 bg-accent/10 border border-accent/30 px-5 py-4">
-                    <CheckCircle className="h-5 w-5 text-accent flex-shrink-0" />
-                    <p className="text-sm text-foreground">
-                      Feliratkoztál! Értesítünk, amint megnyitunk. 🎉
-                    </p>
-                  </div>
-                )}
               </>
             )}
 
