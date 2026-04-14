@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { useCart } from "@/contexts/CartContext";
@@ -7,8 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
-import { Check, Tag, ShoppingBag, Gift } from "lucide-react";
+import { Check, Tag, ShoppingBag, Gift, ArrowLeft } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
+import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
+import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 
 interface GiftWrapOption {
   id: string;
