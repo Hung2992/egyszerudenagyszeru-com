@@ -184,9 +184,17 @@ const Giveaway = () => {
             </div>
           )}
 
-          <p className="mt-6 text-[10px] text-muted-foreground">
-            A nyeremény nem váltható készpénzre. A játékban bárki részt vehet érvényes e-mail címmel.
-          </p>
+          <div className="mt-6 space-y-1">
+            <p className="text-[10px] text-muted-foreground">
+              ⏳ A nyereményjáték korlátlan ideig tart — amíg le nem zárjuk!
+            </p>
+            <p className="text-[10px] text-muted-foreground">
+              📧 Ha nyertél, e-mailben keresünk a megadott címen — nem kell mást tenned!
+            </p>
+            <p className="text-[10px] text-muted-foreground">
+              A nyeremény nem váltható készpénzre. A játékban bárki részt vehet érvényes e-mail címmel.
+            </p>
+          </div>
         </div>
       </div>
     </Layout>
