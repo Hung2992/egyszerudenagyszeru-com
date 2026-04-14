@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload, Trash2, Star, GripVertical, Image, Loader2 } from "lucide-react";
 
-const SUPABASE_URL = "https://tnjoaoofknmvttqmprxy.supabase.co";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 interface ProductImage {
   id: string;

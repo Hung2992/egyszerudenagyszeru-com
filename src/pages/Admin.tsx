@@ -126,7 +126,7 @@ import ProductLinkImport from "@/components/admin/ProductLinkImport";
 import AdminAiAssistant from "@/components/admin/AdminAiAssistant";
 import { Textarea } from "@/components/ui/textarea";
 
-const SUPABASE_URL = "https://tnjoaoofknmvttqmprxy.supabase.co";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 // ─── Types ───
 interface ShopProduct {

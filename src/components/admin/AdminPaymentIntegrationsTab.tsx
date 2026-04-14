@@ -508,8 +508,8 @@ const AdminPaymentIntegrationsTab = () => {
             <div>
               <Label className="text-xs">Webhook URL</Label>
               <div className="flex gap-2 mt-1">
-                <Input readOnly value={`https://tnjoaoofknmvttqmprxy.supabase.co/functions/v1/payment-webhook`} className="font-mono text-[10px]" />
-                <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(`https://tnjoaoofknmvttqmprxy.supabase.co/functions/v1/payment-webhook`); toast({ title: "Webhook URL másolva ✓" }); }}>
+                <Input readOnly value={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/payment-webhook`} className="font-mono text-[10px]" />
+                <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/payment-webhook`); toast({ title: "Webhook URL másolva ✓" }); }}>
                   Másolás
                 </Button>
               </div>
