@@ -78,6 +78,7 @@ import AdminPreorderMgmtTab from "@/components/admin/AdminPreorderMgmtTab";
 import AdminPackagingCustomTab from "@/components/admin/AdminPackagingCustomTab";
 import AdminInvoiceAutomationTab from "@/components/admin/AdminInvoiceAutomationTab";
 import AdminNpsTab from "@/components/admin/AdminNpsTab";
+import AdminSubscribersTab from "@/components/admin/AdminSubscribersTab";
 import AdminCheckoutCustomTab from "@/components/admin/AdminCheckoutCustomTab";
 import AdminRecommendationEngineTab from "@/components/admin/AdminRecommendationEngineTab";
 import AdminGdprCenterTab from "@/components/admin/AdminGdprCenterTab";
