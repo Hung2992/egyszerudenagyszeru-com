@@ -233,6 +233,24 @@ const Checkout = () => {
       await (supabase.rpc as any)("increment_coupon_usage", { coupon_code_input: appliedCoupon }).catch(() => {});
     }
 
+    // Send order confirmation email
+    const orderEmail = user?.email || null;
+    if (orderEmail) {
+      const orderId = crypto.randomUUID();
+      await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "order-confirmation",
+          recipientEmail: orderEmail,
+          idempotencyKey: `order-confirm-${orderId}`,
+          templateData: {
+            name,
+            totalAmount: finalTotal.toLocaleString(),
+            itemCount: items.length,
+          },
+        },
+      }).catch(() => {});
+    }
+
     clearCart();
     toast({ title: "Rendelés leadva! 🎉", description: "Hamarosan feldolgozzuk." });
     navigate("/");

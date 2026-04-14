@@ -43,7 +43,20 @@ const Auth = () => {
     setLoading(false);
     if (error) toast({ title: "Hiba", description: error.message, variant: "destructive" });
     else if (data.user && !data.session) toast({ title: "Sikerült!", description: "Erősítsd meg az email címedet." });
-    else { toast({ title: "Sikeres regisztráció!" }); navigate("/"); }
+    else {
+      // Send welcome email
+      if (data.user?.email) {
+        await supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "welcome",
+            recipientEmail: data.user.email,
+            idempotencyKey: `welcome-${data.user.id}`,
+            templateData: { name: displayName },
+          },
+        }).catch(() => {});
+      }
+      toast({ title: "Sikeres regisztráció!" }); navigate("/");
+    }
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
