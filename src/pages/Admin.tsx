@@ -125,6 +125,9 @@ import AdminPersonalizedRecommendationsTab from "@/components/admin/AdminPersona
 import ProductImageGallery from "@/components/admin/ProductImageGallery";
 import ProductLinkImport from "@/components/admin/ProductLinkImport";
 import AdminAiAssistant from "@/components/admin/AdminAiAssistant";
+import AdminDashboardEnhanced from "@/components/admin/AdminDashboardEnhanced";
+import AdminOrderDetail from "@/components/admin/AdminOrderDetail";
+import AdminUserProfile from "@/components/admin/AdminUserProfile";
 import { Textarea } from "@/components/ui/textarea";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -183,6 +186,7 @@ interface ProfileRow {
   city: string | null;
   preferred_payment: string | null;
   created_at: string;
+  user_id: string | null;
 }
 
 interface BusinessHoursDay {
@@ -538,6 +542,8 @@ const Admin = () => {
   // Users state
   const [users, setUsers] = useState<ProfileRow[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<ProfileRow | null>(null);
 
   // Settings state
   const [settings, setSettings] = useState<StoreSettings | null>(null);
@@ -636,7 +642,7 @@ const Admin = () => {
   };
 
   const fetchUsers = async () => {
-    const { data } = await supabase.from("profiles").select("id, display_name, email, phone, city, preferred_payment, created_at").order("created_at", { ascending: false });
+    const { data } = await supabase.from("profiles").select("id, display_name, email, phone, city, preferred_payment, created_at, user_id").order("created_at", { ascending: false });
     if (data) setUsers(data as any);
   };
 
@@ -1250,95 +1256,16 @@ const Admin = () => {
 
         {/* ─── DASHBOARD TAB ─── */}
         {tab === "dashboard" && (
-          <div className="space-y-6">
-            <h2 className="text-lg font-bold uppercase tracking-wider">Áttekintés</h2>
-            
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="border bg-card p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <DollarSign className="h-4 w-4 text-accent" />
-                  <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Bevétel</span>
-                </div>
-                <p className="text-xl font-bold text-foreground">{totalRevenue.toLocaleString()} <span className="text-sm text-muted-foreground">Ft</span></p>
-              </div>
-              <div className="border bg-card p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <ShoppingCart className="h-4 w-4 text-accent" />
-                  <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Rendelések</span>
-                </div>
-                <p className="text-xl font-bold text-foreground">{totalOrders}</p>
-              </div>
-            </div>
-
-            {/* Profit & Procurement Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="border bg-card p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="h-4 w-4 text-green-500" />
-                  <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Profit</span>
-                </div>
-                <p className={`text-xl font-bold ${totalProfit >= 0 ? "text-green-500" : "text-destructive"}`}>{totalProfit.toLocaleString()} <span className="text-sm text-muted-foreground">Ft</span></p>
-              </div>
-              <div className="border bg-card p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Beszerzési költség</span>
-                </div>
-                <p className="text-xl font-bold text-foreground">{totalProcurementCost.toLocaleString()} <span className="text-sm text-muted-foreground">Ft</span></p>
-              </div>
-              <div className="border bg-card p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="h-4 w-4 text-accent" />
-                  <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Profit %</span>
-                </div>
-                <p className="text-xl font-bold text-foreground">{profitMargin}%</p>
-              </div>
-              <div className="border bg-card p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <ShoppingCart className="h-4 w-4 text-yellow-500" />
-                  <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Beszerzésre vár</span>
-                </div>
-                <p className="text-xl font-bold text-foreground">{pendingProcurement}</p>
-              </div>
-              <div className="border bg-card p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Package className="h-4 w-4 text-accent" />
-                  <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Aktív termékek</span>
-                </div>
-                <p className="text-xl font-bold text-foreground">{activeProducts}</p>
-              </div>
-              <div className="border bg-card p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Users className="h-4 w-4 text-accent" />
-                  <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Felhasználók</span>
-                </div>
-                <p className="text-xl font-bold text-foreground">{totalUsers}</p>
-              </div>
-            </div>
-
-            {/* Recent Orders */}
-            <div>
-              <h3 className="text-sm font-bold uppercase tracking-wider mb-3">Utolsó rendelések</h3>
-              <div className="space-y-2">
-                {orders.slice(0, 5).map(o => (
-                  <div key={o.id} className="flex items-center justify-between border bg-card p-3">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-muted-foreground font-mono">#{o.id.slice(0, 8)}</span>
-                      <span className="text-sm text-foreground">{o.shipping_name || "—"}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-semibold text-accent">{o.total_amount.toLocaleString()} Ft</span>
-                      <StatusBadge status={o.status} />
-                    </div>
-                  </div>
-                ))}
-                {orders.length === 0 && (
-                  <p className="text-center text-sm text-muted-foreground py-4">Még nincsenek rendelések.</p>
-                )}
-              </div>
-            </div>
-          </div>
+          <AdminDashboardEnhanced
+            orders={orders}
+            products={products}
+            totalRevenue={totalRevenue}
+            totalOrders={totalOrders}
+            totalUsers={totalUsers}
+            totalProfit={totalProfit}
+            profitMargin={profitMargin}
+            onViewOrder={(id) => setSelectedOrderId(id)}
+          />
         )}
 
         {/* ─── PRODUCTS TAB ─── */}
@@ -1540,7 +1467,7 @@ const Admin = () => {
             </div>
             <div className="space-y-3">
               {orders.map(o => (
-                <div key={o.id} className="border bg-card p-4 space-y-3">
+                <div key={o.id} className="border bg-card p-4 space-y-3 cursor-pointer hover:border-accent/30 transition-colors" onClick={() => setSelectedOrderId(o.id)}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-muted-foreground font-mono">#{o.id.slice(0, 8)}</span>
@@ -1765,7 +1692,7 @@ const Admin = () => {
             </div>
             <div className="space-y-2">
               {filteredUsers.map(u => (
-                <div key={u.id} className="border bg-card p-4">
+                <div key={u.id} className="border bg-card p-4 cursor-pointer hover:border-accent/30 transition-colors" onClick={() => setSelectedUser(u)}>
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="text-sm font-semibold text-foreground">{u.display_name || "Névtelen"}</span>
@@ -5333,6 +5260,23 @@ const Admin = () => {
         )}
       </div>
       <AdminAiAssistant />
+
+      {/* Order Detail Modal */}
+      {selectedOrderId && (
+        <AdminOrderDetail
+          order={orders.find(o => o.id === selectedOrderId)!}
+          onClose={() => setSelectedOrderId(null)}
+          onUpdate={() => { fetchOrders(); setSelectedOrderId(null); }}
+        />
+      )}
+
+      {/* User Profile Modal */}
+      {selectedUser && (
+        <AdminUserProfile
+          user={selectedUser}
+          onClose={() => setSelectedUser(null)}
+        />
+      )}
     </div>
   );
 };
