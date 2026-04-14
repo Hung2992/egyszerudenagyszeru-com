@@ -305,6 +305,29 @@ const Checkout = () => {
     setSubmitting(false);
   };
 
+  // Show Stripe Embedded Checkout
+  if (showStripeCheckout && stripeClientSecret) {
+    return (
+      <Layout>
+        <div className="mx-auto max-w-2xl px-4 py-8 space-y-4">
+          <Button
+            variant="ghost"
+            className="rounded-none uppercase tracking-wider text-xs"
+            onClick={() => { setShowStripeCheckout(false); setStripeClientSecret(null); }}
+          >
+            <ArrowLeft className="h-3.5 w-3.5 mr-1" /> Vissza
+          </Button>
+          <h1 className="text-xl font-bold uppercase tracking-wider">Bankkártyás fizetés</h1>
+          <div id="checkout" className="border bg-card p-4">
+            <EmbeddedCheckoutProvider stripe={getStripe()} options={{ clientSecret: stripeClientSecret }}>
+              <EmbeddedCheckout />
+            </EmbeddedCheckoutProvider>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   if (items.length === 0) {
     return (
       <Layout>
