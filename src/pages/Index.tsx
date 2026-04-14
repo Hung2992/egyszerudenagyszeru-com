@@ -1,11 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
-import { ArrowRight, Flame, Clock, Mail, CheckCircle } from "lucide-react";
+import { ArrowRight, Flame, Clock } from "lucide-react";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/untyped-client";
-import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
 import GiveawayBanner from "@/components/GiveawayBanner";
 
 const LAUNCH_DATE = new Date("2026-06-05T10:00:00+02:00").getTime();
