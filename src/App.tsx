@@ -28,6 +28,8 @@ import Unsubscribe from "./pages/Unsubscribe.tsx";
 import EmailUnsubscribe from "./pages/EmailUnsubscribe.tsx";
 import Giveaway from "./pages/Giveaway.tsx";
 import GiveawayPopup from "./components/GiveawayPopup.tsx";
+import CheckoutReturn from "./pages/CheckoutReturn.tsx";
+import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner.tsx";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +40,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <PaymentTestModeBanner />
           <CartDrawer />
           <AbandonedCartReminder />
           <GiveawayPopup />
@@ -62,6 +65,7 @@ const App = () => (
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/email-unsubscribe" element={<EmailUnsubscribe />} />
             <Route path="/nyeremenyjatek" element={<Giveaway />} />
+            <Route path="/checkout/return" element={<CheckoutReturn />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

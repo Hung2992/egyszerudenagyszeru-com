@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { useCart } from "@/contexts/CartContext";
@@ -7,8 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
-import { Check, Tag, ShoppingBag, Gift } from "lucide-react";
+import { Check, Tag, ShoppingBag, Gift, ArrowLeft } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
+import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
+import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 
 interface GiftWrapOption {
   id: string;
@@ -33,6 +35,8 @@ const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart();
   const [user, setUser] = useState<User | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [showStripeCheckout, setShowStripeCheckout] = useState(false);
+  const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -207,7 +211,7 @@ const Checkout = () => {
       quantity: i.quantity,
     }));
 
-    // If card payment, redirect to Stripe
+    // If card payment, create embedded checkout session
     if (paymentMethod === "card") {
       try {
         const { data, error } = await supabase.functions.invoke("create-checkout-session", {
@@ -226,19 +230,22 @@ const Checkout = () => {
               items: orderItems,
             },
             returnUrl: window.location.origin,
+            environment: getStripeEnvironment(),
           },
         });
 
         if (error) throw error;
-        if (data?.url) {
+        if (data?.clientSecret) {
           if (appliedCoupon) {
             await (supabase.rpc as any)("increment_coupon_usage", { coupon_code_input: appliedCoupon }).catch(() => {});
           }
           clearCart();
-          window.location.href = data.url;
+          setStripeClientSecret(data.clientSecret);
+          setShowStripeCheckout(true);
+          setSubmitting(false);
           return;
         } else {
-          throw new Error("No checkout URL returned");
+          throw new Error("Nem sikerült a fizetési munkamenet létrehozása");
         }
       } catch (err: any) {
         toast({ title: "Fizetési hiba", description: err.message || "Próbáld újra később.", variant: "destructive" });
@@ -297,6 +304,29 @@ const Checkout = () => {
     navigate("/");
     setSubmitting(false);
   };
+
+  // Show Stripe Embedded Checkout
+  if (showStripeCheckout && stripeClientSecret) {
+    return (
+      <Layout>
+        <div className="mx-auto max-w-2xl px-4 py-8 space-y-4">
+          <Button
+            variant="ghost"
+            className="rounded-none uppercase tracking-wider text-xs"
+            onClick={() => { setShowStripeCheckout(false); setStripeClientSecret(null); }}
+          >
+            <ArrowLeft className="h-3.5 w-3.5 mr-1" /> Vissza
+          </Button>
+          <h1 className="text-xl font-bold uppercase tracking-wider">Bankkártyás fizetés</h1>
+          <div id="checkout" className="border bg-card p-4">
+            <EmbeddedCheckoutProvider stripe={getStripe()} options={{ clientSecret: stripeClientSecret }}>
+              <EmbeddedCheckout />
+            </EmbeddedCheckoutProvider>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   if (items.length === 0) {
     return (

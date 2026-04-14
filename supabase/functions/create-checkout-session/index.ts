@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createStripeClient } from "../_shared/stripe.ts";
+import { type StripeEnv, createStripeClient } from "../_shared/stripe.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
@@ -13,8 +13,8 @@ serve(async (req) => {
   }
 
   try {
-    const { orderData, returnUrl } = await req.json();
-    
+    const { orderData, returnUrl, environment } = await req.json();
+
     if (!orderData || !orderData.items || orderData.items.length === 0) {
       return new Response(JSON.stringify({ error: "No items provided" }), {
         status: 400,
@@ -22,7 +22,7 @@ serve(async (req) => {
       });
     }
 
-    const env = (Deno.env.get("STRIPE_ENV") || "sandbox") as "sandbox" | "live";
+    const env = (environment || "sandbox") as StripeEnv;
     const stripe = createStripeClient(env);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -88,16 +88,16 @@ serve(async (req) => {
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
+      ui_mode: "embedded",
       line_items: lineItems,
       discounts: discounts.length > 0 ? discounts : undefined,
-      success_url: `${returnUrl}?payment=success&order_id=${order.id}`,
-      cancel_url: `${returnUrl}?payment=cancelled&order_id=${order.id}`,
+      return_url: `${returnUrl}/checkout/return?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
       metadata: {
         order_id: order.id,
       },
     });
 
-    return new Response(JSON.stringify({ url: session.url, order_id: order.id }), {
+    return new Response(JSON.stringify({ clientSecret: session.client_secret, order_id: order.id }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
