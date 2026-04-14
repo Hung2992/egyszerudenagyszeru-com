@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/untyped-client";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { RefreshCw, Trash2, Pause, Play } from "lucide-react";
