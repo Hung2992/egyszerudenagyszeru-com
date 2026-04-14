@@ -30,6 +30,13 @@ interface SavedAddress {
   is_default: boolean;
 }
 
+interface CheckoutSessionResponse {
+  clientSecret?: string;
+  order_id?: string;
+  error?: string;
+  fallback?: boolean;
+}
+
 const Checkout = () => {
   const navigate = useNavigate();
   const { items, totalPrice, clearCart } = useCart();
@@ -240,7 +247,10 @@ const Checkout = () => {
           }, 15000);
         });
 
-        const { data, error } = await Promise.race([checkoutPromise, timeoutPromise]) as Awaited<ReturnType<typeof supabase.functions.invoke>>;
+        const { data, error } = await Promise.race([checkoutPromise, timeoutPromise]) as {
+          data: CheckoutSessionResponse | null;
+          error: { message?: string; context?: { message?: string }; details?: string } | null;
+        };
 
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
