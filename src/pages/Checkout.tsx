@@ -207,6 +207,47 @@ const Checkout = () => {
       quantity: i.quantity,
     }));
 
+    // If card payment, redirect to Stripe
+    if (paymentMethod === "card") {
+      try {
+        const { data, error } = await supabase.functions.invoke("create-checkout-session", {
+          body: {
+            orderData: {
+              user_id: user?.id || null,
+              total_amount: finalTotal,
+              shipping_name: name,
+              shipping_phone: phone,
+              shipping_zip: zip,
+              shipping_city: city,
+              shipping_address: address,
+              coupon_code: appliedCoupon || null,
+              discount_amount: couponDiscount > 0 ? couponDiscount : null,
+              gift_wrap_price: giftWrapPrice > 0 ? giftWrapPrice : null,
+              items: orderItems,
+            },
+            returnUrl: window.location.origin,
+          },
+        });
+
+        if (error) throw error;
+        if (data?.url) {
+          if (appliedCoupon) {
+            await (supabase.rpc as any)("increment_coupon_usage", { coupon_code_input: appliedCoupon }).catch(() => {});
+          }
+          clearCart();
+          window.location.href = data.url;
+          return;
+        } else {
+          throw new Error("No checkout URL returned");
+        }
+      } catch (err: any) {
+        toast({ title: "Fizetési hiba", description: err.message || "Próbáld újra később.", variant: "destructive" });
+        setSubmitting(false);
+        return;
+      }
+    }
+
+    // Non-card payment (COD, transfer)
     const { error } = await supabase.from("orders").insert({
       user_id: user?.id || null,
       status: "pending",
