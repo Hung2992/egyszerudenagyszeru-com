@@ -11,6 +11,23 @@ import { Eye, EyeOff } from "lucide-react";
 
 type AuthMode = "login" | "register" | "forgot";
 
+const translateAuthError = (msg: string): string => {
+  const map: Record<string, string> = {
+    "Invalid login credentials": "Hibás email cím vagy jelszó.",
+    "Email not confirmed": "Az email cím még nincs megerősítve. Ellenőrizd a postaládádat.",
+    "User already registered": "Ez az email cím már regisztrálva van.",
+    "Password is known to be weak and easy to guess, please choose a different one.": "Ez a jelszó túl gyenge vagy kiszivárgott adatbázisban szerepel. Kérlek válassz másikat.",
+    "Signup requires a valid password": "Érvényes jelszó szükséges a regisztrációhoz.",
+    "For security purposes, you can only request this after": "Biztonsági okokból csak később kérheted újra.",
+    "Email rate limit exceeded": "Túl sok kérés. Próbáld újra később.",
+    "Unable to validate email address: invalid format": "Érvénytelen email cím formátum.",
+  };
+  for (const [en, hu] of Object.entries(map)) {
+    if (msg.includes(en)) return hu;
+  }
+  return msg;
+};
+
 const Auth = () => {
   const navigate = useNavigate();
   const [mode, setMode] = useState<AuthMode>("login");
@@ -25,7 +42,7 @@ const Auth = () => {
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) toast({ title: "Hiba", description: error.message, variant: "destructive" });
+    if (error) toast({ title: "Hiba", description: translateAuthError(error.message), variant: "destructive" });
     else { toast({ title: "Sikeres bejelentkezés!" }); navigate("/"); }
   };
 
@@ -41,7 +58,7 @@ const Auth = () => {
       options: { emailRedirectTo: window.location.origin, data: { display_name: displayName } },
     });
     setLoading(false);
-    if (error) toast({ title: "Hiba", description: error.message, variant: "destructive" });
+    if (error) toast({ title: "Hiba", description: translateAuthError(error.message), variant: "destructive" });
     else if (data.user && !data.session) toast({ title: "Sikerült!", description: "Erősítsd meg az email címedet." });
     else {
       // Send welcome email
@@ -66,7 +83,7 @@ const Auth = () => {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     setLoading(false);
-    if (error) toast({ title: "Hiba", description: error.message, variant: "destructive" });
+    if (error) toast({ title: "Hiba", description: translateAuthError(error.message), variant: "destructive" });
     else toast({ title: "Elküldtük!", description: "Nézd meg az email fiókodat." });
   };
 
