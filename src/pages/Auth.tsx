@@ -58,7 +58,7 @@ const Auth = () => {
       options: { emailRedirectTo: window.location.origin, data: { display_name: displayName } },
     });
     setLoading(false);
-    if (error) toast({ title: "Hiba", description: error.message, variant: "destructive" });
+    if (error) toast({ title: "Hiba", description: translateAuthError(error.message), variant: "destructive" });
     else if (data.user && !data.session) toast({ title: "Sikerült!", description: "Erősítsd meg az email címedet." });
     else {
       // Send welcome email
