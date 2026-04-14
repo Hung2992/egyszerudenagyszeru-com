@@ -35,6 +35,8 @@ const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart();
   const [user, setUser] = useState<User | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [showStripeCheckout, setShowStripeCheckout] = useState(false);
+  const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
