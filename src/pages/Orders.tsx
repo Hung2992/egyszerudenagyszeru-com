@@ -354,6 +354,9 @@ const Orders = () => {
     setReturnReason("");
     setReturnNotes("");
     setRefundMethod("bank_card");
+    setBankHolderName("");
+    setBankCardLast4("");
+    setBankIban("");
     setReturnSubmitting(false);
     const { data } = await (supabase.from("return_requests" as any) as any).select("*").eq("user_id", userId).order("created_at", { ascending: false });
     setReturnRequests((data || []) as ReturnRequest[]);
