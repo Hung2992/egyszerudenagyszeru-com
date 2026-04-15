@@ -41,13 +41,10 @@ serve(async (req) => {
     if (orderData.items.length > 50) {
       return jsonResponse({ error: "Too many items", fallback: false }, 400);
     }
-    const normalizedEmail = typeof orderData.email === "string" && EMAIL_RE.test(orderData.email.trim())
-      ? orderData.email.trim().toLowerCase()
-      : null;
-
     // ── 0. Authenticate caller from JWT ─────────────────────────────
     const authHeader = req.headers.get("Authorization");
     let userId: string | null = null;
+    let authEmail: string | null = null;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -60,7 +57,16 @@ serve(async (req) => {
       const { data: { user: authUser }, error: authErr } = await anonClient.auth.getUser();
       if (!authErr && authUser?.id) {
         userId = authUser.id;
+        authEmail = typeof authUser.email === "string" ? authUser.email.trim().toLowerCase() : null;
       }
+    }
+
+    const normalizedEmail = typeof orderData.email === "string" && EMAIL_RE.test(orderData.email.trim())
+      ? orderData.email.trim().toLowerCase()
+      : authEmail;
+
+    if (!normalizedEmail) {
+      return jsonResponse({ error: "Érvényes e-mail cím megadása kötelező.", fallback: false }, 400);
     }
 
     const env = (environment || "sandbox") as StripeEnv;
@@ -176,6 +182,7 @@ serve(async (req) => {
       shipping_zip: orderData.shipping_zip,
       shipping_city: orderData.shipping_city,
       shipping_address: orderData.shipping_address,
+      customer_email: normalizedEmail,
       payment_method: "card",
       coupon_code: validatedCouponCode,
       discount_amount: discountHuf > 0 ? discountHuf : null,
@@ -232,7 +239,7 @@ serve(async (req) => {
       return_url: `${returnUrl}/checkout/return?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
       metadata: {
         order_id: order.id,
-        ...(normalizedEmail ? { customer_email: normalizedEmail } : {}),
+        customer_email: normalizedEmail,
       },
     });
 

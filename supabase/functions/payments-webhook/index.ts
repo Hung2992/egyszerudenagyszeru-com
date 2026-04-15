@@ -27,7 +27,7 @@ serve(async (req) => {
         if (orderId) {
           const { data: existingOrder, error: orderLookupError } = await supabase
             .from("orders")
-            .select("id, status, total_amount, shipping_name, items")
+            .select("id, status, total_amount, shipping_name, items, customer_email")
             .eq("id", orderId)
             .maybeSingle();
 
@@ -51,6 +51,7 @@ serve(async (req) => {
               session.customer_details?.email ||
               session.customer_email ||
               session.metadata?.customer_email ||
+              existingOrder.customer_email ||
               null;
 
             try {
