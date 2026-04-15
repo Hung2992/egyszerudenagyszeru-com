@@ -564,6 +564,10 @@ const Checkout = () => {
               <Input value={name} onChange={e => setName(e.target.value)} className="mt-1 rounded-none" />
             </div>
             <div>
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">E-mail *</Label>
+              <Input type="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-1 rounded-none" placeholder="pelda@email.com" />
+            </div>
+            <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">Telefon *</Label>
               <Input value={phone} onChange={e => setPhone(e.target.value)} className="mt-1 rounded-none" placeholder="+36..." />
             </div>
