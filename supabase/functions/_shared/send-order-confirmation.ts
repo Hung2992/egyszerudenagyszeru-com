@@ -1,6 +1,6 @@
 interface SendOrderConfirmationParams {
   supabaseUrl: string
-  serviceRoleKey: string
+  functionAuthKey: string
   recipientEmail: string | null | undefined
   orderId: string
   customerName?: string | null
@@ -21,7 +21,7 @@ export function getOrderItemCount(items: unknown): number {
 
 export async function sendOrderConfirmationEmail({
   supabaseUrl,
-  serviceRoleKey,
+  functionAuthKey,
   recipientEmail,
   orderId,
   customerName,
@@ -35,8 +35,8 @@ export async function sendOrderConfirmationEmail({
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${serviceRoleKey}`,
-      apikey: serviceRoleKey,
+      Authorization: `Bearer ${functionAuthKey}`,
+      apikey: functionAuthKey,
     },
     body: JSON.stringify({
       templateName: 'order-confirmation',
