@@ -49,6 +49,7 @@ interface ReturnRequest {
   refund_amount: number;
   admin_notes: string | null;
   description: string | null;
+  preferred_refund_method: string | null;
   created_at: string;
 }
 
