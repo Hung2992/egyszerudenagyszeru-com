@@ -1305,6 +1305,7 @@ const Admin = () => {
             profitMargin={profitMargin}
             onViewOrder={(id) => setSelectedOrderId(id)}
           />
+          <AdminVisitorAnalytics />
         )}
 
         {/* ─── PRODUCTS TAB ─── */}
