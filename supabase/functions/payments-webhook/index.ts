@@ -8,6 +8,17 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 );
 
+function getFunctionAuthKey(): string {
+  const candidate = [Deno.env.get("SUPABASE_ANON_KEY"), Deno.env.get("SUPABASE_PUBLISHABLE_KEY")]
+    .find((value) => typeof value === "string" && value.trim().split(".").length === 3);
+
+  if (!candidate) {
+    throw new Error("Valid JWT auth key not found for transactional email call");
+  }
+
+  return candidate.trim();
+}
+
 serve(async (req) => {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
@@ -57,7 +68,7 @@ serve(async (req) => {
             try {
               await sendOrderConfirmationEmail({
                 supabaseUrl: Deno.env.get("SUPABASE_URL")!,
-                functionAuthKey: Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || Deno.env.get("SUPABASE_ANON_KEY")!,
+                functionAuthKey: getFunctionAuthKey(),
                 recipientEmail,
                 orderId,
                 customerName: existingOrder.shipping_name,
