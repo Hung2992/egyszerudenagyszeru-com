@@ -18,6 +18,17 @@ interface ReturnRequest {
   admin_notes: string | null;
   description?: string | null;
   created_at: string;
+  orders?: {
+    total_amount: number;
+    customer_email: string;
+    shipping_name: string | null;
+    status: string;
+  } | {
+    total_amount: number;
+    customer_email: string;
+    shipping_name: string | null;
+    status: string;
+  }[] | null;
 }
 
 const STATUS_OPTIONS = [
@@ -35,8 +46,19 @@ const AdminReturnsTab = () => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [refundDrafts, setRefundDrafts] = useState<Record<string, string>>({});
 
+  const getOrderDetails = (request: ReturnRequest) => {
+    if (Array.isArray(request.orders)) {
+      return request.orders[0] ?? null;
+    }
+
+    return request.orders ?? null;
+  };
+
   const fetchRequests = async () => {
-    const { data, error } = await supabase.from("return_requests").select("*").order("created_at", { ascending: false });
+    const { data, error } = await supabase
+      .from("return_requests")
+      .select("*, orders(total_amount, customer_email, shipping_name, status)")
+      .order("created_at", { ascending: false });
 
     if (error) {
       toast({ title: "Nem sikerült betölteni a kérelmeket", description: error.message, variant: "destructive" });
@@ -50,8 +72,14 @@ const AdminReturnsTab = () => {
 
   useEffect(() => { fetchRequests(); }, []);
 
-  const updateStatus = async (id: string, status: string) => {
-    const { error } = await supabase.from("return_requests").update({ status } as any).eq("id", id);
+  const updateStatus = async (request: ReturnRequest, status: string) => {
+    const updatePayload: Record<string, unknown> = { status };
+
+    if (status === "rejected") {
+      updatePayload.refund_amount = 0;
+    }
+
+    const { error } = await supabase.from("return_requests").update(updatePayload as any).eq("id", request.id);
 
     if (error) {
       toast({ title: "Státusz mentése sikertelen", description: error.message, variant: "destructive" });
@@ -76,15 +104,31 @@ const AdminReturnsTab = () => {
     fetchRequests();
   };
 
-  const saveRefundAmount = async (id: string) => {
-    const refundAmount = Number(refundDrafts[id] ?? 0);
+  const saveRefundAmount = async (request: ReturnRequest) => {
+    const refundAmount = Number(refundDrafts[request.id] ?? 0);
+    const orderDetails = getOrderDetails(request);
+    const orderTotal = Number(orderDetails?.total_amount ?? 0);
 
     if (Number.isNaN(refundAmount) || refundAmount < 0) {
       toast({ title: "Érvénytelen összeg", description: "A visszatérítés összege nem lehet negatív.", variant: "destructive" });
       return;
     }
 
-    const { error } = await supabase.from("return_requests").update({ refund_amount: refundAmount } as any).eq("id", id);
+    if (request.status === "rejected") {
+      toast({ title: "Elutasított kérelemhez nem menthető visszatérítés", variant: "destructive" });
+      return;
+    }
+
+    if (orderTotal > 0 && refundAmount > orderTotal) {
+      toast({
+        title: "Túl magas visszatérítés",
+        description: `A visszatérítés maximuma ennél a rendelésnél ${orderTotal.toLocaleString()} Ft lehet.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const { error } = await supabase.from("return_requests").update({ refund_amount: refundAmount } as any).eq("id", request.id);
 
     if (error) {
       toast({ title: "Visszatérítés mentése sikertelen", description: error.message, variant: "destructive" });
@@ -153,6 +197,11 @@ const AdminReturnsTab = () => {
       <div className="space-y-2">
         {filtered.map(r => (
           <div key={r.id} className="border bg-card p-4 space-y-3">
+            {(() => {
+              const orderDetails = getOrderDetails(r);
+
+              return (
+                <>
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2">
@@ -161,11 +210,17 @@ const AdminReturnsTab = () => {
                   <span className="text-xs text-muted-foreground font-mono">#{r.order_id.slice(0, 8)}</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">{new Date(r.created_at).toLocaleDateString("hu-HU")} • User: {r.user_id.slice(0, 8)}...</p>
+                {orderDetails && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {orderDetails.shipping_name ? `${orderDetails.shipping_name} • ` : ""}
+                    {orderDetails.customer_email} • {Number(orderDetails.total_amount ?? 0).toLocaleString()} Ft
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <select
                   value={r.status}
-                  onChange={e => updateStatus(r.id, e.target.value)}
+                  onChange={e => updateStatus(r, e.target.value)}
                   className="h-7 rounded-md border border-input bg-background px-2 text-xs"
                 >
                   {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
@@ -186,7 +241,9 @@ const AdminReturnsTab = () => {
               </div>
             )}
             <div className="border border-border p-3 space-y-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Visszatérítés kezelése</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                {r.request_type === "exchange" ? "Árkülönbözet / visszatérítés kezelése" : "Visszatérítés kezelése"}
+              </span>
               <div className="flex gap-2">
                 <Input
                   type="number"
@@ -196,13 +253,28 @@ const AdminReturnsTab = () => {
                   onChange={(e) => setRefundDrafts((current) => ({ ...current, [r.id]: e.target.value }))}
                   className="h-9"
                   placeholder="0"
+                  disabled={r.status === "rejected"}
                 />
-                <Button size="sm" className="rounded-none" onClick={() => saveRefundAmount(r.id)}>
+                {r.request_type === "return" && Number(orderDetails?.total_amount ?? 0) > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-none"
+                    onClick={() => setRefundDrafts((current) => ({ ...current, [r.id]: String(orderDetails?.total_amount ?? 0) }))}
+                    disabled={r.status === "rejected"}
+                  >
+                    Teljes összeg
+                  </Button>
+                )}
+                <Button size="sm" className="rounded-none" onClick={() => saveRefundAmount(r)} disabled={r.status === "rejected"}>
                   <Save className="h-3.5 w-3.5 mr-1" /> Mentés
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
                 Aktuális összeg: <span className="font-bold text-accent">{(r.refund_amount || 0).toLocaleString()} Ft</span>
+                {Number(orderDetails?.total_amount ?? 0) > 0 && (
+                  <span> • Maximum: {Number(orderDetails?.total_amount ?? 0).toLocaleString()} Ft</span>
+                )}
               </p>
             </div>
             {/* Admin notes */}
@@ -222,6 +294,9 @@ const AdminReturnsTab = () => {
                 </Button>
               </div>
             )}
+                </>
+              );
+            })()}
           </div>
         ))}
         {filtered.length === 0 && (
