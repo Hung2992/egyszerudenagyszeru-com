@@ -6,6 +6,7 @@ import { X, Package, Truck, CheckCircle, Clock, XCircle, ArrowRight } from "luci
 
 interface Order {
   id: string;
+  customer_email: string;
   user_id: string | null;
   status: string;
   total_amount: number;
@@ -64,6 +65,39 @@ const AdminOrderDetail = ({ order, onClose, onUpdate }: Props) => {
     setUpdating(true);
     await supabase.from("orders").update({ status: newStatus } as any).eq("id", order.id);
     toast({ title: `Státusz: ${STATUS_LABELS[newStatus]}` });
+
+    // Send shipping notification email when status changes to "shipped"
+    if (newStatus === "shipped" && order.customer_email) {
+      try {
+        await supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "shipping-notification",
+            recipientEmail: order.customer_email,
+            idempotencyKey: `shipping-${order.id}`,
+            templateData: { name: order.shipping_name },
+          },
+        });
+      } catch (e) {
+        console.error("Shipping email error:", e);
+      }
+    }
+
+    // Send delivery confirmation email when status changes to "delivered"
+    if (newStatus === "delivered" && order.customer_email) {
+      try {
+        await supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "delivery-confirmation",
+            recipientEmail: order.customer_email,
+            idempotencyKey: `delivery-${order.id}`,
+            templateData: { name: order.shipping_name },
+          },
+        });
+      } catch (e) {
+        console.error("Delivery email error:", e);
+      }
+    }
+
     onUpdate();
     setUpdating(false);
   };

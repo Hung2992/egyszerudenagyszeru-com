@@ -150,6 +150,7 @@ interface ShopProduct {
 
 interface Order {
   id: string;
+  customer_email: string;
   user_id: string | null;
   status: string;
   total_amount: number;
