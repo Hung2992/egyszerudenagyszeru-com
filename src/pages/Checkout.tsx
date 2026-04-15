@@ -225,16 +225,13 @@ const Checkout = () => {
         const response = await supabase.functions.invoke("create-checkout-session", {
           body: {
             orderData: {
-              user_id: user?.id || null,
-              total_amount: finalTotal,
               shipping_name: name,
               shipping_phone: phone,
               shipping_zip: zip,
               shipping_city: city,
               shipping_address: address,
               coupon_code: appliedCoupon || null,
-              discount_amount: couponDiscount > 0 ? couponDiscount : null,
-              gift_wrap_price: giftWrapPrice > 0 ? giftWrapPrice : null,
+              gift_wrap_id: selectedGiftWrap || null,
               items: orderItems,
             },
             returnUrl: window.location.origin,
