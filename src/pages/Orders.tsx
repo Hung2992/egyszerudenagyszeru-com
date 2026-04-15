@@ -191,6 +191,22 @@ const Orders = () => {
       return;
     }
     toast({ title: "Visszaküldési kérelem elküldve! 📦", description: "Hamarosan feldolgozzuk." });
+    // Send return request confirmation email
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        await supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "return-request",
+            recipientEmail: user.email,
+            idempotencyKey: `return-${orderId}-${Date.now()}`,
+            templateData: { orderId, reason: returnReason },
+          },
+        });
+      }
+    } catch (e) {
+      console.error("Return request email error:", e);
+    }
     setShowReturnForm(null);
     setReturnReason("");
     setReturnNotes("");
