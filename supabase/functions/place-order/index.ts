@@ -22,12 +22,36 @@ interface OrderItem {
   quantity: number;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MAX_ITEM_QTY = 99;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // ── 0. Authenticate caller from JWT ─────────────────────────────
+    const authHeader = req.headers.get("Authorization");
+    let userId: string | null = null;
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    if (authHeader?.startsWith("Bearer ")) {
+      const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const token = authHeader.replace("Bearer ", "");
+      const { data: claimsData, error: claimsErr } = await anonClient.auth.getClaims(token);
+      if (!claimsErr && claimsData?.claims?.sub) {
+        userId = claimsData.claims.sub as string;
+      }
+    }
+
+    // Service-role client for DB operations
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     const {
-      user_id,
       items,
       coupon_code,
       shipping_name,
@@ -37,23 +61,26 @@ serve(async (req) => {
       shipping_address,
       payment_method,
       notes,
-      gift_wrap_price,
+      gift_wrap_id,
     } = await req.json();
 
+    // ── 1. Input validation ─────────────────────────────────────────
     if (!items || !Array.isArray(items) || items.length === 0) {
       return json({ error: "Nincsenek tételek a rendelésben." }, 400);
+    }
+    if (items.length > 50) {
+      return json({ error: "Túl sok tétel a rendelésben." }, 400);
     }
     if (!shipping_name || !shipping_phone || !shipping_zip || !shipping_city || !shipping_address) {
       return json({ error: "Hiányzó szállítási adatok." }, 400);
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
-
-    // ── 1. Look up real prices from DB ──────────────────────────────
+    // ── 2. Look up real prices from DB ──────────────────────────────
     const productIds = [...new Set((items as OrderItem[]).map((i) => i.productId))];
+    for (const pid of productIds) {
+      if (!UUID_RE.test(pid)) return json({ error: "Érvénytelen termékazonosító." }, 400);
+    }
+
     const { data: products, error: prodErr } = await supabase
       .from("shop_products")
       .select("id, price, stock, is_active")
@@ -65,29 +92,41 @@ serve(async (req) => {
 
     const priceMap = new Map(products.map((p: any) => [p.id, p]));
 
-    // Validate each item
     let serverTotal = 0;
     const validatedItems: OrderItem[] = [];
     for (const item of items as OrderItem[]) {
       const product = priceMap.get(item.productId);
       if (!product) return json({ error: `Ismeretlen termék: ${item.name}` }, 400);
       if (!product.is_active) return json({ error: `Nem elérhető termék: ${item.name}` }, 400);
-      if (product.stock < item.quantity) {
+      const qty = Math.max(1, Math.min(Math.floor(Number(item.quantity) || 1), MAX_ITEM_QTY));
+      if (product.stock < qty) {
         return json({ error: `Nincs elegendő készlet: ${item.name}` }, 400);
       }
-      // Use the DB price, not the client-supplied price
-      serverTotal += product.price * item.quantity;
-      validatedItems.push({ ...item, price: product.price });
+      serverTotal += product.price * qty;
+      validatedItems.push({ ...item, price: product.price, quantity: qty });
     }
 
-    // ── 2. Validate coupon server-side ──────────────────────────────
+    // ── 3. Validate gift wrap from DB (not from client price) ───────
+    let giftWrapPrice = 0;
+    if (gift_wrap_id && typeof gift_wrap_id === "string" && UUID_RE.test(gift_wrap_id)) {
+      const { data: gw } = await supabase
+        .from("gift_wrap_options")
+        .select("price")
+        .eq("id", gift_wrap_id)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (gw) {
+        giftWrapPrice = gw.price;
+      }
+    }
+
+    // ── 4. Validate coupon server-side ──────────────────────────────
     let discountAmount = 0;
     let validatedCouponCode: string | null = null;
 
-    if (coupon_code) {
-      const code = coupon_code.toUpperCase();
+    if (coupon_code && typeof coupon_code === "string") {
+      const code = coupon_code.toUpperCase().slice(0, 50);
 
-      // Try coupons table
       const { data: coupon } = await supabase
         .from("coupons")
         .select("*")
@@ -95,52 +134,50 @@ serve(async (req) => {
         .eq("is_active", true)
         .maybeSingle();
 
-      if (coupon) {
-        if (coupon.valid_until && new Date(coupon.valid_until) < new Date()) {
-          return json({ error: "Ez a kupon lejárt." }, 400);
-        }
-        if (coupon.max_uses && coupon.used_count >= coupon.max_uses) {
-          return json({ error: "Ez a kupon elfogyott." }, 400);
-        }
-
-        if (coupon.discount_percent) {
-          discountAmount = Math.round(serverTotal * (coupon.discount_percent / 100));
-        } else if (coupon.discount_amount) {
-          discountAmount = coupon.discount_amount;
-        }
-        discountAmount = Math.min(discountAmount, serverTotal);
-        validatedCouponCode = coupon.code;
-
-        // Atomically increment used_count with a conditional update
-        const { data: updated, error: updErr } = await supabase
-          .from("coupons")
-          .update({ used_count: coupon.used_count + 1 })
-          .eq("id", coupon.id)
-          .eq("used_count", coupon.used_count) // optimistic lock
-          .select("id")
-          .maybeSingle();
-
-        if (updErr || !updated) {
-          return json({ error: "Kupon érvényesítési hiba, próbáld újra." }, 409);
-        }
-      } else {
+      if (!coupon) {
         return json({ error: "Érvénytelen kuponkód." }, 400);
+      }
+      if (coupon.valid_until && new Date(coupon.valid_until) < new Date()) {
+        return json({ error: "Ez a kupon lejárt." }, 400);
+      }
+      if (coupon.max_uses !== null && coupon.used_count >= coupon.max_uses) {
+        return json({ error: "Ez a kupon elfogyott." }, 400);
+      }
+
+      if (coupon.discount_percent) {
+        discountAmount = Math.round(serverTotal * (coupon.discount_percent / 100));
+      } else if (coupon.discount_amount) {
+        discountAmount = coupon.discount_amount;
+      }
+      discountAmount = Math.min(discountAmount, serverTotal);
+      validatedCouponCode = coupon.code;
+
+      // Atomically increment used_count with optimistic lock
+      const { data: updated, error: updErr } = await supabase
+        .from("coupons")
+        .update({ used_count: coupon.used_count + 1 })
+        .eq("id", coupon.id)
+        .eq("used_count", coupon.used_count)
+        .select("id")
+        .maybeSingle();
+
+      if (updErr || !updated) {
+        return json({ error: "Kupon érvényesítési hiba, próbáld újra." }, 409);
       }
     }
 
-    // ── 3. Calculate final total ────────────────────────────────────
-    const giftWrap = typeof gift_wrap_price === "number" && gift_wrap_price > 0 ? gift_wrap_price : 0;
-    const finalTotal = serverTotal - discountAmount + giftWrap;
+    // ── 5. Calculate final total ────────────────────────────────────
+    const finalTotal = serverTotal - discountAmount + giftWrapPrice;
 
     if (finalTotal < 0) {
       return json({ error: "Érvénytelen végösszeg." }, 400);
     }
 
-    // ── 4. Insert order ─────────────────────────────────────────────
+    // ── 6. Insert order (service role — bypasses RLS) ───────────────
     const { data: order, error: orderErr } = await supabase
       .from("orders")
       .insert({
-        user_id: user_id || null,
+        user_id: userId,
         status: "pending",
         total_amount: finalTotal,
         shipping_name,
@@ -151,7 +188,7 @@ serve(async (req) => {
         payment_method: payment_method || "cod",
         coupon_code: validatedCouponCode,
         discount_amount: discountAmount > 0 ? discountAmount : null,
-        notes: notes || null,
+        notes: typeof notes === "string" ? notes.slice(0, 1000) : null,
         items: validatedItems,
       })
       .select("id")
