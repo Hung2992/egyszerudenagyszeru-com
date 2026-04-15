@@ -92,6 +92,7 @@ const Checkout = () => {
   const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
 
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [zip, setZip] = useState("");
   const [city, setCity] = useState("");
@@ -129,6 +130,9 @@ const Checkout = () => {
           setName(profileRes.data.display_name || "");
           setPhone(profileRes.data.phone || "");
           setCity(profileRes.data.city || "");
+        }
+        if (session.user.email) {
+          setEmail(session.user.email);
         }
         if (addressRes.data && addressRes.data.length > 0) {
           setSavedAddresses(addressRes.data as SavedAddress[]);
@@ -340,10 +344,15 @@ const Checkout = () => {
       toast({ title: "Rendelés leadva! 🎉", description: "Hamarosan feldolgozzuk." });
       navigate("/");
 
-      const orderEmail = user?.email || null;
+      const orderEmail = email || user?.email || null;
       if (orderEmail) {
-        void supabase.functions.invoke("send-transactional-email", {
-          body: {
+        fetch(`${FUNCTIONS_BASE_URL}/send-transactional-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
             templateName: "order-confirmation",
             recipientEmail: orderEmail,
             idempotencyKey: `order-confirm-${data.order_id}`,
@@ -352,7 +361,7 @@ const Checkout = () => {
               totalAmount: (data.total_amount ?? finalTotal).toLocaleString(),
               itemCount: items.length,
             },
-          },
+          }),
         }).catch((emailError) => {
           console.error("Order confirmation email error:", emailError);
         });
@@ -558,6 +567,10 @@ const Checkout = () => {
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">Név *</Label>
               <Input value={name} onChange={e => setName(e.target.value)} className="mt-1 rounded-none" />
+            </div>
+            <div>
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">E-mail *</Label>
+              <Input type="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-1 rounded-none" placeholder="pelda@email.com" />
             </div>
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">Telefon *</Label>
