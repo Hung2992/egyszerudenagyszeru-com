@@ -59,6 +59,11 @@ interface ReturnSettings {
   return_policy: string | null;
 }
 
+interface ReturnEligibility {
+  canRequest: boolean;
+  daysRemaining: number | null;
+}
+
 const STATUS_MAP: Record<string, { label: string; icon: any; color: string }> = {
   awaiting_payment: { label: "Fizetésre vár", icon: Clock, color: "text-amber-500" },
   pending: { label: "Feldolgozás alatt", icon: Clock, color: "text-yellow-500" },
@@ -96,6 +101,23 @@ const STEPS = ["awaiting_payment", "pending", "confirmed", "processing", "shippe
 const isMissingRelationError = (error: { code?: string; message?: string } | null | undefined) => {
   const message = error?.message?.toLowerCase() || "";
   return error?.code === "PGRST205" || error?.code === "42P01" || message.includes("could not find the table") || message.includes("does not exist");
+};
+
+const getReturnEligibility = (orderCreatedAt: string, deadlineDays: number | null | undefined): ReturnEligibility => {
+  if (typeof deadlineDays !== "number" || deadlineDays <= 0) {
+    return { canRequest: true, daysRemaining: null };
+  }
+
+  const orderDate = new Date(orderCreatedAt);
+  const today = new Date();
+  const diffMs = today.getTime() - orderDate.getTime();
+  const elapsedDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const daysRemaining = Math.max(0, deadlineDays - elapsedDays);
+
+  return {
+    canRequest: elapsedDays <= deadlineDays,
+    daysRemaining,
+  };
 };
 
 const Orders = () => {
@@ -190,7 +212,9 @@ const Orders = () => {
     }
     setOrderTrackingMap(otMap);
 
-    if (settingsRes?.data) {
+    if (settingsRes?.error) {
+      console.error("Return settings load failed:", settingsRes.error);
+    } else if (settingsRes?.data) {
       const publicSettings = Array.isArray(settingsRes.data) ? settingsRes.data[0] : settingsRes.data;
       setReturnSettings(publicSettings as ReturnSettings);
     }
@@ -288,7 +312,13 @@ const Orders = () => {
     setReturnRequests((data || []) as ReturnRequest[]);
   };
 
-  const getReturnForOrder = (orderId: string) => returnRequests.find(r => r.order_id === orderId);
+  const getReturnForOrder = (orderId: string) => {
+    const matchingRequests = returnRequests.filter((request) => request.order_id === orderId);
+
+    if (matchingRequests.length === 0) return undefined;
+
+    return matchingRequests.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+  };
   const activeReturnReasons = (returnSettings?.return_reasons || []).filter(Boolean);
   const returnReasonOptions = activeReturnReasons.length > 0 ? activeReturnReasons : RETURN_REASONS;
   const refundMethodLabel = returnSettings?.return_refund_method === "store_credit" ? "Bolt kredit" : "Eredeti fizetési mód";
@@ -329,6 +359,7 @@ const Orders = () => {
               const isCancelled = order.status === "cancelled";
               const tracking = trackingData[order.id];
               const existingReturn = getReturnForOrder(order.id);
+              const returnEligibility = getReturnEligibility(order.created_at, returnSettings?.return_deadline_days);
 
               return (
                 <div key={order.id} className="border border-border bg-card overflow-hidden">
@@ -650,7 +681,7 @@ const Orders = () => {
                                 </div>
                               </div>
                               <div>
-                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Visszaküldés oka *</p>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Kérelem oka *</p>
                                 <div className="flex flex-wrap gap-1.5">
                                   {returnReasonOptions.map(r => (
                                     <button
@@ -669,7 +700,10 @@ const Orders = () => {
                               </div>
                               <div className="border border-border bg-secondary/30 p-3 text-[10px] uppercase tracking-wider text-muted-foreground space-y-1">
                                 {typeof returnSettings?.return_deadline_days === "number" && returnSettings.return_deadline_days > 0 && (
-                                  <p>Visszaküldési időablak: {returnSettings.return_deadline_days} nap</p>
+                                  <p>
+                                    Visszaküldési időablak: {returnSettings.return_deadline_days} nap
+                                    {returnEligibility.daysRemaining !== null ? ` • hátralévő idő: ${returnEligibility.daysRemaining} nap` : ""}
+                                  </p>
                                 )}
                                 <p>
                                   {returnType === "exchange"
@@ -710,6 +744,13 @@ const Orders = () => {
                                   Mégse
                                 </Button>
                               </div>
+                            </div>
+                          ) : !returnEligibility.canRequest ? (
+                            <div className="border border-border bg-secondary/30 p-3 text-xs text-muted-foreground space-y-1">
+                              <p className="font-bold uppercase tracking-wider text-[10px] text-foreground">Visszaküldési időablak lejárt</p>
+                              <p>
+                                Ehhez a rendeléshez a {returnSettings?.return_deadline_days ?? 0} napos visszaküldési / csere határidő már lejárt.
+                              </p>
                             </div>
                           ) : (
                             <Button
