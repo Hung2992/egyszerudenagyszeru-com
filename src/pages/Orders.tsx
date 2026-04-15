@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { useCart } from "@/contexts/CartContext";
@@ -50,7 +50,9 @@ interface ReturnRequest {
 }
 
 const STATUS_MAP: Record<string, { label: string; icon: any; color: string }> = {
+  awaiting_payment: { label: "Fizetésre vár", icon: Clock, color: "text-amber-500" },
   pending: { label: "Feldolgozás alatt", icon: Clock, color: "text-yellow-500" },
+  confirmed: { label: "Fizetés rendben", icon: CheckCircle2, color: "text-emerald-500" },
   processing: { label: "Előkészítés", icon: Package, color: "text-blue-400" },
   shipped: { label: "Szállítás alatt", icon: Truck, color: "text-accent" },
   delivered: { label: "Kézbesítve", icon: CheckCircle2, color: "text-green-500" },
@@ -74,7 +76,7 @@ const RETURN_REASONS = [
   "Egyéb",
 ];
 
-const STEPS = ["pending", "processing", "shipped", "delivered"];
+const STEPS = ["awaiting_payment", "pending", "confirmed", "processing", "shipped", "delivered"];
 
 const isMissingRelationError = (error: { code?: string; message?: string } | null | undefined) => {
   const message = error?.message?.toLowerCase() || "";
@@ -96,59 +98,100 @@ const Orders = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [orderTrackingMap, setOrderTrackingMap] = useState<Record<string, OrderTrackingEntry[]>>({});
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) { navigate("/auth"); return; }
-      setUserId(session.user.id);
-      const userEmail = session.user.email || "";
+  const fetchOrders = useCallback(async (showErrorToast = true) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      navigate("/auth");
+      return;
+    }
 
-      const [ordersRes, trackingRes, returnsRes, orderTrackingRes] = await Promise.all([
-        supabase.from("orders").select("*").or(`user_id.eq.${session.user.id},customer_email.eq.${userEmail}`).order("created_at", { ascending: false }),
-        (supabase.from("package_tracking" as any) as any).select("*"),
-        (supabase.from("return_requests" as any) as any).select("*").eq("user_id", session.user.id).order("created_at", { ascending: false }),
-        (supabase.from("order_tracking" as any) as any).select("*").order("created_at", { ascending: true }),
-      ]);
+    setUserId(session.user.id);
+    const userEmail = session.user.email?.trim().toLowerCase() || "";
 
-      if (ordersRes.error) {
-        console.error("Orders load failed:", ordersRes.error);
+    const orderQueries = [
+      supabase.from("orders").select("*").eq("user_id", session.user.id).order("created_at", { ascending: false }),
+    ];
+
+    if (userEmail) {
+      orderQueries.push(
+        supabase.from("orders").select("*").eq("customer_email", userEmail).order("created_at", { ascending: false }) as any
+      );
+    }
+
+    const [orderResults, trackingRes, returnsRes, orderTrackingRes] = await Promise.all([
+      Promise.all(orderQueries),
+      (supabase.from("package_tracking" as any) as any).select("*"),
+      (supabase.from("return_requests" as any) as any).select("*").eq("user_id", session.user.id).order("created_at", { ascending: false }),
+      (supabase.from("order_tracking" as any) as any).select("*").order("created_at", { ascending: true }),
+    ]);
+
+    const orderErrors = orderResults.map((result: any) => result.error).filter(Boolean);
+    if (orderErrors.length > 0) {
+      console.error("Orders load failed:", orderErrors);
+      if (showErrorToast) {
         toast({ title: "Nem sikerült betölteni a rendeléseket", variant: "destructive" });
-        setOrders([]);
-      } else {
-        setOrders((ordersRes.data || []) as any as Order[]);
       }
+      setOrders([]);
+    } else {
+      const mergedOrders = orderResults
+        .flatMap((result: any) => result.data || [])
+        .reduce((acc: Order[], current: Order) => {
+          if (!acc.some((order) => order.id === current.id)) {
+            acc.push(current);
+          }
+          return acc;
+        }, [])
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      const tMap: Record<string, PackageTracking> = {};
-      if (trackingRes.data) {
-        trackingRes.data.forEach((t: any) => { tMap[t.order_id] = t; });
-      } else if (trackingRes.error && !isMissingRelationError(trackingRes.error)) {
-        console.error("Package tracking load failed:", trackingRes.error);
-      }
-      setTrackingData(tMap);
+      setOrders(mergedOrders);
+    }
 
-      if (returnsRes.data) {
-        setReturnRequests((returnsRes.data || []) as ReturnRequest[]);
-      } else if (returnsRes.error) {
-        console.error("Return requests load failed:", returnsRes.error);
-        setReturnRequests([]);
-      }
+    const tMap: Record<string, PackageTracking> = {};
+    if (trackingRes.data) {
+      trackingRes.data.forEach((t: any) => { tMap[t.order_id] = t; });
+    } else if (trackingRes.error && !isMissingRelationError(trackingRes.error)) {
+      console.error("Package tracking load failed:", trackingRes.error);
+    }
+    setTrackingData(tMap);
 
-      // Build order tracking map
-      const otMap: Record<string, OrderTrackingEntry[]> = {};
-      if (orderTrackingRes.data) {
-        orderTrackingRes.data.forEach((t: any) => {
-          if (!otMap[t.order_id]) otMap[t.order_id] = [];
-          otMap[t.order_id].push(t as OrderTrackingEntry);
-        });
-      } else if (orderTrackingRes.error && !isMissingRelationError(orderTrackingRes.error)) {
-        console.error("Order tracking load failed:", orderTrackingRes.error);
-      }
-      setOrderTrackingMap(otMap);
+    if (returnsRes.data) {
+      setReturnRequests((returnsRes.data || []) as ReturnRequest[]);
+    } else if (returnsRes.error) {
+      console.error("Return requests load failed:", returnsRes.error);
+      setReturnRequests([]);
+    }
 
-      setLoading(false);
-    };
-    fetchOrders();
+    const otMap: Record<string, OrderTrackingEntry[]> = {};
+    if (orderTrackingRes.data) {
+      orderTrackingRes.data.forEach((t: any) => {
+        if (!otMap[t.order_id]) otMap[t.order_id] = [];
+        otMap[t.order_id].push(t as OrderTrackingEntry);
+      });
+    } else if (orderTrackingRes.error && !isMissingRelationError(orderTrackingRes.error)) {
+      console.error("Order tracking load failed:", orderTrackingRes.error);
+    }
+    setOrderTrackingMap(otMap);
+
+    setLoading(false);
   }, [navigate]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  useEffect(() => {
+    const refreshOrders = () => {
+      fetchOrders(false);
+    };
+
+    const intervalId = window.setInterval(refreshOrders, 10000);
+    window.addEventListener("focus", refreshOrders);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshOrders);
+    };
+  }, [fetchOrders]);
 
   const getStepIndex = (status: string) => STEPS.indexOf(status);
 
