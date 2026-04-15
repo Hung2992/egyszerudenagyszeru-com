@@ -1807,25 +1807,47 @@ const Admin = () => {
                 className="pl-10"
               />
             </div>
+            {/* Summary cards */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="border bg-card p-3 text-center">
+                <p className="text-xl font-bold text-accent">{filteredUsers.length}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Összes</p>
+              </div>
+              <div className="border bg-card p-3 text-center">
+                <p className="text-xl font-bold text-foreground">{filteredUsers.filter(u => orders.some(o => (o as any).customer_email?.toLowerCase() === u.email?.toLowerCase())).length}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Vásárlók</p>
+              </div>
+              <div className="border bg-card p-3 text-center">
+                <p className="text-xl font-bold text-foreground">{filteredUsers.filter(u => u.user_id).length}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Regisztrált</p>
+              </div>
+            </div>
             <div className="space-y-2">
-              {filteredUsers.map(u => (
-                <div key={u.id} className="border bg-card p-4 cursor-pointer hover:border-accent/30 transition-colors" onClick={() => setSelectedUser(u)}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-sm font-semibold text-foreground">{u.display_name || "Névtelen"}</span>
-                      {u.email && <span className="ml-2 text-xs text-muted-foreground">{u.email}</span>}
+              {filteredUsers.map(u => {
+                const userOrders = orders.filter(o => (o as any).customer_email?.toLowerCase() === u.email?.toLowerCase());
+                const totalSpent = userOrders.reduce((s, o) => s + o.total_amount, 0);
+                return (
+                  <div key={u.id} className="border bg-card p-4 cursor-pointer hover:border-accent/30 transition-colors" onClick={() => setSelectedUser(u)}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-sm font-semibold text-foreground">{u.display_name || "Névtelen"}</span>
+                        {u.email && <span className="ml-2 text-xs text-muted-foreground">{u.email}</span>}
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">
+                        {new Date(u.created_at).toLocaleDateString("hu-HU")}
+                      </span>
                     </div>
-                    <span className="text-[10px] text-muted-foreground">
-                      {new Date(u.created_at).toLocaleDateString("hu-HU")}
-                    </span>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
+                      {u.phone && <span>📱 {u.phone}</span>}
+                      {u.city && <span>📍 {u.city}</span>}
+                      {userOrders.length > 0 && (
+                        <span className="text-accent font-semibold">🛒 {userOrders.length} rendelés · {totalSpent.toLocaleString()} Ft</span>
+                      )}
+                      {u.preferred_payment && <span>💳 {u.preferred_payment}</span>}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                    {u.phone && <span>📱 {u.phone}</span>}
-                    {u.city && <span>📍 {u.city}</span>}
-                    {u.preferred_payment && <span>💳 {u.preferred_payment}</span>}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               {filteredUsers.length === 0 && (
                 <p className="text-center text-sm text-muted-foreground py-8">Nincs találat.</p>
               )}
