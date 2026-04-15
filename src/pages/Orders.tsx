@@ -646,6 +646,7 @@ const Orders = () => {
                               <p className="font-bold text-foreground uppercase tracking-wider text-[10px]">
                                 {existingReturn.request_type === "exchange" ? <ArrowLeftRight className="h-3 w-3 inline mr-1" /> : <RotateCcw className="h-3 w-3 inline mr-1" />}
                                 {existingReturn.request_type === "exchange" ? "Csere kérelem" : "Visszaküldési kérelem"}
+                                <span className="ml-2 text-accent">#{order.id.slice(0, 8).toUpperCase()}</span>
                               </p>
                               <div className="space-y-1">
                                 <div className="flex justify-between gap-4">
