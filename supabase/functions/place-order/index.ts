@@ -28,26 +28,6 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const MAX_ITEM_QTY = 99;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function getFunctionAuthKey(): string {
-  const candidate = [
-    Deno.env.get("SUPABASE_ANON_KEY"),
-    Deno.env.get("SUPABASE_PUBLISHABLE_KEY"),
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
-  ]
-    .find((value) => typeof value === "string" && value.trim().split(".").length === 3)
-
-  if (!candidate) {
-    console.error("Hiányzó JWT kulcs az e-mail küldéshez", {
-      hasAnonKey: !!Deno.env.get("SUPABASE_ANON_KEY"),
-      hasPublishableKey: !!Deno.env.get("SUPABASE_PUBLISHABLE_KEY"),
-      hasServiceRoleKey: !!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
-    })
-    throw new Error("Nem található érvényes JWT kulcs az e-mail küldéshez")
-  }
-
-  return candidate.trim()
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -233,7 +213,7 @@ serve(async (req) => {
     try {
       await sendOrderConfirmationEmail({
         supabaseUrl,
-        functionAuthKey: getFunctionAuthKey(),
+        supabaseServiceRoleKey: supabaseServiceKey,
         recipientEmail: normalizedEmail,
         orderId: order.id,
         customerName: shipping_name,
