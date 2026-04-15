@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { getOrderItemCount, sendOrderConfirmationEmail } from "../_shared/send-order-confirmation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,6 +26,7 @@ interface OrderItem {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_ITEM_QTY = 99;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -55,6 +57,7 @@ serve(async (req) => {
       items,
       coupon_code,
       shipping_name,
+      email,
       shipping_phone,
       shipping_zip,
       shipping_city,
@@ -74,6 +77,11 @@ serve(async (req) => {
     if (!shipping_name || !shipping_phone || !shipping_zip || !shipping_city || !shipping_address) {
       return json({ error: "Hiányzó szállítási adatok." }, 400);
     }
+    if (typeof email !== "string" || !EMAIL_RE.test(email.trim())) {
+      return json({ error: "Hiányzó vagy érvénytelen e-mail cím." }, 400);
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
 
     // ── 2. Look up real prices from DB ──────────────────────────────
     const productIds = [...new Set((items as OrderItem[]).map((i) => i.productId))];
@@ -196,6 +204,20 @@ serve(async (req) => {
 
     if (orderErr) {
       return json({ error: `Rendelés létrehozási hiba: ${orderErr.message}` }, 500);
+    }
+
+    try {
+      await sendOrderConfirmationEmail({
+        supabaseUrl,
+        serviceRoleKey: supabaseServiceKey,
+        recipientEmail: normalizedEmail,
+        orderId: order.id,
+        customerName: shipping_name,
+        totalAmount: finalTotal,
+        itemCount: getOrderItemCount(validatedItems),
+      });
+    } catch (emailError) {
+      console.error("order confirmation email enqueue error:", emailError);
     }
 
     return json({ order_id: order.id, total_amount: finalTotal });
