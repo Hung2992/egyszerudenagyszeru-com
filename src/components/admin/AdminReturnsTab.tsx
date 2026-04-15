@@ -280,14 +280,31 @@ const AdminReturnsTab = () => {
     const eligible = requests.filter(r => ids.includes(r.id) && r.status === "approved" && r.refund_status !== "completed" && r.refund_amount > 0);
     if (eligible.length === 0) { toast({ title: "Nincs feldolgozható visszatérítés", variant: "destructive" }); return; }
     for (const req of eligible) {
+      const od = getOrderDetails(req);
+      const txId = req.refund_transaction_id || `REF-${Date.now().toString(36).toUpperCase()}-${req.id.slice(0, 4)}`;
       await supabase.from("return_requests").update({
         refund_status: "completed",
         refund_processed_at: new Date().toISOString(),
-        refund_transaction_id: req.refund_transaction_id || `REF-${Date.now().toString(36).toUpperCase()}-${req.id.slice(0, 4)}`,
+        refund_transaction_id: txId,
         status: "completed",
       } as any).eq("id", req.id);
+
+      // Auto-create refund in Financial Center
+      await supabase.from("refunds").insert({
+        order_id: req.order_id,
+        customer_name: od?.shipping_name || od?.customer_email || "Ismeretlen",
+        amount: req.refund_amount,
+        currency: "HUF",
+        reason: req.reason,
+        method: req.preferred_refund_method === "bank_card" ? "bank_card" : "bank_transfer",
+        status: "completed",
+        notes: `Auto batch: ${req.request_type === "return" ? "Visszáru" : "Csere"} #${req.order_id.slice(0, 8).toUpperCase()} — ${txId}`,
+      } as any);
+
+      // Auto-update order
+      await supabase.from("orders").update({ status: "refunded" } as any).eq("id", req.order_id);
     }
-    toast({ title: `💰 ${eligible.length} visszatérítés feldolgozva!`, description: `Összesen: ${eligible.reduce((s, r) => s + r.refund_amount, 0).toLocaleString()} Ft` });
+    toast({ title: `💰 ${eligible.length} visszatérítés feldolgozva!`, description: `Összesen: ${eligible.reduce((s, r) => s + r.refund_amount, 0).toLocaleString()} Ft — Pénzügyi Központba rögzítve` });
     setSelectedIds(new Set());
     fetchRequests();
   };
