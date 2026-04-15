@@ -46,12 +46,13 @@ const Index = () => {
       <section className="relative min-h-[85vh] md:min-h-[90vh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="https://images.unsplash.com/photo-1617137968427-85924c800a22?w=1335&h=858&fit=crop&q=80"
-            srcSet="https://images.unsplash.com/photo-1617137968427-85924c800a22?w=768&h=494&fit=crop&q=80 768w, https://images.unsplash.com/photo-1617137968427-85924c800a22?w=1335&h=858&fit=crop&q=80 1335w"
+            src="https://images.unsplash.com/photo-1617137968427-85924c800a22?w=1335&h=858&fit=crop&q=80&fm=webp"
+            srcSet="https://images.unsplash.com/photo-1617137968427-85924c800a22?w=480&h=309&fit=crop&q=75&fm=webp 480w, https://images.unsplash.com/photo-1617137968427-85924c800a22?w=768&h=494&fit=crop&q=80&fm=webp 768w, https://images.unsplash.com/photo-1617137968427-85924c800a22?w=1335&h=858&fit=crop&q=80&fm=webp 1335w"
             sizes="100vw"
             alt="Streetwear stílus"
             className="h-full w-full object-cover"
             fetchPriority="high"
+            decoding="sync"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background/40" />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
