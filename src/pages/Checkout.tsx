@@ -583,7 +583,6 @@ const Checkout = () => {
             {[
               { value: "cod", label: "Utánvét" },
               { value: "card", label: "Bankkártya" },
-              { value: "transfer", label: "Átutalás" },
             ].map(pm => (
               <button
                 key={pm.value}
