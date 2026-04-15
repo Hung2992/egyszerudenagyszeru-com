@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/untyped-client";
 
@@ -31,10 +31,23 @@ function getSessionId(): string {
 
 export const usePageTracking = () => {
   const location = useLocation();
+  const lastTracked = useRef<string>("");
+  const lastTrackedTime = useRef<number>(0);
 
   useEffect(() => {
     // Don't track admin pages
     if (location.pathname.startsWith("/admin")) return;
+
+    const now = Date.now();
+    const dedupKey = `${getSessionId()}:${location.pathname}`;
+    
+    // Deduplicate: same page + same session within 30 seconds → skip
+    if (dedupKey === lastTracked.current && now - lastTrackedTime.current < 30000) {
+      return;
+    }
+
+    lastTracked.current = dedupKey;
+    lastTrackedTime.current = now;
 
     const track = async () => {
       try {
