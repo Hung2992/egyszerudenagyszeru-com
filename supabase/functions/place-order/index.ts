@@ -77,11 +77,9 @@ serve(async (req) => {
     if (!shipping_name || !shipping_phone || !shipping_zip || !shipping_city || !shipping_address) {
       return json({ error: "Hiányzó szállítási adatok." }, 400);
     }
-    if (typeof email !== "string" || !EMAIL_RE.test(email.trim())) {
-      return json({ error: "Hiányzó vagy érvénytelen e-mail cím." }, 400);
-    }
-
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = typeof email === "string" && EMAIL_RE.test(email.trim())
+      ? email.trim().toLowerCase()
+      : null;
 
     // ── 2. Look up real prices from DB ──────────────────────────────
     const productIds = [...new Set((items as OrderItem[]).map((i) => i.productId))];
