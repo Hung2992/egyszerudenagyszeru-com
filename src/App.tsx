@@ -42,9 +42,10 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <CartProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+        <Suspense fallback={null}>
+          <Toaster />
+          <Sonner />
+        </Suspense>
           <PaymentTestModeBanner />
           <Suspense fallback={null}>
             <CartDrawer />
