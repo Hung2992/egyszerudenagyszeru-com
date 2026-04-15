@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -9,27 +10,29 @@ import AbandonedCartReminder from "@/components/AbandonedCartReminder";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
-import Profile from "./pages/Profile.tsx";
-import Admin from "./pages/Admin.tsx";
-import Shop from "./pages/Shop.tsx";
-import ProductDetail from "./pages/ProductDetail.tsx";
-import Checkout from "./pages/Checkout.tsx";
-import Shipping from "./pages/Shipping.tsx";
-import SizeGuide from "./pages/SizeGuide.tsx";
-import Contact from "./pages/Contact.tsx";
-import Orders from "./pages/Orders.tsx";
-import Wishlist from "./pages/Wishlist.tsx";
-import Loyalty from "./pages/Loyalty.tsx";
-import GiftCards from "./pages/GiftCards.tsx";
-import Community from "./pages/Community.tsx";
 import NotFound from "./pages/NotFound.tsx";
-import SharedWishlist from "./pages/SharedWishlist.tsx";
-import Unsubscribe from "./pages/Unsubscribe.tsx";
-import EmailUnsubscribe from "./pages/EmailUnsubscribe.tsx";
-import Giveaway from "./pages/Giveaway.tsx";
 import GiveawayPopup from "./components/GiveawayPopup.tsx";
-import CheckoutReturn from "./pages/CheckoutReturn.tsx";
 import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner.tsx";
+
+// Lazy-loaded pages to reduce initial bundle size
+const Profile = lazy(() => import("./pages/Profile.tsx"));
+const Admin = lazy(() => import("./pages/Admin.tsx"));
+const Shop = lazy(() => import("./pages/Shop.tsx"));
+const ProductDetail = lazy(() => import("./pages/ProductDetail.tsx"));
+const Checkout = lazy(() => import("./pages/Checkout.tsx"));
+const Shipping = lazy(() => import("./pages/Shipping.tsx"));
+const SizeGuide = lazy(() => import("./pages/SizeGuide.tsx"));
+const Contact = lazy(() => import("./pages/Contact.tsx"));
+const Orders = lazy(() => import("./pages/Orders.tsx"));
+const Wishlist = lazy(() => import("./pages/Wishlist.tsx"));
+const Loyalty = lazy(() => import("./pages/Loyalty.tsx"));
+const GiftCards = lazy(() => import("./pages/GiftCards.tsx"));
+const Community = lazy(() => import("./pages/Community.tsx"));
+const SharedWishlist = lazy(() => import("./pages/SharedWishlist.tsx"));
+const Unsubscribe = lazy(() => import("./pages/Unsubscribe.tsx"));
+const EmailUnsubscribe = lazy(() => import("./pages/EmailUnsubscribe.tsx"));
+const Giveaway = lazy(() => import("./pages/Giveaway.tsx"));
+const CheckoutReturn = lazy(() => import("./pages/CheckoutReturn.tsx"));
 
 const queryClient = new QueryClient();
 
