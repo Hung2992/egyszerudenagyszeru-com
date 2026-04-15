@@ -344,10 +344,15 @@ const Checkout = () => {
       toast({ title: "Rendelés leadva! 🎉", description: "Hamarosan feldolgozzuk." });
       navigate("/");
 
-      const orderEmail = user?.email || null;
+      const orderEmail = email || user?.email || null;
       if (orderEmail) {
-        void supabase.functions.invoke("send-transactional-email", {
-          body: {
+        fetch(`${FUNCTIONS_BASE_URL}/send-transactional-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
             templateName: "order-confirmation",
             recipientEmail: orderEmail,
             idempotencyKey: `order-confirm-${data.order_id}`,
@@ -356,7 +361,7 @@ const Checkout = () => {
               totalAmount: (data.total_amount ?? finalTotal).toLocaleString(),
               itemCount: items.length,
             },
-          },
+          }),
         }).catch((emailError) => {
           console.error("Order confirmation email error:", emailError);
         });
