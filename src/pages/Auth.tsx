@@ -61,7 +61,7 @@ const Auth = () => {
     setLoading(false);
     if (error) toast({ title: "Hiba", description: translateAuthError(error.message), variant: "destructive" });
     else {
-      if (data.user?.email) {
+      if (data.session && data.user?.email) {
         try {
           await sendAppEmail({
             templateName: "welcome",
