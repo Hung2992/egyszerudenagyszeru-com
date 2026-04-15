@@ -6,6 +6,7 @@ import { X, Package, Truck, CheckCircle, Clock, XCircle, ArrowRight } from "luci
 
 interface Order {
   id: string;
+  customer_email: string;
   user_id: string | null;
   status: string;
   total_amount: number;
