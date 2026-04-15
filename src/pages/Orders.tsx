@@ -103,6 +103,8 @@ const isMissingRelationError = (error: { code?: string; message?: string } | nul
   return error?.code === "PGRST205" || error?.code === "42P01" || message.includes("could not find the table") || message.includes("does not exist");
 };
 
+const getSanitizedText = (value: string) => value.trim();
+
 const getReturnEligibility = (orderCreatedAt: string, deadlineDays: number | null | undefined): ReturnEligibility => {
   if (typeof deadlineDays !== "number" || deadlineDays <= 0) {
     return { canRequest: true, daysRemaining: null };
@@ -261,15 +263,43 @@ const Orders = () => {
   };
 
   const submitReturn = async (orderId: string) => {
-    if (!userId || !returnReason) return;
+    const selectedOrder = orders.find((order) => order.id === orderId);
+    const sanitizedReason = getSanitizedText(returnReason);
+    const sanitizedNotes = getSanitizedText(returnNotes);
+    const existingReturn = getReturnForOrder(orderId);
+
+    if (!userId || !sanitizedReason || !selectedOrder) return;
+
+    if (returnSubmitting) return;
+
+    if (selectedOrder.status !== "delivered") {
+      toast({ title: "Csak kézbesített rendelésre nyitható kérelem", variant: "destructive" });
+      return;
+    }
+
+    if (!getReturnEligibility(selectedOrder.created_at, returnSettings?.return_deadline_days).canRequest) {
+      toast({ title: "Lejárt a visszaküldési határidő", variant: "destructive" });
+      return;
+    }
+
+    if (existingReturn) {
+      toast({ title: "Ehhez a rendeléshez már tartozik kérelem", variant: "destructive" });
+      return;
+    }
+
+    if (returnType === "exchange" && !sanitizedNotes) {
+      toast({ title: "Cseréhez add meg, mire szeretnéd cserélni", variant: "destructive" });
+      return;
+    }
+
     setReturnSubmitting(true);
     const { data: createdReturn, error } = await (supabase.from("return_requests" as any) as any)
       .insert({
         user_id: userId,
         order_id: orderId,
-        reason: returnReason,
+        reason: sanitizedReason,
         request_type: returnType,
-        description: returnNotes || null,
+        description: sanitizedNotes || null,
       })
       .select("id")
       .single();
@@ -297,7 +327,7 @@ const Orders = () => {
           templateName: "return-request",
           recipientEmail: user.email,
           idempotencyKey: `return-${createdReturn?.id ?? orderId}`,
-          templateData: { orderId, reason: returnReason, requestType: returnType },
+          templateData: { orderId, reason: sanitizedReason, requestType: returnType },
         });
       }
     } catch (e) {
@@ -322,6 +352,7 @@ const Orders = () => {
   const activeReturnReasons = (returnSettings?.return_reasons || []).filter(Boolean);
   const returnReasonOptions = activeReturnReasons.length > 0 ? activeReturnReasons : RETURN_REASONS;
   const refundMethodLabel = returnSettings?.return_refund_method === "store_credit" ? "Bolt kredit" : "Eredeti fizetési mód";
+  const isReturnFormValid = Boolean(returnReason) && (returnType === "return" || Boolean(getSanitizedText(returnNotes)));
 
   if (loading) {
     return (
@@ -710,6 +741,7 @@ const Orders = () => {
                                     ? "Csere kérésnél írd le pontosan, mire szeretnéd cserélni a terméket."
                                     : `Visszatérítés módja: ${refundMethodLabel}`}
                                 </p>
+                                {returnType === "exchange" && <p>A csere kéréshez a megjegyzés mező kitöltése kötelező.</p>}
                               </div>
                               <div>
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Megjegyzés (opcionális)</p>
@@ -731,7 +763,7 @@ const Orders = () => {
                                   size="sm"
                                   className="rounded-none uppercase tracking-wider text-[10px] flex-1"
                                   onClick={() => submitReturn(order.id)}
-                                  disabled={!returnReason || returnSubmitting}
+                                  disabled={!isReturnFormValid || returnSubmitting}
                                 >
                                   {returnSubmitting ? "Küldés..." : returnType === "exchange" ? "Csere kérelem beküldése" : "Visszaküldés beküldése"}
                                 </Button>
