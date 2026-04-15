@@ -5,14 +5,16 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/contexts/CartContext";
-import CartDrawer from "@/components/CartDrawer";
-import AbandonedCartReminder from "@/components/AbandonedCartReminder";
 import Index from "./pages/Index.tsx";
-import Auth from "./pages/Auth.tsx";
-import ResetPassword from "./pages/ResetPassword.tsx";
-import NotFound from "./pages/NotFound.tsx";
-import GiveawayPopup from "./components/GiveawayPopup.tsx";
 import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner.tsx";
+
+// Lazy-loaded components that appear with delay or on interaction
+const CartDrawer = lazy(() => import("@/components/CartDrawer"));
+const AbandonedCartReminder = lazy(() => import("@/components/AbandonedCartReminder"));
+const GiveawayPopup = lazy(() => import("./components/GiveawayPopup.tsx"));
+const Auth = lazy(() => import("./pages/Auth.tsx"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword.tsx"));
+const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 // Lazy-loaded pages to reduce initial bundle size
 const Profile = lazy(() => import("./pages/Profile.tsx"));
