@@ -24,6 +24,7 @@ interface ReturnRequest {
   exchange_product_id: string | null;
   admin_notes: string | null;
   description?: string | null;
+  preferred_refund_method?: string | null;
   created_at: string;
   orders?: OrderDetails | OrderDetails[] | null;
 }
@@ -260,6 +261,15 @@ const AdminReturnsTab = () => {
                 <div className="bg-secondary/30 p-3 text-sm">
                   <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Vásárlói megjegyzés</span>
                   <p className="mt-1 text-foreground">{request.description}</p>
+                </div>
+              )}
+
+              {request.preferred_refund_method && (
+                <div className="bg-secondary/30 p-3 text-sm">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Visszatérítés kért módja</span>
+                  <p className="mt-1 font-bold text-foreground">
+                    {request.preferred_refund_method === "bank_card" ? "💳 Bankkártyára" : "💵 Készpénz"}
+                  </p>
                 </div>
               )}
 

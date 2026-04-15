@@ -49,6 +49,7 @@ interface ReturnRequest {
   refund_amount: number;
   admin_notes: string | null;
   description: string | null;
+  preferred_refund_method: string | null;
   created_at: string;
 }
 
@@ -96,6 +97,11 @@ const RETURN_TYPE_OPTIONS = [
   { value: "exchange", label: "Csere", icon: ArrowLeftRight },
 ];
 
+const REFUND_METHOD_OPTIONS = [
+  { value: "bank_card", label: "Bankkártyára" },
+  { value: "cash", label: "Készpénz" },
+];
+
 const STEPS = ["awaiting_payment", "pending", "confirmed", "processing", "shipped", "delivered"];
 
 const isMissingRelationError = (error: { code?: string; message?: string } | null | undefined) => {
@@ -135,6 +141,7 @@ const Orders = () => {
   const [returnReason, setReturnReason] = useState("");
   const [returnNotes, setReturnNotes] = useState("");
   const [returnSubmitting, setReturnSubmitting] = useState(false);
+  const [refundMethod, setRefundMethod] = useState<"bank_card" | "cash">("bank_card");
   const [userId, setUserId] = useState<string | null>(null);
   const [orderTrackingMap, setOrderTrackingMap] = useState<Record<string, OrderTrackingEntry[]>>({});
   const [returnSettings, setReturnSettings] = useState<ReturnSettings | null>(null);
@@ -300,6 +307,7 @@ const Orders = () => {
         reason: sanitizedReason,
         request_type: returnType,
         description: sanitizedNotes || null,
+        preferred_refund_method: returnType === "return" ? refundMethod : null,
       })
       .select("id")
       .single();
@@ -337,6 +345,7 @@ const Orders = () => {
     setReturnType("return");
     setReturnReason("");
     setReturnNotes("");
+    setRefundMethod("bank_card");
     setReturnSubmitting(false);
     const { data } = await (supabase.from("return_requests" as any) as any).select("*").eq("user_id", userId).order("created_at", { ascending: false });
     setReturnRequests((data || []) as ReturnRequest[]);
@@ -351,7 +360,7 @@ const Orders = () => {
   };
   const activeReturnReasons = (returnSettings?.return_reasons || []).filter(Boolean);
   const returnReasonOptions = activeReturnReasons.length > 0 ? activeReturnReasons : RETURN_REASONS;
-  const refundMethodLabel = returnSettings?.return_refund_method === "store_credit" ? "Bolt kredit" : "Eredeti fizetési mód";
+  
   const isReturnFormValid = Boolean(returnReason) && (returnType === "return" || Boolean(getSanitizedText(returnNotes)));
 
   if (loading) {
@@ -669,6 +678,12 @@ const Orders = () => {
                                     <span className="font-bold text-accent">{existingReturn.refund_amount.toLocaleString()} Ft</span>
                                   </div>
                                 )}
+                                {(existingReturn as any).preferred_refund_method && (
+                                  <div className="flex justify-between gap-4">
+                                    <span className="text-muted-foreground">Visszatérítés módja:</span>
+                                    <span className="text-foreground">{(existingReturn as any).preferred_refund_method === "bank_card" ? "Bankkártyára" : "Készpénz"}</span>
+                                  </div>
+                                )}
                                 {existingReturn.description && (
                                   <div>
                                     <span className="text-muted-foreground">Megjegyzés:</span>
@@ -682,6 +697,24 @@ const Orders = () => {
                                   </div>
                                 )}
                               </div>
+                              {existingReturn.status === "pending" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="rounded-none uppercase tracking-wider text-[10px] mt-2 text-destructive border-destructive/30"
+                                  onClick={async () => {
+                                    const { error } = await (supabase.from("return_requests" as any) as any).delete().eq("id", existingReturn.id);
+                                    if (error) {
+                                      toast({ title: "Törlés sikertelen", description: error.message, variant: "destructive" });
+                                      return;
+                                    }
+                                    toast({ title: "Kérelem törölve ✓" });
+                                    setReturnRequests(prev => prev.filter(r => r.id !== existingReturn.id));
+                                  }}
+                                >
+                                  <XCircle className="h-3 w-3 mr-1" /> Kérelem visszavonása
+                                </Button>
+                              )}
                             </div>
                           ) : showReturnForm === order.id ? (
                             <div className="space-y-3">
@@ -739,10 +772,31 @@ const Orders = () => {
                                 <p>
                                   {returnType === "exchange"
                                     ? "Csere kérésnél írd le pontosan, mire szeretnéd cserélni a terméket."
-                                    : `Visszatérítés módja: ${refundMethodLabel}`}
+                                    : "Válaszd ki a visszatérítés módját alább."}
                                 </p>
                                 {returnType === "exchange" && <p>A csere kéréshez a megjegyzés mező kitöltése kötelező.</p>}
                               </div>
+                              {returnType === "return" && (
+                                <div>
+                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Visszatérítés módja *</p>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {REFUND_METHOD_OPTIONS.map((option) => {
+                                      const active = refundMethod === option.value;
+                                      return (
+                                        <button
+                                          key={option.value}
+                                          onClick={() => setRefundMethod(option.value as "bank_card" | "cash")}
+                                          className={`flex items-center justify-center gap-2 px-3 py-2 border text-[10px] uppercase tracking-wider transition-colors ${
+                                            active ? "bg-accent text-accent-foreground font-bold" : "text-muted-foreground hover:text-foreground"
+                                          }`}
+                                        >
+                                          {option.label}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
                               <div>
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Megjegyzés (opcionális)</p>
                                 <textarea
@@ -771,7 +825,7 @@ const Orders = () => {
                                   size="sm"
                                   variant="outline"
                                   className="rounded-none uppercase tracking-wider text-[10px]"
-                                  onClick={() => { setShowReturnForm(null); setReturnType("return"); setReturnReason(""); setReturnNotes(""); }}
+                                  onClick={() => { setShowReturnForm(null); setReturnType("return"); setReturnReason(""); setReturnNotes(""); setRefundMethod("bank_card"); }}
                                 >
                                   Mégse
                                 </Button>
@@ -794,6 +848,7 @@ const Orders = () => {
                                 setReturnType("return");
                                 setReturnReason("");
                                 setReturnNotes("");
+                                setRefundMethod("bank_card");
                               }}
                             >
                               <RotateCcw className="h-3 w-3 mr-1" />
