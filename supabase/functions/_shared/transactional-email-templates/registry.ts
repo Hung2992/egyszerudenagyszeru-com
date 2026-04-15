@@ -18,6 +18,9 @@ import { template as giveawayWinner } from './giveaway-winner.tsx'
 import { template as giveawayThanks } from './giveaway-thanks.tsx'
 import { template as couponNotification } from './coupon-notification.tsx'
 import { template as paymentConfirmation } from './payment-confirmation.tsx'
+import { template as profileUpdate } from './profile-update.tsx'
+import { template as passwordChanged } from './password-changed.tsx'
+import { template as returnRequest } from './return-request.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'contact-confirmation': contactConfirmation,
@@ -29,4 +32,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'giveaway-thanks': giveawayThanks,
   'coupon-notification': couponNotification,
   'payment-confirmation': paymentConfirmation,
+  'profile-update': profileUpdate,
+  'password-changed': passwordChanged,
+  'return-request': returnRequest,
 }
