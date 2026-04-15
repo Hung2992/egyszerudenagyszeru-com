@@ -1089,7 +1089,8 @@ const Admin = () => {
   const totalRevenue = orders.filter(o => o.status !== "cancelled").reduce((sum, o) => sum + o.total_amount, 0);
   const totalOrders = orders.length;
   const activeProducts = products.filter(p => p.is_active).length;
-  const totalUsers = users.length;
+  const uniqueCustomerEmails = new Set(orders.map(o => (o as any).customer_email?.toLowerCase()).filter(Boolean));
+  const totalUsers = Math.max(users.length, uniqueCustomerEmails.size);
 
   const totalProcurementCost = procurementForProfit.reduce((sum, p) => sum + (p.unit_cost * p.quantity), 0);
   const totalProfit = totalRevenue - totalProcurementCost;
