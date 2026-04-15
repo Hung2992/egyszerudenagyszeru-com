@@ -96,6 +96,11 @@ const RETURN_TYPE_OPTIONS = [
   { value: "exchange", label: "Csere", icon: ArrowLeftRight },
 ];
 
+const REFUND_METHOD_OPTIONS = [
+  { value: "bank_card", label: "Bankkártyára" },
+  { value: "cash", label: "Készpénz" },
+];
+
 const STEPS = ["awaiting_payment", "pending", "confirmed", "processing", "shipped", "delivered"];
 
 const isMissingRelationError = (error: { code?: string; message?: string } | null | undefined) => {
