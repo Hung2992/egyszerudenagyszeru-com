@@ -265,8 +265,7 @@ const Checkout = () => {
         setStripeClientSecret(data.clientSecret);
         setShowStripeCheckout(true);
 
-        if (appliedCoupon) {
-          await (supabase.rpc as any)("increment_coupon_usage", { coupon_code_input: appliedCoupon }).catch(() => {});
+        // Coupon usage is now handled server-side in create-checkout-session
         }
 
         return;
