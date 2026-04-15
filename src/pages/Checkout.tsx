@@ -225,16 +225,13 @@ const Checkout = () => {
         const response = await supabase.functions.invoke("create-checkout-session", {
           body: {
             orderData: {
-              user_id: user?.id || null,
-              total_amount: finalTotal,
               shipping_name: name,
               shipping_phone: phone,
               shipping_zip: zip,
               shipping_city: city,
               shipping_address: address,
               coupon_code: appliedCoupon || null,
-              discount_amount: couponDiscount > 0 ? couponDiscount : null,
-              gift_wrap_price: giftWrapPrice > 0 ? giftWrapPrice : null,
+              gift_wrap_id: selectedGiftWrap || null,
               items: orderItems,
             },
             returnUrl: window.location.origin,
@@ -282,7 +279,6 @@ const Checkout = () => {
     try {
       const { data, error: invokeErr } = await supabase.functions.invoke("place-order", {
         body: {
-          user_id: user?.id || null,
           items: orderItems,
           coupon_code: appliedCoupon || null,
           shipping_name: name,
@@ -292,7 +288,7 @@ const Checkout = () => {
           shipping_address: address,
           payment_method: paymentMethod,
           notes: notes || null,
-          gift_wrap_price: giftWrapPrice > 0 ? giftWrapPrice : null,
+          gift_wrap_id: selectedGiftWrap || null,
         },
       });
 

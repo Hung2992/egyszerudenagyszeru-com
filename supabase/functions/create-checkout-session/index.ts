@@ -22,6 +22,9 @@ interface OrderItem {
   quantity: number;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const MAX_ITEM_QTY = 99;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -33,16 +36,39 @@ serve(async (req) => {
     if (!orderData || !orderData.items || orderData.items.length === 0) {
       return jsonResponse({ error: "No items provided", fallback: false }, 400);
     }
+    if (orderData.items.length > 50) {
+      return jsonResponse({ error: "Too many items", fallback: false }, 400);
+    }
+
+    // ── 0. Authenticate caller from JWT ─────────────────────────────
+    const authHeader = req.headers.get("Authorization");
+    let userId: string | null = null;
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    if (authHeader?.startsWith("Bearer ")) {
+      const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const token = authHeader.replace("Bearer ", "");
+      const { data: claimsData, error: claimsErr } = await anonClient.auth.getClaims(token);
+      if (!claimsErr && claimsData?.claims?.sub) {
+        userId = claimsData.claims.sub as string;
+      }
+    }
 
     const env = (environment || "sandbox") as StripeEnv;
     const stripe = createStripeClient(env);
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // ── 1. Validate product prices from DB ──────────────────────────
     const productIds = [...new Set((orderData.items as OrderItem[]).map((i: OrderItem) => i.productId))];
+    for (const pid of productIds) {
+      if (!UUID_RE.test(pid)) return jsonResponse({ error: "Érvénytelen termékazonosító.", fallback: false }, 400);
+    }
+
     const { data: products, error: prodErr } = await supabase
       .from("shop_products")
       .select("id, price, stock, is_active")
@@ -60,19 +86,34 @@ serve(async (req) => {
       const product = priceMap.get(item.productId);
       if (!product) return jsonResponse({ error: `Ismeretlen termék: ${item.name}`, fallback: false }, 400);
       if (!product.is_active) return jsonResponse({ error: `Nem elérhető termék: ${item.name}`, fallback: false }, 400);
-      if (product.stock < item.quantity) {
+      const qty = Math.max(1, Math.min(Math.floor(Number(item.quantity) || 1), MAX_ITEM_QTY));
+      if (product.stock < qty) {
         return jsonResponse({ error: `Nincs elegendő készlet: ${item.name}`, fallback: false }, 400);
       }
-      serverTotal += product.price * item.quantity;
-      validatedItems.push({ ...item, price: product.price });
+      serverTotal += product.price * qty;
+      validatedItems.push({ ...item, price: product.price, quantity: qty });
     }
 
-    // ── 2. Validate coupon server-side ──────────────────────────────
+    // ── 2. Validate gift wrap from DB ───────────────────────────────
+    let giftWrapPrice = 0;
+    if (orderData.gift_wrap_id && typeof orderData.gift_wrap_id === "string" && UUID_RE.test(orderData.gift_wrap_id)) {
+      const { data: gw } = await supabase
+        .from("gift_wrap_options")
+        .select("price")
+        .eq("id", orderData.gift_wrap_id)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (gw) {
+        giftWrapPrice = gw.price;
+      }
+    }
+
+    // ── 3. Validate coupon server-side ──────────────────────────────
     let discountHuf = 0;
     let validatedCouponCode: string | null = null;
 
-    if (orderData.coupon_code) {
-      const code = orderData.coupon_code.toUpperCase();
+    if (orderData.coupon_code && typeof orderData.coupon_code === "string") {
+      const code = orderData.coupon_code.toUpperCase().slice(0, 50);
 
       const { data: coupon } = await supabase
         .from("coupons")
@@ -81,52 +122,49 @@ serve(async (req) => {
         .eq("is_active", true)
         .maybeSingle();
 
-      if (coupon) {
-        if (coupon.valid_until && new Date(coupon.valid_until) < new Date()) {
-          return jsonResponse({ error: "Ez a kupon lejárt.", fallback: false }, 400);
-        }
-        if (coupon.max_uses && coupon.used_count >= coupon.max_uses) {
-          return jsonResponse({ error: "Ez a kupon elfogyott.", fallback: false }, 400);
-        }
-
-        if (coupon.discount_percent) {
-          discountHuf = Math.round(serverTotal * (coupon.discount_percent / 100));
-        } else if (coupon.discount_amount) {
-          discountHuf = coupon.discount_amount;
-        }
-        discountHuf = Math.min(discountHuf, serverTotal);
-        validatedCouponCode = coupon.code;
-
-        // Atomic increment with optimistic lock
-        const { data: updated, error: updErr } = await supabase
-          .from("coupons")
-          .update({ used_count: coupon.used_count + 1 })
-          .eq("id", coupon.id)
-          .eq("used_count", coupon.used_count)
-          .select("id")
-          .maybeSingle();
-
-        if (updErr || !updated) {
-          return jsonResponse({ error: "Kupon érvényesítési hiba, próbáld újra.", fallback: false }, 409);
-        }
-      } else {
+      if (!coupon) {
         return jsonResponse({ error: "Érvénytelen kuponkód.", fallback: false }, 400);
+      }
+      if (coupon.valid_until && new Date(coupon.valid_until) < new Date()) {
+        return jsonResponse({ error: "Ez a kupon lejárt.", fallback: false }, 400);
+      }
+      if (coupon.max_uses !== null && coupon.used_count >= coupon.max_uses) {
+        return jsonResponse({ error: "Ez a kupon elfogyott.", fallback: false }, 400);
+      }
+
+      if (coupon.discount_percent) {
+        discountHuf = Math.round(serverTotal * (coupon.discount_percent / 100));
+      } else if (coupon.discount_amount) {
+        discountHuf = coupon.discount_amount;
+      }
+      discountHuf = Math.min(discountHuf, serverTotal);
+      validatedCouponCode = coupon.code;
+
+      // Atomic increment with optimistic lock
+      const { data: updated, error: updErr } = await supabase
+        .from("coupons")
+        .update({ used_count: coupon.used_count + 1 })
+        .eq("id", coupon.id)
+        .eq("used_count", coupon.used_count)
+        .select("id")
+        .maybeSingle();
+
+      if (updErr || !updated) {
+        return jsonResponse({ error: "Kupon érvényesítési hiba, próbáld újra.", fallback: false }, 409);
       }
     }
 
-    // ── 3. Calculate server-side total ───────────────────────────────
-    const giftWrapPrice = typeof orderData.gift_wrap_price === "number" && orderData.gift_wrap_price > 0
-      ? orderData.gift_wrap_price : 0;
+    // ── 4. Calculate server-side total ───────────────────────────────
     const netTotalHuf = serverTotal - discountHuf + giftWrapPrice;
 
     // Stripe minimum for HUF is 175
     if (netTotalHuf < 175) {
-      return jsonResponse({ error: "A rendelés összege legalább 175 Ft kell legyen.", fallback: false }, 200);
+      return jsonResponse({ error: "A rendelés összege legalább 175 Ft kell legyen.", fallback: false }, 400);
     }
 
-    // ── 4. Create order with server-validated amounts ────────────────
+    // ── 5. Create order with server-validated amounts ────────────────
     const { data: order, error: orderError } = await supabase.from("orders").insert({
-      user_id: orderData.user_id || null,
+      user_id: userId,
       status: "awaiting_payment",
       total_amount: netTotalHuf,
       shipping_name: orderData.shipping_name,
@@ -144,7 +182,7 @@ serve(async (req) => {
       throw new Error(`Order creation failed: ${orderError.message}`);
     }
 
-    // ── 5. Build Stripe line items from validated prices ────────────
+    // ── 6. Build Stripe line items from validated prices ────────────
     const toStripeAmount = (huf: number) => Math.round(huf * 100);
 
     const lineItems = validatedItems.map((item: OrderItem) => ({
@@ -196,6 +234,6 @@ serve(async (req) => {
   } catch (error: unknown) {
     console.error("Checkout session error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
-    return jsonResponse({ error: message, fallback: true }, 200);
+    return jsonResponse({ error: message, fallback: true }, 500);
   }
 });
