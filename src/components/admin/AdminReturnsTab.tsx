@@ -264,6 +264,15 @@ const AdminReturnsTab = () => {
                 </div>
               )}
 
+              {request.preferred_refund_method && (
+                <div className="bg-secondary/30 p-3 text-sm">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Visszatérítés kért módja</span>
+                  <p className="mt-1 font-bold text-foreground">
+                    {request.preferred_refund_method === "bank_card" ? "💳 Bankkártyára" : "💵 Készpénz"}
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-2 border border-border p-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   {request.request_type === "exchange" ? "Árkülönbözet / visszatérítés kezelése" : "Visszatérítés kezelése"}
