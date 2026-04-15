@@ -50,6 +50,7 @@ const App = () => (
           <Sonner />
         </Suspense>
         <BrowserRouter>
+          <PageTracker />
           <PaymentTestModeBanner />
           <Suspense fallback={null}>
             <CartDrawer />
