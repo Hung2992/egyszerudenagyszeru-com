@@ -75,6 +75,11 @@ const RETURN_REASONS = [
 
 const STEPS = ["pending", "processing", "shipped", "delivered"];
 
+const isMissingRelationError = (error: { code?: string; message?: string } | null | undefined) => {
+  const message = error?.message?.toLowerCase() || "";
+  return error?.code === "PGRST205" || error?.code === "42P01" || message.includes("could not find the table") || message.includes("does not exist");
+};
+
 const Orders = () => {
   const navigate = useNavigate();
   const { addItem } = useCart();
@@ -104,20 +109,39 @@ const Orders = () => {
         (supabase.from("order_tracking" as any) as any).select("*").order("created_at", { ascending: true }),
       ]);
 
-      setOrders((ordersRes.data || []) as any as Order[]);
+      if (ordersRes.error) {
+        console.error("Orders load failed:", ordersRes.error);
+        toast({ title: "Nem sikerült betölteni a rendeléseket", variant: "destructive" });
+        setOrders([]);
+      } else {
+        setOrders((ordersRes.data || []) as any as Order[]);
+      }
 
       const tMap: Record<string, PackageTracking> = {};
-      (trackingRes.data || []).forEach((t: any) => { tMap[t.order_id] = t; });
+      if (trackingRes.data) {
+        trackingRes.data.forEach((t: any) => { tMap[t.order_id] = t; });
+      } else if (trackingRes.error && !isMissingRelationError(trackingRes.error)) {
+        console.error("Package tracking load failed:", trackingRes.error);
+      }
       setTrackingData(tMap);
 
-      setReturnRequests((returnsRes.data || []) as ReturnRequest[]);
+      if (returnsRes.data) {
+        setReturnRequests((returnsRes.data || []) as ReturnRequest[]);
+      } else if (returnsRes.error) {
+        console.error("Return requests load failed:", returnsRes.error);
+        setReturnRequests([]);
+      }
 
       // Build order tracking map
       const otMap: Record<string, OrderTrackingEntry[]> = {};
-      (orderTrackingRes.data || []).forEach((t: any) => {
-        if (!otMap[t.order_id]) otMap[t.order_id] = [];
-        otMap[t.order_id].push(t as OrderTrackingEntry);
-      });
+      if (orderTrackingRes.data) {
+        orderTrackingRes.data.forEach((t: any) => {
+          if (!otMap[t.order_id]) otMap[t.order_id] = [];
+          otMap[t.order_id].push(t as OrderTrackingEntry);
+        });
+      } else if (orderTrackingRes.error && !isMissingRelationError(orderTrackingRes.error)) {
+        console.error("Order tracking load failed:", orderTrackingRes.error);
+      }
       setOrderTrackingMap(otMap);
 
       setLoading(false);
@@ -156,7 +180,13 @@ const Orders = () => {
     });
     if (error) {
       console.error("Return request error:", error);
-      toast({ title: "Hiba történt", description: "A visszaküldési kérelem nem sikerült. Kérjük próbáld újra.", variant: "destructive" });
+      toast({
+        title: "Hiba történt",
+        description: error.message?.includes("row-level security")
+          ? "A visszaküldési jogosultság most hibásan van beállítva a háttérben. Ezt külön javítom."
+          : "A visszaküldési kérelem nem sikerült. Kérjük próbáld újra.",
+        variant: "destructive"
+      });
       setReturnSubmitting(false);
       return;
     }

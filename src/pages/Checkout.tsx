@@ -38,48 +38,37 @@ interface CheckoutSessionResponse {
   fallback?: boolean;
 }
 
-const FUNCTIONS_BASE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 const FUNCTION_REQUEST_TIMEOUT_MS = 15000;
+
+const isMissingRelationError = (error: { code?: string; message?: string } | null | undefined) => {
+  const message = error?.message?.toLowerCase() || "";
+  return error?.code === "PGRST205" || error?.code === "42P01" || message.includes("could not find the table") || message.includes("does not exist");
+};
 
 async function invokeCheckoutFunction<T>(functionName: string, body: unknown): Promise<T> {
   const { data: { session } } = await supabase.auth.getSession();
-  const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), FUNCTION_REQUEST_TIMEOUT_MS);
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    window.setTimeout(() => reject(new Error("A kérés túl sokáig tartott. Próbáld újra.")), FUNCTION_REQUEST_TIMEOUT_MS);
+  });
 
   try {
-    const response = await fetch(`${FUNCTIONS_BASE_URL}/${functionName}`, {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        "Content-Type": "application/json",
-        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        ...(session?.access_token
+    const { data, error } = await Promise.race([
+      supabase.functions.invoke(functionName, {
+        body,
+        headers: session?.access_token
           ? { Authorization: `Bearer ${session.access_token}` }
-          : {}),
-      },
-      body: JSON.stringify(body),
-    });
+          : undefined,
+      }),
+      timeoutPromise,
+    ]);
 
-    const responseText = await response.text();
-    const payload = responseText ? JSON.parse(responseText) : null;
-
-    if (!response.ok) {
-      throw new Error(payload?.error || "Hálózati hiba történt");
+    if (error) {
+      throw new Error(error.message || "Hálózati hiba történt");
     }
 
-    return payload as T;
+    return data as T;
   } catch (error) {
-    if (error instanceof DOMException && error.name === "AbortError") {
-      throw new Error("A kérés túl sokáig tartott. Próbáld újra.");
-    }
-
-    if (error instanceof SyntaxError) {
-      throw new Error("Érvénytelen válasz érkezett a szervertől.");
-    }
-
     throw error instanceof Error ? error : new Error("Hálózati hiba történt");
-  } finally {
-    window.clearTimeout(timeoutId);
   }
 }
 
@@ -113,37 +102,53 @@ const Checkout = () => {
   const [giftMessage, setGiftMessage] = useState("");
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    const loadCheckoutData = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
-      // Fetch gift wrap options
-      const { data: giftWraps } = await (supabase.from("gift_wrap_options" as any) as any)
+
+      const giftWrapResponse = await (supabase.from("gift_wrap_options" as any) as any)
         .select("id, name, price, description")
         .eq("is_active", true)
         .order("sort_order", { ascending: true });
-      if (giftWraps) setGiftWrapOptions(giftWraps as GiftWrapOption[]);
-      if (session?.user) {
-        const [profileRes, addressRes] = await Promise.all([
-          supabase.from("profiles").select("display_name, phone, city").eq("id", session.user.id).maybeSingle(),
-          (supabase.from("saved_addresses" as any) as any).select("*").eq("user_id", session.user.id).order("is_default", { ascending: false }),
-        ]);
-        if (profileRes.data) {
-          setName(profileRes.data.display_name || "");
-          setPhone(profileRes.data.phone || "");
-          setCity(profileRes.data.city || "");
-        }
-        if (session.user.email) {
-          setEmail(session.user.email);
-        }
-        if (addressRes.data && addressRes.data.length > 0) {
-          setSavedAddresses(addressRes.data as SavedAddress[]);
-          const defaultAddr = addressRes.data.find((a: any) => a.is_default) || addressRes.data[0];
-          if (defaultAddr) {
-            applyAddress(defaultAddr);
-            setSelectedAddressId(defaultAddr.id);
-          }
-        }
+
+      if (giftWrapResponse.data) {
+        setGiftWrapOptions(giftWrapResponse.data as GiftWrapOption[]);
+      } else if (giftWrapResponse.error && !isMissingRelationError(giftWrapResponse.error)) {
+        console.error("Gift wrap options load failed:", giftWrapResponse.error);
       }
-    });
+
+      if (!session?.user) return;
+
+      if (session.user.email) {
+        setEmail(session.user.email);
+      }
+
+      const [profileRes, addressRes] = await Promise.all([
+        supabase.from("profiles").select("display_name, phone, city").eq("user_id", session.user.id).maybeSingle(),
+        (supabase.from("saved_addresses" as any) as any).select("*").eq("user_id", session.user.id).order("is_default", { ascending: false }),
+      ]);
+
+      if (profileRes.data) {
+        setName(profileRes.data.display_name || "");
+        setPhone(profileRes.data.phone || "");
+        setCity(profileRes.data.city || "");
+      } else if (profileRes.error && !isMissingRelationError(profileRes.error)) {
+        console.error("Profile prefill failed:", profileRes.error);
+      }
+
+      if (addressRes.data && addressRes.data.length > 0) {
+        setSavedAddresses(addressRes.data as SavedAddress[]);
+        const defaultAddr = addressRes.data.find((a: any) => a.is_default) || addressRes.data[0];
+        if (defaultAddr) {
+          applyAddress(defaultAddr);
+          setSelectedAddressId(defaultAddr.id);
+        }
+      } else if (addressRes.error && !isMissingRelationError(addressRes.error)) {
+        console.error("Saved addresses load failed:", addressRes.error);
+      }
+    };
+
+    loadCheckoutData();
   }, []);
 
   const applyAddress = (addr: SavedAddress) => {
@@ -350,7 +355,7 @@ const Checkout = () => {
 
       clearCart();
       toast({ title: "Rendelés leadva! 🎉", description: "Hamarosan feldolgozzuk." });
-      navigate("/");
+      navigate("/orders");
     } catch (err: any) {
       const msg = typeof err === "string" ? err : (err?.message || "Próbáld újra később.");
       toast({ title: "Rendelési hiba", description: msg, variant: "destructive" });
