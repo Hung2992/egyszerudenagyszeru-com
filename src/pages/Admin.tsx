@@ -1295,17 +1295,19 @@ const Admin = () => {
 
         {/* ─── DASHBOARD TAB ─── */}
         {tab === "dashboard" && (
-          <AdminDashboardEnhanced
-            orders={orders}
-            products={products}
-            totalRevenue={totalRevenue}
-            totalOrders={totalOrders}
-            totalUsers={totalUsers}
-            totalProfit={totalProfit}
-            profitMargin={profitMargin}
-            onViewOrder={(id) => setSelectedOrderId(id)}
-          />
-          <AdminVisitorAnalytics />
+          <>
+            <AdminDashboardEnhanced
+              orders={orders}
+              products={products}
+              totalRevenue={totalRevenue}
+              totalOrders={totalOrders}
+              totalUsers={totalUsers}
+              totalProfit={totalProfit}
+              profitMargin={profitMargin}
+              onViewOrder={(id) => setSelectedOrderId(id)}
+            />
+            <AdminVisitorAnalytics />
+          </>
         )}
 
         {/* ─── PRODUCTS TAB ─── */}
