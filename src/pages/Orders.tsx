@@ -360,7 +360,7 @@ const Orders = () => {
   };
   const activeReturnReasons = (returnSettings?.return_reasons || []).filter(Boolean);
   const returnReasonOptions = activeReturnReasons.length > 0 ? activeReturnReasons : RETURN_REASONS;
-  const refundMethodLabel = returnSettings?.return_refund_method === "store_credit" ? "Bolt kredit" : "Eredeti fizetési mód";
+  
   const isReturnFormValid = Boolean(returnReason) && (returnType === "return" || Boolean(getSanitizedText(returnNotes)));
 
   if (loading) {
