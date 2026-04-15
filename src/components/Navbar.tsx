@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { useCart } from "@/contexts/CartContext";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Button } from "@/components/ui/button";
 import { LogOut, User, ShoppingCart, Menu, X, Shield, Heart, Package, Star, Gift, Users } from "lucide-react";
 import type { User as SupaUser } from "@supabase/supabase-js";
@@ -25,37 +26,18 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { totalItems, setIsCartOpen } = useCart();
+  const { isAdmin, loading: adminLoading } = useAdminCheck();
   const [user, setUser] = useState<SupaUser | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const checkAdmin = async (userId: string) => {
-      const { data, error } = await supabase.rpc("has_role", {
-        _user_id: userId,
-        _role: "admin",
-      });
-
-      if (error) {
-        console.error("Navbar admin role check failed:", error);
-        setIsAdmin(false);
-        return;
-      }
-
-      setIsAdmin(!!data);
-    };
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) await checkAdmin(session.user.id);
-      else setIsAdmin(false);
     });
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (session?.user) await checkAdmin(session.user.id);
-      else setIsAdmin(false);
     });
 
     return () => subscription.unsubscribe();
@@ -126,7 +108,7 @@ const Navbar = () => {
             </Button>
             {user ? (
               <div className="relative">
-                {isAdmin && (
+                {!adminLoading && isAdmin && (
                   <Button variant="ghost" size="icon" className="h-9 w-9 text-accent" onClick={() => navigate("/admin")}>
                     <Shield className="h-4 w-4" />
                   </Button>
@@ -153,7 +135,7 @@ const Navbar = () => {
                         {link.label}
                       </button>
                     ))}
-                    {isAdmin && (
+                    {!adminLoading && isAdmin && (
                       <button
                         onClick={() => {
                           navigate("/admin");
