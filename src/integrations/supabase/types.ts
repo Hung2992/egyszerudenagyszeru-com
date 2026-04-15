@@ -746,6 +746,59 @@ export type Database = {
         }
         Relationships: []
       }
+      refund_history: {
+        Row: {
+          action_type: string
+          amount: number | null
+          card_last4: string | null
+          created_at: string
+          id: string
+          method: string | null
+          new_status: string | null
+          notes: string | null
+          performed_by: string | null
+          previous_status: string | null
+          return_request_id: string
+          transaction_id: string | null
+        }
+        Insert: {
+          action_type?: string
+          amount?: number | null
+          card_last4?: string | null
+          created_at?: string
+          id?: string
+          method?: string | null
+          new_status?: string | null
+          notes?: string | null
+          performed_by?: string | null
+          previous_status?: string | null
+          return_request_id: string
+          transaction_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          amount?: number | null
+          card_last4?: string | null
+          created_at?: string
+          id?: string
+          method?: string | null
+          new_status?: string | null
+          notes?: string | null
+          performed_by?: string | null
+          previous_status?: string | null
+          return_request_id?: string
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refund_history_return_request_id_fkey"
+            columns: ["return_request_id"]
+            isOneToOne: false
+            referencedRelation: "return_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       refunds: {
         Row: {
           amount: number
