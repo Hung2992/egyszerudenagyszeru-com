@@ -747,10 +747,31 @@ const Orders = () => {
                                 <p>
                                   {returnType === "exchange"
                                     ? "Csere kérésnél írd le pontosan, mire szeretnéd cserélni a terméket."
-                                    : `Visszatérítés módja: ${refundMethodLabel}`}
+                                    : "Válaszd ki a visszatérítés módját alább."}
                                 </p>
                                 {returnType === "exchange" && <p>A csere kéréshez a megjegyzés mező kitöltése kötelező.</p>}
                               </div>
+                              {returnType === "return" && (
+                                <div>
+                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Visszatérítés módja *</p>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {REFUND_METHOD_OPTIONS.map((option) => {
+                                      const active = refundMethod === option.value;
+                                      return (
+                                        <button
+                                          key={option.value}
+                                          onClick={() => setRefundMethod(option.value as "bank_card" | "cash")}
+                                          className={`flex items-center justify-center gap-2 px-3 py-2 border text-[10px] uppercase tracking-wider transition-colors ${
+                                            active ? "bg-accent text-accent-foreground font-bold" : "text-muted-foreground hover:text-foreground"
+                                          }`}
+                                        >
+                                          {option.label}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )
                               <div>
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Megjegyzés (opcionális)</p>
                                 <textarea
@@ -779,7 +800,7 @@ const Orders = () => {
                                   size="sm"
                                   variant="outline"
                                   className="rounded-none uppercase tracking-wider text-[10px]"
-                                  onClick={() => { setShowReturnForm(null); setReturnType("return"); setReturnReason(""); setReturnNotes(""); }}
+                                  onClick={() => { setShowReturnForm(null); setReturnType("return"); setReturnReason(""); setReturnNotes(""); setRefundMethod("bank_card"); }}
                                 >
                                   Mégse
                                 </Button>
