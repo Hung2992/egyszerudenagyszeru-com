@@ -771,7 +771,7 @@ const Orders = () => {
                                     })}
                                   </div>
                                 </div>
-                              )
+                              )}
                               <div>
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Megjegyzés (opcionális)</p>
                                 <textarea
