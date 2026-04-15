@@ -526,6 +526,7 @@ export type Database = {
           exchange_product_id: string | null
           id: string
           order_id: string
+          preferred_refund_method: string | null
           reason: string
           refund_amount: number
           request_type: string
@@ -539,6 +540,7 @@ export type Database = {
           exchange_product_id?: string | null
           id?: string
           order_id: string
+          preferred_refund_method?: string | null
           reason: string
           refund_amount?: number
           request_type?: string
@@ -552,6 +554,7 @@ export type Database = {
           exchange_product_id?: string | null
           id?: string
           order_id?: string
+          preferred_refund_method?: string | null
           reason?: string
           refund_amount?: number
           request_type?: string
