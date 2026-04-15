@@ -142,6 +142,9 @@ const Orders = () => {
   const [returnNotes, setReturnNotes] = useState("");
   const [returnSubmitting, setReturnSubmitting] = useState(false);
   const [refundMethod, setRefundMethod] = useState<"bank_card" | "cash">("bank_card");
+  const [bankHolderName, setBankHolderName] = useState("");
+  const [bankCardLast4, setBankCardLast4] = useState("");
+  const [bankIban, setBankIban] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [orderTrackingMap, setOrderTrackingMap] = useState<Record<string, OrderTrackingEntry[]>>({});
   const [returnSettings, setReturnSettings] = useState<ReturnSettings | null>(null);
