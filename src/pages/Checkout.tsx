@@ -299,10 +299,13 @@ const Checkout = () => {
         throw new Error(data?.error || "Nem sikerült a rendelés létrehozása");
       }
 
-      // Send order confirmation email
+      clearCart();
+      toast({ title: "Rendelés leadva! 🎉", description: "Hamarosan feldolgozzuk." });
+      navigate("/");
+
       const orderEmail = user?.email || null;
       if (orderEmail) {
-        await supabase.functions.invoke("send-transactional-email", {
+        void supabase.functions.invoke("send-transactional-email", {
           body: {
             templateName: "order-confirmation",
             recipientEmail: orderEmail,
@@ -313,12 +316,10 @@ const Checkout = () => {
               itemCount: items.length,
             },
           },
-        }).catch(() => {});
+        }).catch((emailError) => {
+          console.error("Order confirmation email error:", emailError);
+        });
       }
-
-      clearCart();
-      toast({ title: "Rendelés leadva! 🎉", description: "Hamarosan feldolgozzuk." });
-      navigate("/");
     } catch (err: any) {
       const msg = typeof err === "string" ? err : (err?.message || "Próbáld újra később.");
       toast({ title: "Rendelési hiba", description: msg, variant: "destructive" });
