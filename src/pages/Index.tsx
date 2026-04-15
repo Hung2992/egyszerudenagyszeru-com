@@ -2,8 +2,9 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
 import { ArrowRight, Flame, Clock } from "lucide-react";
-import { useState, useEffect } from "react";
-import GiveawayBanner from "@/components/GiveawayBanner";
+import { useState, useEffect, lazy, Suspense } from "react";
+
+const GiveawayBanner = lazy(() => import("@/components/GiveawayBanner"));
 
 const LAUNCH_DATE = new Date("2026-06-05T10:00:00+02:00").getTime();
 
@@ -175,7 +176,9 @@ const Index = () => {
 
 
       {/* NYEREMÉNYJÁTÉK BANNER */}
-      <GiveawayBanner />
+      <Suspense fallback={null}>
+        <GiveawayBanner />
+      </Suspense>
 
       {/* HANGULAT szekció */}
       <section className="border-y border-border">
