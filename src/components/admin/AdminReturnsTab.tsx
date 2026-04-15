@@ -2,10 +2,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, X, Check, RotateCcw, ArrowLeftRight } from "lucide-react";
+import { Pencil, Trash2, Check, RotateCcw, ArrowLeftRight, Save } from "lucide-react";
 
 interface ReturnRequest {
   id: string;
@@ -17,6 +16,7 @@ interface ReturnRequest {
   refund_amount: number;
   exchange_product_id: string | null;
   admin_notes: string | null;
+  description?: string | null;
   created_at: string;
 }
 
@@ -33,30 +33,76 @@ const AdminReturnsTab = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [adminNotes, setAdminNotes] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [refundDrafts, setRefundDrafts] = useState<Record<string, string>>({});
 
   const fetchRequests = async () => {
-    const { data } = await supabase.from("return_requests").select("*").order("created_at", { ascending: false });
-    if (data) setRequests(data as any);
+    const { data, error } = await supabase.from("return_requests").select("*").order("created_at", { ascending: false });
+
+    if (error) {
+      toast({ title: "Nem sikerült betölteni a kérelmeket", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    const requestRows = (data || []) as ReturnRequest[];
+    setRequests(requestRows);
+    setRefundDrafts(Object.fromEntries(requestRows.map((request) => [request.id, String(request.refund_amount ?? 0)])));
   };
 
   useEffect(() => { fetchRequests(); }, []);
 
   const updateStatus = async (id: string, status: string) => {
-    await supabase.from("return_requests").update({ status } as any).eq("id", id);
+    const { error } = await supabase.from("return_requests").update({ status } as any).eq("id", id);
+
+    if (error) {
+      toast({ title: "Státusz mentése sikertelen", description: error.message, variant: "destructive" });
+      return;
+    }
+
     toast({ title: `Státusz frissítve: ${STATUS_OPTIONS.find(s => s.value === status)?.label}` });
     fetchRequests();
   };
 
   const saveNotes = async (id: string) => {
-    await supabase.from("return_requests").update({ admin_notes: adminNotes } as any).eq("id", id);
+    const { error } = await supabase.from("return_requests").update({ admin_notes: adminNotes } as any).eq("id", id);
+
+    if (error) {
+      toast({ title: "Megjegyzés mentése sikertelen", description: error.message, variant: "destructive" });
+      return;
+    }
+
     toast({ title: "Megjegyzés mentve!" });
     setEditingId(null);
     setAdminNotes("");
     fetchRequests();
   };
 
+  const saveRefundAmount = async (id: string) => {
+    const refundAmount = Number(refundDrafts[id] ?? 0);
+
+    if (Number.isNaN(refundAmount) || refundAmount < 0) {
+      toast({ title: "Érvénytelen összeg", description: "A visszatérítés összege nem lehet negatív.", variant: "destructive" });
+      return;
+    }
+
+    const { error } = await supabase.from("return_requests").update({ refund_amount: refundAmount } as any).eq("id", id);
+
+    if (error) {
+      toast({ title: "Visszatérítés mentése sikertelen", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    toast({ title: "Visszatérítési összeg mentve" });
+    fetchRequests();
+  };
+
   const deleteRequest = async (id: string) => {
-    await supabase.from("return_requests").delete().eq("id", id);
+    const { error } = await supabase.from("return_requests").delete().eq("id", id);
+
+    if (error) {
+      toast({ title: "Kérelem törlése sikertelen", description: error.message, variant: "destructive" });
+      return;
+    }
+
     toast({ title: "Kérelem törölve!" });
     fetchRequests();
   };
@@ -133,9 +179,32 @@ const AdminReturnsTab = () => {
               <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Indok:</span>
               <p className="mt-1">{r.reason}</p>
             </div>
-            {r.refund_amount > 0 && (
-              <p className="text-sm">Visszatérítés: <span className="font-bold text-accent">{r.refund_amount.toLocaleString()} Ft</span></p>
+            {r.description && (
+              <div className="bg-secondary/30 p-3 text-sm">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Vásárlói megjegyzés:</span>
+                <p className="mt-1">{r.description}</p>
+              </div>
             )}
+            <div className="border border-border p-3 space-y-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Visszatérítés kezelése</span>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  min={0}
+                  step="1"
+                  value={refundDrafts[r.id] ?? "0"}
+                  onChange={(e) => setRefundDrafts((current) => ({ ...current, [r.id]: e.target.value }))}
+                  className="h-9"
+                  placeholder="0"
+                />
+                <Button size="sm" className="rounded-none" onClick={() => saveRefundAmount(r.id)}>
+                  <Save className="h-3.5 w-3.5 mr-1" /> Mentés
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Aktuális összeg: <span className="font-bold text-accent">{(r.refund_amount || 0).toLocaleString()} Ft</span>
+              </p>
+            </div>
             {/* Admin notes */}
             {editingId === r.id ? (
               <div className="space-y-2">

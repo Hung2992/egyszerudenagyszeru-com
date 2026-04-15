@@ -6,7 +6,7 @@ import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { Package, Clock, Truck, CheckCircle2, XCircle, ChevronDown, ChevronUp, RefreshCw, MapPin, Calendar, FileText, RotateCcw, ExternalLink } from "lucide-react";
+import { Package, Clock, Truck, CheckCircle2, XCircle, ChevronDown, ChevronUp, RefreshCw, MapPin, Calendar, FileText, RotateCcw, ExternalLink, ArrowLeftRight } from "lucide-react";
 import { sendAppEmail } from "@/lib/app-email";
 
 interface Order {
@@ -44,9 +44,19 @@ interface ReturnRequest {
   id: string;
   order_id: string;
   reason: string;
+  request_type: string;
   status: string;
+  refund_amount: number;
   admin_notes: string | null;
+  description: string | null;
   created_at: string;
+}
+
+interface ReturnSettings {
+  return_deadline_days: number | null;
+  return_reasons: string[] | null;
+  return_refund_method: string | null;
+  return_policy: string | null;
 }
 
 const STATUS_MAP: Record<string, { label: string; icon: any; color: string }> = {
@@ -76,6 +86,11 @@ const RETURN_REASONS = [
   "Egyéb",
 ];
 
+const RETURN_TYPE_OPTIONS = [
+  { value: "return", label: "Visszaküldés", icon: RotateCcw },
+  { value: "exchange", label: "Csere", icon: ArrowLeftRight },
+];
+
 const STEPS = ["awaiting_payment", "pending", "confirmed", "processing", "shipped", "delivered"];
 
 const isMissingRelationError = (error: { code?: string; message?: string } | null | undefined) => {
@@ -92,11 +107,13 @@ const Orders = () => {
   const [trackingData, setTrackingData] = useState<Record<string, PackageTracking>>({});
   const [returnRequests, setReturnRequests] = useState<ReturnRequest[]>([]);
   const [showReturnForm, setShowReturnForm] = useState<string | null>(null);
+  const [returnType, setReturnType] = useState<"return" | "exchange">("return");
   const [returnReason, setReturnReason] = useState("");
   const [returnNotes, setReturnNotes] = useState("");
   const [returnSubmitting, setReturnSubmitting] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [orderTrackingMap, setOrderTrackingMap] = useState<Record<string, OrderTrackingEntry[]>>({});
+  const [returnSettings, setReturnSettings] = useState<ReturnSettings | null>(null);
 
   const fetchOrders = useCallback(async (showErrorToast = true) => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -118,11 +135,12 @@ const Orders = () => {
       );
     }
 
-    const [orderResults, trackingRes, returnsRes, orderTrackingRes] = await Promise.all([
+    const [orderResults, trackingRes, returnsRes, orderTrackingRes, settingsRes] = await Promise.all([
       Promise.all(orderQueries),
       (supabase.from("package_tracking" as any) as any).select("*"),
       (supabase.from("return_requests" as any) as any).select("*").eq("user_id", session.user.id).order("created_at", { ascending: false }),
       (supabase.from("order_tracking" as any) as any).select("*").order("created_at", { ascending: true }),
+      (supabase.rpc("get_public_store_settings") as any),
     ]);
 
     const orderErrors = orderResults.map((result: any) => result.error).filter(Boolean);
@@ -171,6 +189,11 @@ const Orders = () => {
       console.error("Order tracking load failed:", orderTrackingRes.error);
     }
     setOrderTrackingMap(otMap);
+
+    if (settingsRes?.data) {
+      const publicSettings = Array.isArray(settingsRes.data) ? settingsRes.data[0] : settingsRes.data;
+      setReturnSettings(publicSettings as ReturnSettings);
+    }
 
     setLoading(false);
   }, [navigate]);
@@ -221,6 +244,7 @@ const Orders = () => {
         user_id: userId,
         order_id: orderId,
         reason: returnReason,
+        request_type: returnType,
         description: returnNotes || null,
       })
       .select("id")
@@ -237,7 +261,10 @@ const Orders = () => {
       setReturnSubmitting(false);
       return;
     }
-    toast({ title: "Visszaküldési kérelem elküldve! 📦", description: "Hamarosan feldolgozzuk." });
+    toast({
+      title: returnType === "exchange" ? "Csere kérelem elküldve! 🔁" : "Visszaküldési kérelem elküldve! 📦",
+      description: "Hamarosan feldolgozzuk.",
+    });
     // Send return request confirmation email
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -245,14 +272,15 @@ const Orders = () => {
         await sendAppEmail({
           templateName: "return-request",
           recipientEmail: user.email,
-          idempotencyKey: `return-${createdReturn?.id ?? orderId}-${Date.now()}`,
-          templateData: { orderId, reason: returnReason },
+          idempotencyKey: `return-${createdReturn?.id ?? orderId}`,
+          templateData: { orderId, reason: returnReason, requestType: returnType },
         });
       }
     } catch (e) {
       console.error("Return request email error:", e);
     }
     setShowReturnForm(null);
+    setReturnType("return");
     setReturnReason("");
     setReturnNotes("");
     setReturnSubmitting(false);
@@ -261,6 +289,9 @@ const Orders = () => {
   };
 
   const getReturnForOrder = (orderId: string) => returnRequests.find(r => r.order_id === orderId);
+  const activeReturnReasons = (returnSettings?.return_reasons || []).filter(Boolean);
+  const returnReasonOptions = activeReturnReasons.length > 0 ? activeReturnReasons : RETURN_REASONS;
+  const refundMethodLabel = returnSettings?.return_refund_method === "store_credit" ? "Bolt kredit" : "Eredeti fizetési mód";
 
   if (loading) {
     return (
@@ -542,10 +573,14 @@ const Orders = () => {
                           {existingReturn ? (
                             <div className="border border-border p-3 space-y-2 text-xs">
                               <p className="font-bold text-foreground uppercase tracking-wider text-[10px]">
-                                <RotateCcw className="h-3 w-3 inline mr-1" />
-                                Visszaküldési kérelem
+                                {existingReturn.request_type === "exchange" ? <ArrowLeftRight className="h-3 w-3 inline mr-1" /> : <RotateCcw className="h-3 w-3 inline mr-1" />}
+                                {existingReturn.request_type === "exchange" ? "Csere kérelem" : "Visszaküldési kérelem"}
                               </p>
                               <div className="space-y-1">
+                                <div className="flex justify-between gap-4">
+                                  <span className="text-muted-foreground">Típus:</span>
+                                  <span className="text-foreground">{existingReturn.request_type === "exchange" ? "Csere" : "Visszaküldés"}</span>
+                                </div>
                                 <div className="flex justify-between">
                                   <span className="text-muted-foreground">Ok:</span>
                                   <span className="text-foreground">{existingReturn.reason}</span>
@@ -554,14 +589,30 @@ const Orders = () => {
                                   <span className="text-muted-foreground">Állapot:</span>
                                   <span className={`font-bold ${
                                     existingReturn.status === "approved" ? "text-green-500" :
+                                    existingReturn.status === "completed" ? "text-accent" :
+                                    existingReturn.status === "processing" ? "text-blue-400" :
                                     existingReturn.status === "rejected" ? "text-destructive" :
                                     "text-yellow-500"
                                   }`}>
                                     {existingReturn.status === "pending" ? "Elbírálás alatt" :
                                      existingReturn.status === "approved" ? "Jóváhagyva ✓" :
+                                     existingReturn.status === "processing" ? "Feldolgozás alatt" :
+                                     existingReturn.status === "completed" ? "Befejezve" :
                                      existingReturn.status === "rejected" ? "Elutasítva" : existingReturn.status}
                                   </span>
                                 </div>
+                                {existingReturn.refund_amount > 0 && (
+                                  <div className="flex justify-between gap-4">
+                                    <span className="text-muted-foreground">Visszatérítés:</span>
+                                    <span className="font-bold text-accent">{existingReturn.refund_amount.toLocaleString()} Ft</span>
+                                  </div>
+                                )}
+                                {existingReturn.description && (
+                                  <div>
+                                    <span className="text-muted-foreground">Megjegyzés:</span>
+                                    <p className="text-foreground mt-0.5">{existingReturn.description}</p>
+                                  </div>
+                                )}
                                 {existingReturn.admin_notes && (
                                   <div>
                                     <span className="text-muted-foreground">Admin megjegyzés:</span>
@@ -573,13 +624,35 @@ const Orders = () => {
                           ) : showReturnForm === order.id ? (
                             <div className="space-y-3">
                               <p className="font-bold text-foreground uppercase tracking-wider text-[10px]">
-                                <RotateCcw className="h-3 w-3 inline mr-1" />
-                                Visszaküldési kérelem
+                                {returnType === "exchange" ? <ArrowLeftRight className="h-3 w-3 inline mr-1" /> : <RotateCcw className="h-3 w-3 inline mr-1" />}
+                                {returnType === "exchange" ? "Csere kérelem" : "Visszaküldési kérelem"}
                               </p>
+                              <div>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Kérelem típusa *</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                  {RETURN_TYPE_OPTIONS.map((option) => {
+                                    const OptionIcon = option.icon;
+                                    const active = returnType === option.value;
+
+                                    return (
+                                      <button
+                                        key={option.value}
+                                        onClick={() => setReturnType(option.value as "return" | "exchange")}
+                                        className={`flex items-center justify-center gap-2 px-3 py-2 border text-[10px] uppercase tracking-wider transition-colors ${
+                                          active ? "bg-accent text-accent-foreground font-bold" : "text-muted-foreground hover:text-foreground"
+                                        }`}
+                                      >
+                                        <OptionIcon className="h-3 w-3" />
+                                        {option.label}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
                               <div>
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Visszaküldés oka *</p>
                                 <div className="flex flex-wrap gap-1.5">
-                                  {RETURN_REASONS.map(r => (
+                                  {returnReasonOptions.map(r => (
                                     <button
                                       key={r}
                                       onClick={() => setReturnReason(r)}
@@ -594,15 +667,31 @@ const Orders = () => {
                                   ))}
                                 </div>
                               </div>
+                              <div className="border border-border bg-secondary/30 p-3 text-[10px] uppercase tracking-wider text-muted-foreground space-y-1">
+                                {typeof returnSettings?.return_deadline_days === "number" && returnSettings.return_deadline_days > 0 && (
+                                  <p>Visszaküldési időablak: {returnSettings.return_deadline_days} nap</p>
+                                )}
+                                <p>
+                                  {returnType === "exchange"
+                                    ? "Csere kérésnél írd le pontosan, mire szeretnéd cserélni a terméket."
+                                    : `Visszatérítés módja: ${refundMethodLabel}`}
+                                </p>
+                              </div>
                               <div>
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Megjegyzés (opcionális)</p>
                                 <textarea
                                   value={returnNotes}
                                   onChange={e => setReturnNotes(e.target.value)}
                                   className="flex min-h-[50px] w-full border border-input bg-background px-3 py-2 text-xs resize-none"
-                                  placeholder="Részletek..."
+                                  placeholder={returnType === "exchange" ? "Pl. másik méret / szín / modell..." : "Részletek..."}
                                 />
                               </div>
+                              {returnSettings?.return_policy && (
+                                <div className="text-xs text-muted-foreground border-t border-border pt-3 leading-relaxed">
+                                  <span className="font-bold uppercase tracking-wider text-[10px] text-foreground">Visszaküldési szabályzat</span>
+                                  <p className="mt-1">{returnSettings.return_policy}</p>
+                                </div>
+                              )}
                               <div className="flex gap-2">
                                 <Button
                                   size="sm"
@@ -610,13 +699,13 @@ const Orders = () => {
                                   onClick={() => submitReturn(order.id)}
                                   disabled={!returnReason || returnSubmitting}
                                 >
-                                  {returnSubmitting ? "Küldés..." : "Kérelem beküldése"}
+                                  {returnSubmitting ? "Küldés..." : returnType === "exchange" ? "Csere kérelem beküldése" : "Visszaküldés beküldése"}
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
                                   className="rounded-none uppercase tracking-wider text-[10px]"
-                                  onClick={() => { setShowReturnForm(null); setReturnReason(""); setReturnNotes(""); }}
+                                  onClick={() => { setShowReturnForm(null); setReturnType("return"); setReturnReason(""); setReturnNotes(""); }}
                                 >
                                   Mégse
                                 </Button>
@@ -627,10 +716,15 @@ const Orders = () => {
                               variant="outline"
                               size="sm"
                               className="rounded-none uppercase tracking-wider text-[10px]"
-                              onClick={() => setShowReturnForm(order.id)}
+                              onClick={() => {
+                                setShowReturnForm(order.id);
+                                setReturnType("return");
+                                setReturnReason("");
+                                setReturnNotes("");
+                              }}
                             >
                               <RotateCcw className="h-3 w-3 mr-1" />
-                              Visszaküldési kérelem
+                              Visszaküldés / csere
                             </Button>
                           )}
                         </div>
