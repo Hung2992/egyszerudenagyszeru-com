@@ -57,7 +57,7 @@ serve(async (req) => {
             try {
               await sendOrderConfirmationEmail({
                 supabaseUrl: Deno.env.get("SUPABASE_URL")!,
-                functionAuthKey: Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || Deno.env.get("SUPABASE_ANON_KEY")!,
+                functionAuthKey: Deno.env.get("SUPABASE_ANON_KEY")!,
                 recipientEmail,
                 orderId,
                 customerName: existingOrder.shipping_name,

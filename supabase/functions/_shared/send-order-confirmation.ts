@@ -31,12 +31,17 @@ export async function sendOrderConfirmationEmail({
   const normalizedEmail = recipientEmail?.trim()
   if (!normalizedEmail) return
 
+  const normalizedAuthKey = functionAuthKey?.trim()
+  if (!normalizedAuthKey || normalizedAuthKey.split('.').length !== 3) {
+    throw new Error('Order confirmation email auth token must be a JWT anon key')
+  }
+
   const response = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${functionAuthKey}`,
-      apikey: functionAuthKey,
+      Authorization: `Bearer ${normalizedAuthKey}`,
+      apikey: normalizedAuthKey,
     },
     body: JSON.stringify({
       templateName: 'order-confirmation',
