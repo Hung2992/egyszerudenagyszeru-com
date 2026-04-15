@@ -92,6 +92,7 @@ const Checkout = () => {
   const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
 
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [zip, setZip] = useState("");
   const [city, setCity] = useState("");
@@ -129,6 +130,9 @@ const Checkout = () => {
           setName(profileRes.data.display_name || "");
           setPhone(profileRes.data.phone || "");
           setCity(profileRes.data.city || "");
+        }
+        if (session.user.email) {
+          setEmail(session.user.email);
         }
         if (addressRes.data && addressRes.data.length > 0) {
           setSavedAddresses(addressRes.data as SavedAddress[]);
