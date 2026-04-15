@@ -9,10 +9,19 @@ const supabase = createClient(
 );
 
 function getFunctionAuthKey(): string {
-  const candidate = [Deno.env.get("SUPABASE_ANON_KEY"), Deno.env.get("SUPABASE_PUBLISHABLE_KEY")]
+  const candidate = [
+    Deno.env.get("SUPABASE_ANON_KEY"),
+    Deno.env.get("SUPABASE_PUBLISHABLE_KEY"),
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
+  ]
     .find((value) => typeof value === "string" && value.trim().split(".").length === 3);
 
   if (!candidate) {
+    console.error("Hiányzó JWT kulcs az e-mail küldéshez", {
+      hasAnonKey: !!Deno.env.get("SUPABASE_ANON_KEY"),
+      hasPublishableKey: !!Deno.env.get("SUPABASE_PUBLISHABLE_KEY"),
+      hasServiceRoleKey: !!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
+    });
     throw new Error("Valid JWT auth key not found for transactional email call");
   }
 
