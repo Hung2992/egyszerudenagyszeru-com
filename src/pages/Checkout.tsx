@@ -265,9 +265,7 @@ const Checkout = () => {
         setStripeClientSecret(data.clientSecret);
         setShowStripeCheckout(true);
 
-        if (appliedCoupon) {
-          await (supabase.rpc as any)("increment_coupon_usage", { coupon_code_input: appliedCoupon }).catch(() => {});
-        }
+        // Coupon usage is now handled server-side in create-checkout-session
 
         return;
       } catch (err: any) {
@@ -280,55 +278,57 @@ const Checkout = () => {
       }
     }
 
-    // Non-card payment (COD, transfer)
-    const { error } = await supabase.from("orders").insert({
-      user_id: user?.id || null,
-      status: "pending",
-      total_amount: finalTotal,
-      shipping_name: name,
-      shipping_phone: phone,
-      shipping_zip: zip,
-      shipping_city: city,
-      shipping_address: address,
-      payment_method: paymentMethod,
-      coupon_code: appliedCoupon || null,
-      discount_amount: couponDiscount > 0 ? couponDiscount : null,
-      notes: notes || null,
-      items: orderItems as any,
-    });
-
-    if (error) {
-      toast({ title: "Hiba történt", description: error.message, variant: "destructive" });
-      setSubmitting(false);
-      return;
-    }
-
-    if (appliedCoupon) {
-      await (supabase.rpc as any)("increment_coupon_usage", { coupon_code_input: appliedCoupon }).catch(() => {});
-    }
-
-    // Send order confirmation email
-    const orderEmail = user?.email || null;
-    if (orderEmail) {
-      const orderId = crypto.randomUUID();
-      await supabase.functions.invoke("send-transactional-email", {
+    // Non-card payment: validate server-side via edge function
+    try {
+      const { data, error: invokeErr } = await supabase.functions.invoke("place-order", {
         body: {
-          templateName: "order-confirmation",
-          recipientEmail: orderEmail,
-          idempotencyKey: `order-confirm-${orderId}`,
-          templateData: {
-            name,
-            totalAmount: finalTotal.toLocaleString(),
-            itemCount: items.length,
-          },
+          user_id: user?.id || null,
+          items: orderItems,
+          coupon_code: appliedCoupon || null,
+          shipping_name: name,
+          shipping_phone: phone,
+          shipping_zip: zip,
+          shipping_city: city,
+          shipping_address: address,
+          payment_method: paymentMethod,
+          notes: notes || null,
+          gift_wrap_price: giftWrapPrice > 0 ? giftWrapPrice : null,
         },
-      }).catch(() => {});
-    }
+      });
 
-    clearCart();
-    toast({ title: "Rendelés leadva! 🎉", description: "Hamarosan feldolgozzuk." });
-    navigate("/");
-    setSubmitting(false);
+      if (invokeErr) {
+        throw new Error(invokeErr.message || "Hálózati hiba történt");
+      }
+      if (!data || data.error) {
+        throw new Error(data?.error || "Nem sikerült a rendelés létrehozása");
+      }
+
+      // Send order confirmation email
+      const orderEmail = user?.email || null;
+      if (orderEmail) {
+        await supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "order-confirmation",
+            recipientEmail: orderEmail,
+            idempotencyKey: `order-confirm-${data.order_id}`,
+            templateData: {
+              name,
+              totalAmount: (data.total_amount ?? finalTotal).toLocaleString(),
+              itemCount: items.length,
+            },
+          },
+        }).catch(() => {});
+      }
+
+      clearCart();
+      toast({ title: "Rendelés leadva! 🎉", description: "Hamarosan feldolgozzuk." });
+      navigate("/");
+    } catch (err: any) {
+      const msg = typeof err === "string" ? err : (err?.message || "Próbáld újra később.");
+      toast({ title: "Rendelési hiba", description: msg, variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // Show Stripe Embedded Checkout
