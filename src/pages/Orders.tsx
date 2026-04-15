@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { Package, Clock, Truck, CheckCircle2, XCircle, ChevronDown, ChevronUp, RefreshCw, MapPin, Calendar, FileText, RotateCcw, ExternalLink } from "lucide-react";
+import { sendAppEmail } from "@/lib/app-email";
 
 interface Order {
   id: string;
@@ -172,12 +173,15 @@ const Orders = () => {
   const submitReturn = async (orderId: string) => {
     if (!userId || !returnReason) return;
     setReturnSubmitting(true);
-    const { error } = await (supabase.from("return_requests" as any) as any).insert({
-      user_id: userId,
-      order_id: orderId,
-      reason: returnReason,
-      description: returnNotes || null,
-    });
+    const { data: createdReturn, error } = await (supabase.from("return_requests" as any) as any)
+      .insert({
+        user_id: userId,
+        order_id: orderId,
+        reason: returnReason,
+        description: returnNotes || null,
+      })
+      .select("id")
+      .single();
     if (error) {
       console.error("Return request error:", error);
       toast({
@@ -195,13 +199,11 @@ const Orders = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user?.email) {
-        await supabase.functions.invoke("send-transactional-email", {
-          body: {
-            templateName: "return-request",
-            recipientEmail: user.email,
-            idempotencyKey: `return-${orderId}-${Date.now()}`,
-            templateData: { orderId, reason: returnReason },
-          },
+        await sendAppEmail({
+          templateName: "return-request",
+          recipientEmail: user.email,
+          idempotencyKey: `return-${createdReturn?.id ?? orderId}-${Date.now()}`,
+          templateData: { orderId, reason: returnReason },
         });
       }
     } catch (e) {

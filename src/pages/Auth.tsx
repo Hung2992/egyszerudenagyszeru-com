@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
 import { Eye, EyeOff } from "lucide-react";
+import { sendAppEmail } from "@/lib/app-email";
 
 type AuthMode = "login" | "register" | "forgot";
 
@@ -59,20 +60,26 @@ const Auth = () => {
     });
     setLoading(false);
     if (error) toast({ title: "Hiba", description: translateAuthError(error.message), variant: "destructive" });
-    else if (data.user && !data.session) toast({ title: "Sikerült!", description: "Erősítsd meg az email címedet." });
     else {
-      // Send welcome email
       if (data.user?.email) {
-        await supabase.functions.invoke("send-transactional-email", {
-          body: {
+        try {
+          await sendAppEmail({
             templateName: "welcome",
             recipientEmail: data.user.email,
             idempotencyKey: `welcome-${data.user.id}`,
             templateData: { name: displayName },
-          },
-        }).catch(() => {});
+          });
+        } catch (emailError) {
+          console.error("Welcome email error:", emailError);
+        }
       }
-      toast({ title: "Sikeres regisztráció!" }); navigate("/");
+
+      if (data.user && !data.session) {
+        toast({ title: "Sikerült!", description: "Erősítsd meg az email címedet." });
+      } else {
+        toast({ title: "Sikeres regisztráció!" });
+        navigate("/");
+      }
     }
   };
 

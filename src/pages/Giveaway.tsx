@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { toast } from "sonner";
+import { sendAppEmail } from "@/lib/app-email";
 
 // Giveaway end date: 51 days from 2026-04-14
 const GIVEAWAY_END = new Date("2026-06-04T23:59:59");
@@ -83,13 +84,15 @@ const Giveaway = () => {
     setDone(true);
     toast.success("Sikeresen feliratkoztál! 🎉");
 
-    supabase.functions.invoke('send-transactional-email', {
-      body: {
+    try {
+      await sendAppEmail({
         templateName: 'giveaway-thanks',
         recipientEmail: trimmed,
         idempotencyKey: `giveaway-thanks-${trimmed}`,
-      },
-    });
+      });
+    } catch (emailError) {
+      console.error("Giveaway thank-you email error:", emailError);
+    }
   };
 
   const CountdownBlock = ({ value, label }: { value: number; label: string }) => (

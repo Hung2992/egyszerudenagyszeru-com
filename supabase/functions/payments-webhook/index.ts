@@ -8,6 +8,49 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 );
 
+async function sendPaymentConfirmationEmail({
+  recipientEmail,
+  orderId,
+  customerName,
+  totalAmount,
+}: {
+  recipientEmail: string | null;
+  orderId: string;
+  customerName?: string | null;
+  totalAmount?: number | null;
+}) {
+  if (!recipientEmail) return;
+
+  const formattedTotal = Number.isFinite(Number(totalAmount))
+    ? Number(totalAmount).toLocaleString("hu-HU")
+    : undefined;
+
+  const { data, error } = await supabase.functions.invoke("send-transactional-email", {
+    body: {
+      templateName: "payment-confirmation",
+      recipientEmail,
+      idempotencyKey: `payment-confirm-${orderId}`,
+      templateData: {
+        name: customerName ?? undefined,
+        totalAmount: formattedTotal,
+        paymentMethod: "Bankkártya",
+      },
+    },
+  });
+
+  if (error) {
+    throw new Error(error.message || "Payment confirmation invoke failed");
+  }
+
+  if (data?.error) {
+    throw new Error(data.error);
+  }
+
+  if (data?.success === false && data?.reason !== "email_suppressed") {
+    throw new Error(data?.reason || "Payment confirmation failed");
+  }
+}
+
 serve(async (req) => {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
@@ -66,6 +109,17 @@ serve(async (req) => {
               });
             } catch (emailError) {
               console.error(`Order confirmation email failed for ${orderId}:`, emailError);
+            }
+
+            try {
+              await sendPaymentConfirmationEmail({
+                recipientEmail,
+                orderId,
+                customerName: existingOrder.shipping_name,
+                totalAmount: existingOrder.total_amount,
+              });
+            } catch (emailError) {
+              console.error(`Payment confirmation email failed for ${orderId}:`, emailError);
             }
           }
 
