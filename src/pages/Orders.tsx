@@ -140,6 +140,7 @@ const Orders = () => {
   const [returnReason, setReturnReason] = useState("");
   const [returnNotes, setReturnNotes] = useState("");
   const [returnSubmitting, setReturnSubmitting] = useState(false);
+  const [refundMethod, setRefundMethod] = useState<"bank_card" | "cash">("bank_card");
   const [userId, setUserId] = useState<string | null>(null);
   const [orderTrackingMap, setOrderTrackingMap] = useState<Record<string, OrderTrackingEntry[]>>({});
   const [returnSettings, setReturnSettings] = useState<ReturnSettings | null>(null);
@@ -305,6 +306,7 @@ const Orders = () => {
         reason: sanitizedReason,
         request_type: returnType,
         description: sanitizedNotes || null,
+        preferred_refund_method: returnType === "return" ? refundMethod : null,
       })
       .select("id")
       .single();
@@ -342,6 +344,7 @@ const Orders = () => {
     setReturnType("return");
     setReturnReason("");
     setReturnNotes("");
+    setRefundMethod("bank_card");
     setReturnSubmitting(false);
     const { data } = await (supabase.from("return_requests" as any) as any).select("*").eq("user_id", userId).order("created_at", { ascending: false });
     setReturnRequests((data || []) as ReturnRequest[]);
