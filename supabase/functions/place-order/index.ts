@@ -35,6 +35,7 @@ serve(async (req) => {
     // ── 0. Authenticate caller from JWT ─────────────────────────────
     const authHeader = req.headers.get("Authorization");
     let userId: string | null = null;
+    let authEmail: string | null = null;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -47,6 +48,7 @@ serve(async (req) => {
       const { data: { user: authUser }, error: authErr } = await anonClient.auth.getUser();
       if (!authErr && authUser?.id) {
         userId = authUser.id;
+        authEmail = typeof authUser.email === "string" ? authUser.email.trim().toLowerCase() : null;
       }
     }
 
@@ -79,7 +81,10 @@ serve(async (req) => {
     }
     const normalizedEmail = typeof email === "string" && EMAIL_RE.test(email.trim())
       ? email.trim().toLowerCase()
-      : null;
+      : authEmail;
+    if (!normalizedEmail) {
+      return json({ error: "Érvényes e-mail cím megadása kötelező." }, 400);
+    }
 
     // ── 2. Look up real prices from DB ──────────────────────────────
     const productIds = [...new Set((items as OrderItem[]).map((i) => i.productId))];
@@ -191,6 +196,7 @@ serve(async (req) => {
         shipping_zip,
         shipping_city,
         shipping_address,
+        customer_email: normalizedEmail,
         payment_method: payment_method || "cod",
         coupon_code: validatedCouponCode,
         discount_amount: discountAmount > 0 ? discountAmount : null,
