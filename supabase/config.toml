@@ -24,3 +24,6 @@ project_id = "meyxhsgnryuupwpddxav"
 
   [functions.payments-webhook]
     verify_jwt = false
+
+  [functions.place-order]
+    verify_jwt = false
