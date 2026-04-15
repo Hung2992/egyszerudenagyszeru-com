@@ -24,6 +24,7 @@ interface ReturnRequest {
   exchange_product_id: string | null;
   admin_notes: string | null;
   description?: string | null;
+  preferred_refund_method?: string | null;
   created_at: string;
   orders?: OrderDetails | OrderDetails[] | null;
 }

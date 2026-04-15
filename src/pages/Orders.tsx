@@ -678,6 +678,12 @@ const Orders = () => {
                                     <span className="font-bold text-accent">{existingReturn.refund_amount.toLocaleString()} Ft</span>
                                   </div>
                                 )}
+                                {(existingReturn as any).preferred_refund_method && (
+                                  <div className="flex justify-between gap-4">
+                                    <span className="text-muted-foreground">Visszatérítés módja:</span>
+                                    <span className="text-foreground">{(existingReturn as any).preferred_refund_method === "bank_card" ? "Bankkártyára" : "Készpénz"}</span>
+                                  </div>
+                                )}
                                 {existingReturn.description && (
                                   <div>
                                     <span className="text-muted-foreground">Megjegyzés:</span>
@@ -691,6 +697,24 @@ const Orders = () => {
                                   </div>
                                 )}
                               </div>
+                              {existingReturn.status === "pending" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="rounded-none uppercase tracking-wider text-[10px] mt-2 text-destructive border-destructive/30"
+                                  onClick={async () => {
+                                    const { error } = await (supabase.from("return_requests" as any) as any).delete().eq("id", existingReturn.id);
+                                    if (error) {
+                                      toast({ title: "Törlés sikertelen", description: error.message, variant: "destructive" });
+                                      return;
+                                    }
+                                    toast({ title: "Kérelem törölve ✓" });
+                                    setReturnRequests(prev => prev.filter(r => r.id !== existingReturn.id));
+                                  }}
+                                >
+                                  <XCircle className="h-3 w-3 mr-1" /> Kérelem visszavonása
+                                </Button>
+                              )}
                             </div>
                           ) : showReturnForm === order.id ? (
                             <div className="space-y-3">
