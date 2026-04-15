@@ -266,7 +266,6 @@ const Checkout = () => {
         setShowStripeCheckout(true);
 
         // Coupon usage is now handled server-side in create-checkout-session
-        }
 
         return;
       } catch (err: any) {
