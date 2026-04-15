@@ -8,7 +8,8 @@ import {
   Pencil, Trash2, Check, RotateCcw, ArrowLeftRight, Save, CreditCard, Banknote,
   Clock, CheckCircle2, XCircle, AlertTriangle, RefreshCw, DollarSign, FileText,
   Download, Search, Filter, TrendingDown, TrendingUp, Calendar, Eye, EyeOff,
-  Zap, BarChart3, Shield, History, Copy, ChevronDown, ChevronUp
+  Zap, BarChart3, Shield, History, Copy, ChevronDown, ChevronUp, Plus,
+  ArrowUp, Bell, Layers, Receipt
 } from "lucide-react";
 
 interface OrderDetails {
@@ -40,17 +41,34 @@ interface ReturnRequest {
   orders?: OrderDetails | OrderDetails[] | null;
 }
 
+interface RefundHistoryEntry {
+  id: string;
+  return_request_id: string;
+  action_type: string;
+  amount: number;
+  method: string | null;
+  transaction_id: string | null;
+  card_last4: string | null;
+  notes: string | null;
+  previous_status: string | null;
+  new_status: string | null;
+  performed_by: string | null;
+  created_at: string;
+}
+
 const STATUS_OPTIONS = [
   { value: "pending", label: "Függőben", icon: Clock, color: "text-yellow-500" },
   { value: "approved", label: "Jóváhagyva", icon: CheckCircle2, color: "text-emerald-500" },
   { value: "rejected", label: "Elutasítva", icon: XCircle, color: "text-destructive" },
   { value: "processing", label: "Feldolgozás alatt", icon: RefreshCw, color: "text-blue-400" },
+  { value: "escalated", label: "Eszkalálva", icon: ArrowUp, color: "text-orange-500" },
   { value: "completed", label: "Befejezve", icon: CheckCircle2, color: "text-green-500" },
 ];
 
 const REFUND_STATUS_OPTIONS = [
   { value: "pending", label: "Visszatérítés függőben", icon: Clock, color: "text-yellow-500 bg-yellow-500/10 border-yellow-500/20" },
   { value: "processing", label: "Visszatérítés folyamatban", icon: RefreshCw, color: "text-blue-400 bg-blue-400/10 border-blue-400/20" },
+  { value: "partial", label: "Részleges visszatérítés", icon: Layers, color: "text-purple-400 bg-purple-400/10 border-purple-400/20" },
   { value: "completed", label: "Visszatérítve ✓", icon: CheckCircle2, color: "text-green-500 bg-green-500/10 border-green-500/20" },
   { value: "failed", label: "Visszatérítés sikertelen", icon: AlertTriangle, color: "text-destructive bg-destructive/10 border-destructive/20" },
 ];
@@ -60,7 +78,17 @@ const STATUS_BADGE_STYLES: Record<string, string> = {
   approved: "border-accent/20 bg-accent/10 text-accent",
   rejected: "border-destructive/20 bg-destructive/10 text-destructive",
   processing: "border-border bg-secondary/40 text-foreground",
+  escalated: "border-orange-500/20 bg-orange-500/10 text-orange-500",
   completed: "border-border bg-card text-foreground",
+};
+
+const ACTION_LABELS: Record<string, string> = {
+  status_change: "Státusz módosítás",
+  partial_refund: "Részleges visszatérítés",
+  full_refund: "Teljes visszatérítés",
+  escalation: "Eszkaláció",
+  note_added: "Megjegyzés hozzáadva",
+  refund_details_saved: "Visszatérítés adatok mentve",
 };
 
 const getOrderDetails = (request: ReturnRequest): OrderDetails | null => {
@@ -85,6 +113,9 @@ const AdminReturnsTab = () => {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [sortField, setSortField] = useState<"created_at" | "refund_amount">("created_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [historyMap, setHistoryMap] = useState<Record<string, RefundHistoryEntry[]>>({});
+  const [showTimeline, setShowTimeline] = useState<string | null>(null);
+  const [partialAmount, setPartialAmount] = useState<Record<string, string>>({});
 
   const fetchRequests = async () => {
     const { data, error } = await supabase
@@ -105,6 +136,26 @@ const AdminReturnsTab = () => {
     setRefundNotesDrafts(Object.fromEntries(requestRows.map((r) => [r.id, r.refund_notes || ""])));
   };
 
+  const fetchHistory = async (requestId: string) => {
+    const { data } = await supabase
+      .from("refund_history")
+      .select("*")
+      .eq("return_request_id", requestId)
+      .order("created_at", { ascending: true });
+    if (data) {
+      setHistoryMap(prev => ({ ...prev, [requestId]: data as RefundHistoryEntry[] }));
+    }
+  };
+
+  const logHistory = async (requestId: string, entry: Partial<RefundHistoryEntry>) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    await supabase.from("refund_history").insert({
+      return_request_id: requestId,
+      performed_by: session?.user?.id || null,
+      ...entry,
+    } as any);
+  };
+
   useEffect(() => { fetchRequests(); }, []);
 
   // ====== ANALYTICS ======
@@ -120,9 +171,9 @@ const AdminReturnsTab = () => {
       return d.getMonth() === lm.getMonth() && d.getFullYear() === lm.getFullYear();
     });
 
-    const totalRefunded = requests.filter(r => r.refund_status === "completed").reduce((s, r) => s + (r.refund_amount || 0), 0);
-    const thisMonthRefunded = thisMonth.filter(r => r.refund_status === "completed").reduce((s, r) => s + (r.refund_amount || 0), 0);
-    const lastMonthRefunded = lastMonth.filter(r => r.refund_status === "completed").reduce((s, r) => s + (r.refund_amount || 0), 0);
+    const totalRefunded = requests.filter(r => r.refund_status === "completed" || r.refund_status === "partial").reduce((s, r) => s + (r.refund_amount || 0), 0);
+    const thisMonthRefunded = thisMonth.filter(r => r.refund_status === "completed" || r.refund_status === "partial").reduce((s, r) => s + (r.refund_amount || 0), 0);
+    const lastMonthRefunded = lastMonth.filter(r => r.refund_status === "completed" || r.refund_status === "partial").reduce((s, r) => s + (r.refund_amount || 0), 0);
     const refundTrend = lastMonthRefunded > 0 ? ((thisMonthRefunded - lastMonthRefunded) / lastMonthRefunded * 100) : 0;
 
     const avgProcessingDays = requests
@@ -132,6 +183,7 @@ const AdminReturnsTab = () => {
 
     const returnRate = requests.filter(r => r.request_type === "return").length;
     const exchangeRate = requests.filter(r => r.request_type === "exchange").length;
+    const escalatedCount = requests.filter(r => r.status === "escalated").length;
     const approvalRate = requests.length > 0
       ? (requests.filter(r => r.status === "approved" || r.status === "completed").length / requests.length * 100)
       : 0;
@@ -140,25 +192,37 @@ const AdminReturnsTab = () => {
     requests.forEach(r => { byReason[r.reason] = (byReason[r.reason] || 0) + 1; });
     const topReasons = Object.entries(byReason).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
-    const bankCardRefunds = requests.filter(r => r.preferred_refund_method === "bank_card" && r.refund_status === "completed").length;
-    const cashRefunds = requests.filter(r => r.preferred_refund_method === "cash" && r.refund_status === "completed").length;
+    const bankCardRefunds = requests.filter(r => r.preferred_refund_method === "bank_card" && (r.refund_status === "completed" || r.refund_status === "partial")).length;
+    const cashRefunds = requests.filter(r => r.preferred_refund_method === "cash" && (r.refund_status === "completed" || r.refund_status === "partial")).length;
 
-    // Overdue: approved but no refund for >3 days
     const overdueRefunds = requests.filter(r => {
-      if (r.status !== "approved" || r.refund_status === "completed" || r.refund_status === "failed") return false;
+      if (r.status === "rejected" || r.refund_status === "completed" || r.refund_status === "failed") return false;
+      if (r.status !== "approved" && r.status !== "escalated") return false;
       const daysSince = (now.getTime() - new Date(r.created_at).getTime()) / (1000 * 60 * 60 * 24);
       return daysSince > 3;
     });
 
+    // SLA: % of refunds completed within 3 days
+    const completedRefunds = requests.filter(r => r.refund_status === "completed" && r.refund_processed_at);
+    const withinSla = completedRefunds.filter(r => {
+      const days = (new Date(r.refund_processed_at!).getTime() - new Date(r.created_at).getTime()) / (1000 * 60 * 60 * 24);
+      return days <= 3;
+    });
+    const slaRate = completedRefunds.length > 0 ? (withinSla.length / completedRefunds.length * 100) : 100;
+
+    const partialRefunds = requests.filter(r => r.refund_status === "partial").length;
+
     return {
       totalRefunded, thisMonthRefunded, lastMonthRefunded, refundTrend,
-      avgProcessingDays, returnRate, exchangeRate, approvalRate,
+      avgProcessingDays, returnRate, exchangeRate, escalatedCount, approvalRate,
       topReasons, bankCardRefunds, cashRefunds, overdueRefunds,
       thisMonthCount: thisMonth.length, lastMonthCount: lastMonth.length,
+      slaRate, partialRefunds,
     };
   }, [requests]);
 
   const updateStatus = async (request: ReturnRequest, status: string) => {
+    const prev = request.status;
     const updatePayload: Record<string, unknown> = { status };
     if (status === "rejected") {
       updatePayload.refund_amount = 0;
@@ -169,11 +233,20 @@ const AdminReturnsTab = () => {
     }
     const { error } = await supabase.from("return_requests").update(updatePayload as any).eq("id", request.id);
     if (error) { toast({ title: "Státusz mentése sikertelen", description: error.message, variant: "destructive" }); return; }
+
+    await logHistory(request.id, {
+      action_type: status === "escalated" ? "escalation" : "status_change",
+      previous_status: prev,
+      new_status: status,
+      notes: status === "escalated" ? "Kérelem eszkalálva — sürgős felülvizsgálat szükséges" : `Státusz: ${prev} → ${status}`,
+    });
+
     toast({ title: `Státusz frissítve: ${STATUS_OPTIONS.find(o => o.value === status)?.label}` });
     fetchRequests();
   };
 
   const updateRefundStatus = async (request: ReturnRequest, refundStatus: string) => {
+    const prev = request.refund_status;
     const updatePayload: Record<string, unknown> = { refund_status: refundStatus };
     if (refundStatus === "completed") {
       updatePayload.refund_processed_at = new Date().toISOString();
@@ -181,6 +254,14 @@ const AdminReturnsTab = () => {
     }
     const { error } = await supabase.from("return_requests").update(updatePayload as any).eq("id", request.id);
     if (error) { toast({ title: "Visszatérítés státusz mentése sikertelen", description: error.message, variant: "destructive" }); return; }
+
+    await logHistory(request.id, {
+      action_type: "status_change",
+      previous_status: prev,
+      new_status: refundStatus,
+      notes: `Visszatérítés státusz: ${prev} → ${refundStatus}`,
+    });
+
     toast({ title: refundStatus === "completed" ? "💰 Visszatérítés teljesítve!" : "Visszatérítés státusz frissítve" });
     fetchRequests();
   };
@@ -188,6 +269,9 @@ const AdminReturnsTab = () => {
   const saveNotes = async (id: string) => {
     const { error } = await supabase.from("return_requests").update({ admin_notes: adminNotes.trim() || null } as any).eq("id", id);
     if (error) { toast({ title: "Megjegyzés mentése sikertelen", description: error.message, variant: "destructive" }); return; }
+
+    await logHistory(id, { action_type: "note_added", notes: adminNotes.trim() });
+
     toast({ title: "Megjegyzés mentve!" });
     setEditingId(null);
     setAdminNotes("");
@@ -215,8 +299,84 @@ const AdminReturnsTab = () => {
     };
     const { error } = await supabase.from("return_requests").update(payload as any).eq("id", request.id);
     if (error) { toast({ title: "Visszatérítés adatok mentése sikertelen", description: error.message, variant: "destructive" }); return; }
+
+    await logHistory(request.id, {
+      action_type: "refund_details_saved",
+      transaction_id: payload.refund_transaction_id as string,
+      card_last4: payload.bank_card_last4 as string,
+      notes: "Visszatérítés részletek frissítve",
+    });
+
     toast({ title: "Visszatérítés részletek mentve ✓" });
     fetchRequests();
+  };
+
+  // ====== PARTIAL REFUND ======
+  const processPartialRefund = async (request: ReturnRequest) => {
+    const amount = Number(partialAmount[request.id] || 0);
+    if (amount <= 0) { toast({ title: "Add meg a részleges összeget", variant: "destructive" }); return; }
+    const orderDetails = getOrderDetails(request);
+    const orderTotal = Number(orderDetails?.total_amount ?? 0);
+
+    // Calculate total already refunded from history
+    const history = historyMap[request.id] || [];
+    const alreadyRefunded = history
+      .filter(h => h.action_type === "partial_refund" || h.action_type === "full_refund")
+      .reduce((s, h) => s + (h.amount || 0), 0);
+
+    if (orderTotal > 0 && (alreadyRefunded + amount) > orderTotal) {
+      toast({ title: "Túl magas összesített visszatérítés", description: `Már visszatérítve: ${alreadyRefunded.toLocaleString()} Ft, Max: ${orderTotal.toLocaleString()} Ft`, variant: "destructive" });
+      return;
+    }
+
+    const txId = `PREF-${Date.now().toString(36).toUpperCase()}-${request.id.slice(0, 4)}`;
+    const cardLast4 = refundCardDrafts[request.id]?.trim() || request.bank_card_last4 || null;
+
+    // Log partial refund in history
+    await logHistory(request.id, {
+      action_type: "partial_refund",
+      amount,
+      method: request.preferred_refund_method || "bank_transfer",
+      transaction_id: txId,
+      card_last4: cardLast4,
+      notes: `Részleges visszatérítés: ${amount.toLocaleString()} Ft`,
+    });
+
+    // Update request
+    const newTotal = (request.refund_amount || 0) + amount;
+    const isFullyRefunded = orderTotal > 0 && newTotal >= orderTotal;
+
+    await supabase.from("return_requests").update({
+      refund_amount: newTotal,
+      refund_status: isFullyRefunded ? "completed" : "partial",
+      refund_processed_at: isFullyRefunded ? new Date().toISOString() : request.refund_processed_at,
+      status: isFullyRefunded ? "completed" : request.status,
+    } as any).eq("id", request.id);
+
+    // Auto-create in Financial Center
+    await supabase.from("refunds").insert({
+      order_id: request.order_id,
+      customer_name: orderDetails?.shipping_name || orderDetails?.customer_email || "Ismeretlen",
+      amount,
+      currency: "HUF",
+      reason: `Részleges: ${request.reason}`,
+      method: request.preferred_refund_method === "bank_card" ? "bank_card" : "bank_transfer",
+      status: "completed",
+      notes: `Részleges visszatérítés #${request.order_id.slice(0, 8).toUpperCase()} — ${txId}`,
+    } as any);
+
+    if (isFullyRefunded && request.order_id) {
+      await supabase.from("orders").update({ status: "refunded" } as any).eq("id", request.order_id);
+    }
+
+    toast({
+      title: `💰 Részleges visszatérítés: ${amount.toLocaleString()} Ft`,
+      description: `Összesen visszatérítve: ${newTotal.toLocaleString()} Ft${isFullyRefunded ? " — Teljes visszatérítés kész!" : ""}`,
+    });
+
+    setPartialAmount(c => ({ ...c, [request.id]: "" }));
+    fetchRequests();
+    fetchHistory(request.id);
   };
 
   const processRefund = async (request: ReturnRequest) => {
@@ -239,8 +399,20 @@ const AdminReturnsTab = () => {
     const { error } = await supabase.from("return_requests").update(payload as any).eq("id", request.id);
     if (error) { toast({ title: "Visszatérítés feldolgozása sikertelen", description: error.message, variant: "destructive" }); return; }
 
+    // Log to history
+    await logHistory(request.id, {
+      action_type: "full_refund",
+      amount: refundAmount,
+      method: request.preferred_refund_method || "bank_transfer",
+      transaction_id: transactionId,
+      card_last4: cardLast4,
+      previous_status: request.refund_status,
+      new_status: "completed",
+      notes: `Teljes visszatérítés: ${refundAmount.toLocaleString()} Ft — ${transactionId}`,
+    });
+
     // Auto-create refund record in Financial Center
-    const refundRecord: Record<string, unknown> = {
+    await supabase.from("refunds").insert({
       order_id: request.order_id,
       customer_name: orderDetails?.shipping_name || orderDetails?.customer_email || "Ismeretlen vásárló",
       amount: refundAmount,
@@ -250,10 +422,8 @@ const AdminReturnsTab = () => {
       status: "completed",
       bank_details: cardLast4 ? { card_last4: cardLast4 } : null,
       notes: `Auto: ${request.request_type === "return" ? "Visszáru" : "Csere"} #${request.order_id.slice(0, 8).toUpperCase()} — Tranzakció: ${transactionId}${refundNotes ? ` — ${refundNotes}` : ""}`,
-    };
-    await supabase.from("refunds").insert(refundRecord as any);
+    } as any);
 
-    // Auto-update order status to reflect refund
     if (request.order_id) {
       await supabase.from("orders").update({ status: "refunded" } as any).eq("id", request.order_id);
     }
@@ -269,6 +439,7 @@ const AdminReturnsTab = () => {
     if (eligible.length === 0) { toast({ title: "Nincs jóváhagyható kérelem a kiválasztottak között", variant: "destructive" }); return; }
     for (const req of eligible) {
       await supabase.from("return_requests").update({ status: "approved", refund_status: "processing" } as any).eq("id", req.id);
+      await logHistory(req.id, { action_type: "status_change", previous_status: "pending", new_status: "approved", notes: "Tömeges jóváhagyás" });
     }
     toast({ title: `${eligible.length} kérelem jóváhagyva!` });
     setSelectedIds(new Set());
@@ -289,7 +460,15 @@ const AdminReturnsTab = () => {
         status: "completed",
       } as any).eq("id", req.id);
 
-      // Auto-create refund in Financial Center
+      await logHistory(req.id, {
+        action_type: "full_refund",
+        amount: req.refund_amount,
+        transaction_id: txId,
+        previous_status: req.refund_status,
+        new_status: "completed",
+        notes: `Tömeges visszatérítés: ${req.refund_amount.toLocaleString()} Ft`,
+      });
+
       await supabase.from("refunds").insert({
         order_id: req.order_id,
         customer_name: od?.shipping_name || od?.customer_email || "Ismeretlen",
@@ -301,10 +480,22 @@ const AdminReturnsTab = () => {
         notes: `Auto batch: ${req.request_type === "return" ? "Visszáru" : "Csere"} #${req.order_id.slice(0, 8).toUpperCase()} — ${txId}`,
       } as any);
 
-      // Auto-update order
       await supabase.from("orders").update({ status: "refunded" } as any).eq("id", req.order_id);
     }
     toast({ title: `💰 ${eligible.length} visszatérítés feldolgozva!`, description: `Összesen: ${eligible.reduce((s, r) => s + r.refund_amount, 0).toLocaleString()} Ft — Pénzügyi Központba rögzítve` });
+    setSelectedIds(new Set());
+    fetchRequests();
+  };
+
+  const batchEscalate = async () => {
+    const ids = Array.from(selectedIds);
+    const eligible = requests.filter(r => ids.includes(r.id) && r.status !== "completed" && r.status !== "rejected" && r.status !== "escalated");
+    if (eligible.length === 0) { toast({ title: "Nincs eszkalálható kérelem", variant: "destructive" }); return; }
+    for (const req of eligible) {
+      await supabase.from("return_requests").update({ status: "escalated" } as any).eq("id", req.id);
+      await logHistory(req.id, { action_type: "escalation", previous_status: req.status, new_status: "escalated", notes: "Tömeges eszkaláció" });
+    }
+    toast({ title: `⚠ ${eligible.length} kérelem eszkalálva!` });
     setSelectedIds(new Set());
     fetchRequests();
   };
@@ -318,20 +509,26 @@ const AdminReturnsTab = () => {
 
   // ====== EXPORT ======
   const exportCSV = () => {
-    const headers = ["Rendelés kód", "Típus", "Státusz", "Visszatérítés státusz", "Összeg (Ft)", "Módszer", "Kártya", "Tranzakció ID", "Indok", "Dátum", "Feldolgozva"];
-    const rows = requests.map(r => [
-      `#${r.order_id.slice(0, 8).toUpperCase()}`,
-      r.request_type === "return" ? "Visszaküldés" : "Csere",
-      STATUS_OPTIONS.find(s => s.value === r.status)?.label || r.status,
-      REFUND_STATUS_OPTIONS.find(s => s.value === r.refund_status)?.label || r.refund_status,
-      r.refund_amount,
-      r.preferred_refund_method === "bank_card" ? "Bankkártya" : r.preferred_refund_method === "cash" ? "Készpénz" : "-",
-      r.bank_card_last4 ? `****${r.bank_card_last4}` : "-",
-      r.refund_transaction_id || "-",
-      r.reason,
-      new Date(r.created_at).toLocaleDateString("hu-HU"),
-      r.refund_processed_at ? new Date(r.refund_processed_at).toLocaleDateString("hu-HU") : "-",
-    ]);
+    const headers = ["Rendelés kód", "Típus", "Státusz", "Visszatérítés státusz", "Összeg (Ft)", "Módszer", "Kártya", "Tranzakció ID", "Indok", "Dátum", "Feldolgozva", "SLA (nap)"];
+    const rows = requests.map(r => {
+      const processingDays = r.refund_processed_at
+        ? Math.ceil((new Date(r.refund_processed_at).getTime() - new Date(r.created_at).getTime()) / (1000 * 60 * 60 * 24))
+        : "-";
+      return [
+        `#${r.order_id.slice(0, 8).toUpperCase()}`,
+        r.request_type === "return" ? "Visszaküldés" : "Csere",
+        STATUS_OPTIONS.find(s => s.value === r.status)?.label || r.status,
+        REFUND_STATUS_OPTIONS.find(s => s.value === r.refund_status)?.label || r.refund_status,
+        r.refund_amount,
+        r.preferred_refund_method === "bank_card" ? "Bankkártya" : r.preferred_refund_method === "cash" ? "Készpénz" : "-",
+        r.bank_card_last4 ? `****${r.bank_card_last4}` : "-",
+        r.refund_transaction_id || "-",
+        r.reason,
+        new Date(r.created_at).toLocaleDateString("hu-HU"),
+        r.refund_processed_at ? new Date(r.refund_processed_at).toLocaleDateString("hu-HU") : "-",
+        processingDays,
+      ];
+    });
     const csv = [headers.join(";"), ...rows.map(r => r.join(";"))].join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -367,7 +564,8 @@ const AdminReturnsTab = () => {
   });
 
   const pendingCount = requests.filter(r => r.status === "pending").length;
-  const totalRefunded = requests.filter(r => r.refund_status === "completed").reduce((s, r) => s + (r.refund_amount || 0), 0);
+  const escalatedCount = requests.filter(r => r.status === "escalated").length;
+  const totalRefunded = requests.filter(r => r.refund_status === "completed" || r.refund_status === "partial").reduce((s, r) => s + (r.refund_amount || 0), 0);
   const pendingRefunds = requests.filter(r => r.refund_status === "processing" || (r.refund_status === "pending" && r.status === "approved"));
   const allSelected = filtered.length > 0 && filtered.every(r => selectedIds.has(r.id));
 
@@ -376,16 +574,26 @@ const AdminReturnsTab = () => {
     else { setSelectedIds(new Set(filtered.map(r => r.id))); }
   };
 
+  const toggleTimeline = (requestId: string) => {
+    if (showTimeline === requestId) {
+      setShowTimeline(null);
+    } else {
+      setShowTimeline(requestId);
+      if (!historyMap[requestId]) fetchHistory(requestId);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-lg font-bold uppercase tracking-wider">
           Visszáru / Csere / Visszatérítés ({requests.length})
           {pendingCount > 0 && <span className="ml-2 text-sm text-accent">({pendingCount} függőben)</span>}
+          {escalatedCount > 0 && <span className="ml-2 text-sm text-orange-500">({escalatedCount} eszkalálva)</span>}
         </h2>
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={() => setShowAnalytics(!showAnalytics)}>
-            <BarChart3 className="w-3.5 h-3.5 mr-1" /> {showAnalytics ? "Analitika elrejtése" : "Analitika"}
+            <BarChart3 className="w-3.5 h-3.5 mr-1" /> {showAnalytics ? "Elrejtés" : "Analitika"}
           </Button>
           <Button size="sm" variant="outline" onClick={exportCSV}>
             <Download className="w-3.5 h-3.5 mr-1" /> Export CSV
@@ -394,7 +602,7 @@ const AdminReturnsTab = () => {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-8">
         <div className="border border-border bg-card p-3">
           <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Összes</span>
           <p className="text-xl font-bold text-foreground">{requests.length}</p>
@@ -402,6 +610,10 @@ const AdminReturnsTab = () => {
         <div className="border border-border bg-card p-3">
           <span className="text-[10px] font-medium uppercase tracking-widest text-accent">Függőben</span>
           <p className="text-xl font-bold text-accent">{pendingCount}</p>
+        </div>
+        <div className="border border-border bg-card p-3">
+          <span className="text-[10px] font-medium uppercase tracking-widest text-orange-500">Eszkalálva</span>
+          <p className="text-xl font-bold text-orange-500">{escalatedCount}</p>
         </div>
         <div className="border border-border bg-card p-3">
           <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Visszaküldés</span>
@@ -416,8 +628,12 @@ const AdminReturnsTab = () => {
           <p className="text-lg font-bold text-green-500">{totalRefunded.toLocaleString()} Ft</p>
         </div>
         <div className="border border-border bg-card p-3">
-          <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Jóváhagyás %</span>
-          <p className="text-xl font-bold text-foreground">{analytics.approvalRate.toFixed(0)}%</p>
+          <span className="text-[10px] font-medium uppercase tracking-widest text-purple-400">Részleges</span>
+          <p className="text-xl font-bold text-purple-400">{analytics.partialRefunds}</p>
+        </div>
+        <div className="border border-border bg-card p-3">
+          <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">SLA ≤3nap</span>
+          <p className={`text-xl font-bold ${analytics.slaRate >= 80 ? "text-green-500" : analytics.slaRate >= 50 ? "text-yellow-500" : "text-destructive"}`}>{analytics.slaRate.toFixed(0)}%</p>
         </div>
       </div>
 
@@ -450,7 +666,7 @@ const AdminReturnsTab = () => {
               <p className="text-lg font-bold">{analytics.avgProcessingDays.toFixed(1)} nap</p>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="border border-border bg-card p-3">
               <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 block">Visszatérítési módok</span>
               <div className="flex gap-4">
@@ -465,6 +681,15 @@ const AdminReturnsTab = () => {
               </div>
             </div>
             <div className="border border-border bg-card p-3">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 block">Jóváhagyási arány</span>
+              <div className="flex items-center gap-2">
+                <div className="w-full h-3 bg-secondary rounded-full overflow-hidden">
+                  <div className="h-full bg-accent" style={{ width: `${analytics.approvalRate}%` }} />
+                </div>
+                <span className="text-sm font-bold text-accent">{analytics.approvalRate.toFixed(0)}%</span>
+              </div>
+            </div>
+            <div className="border border-border bg-card p-3">
               <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 block">Top visszaküldési okok</span>
               <div className="space-y-1">
                 {analytics.topReasons.map(([reason, count], i) => (
@@ -476,6 +701,16 @@ const AdminReturnsTab = () => {
                 {analytics.topReasons.length === 0 && <p className="text-xs text-muted-foreground">Nincs adat</p>}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Escalated alert */}
+      {escalatedCount > 0 && (
+        <div className="border border-orange-500/30 bg-orange-500/5 p-3 flex items-center gap-3">
+          <ArrowUp className="h-5 w-5 text-orange-500 shrink-0 animate-pulse" />
+          <div>
+            <p className="text-sm font-bold text-orange-500">⚠ {escalatedCount} eszkalált kérelem — sürgős felülvizsgálat szükséges!</p>
           </div>
         </div>
       )}
@@ -550,6 +785,9 @@ const AdminReturnsTab = () => {
           <Button size="sm" className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white" onClick={batchProcessRefund}>
             <Zap className="w-3 h-3 mr-1" /> Tömeges visszatérítés
           </Button>
+          <Button size="sm" variant="outline" className="h-7 text-xs border-orange-500/30 text-orange-500 hover:bg-orange-500/10" onClick={batchEscalate}>
+            <ArrowUp className="w-3 h-3 mr-1" /> Tömeges eszkaláció
+          </Button>
           <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setSelectedIds(new Set())}>
             Kiválasztás törlése
           </Button>
@@ -558,7 +796,6 @@ const AdminReturnsTab = () => {
 
       {/* Requests list */}
       <div className="space-y-3">
-        {/* Select all */}
         {filtered.length > 0 && (
           <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
             <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="accent-[hsl(var(--accent))]" />
@@ -575,11 +812,15 @@ const AdminReturnsTab = () => {
           const isRefundExpanded = expandedRefund === request.id;
           const isSelected = selectedIds.has(request.id);
           const daysSinceCreated = Math.floor((Date.now() - new Date(request.created_at).getTime()) / (1000 * 60 * 60 * 24));
-          const isOverdue = request.status === "approved" && request.refund_status !== "completed" && request.refund_status !== "failed" && daysSinceCreated > 3;
+          const isOverdue = (request.status === "approved" || request.status === "escalated") && request.refund_status !== "completed" && request.refund_status !== "failed" && daysSinceCreated > 3;
+          const isEscalated = request.status === "escalated";
           const refundPercent = orderTotal > 0 ? ((request.refund_amount / orderTotal) * 100) : 0;
+          const history = historyMap[request.id] || [];
+          const isTimelineOpen = showTimeline === request.id;
+          const totalPartialRefunded = history.filter(h => h.action_type === "partial_refund").reduce((s, h) => s + (h.amount || 0), 0);
 
           return (
-            <div key={request.id} className={`space-y-3 border p-4 transition-colors ${isOverdue ? "border-destructive/40 bg-destructive/5" : isSelected ? "border-accent/40 bg-accent/5" : "border-border bg-card"}`}>
+            <div key={request.id} className={`space-y-3 border p-4 transition-colors ${isEscalated ? "border-orange-500/40 bg-orange-500/5" : isOverdue ? "border-destructive/40 bg-destructive/5" : isSelected ? "border-accent/40 bg-accent/5" : "border-border bg-card"}`}>
               {/* Header */}
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3">
@@ -606,7 +847,12 @@ const AdminReturnsTab = () => {
                           {refundStatusInfo.label}
                         </span>
                       )}
-                      {isOverdue && (
+                      {isEscalated && (
+                        <span className="rounded-sm border border-orange-500/30 bg-orange-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-orange-500 animate-pulse">
+                          ⚠ ESZKALÁLVA
+                        </span>
+                      )}
+                      {isOverdue && !isEscalated && (
                         <span className="rounded-sm border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-destructive animate-pulse">
                           ⚠ KÉSEDELMES
                         </span>
@@ -630,11 +876,46 @@ const AdminReturnsTab = () => {
                   <select value={request.status} onChange={e => updateStatus(request, e.target.value)} className="h-7 rounded-md border border-input bg-background px-2 text-xs">
                     {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                   </select>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => toggleTimeline(request.id)} title="Idővonal">
+                    <History className="h-3.5 w-3.5 text-muted-foreground" />
+                  </Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteRequest(request.id)}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               </div>
+
+              {/* Timeline */}
+              {isTimelineOpen && (
+                <div className="border border-border bg-secondary/20 p-4 space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                    <History className="w-3.5 h-3.5" /> Visszatérítés idővonal
+                  </h4>
+                  {history.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">Nincs előzmény még.</p>
+                  ) : (
+                    <div className="relative pl-4 border-l-2 border-accent/20 space-y-3">
+                      {history.map((h) => (
+                        <div key={h.id} className="relative">
+                          <div className="absolute -left-[21px] w-3 h-3 rounded-full bg-accent border-2 border-background" />
+                          <div className="text-xs space-y-0.5">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-foreground">{ACTION_LABELS[h.action_type] || h.action_type}</span>
+                              {h.amount > 0 && <span className="font-bold text-green-500">{h.amount.toLocaleString()} Ft</span>}
+                            </div>
+                            {h.notes && <p className="text-muted-foreground">{h.notes}</p>}
+                            {h.transaction_id && <p className="text-muted-foreground font-mono">TX: {h.transaction_id}</p>}
+                            {h.previous_status && h.new_status && (
+                              <p className="text-muted-foreground">{h.previous_status} → {h.new_status}</p>
+                            )}
+                            <p className="text-muted-foreground/60">{new Date(h.created_at).toLocaleString("hu-HU")}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Reason */}
               <div className="bg-muted/50 p-3 text-sm">
@@ -688,6 +969,7 @@ const AdminReturnsTab = () => {
                   {orderTotal > 0 && (
                     <>
                       <Button size="sm" variant="outline" className="rounded-none text-[10px] h-9" onClick={() => setRefundDrafts(c => ({ ...c, [request.id]: String(orderTotal) }))} disabled={isRejected}>100%</Button>
+                      <Button size="sm" variant="outline" className="rounded-none text-[10px] h-9" onClick={() => setRefundDrafts(c => ({ ...c, [request.id]: String(Math.round(orderTotal * 0.75)) }))} disabled={isRejected}>75%</Button>
                       <Button size="sm" variant="outline" className="rounded-none text-[10px] h-9" onClick={() => setRefundDrafts(c => ({ ...c, [request.id]: String(Math.round(orderTotal * 0.5)) }))} disabled={isRejected}>50%</Button>
                       <Button size="sm" variant="outline" className="rounded-none text-[10px] h-9" onClick={() => setRefundDrafts(c => ({ ...c, [request.id]: String(Math.round(orderTotal * 0.25)) }))} disabled={isRejected}>25%</Button>
                     </>
@@ -701,6 +983,7 @@ const AdminReturnsTab = () => {
                   <span>
                     Aktuális: <span className="font-bold text-accent">{(request.refund_amount || 0).toLocaleString()} Ft</span>
                     {orderTotal > 0 && <span> • Max: {orderTotal.toLocaleString()} Ft</span>}
+                    {totalPartialRefunded > 0 && <span className="text-purple-400"> • Részlegesen: {totalPartialRefunded.toLocaleString()} Ft</span>}
                   </span>
                   {refundPercent > 0 && (
                     <span className="font-bold text-accent">{refundPercent.toFixed(0)}% visszatérítés</span>
@@ -770,6 +1053,35 @@ const AdminReturnsTab = () => {
                         className="mt-1 min-h-[50px] text-xs"
                       />
                     </div>
+
+                    {/* Partial refund section */}
+                    <div className="border border-purple-400/20 bg-purple-400/5 p-3 space-y-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1">
+                        <Layers className="h-3 w-3" /> Részleges visszatérítés
+                      </span>
+                      <div className="flex gap-2">
+                        <Input
+                          type="number" min={1}
+                          value={partialAmount[request.id] || ""}
+                          onChange={e => setPartialAmount(c => ({ ...c, [request.id]: e.target.value }))}
+                          placeholder="Összeg (Ft)"
+                          className="h-8 text-xs flex-1"
+                          disabled={isRejected || request.refund_status === "completed"}
+                        />
+                        <Button
+                          size="sm"
+                          className="rounded-none text-xs bg-purple-600 hover:bg-purple-700 text-white"
+                          onClick={() => processPartialRefund(request)}
+                          disabled={isRejected || request.refund_status === "completed"}
+                        >
+                          <Plus className="mr-1 h-3 w-3" /> Részleges visszatérítés
+                        </Button>
+                      </div>
+                      {totalPartialRefunded > 0 && (
+                        <p className="text-xs text-purple-400">Eddigi részleges összeg: {totalPartialRefunded.toLocaleString()} Ft ({history.filter(h => h.action_type === "partial_refund").length} tranzakció)</p>
+                      )}
+                    </div>
+
                     <div className="flex gap-2 flex-wrap">
                       <Button size="sm" variant="outline" className="rounded-none text-xs" onClick={() => saveRefundDetails(request)}>
                         <FileText className="mr-1 h-3 w-3" /> Részletek mentése
@@ -781,7 +1093,7 @@ const AdminReturnsTab = () => {
                         disabled={isRejected || request.refund_status === "completed"}
                       >
                         <CheckCircle2 className="mr-1 h-3 w-3" />
-                        {request.refund_status === "completed" ? "Visszatérítve ✓" : "Visszatérítés véglegesítése"}
+                        {request.refund_status === "completed" ? "Visszatérítve ✓" : "Teljes visszatérítés véglegesítése"}
                       </Button>
                     </div>
 
