@@ -53,7 +53,7 @@ const App = () => (
             <AbandonedCartReminder />
             <GiveawayPopup />
           </Suspense>
-          <Suspense fallback={null}
+          <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
