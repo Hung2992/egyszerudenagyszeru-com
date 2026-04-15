@@ -64,6 +64,39 @@ const AdminOrderDetail = ({ order, onClose, onUpdate }: Props) => {
     setUpdating(true);
     await supabase.from("orders").update({ status: newStatus } as any).eq("id", order.id);
     toast({ title: `Státusz: ${STATUS_LABELS[newStatus]}` });
+
+    // Send shipping notification email when status changes to "shipped"
+    if (newStatus === "shipped" && order.shipping_name) {
+      try {
+        await supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "shipping-notification",
+            recipientEmail: (order as any).customer_email,
+            idempotencyKey: `shipping-${order.id}`,
+            templateData: { name: order.shipping_name },
+          },
+        });
+      } catch (e) {
+        console.error("Shipping email error:", e);
+      }
+    }
+
+    // Send delivery confirmation email when status changes to "delivered"
+    if (newStatus === "delivered" && order.shipping_name) {
+      try {
+        await supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "delivery-confirmation",
+            recipientEmail: (order as any).customer_email,
+            idempotencyKey: `delivery-${order.id}`,
+            templateData: { name: order.shipping_name },
+          },
+        });
+      } catch (e) {
+        console.error("Delivery email error:", e);
+      }
+    }
+
     onUpdate();
     setUpdating(false);
   };
