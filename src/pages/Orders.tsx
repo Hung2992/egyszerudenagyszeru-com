@@ -308,6 +308,7 @@ const Orders = () => {
         request_type: returnType,
         description: sanitizedNotes || null,
         preferred_refund_method: returnType === "return" ? refundMethod : null,
+        refund_amount: returnType === "return" ? selectedOrder.total_amount : 0,
       })
       .select("id")
       .single();

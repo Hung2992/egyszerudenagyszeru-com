@@ -645,8 +645,83 @@ const Admin = () => {
   };
 
   const fetchUsers = async () => {
-    const { data } = await supabase.from("profiles").select("id, display_name, email, phone, city, preferred_payment, created_at, user_id").order("created_at", { ascending: false });
-    if (data) setUsers(data as any);
+    // Merge users from profiles, orders, giveaway entries, and subscribers
+    const [profilesRes, ordersRes, giveawayRes, subscribersRes] = await Promise.all([
+      supabase.from("profiles").select("id, display_name, email, phone, city, preferred_payment, created_at, user_id").order("created_at", { ascending: false }),
+      supabase.from("orders").select("customer_email, shipping_name, shipping_city, shipping_phone, created_at, user_id"),
+      supabase.from("giveaway_entries").select("email, created_at"),
+      supabase.from("launch_subscribers").select("email, created_at"),
+    ]);
+
+    const mergedMap: Record<string, ProfileRow> = {};
+
+    // Add profiles first (highest priority)
+    (profilesRes.data || []).forEach((p: any) => {
+      const key = (p.email || p.id).toLowerCase();
+      mergedMap[key] = p;
+    });
+
+    // Add order customers
+    (ordersRes.data || []).forEach((o: any) => {
+      const email = o.customer_email?.toLowerCase();
+      if (!email || email === "missing-email@invalid.local") return;
+      if (!mergedMap[email]) {
+        mergedMap[email] = {
+          id: email,
+          display_name: o.shipping_name || null,
+          email: o.customer_email,
+          phone: o.shipping_phone || null,
+          city: o.shipping_city || null,
+          preferred_payment: null,
+          created_at: o.created_at,
+          user_id: o.user_id || null,
+        };
+      } else {
+        // Update with latest data
+        if (o.shipping_name && !mergedMap[email].display_name) mergedMap[email].display_name = o.shipping_name;
+        if (o.shipping_phone && !mergedMap[email].phone) mergedMap[email].phone = o.shipping_phone;
+        if (o.shipping_city && !mergedMap[email].city) mergedMap[email].city = o.shipping_city;
+      }
+    });
+
+    // Add giveaway entries
+    (giveawayRes.data || []).forEach((g: any) => {
+      const email = g.email?.toLowerCase();
+      if (!email) return;
+      if (!mergedMap[email]) {
+        mergedMap[email] = {
+          id: email,
+          display_name: null,
+          email: g.email,
+          phone: null,
+          city: null,
+          preferred_payment: null,
+          created_at: g.created_at,
+          user_id: null,
+        };
+      }
+    });
+
+    // Add subscribers
+    (subscribersRes.data || []).forEach((s: any) => {
+      const email = s.email?.toLowerCase();
+      if (!email) return;
+      if (!mergedMap[email]) {
+        mergedMap[email] = {
+          id: email,
+          display_name: null,
+          email: s.email,
+          phone: null,
+          city: null,
+          preferred_payment: null,
+          created_at: s.created_at,
+          user_id: null,
+        };
+      }
+    });
+
+    const merged = Object.values(mergedMap).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    setUsers(merged);
   };
 
   const fetchSettings = async () => {
@@ -1732,25 +1807,47 @@ const Admin = () => {
                 className="pl-10"
               />
             </div>
+            {/* Summary cards */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="border bg-card p-3 text-center">
+                <p className="text-xl font-bold text-accent">{filteredUsers.length}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Összes</p>
+              </div>
+              <div className="border bg-card p-3 text-center">
+                <p className="text-xl font-bold text-foreground">{filteredUsers.filter(u => orders.some(o => (o as any).customer_email?.toLowerCase() === u.email?.toLowerCase())).length}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Vásárlók</p>
+              </div>
+              <div className="border bg-card p-3 text-center">
+                <p className="text-xl font-bold text-foreground">{filteredUsers.filter(u => u.user_id).length}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Regisztrált</p>
+              </div>
+            </div>
             <div className="space-y-2">
-              {filteredUsers.map(u => (
-                <div key={u.id} className="border bg-card p-4 cursor-pointer hover:border-accent/30 transition-colors" onClick={() => setSelectedUser(u)}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-sm font-semibold text-foreground">{u.display_name || "Névtelen"}</span>
-                      {u.email && <span className="ml-2 text-xs text-muted-foreground">{u.email}</span>}
+              {filteredUsers.map(u => {
+                const userOrders = orders.filter(o => (o as any).customer_email?.toLowerCase() === u.email?.toLowerCase());
+                const totalSpent = userOrders.reduce((s, o) => s + o.total_amount, 0);
+                return (
+                  <div key={u.id} className="border bg-card p-4 cursor-pointer hover:border-accent/30 transition-colors" onClick={() => setSelectedUser(u)}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-sm font-semibold text-foreground">{u.display_name || "Névtelen"}</span>
+                        {u.email && <span className="ml-2 text-xs text-muted-foreground">{u.email}</span>}
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">
+                        {new Date(u.created_at).toLocaleDateString("hu-HU")}
+                      </span>
                     </div>
-                    <span className="text-[10px] text-muted-foreground">
-                      {new Date(u.created_at).toLocaleDateString("hu-HU")}
-                    </span>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
+                      {u.phone && <span>📱 {u.phone}</span>}
+                      {u.city && <span>📍 {u.city}</span>}
+                      {userOrders.length > 0 && (
+                        <span className="text-accent font-semibold">🛒 {userOrders.length} rendelés · {totalSpent.toLocaleString()} Ft</span>
+                      )}
+                      {u.preferred_payment && <span>💳 {u.preferred_payment}</span>}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                    {u.phone && <span>📱 {u.phone}</span>}
-                    {u.city && <span>📍 {u.city}</span>}
-                    {u.preferred_payment && <span>💳 {u.preferred_payment}</span>}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               {filteredUsers.length === 0 && (
                 <p className="text-center text-sm text-muted-foreground py-8">Nincs találat.</p>
               )}
