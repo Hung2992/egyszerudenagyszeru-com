@@ -46,9 +46,11 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <PaymentTestModeBanner />
-          <CartDrawer />
-          <AbandonedCartReminder />
-          <GiveawayPopup />
+          <Suspense fallback={null}>
+            <CartDrawer />
+            <AbandonedCartReminder />
+            <GiveawayPopup />
+          </Suspense>
           <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<Index />} />
