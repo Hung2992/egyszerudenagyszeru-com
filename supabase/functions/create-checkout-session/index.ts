@@ -52,10 +52,9 @@ serve(async (req) => {
       const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
         global: { headers: { Authorization: authHeader } },
       });
-      const token = authHeader.replace("Bearer ", "");
-      const { data: claimsData, error: claimsErr } = await anonClient.auth.getClaims(token);
-      if (!claimsErr && claimsData?.claims?.sub) {
-        userId = claimsData.claims.sub as string;
+      const { data: { user: authUser }, error: authErr } = await anonClient.auth.getUser();
+      if (!authErr && authUser?.id) {
+        userId = authUser.id;
       }
     }
 
