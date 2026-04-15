@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area,
 } from "recharts";
-import { DollarSign, ShoppingCart, TrendingUp, Users, Package, AlertTriangle, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { DollarSign, ShoppingCart, TrendingUp, Users, Package, AlertTriangle, ArrowUpRight, ArrowDownRight, Repeat, Star, CreditCard, MapPin, Clock } from "lucide-react";
 
 interface Order {
   id: string;
@@ -10,8 +10,10 @@ interface Order {
   total_amount: number;
   created_at: string;
   shipping_name: string | null;
+  customer_email?: string;
   items: any;
   payment_method: string | null;
+  shipping_city?: string | null;
 }
 
 interface Product {
@@ -50,6 +52,54 @@ const AdminDashboardEnhanced = ({
   const activeProducts = products.filter(p => p.is_active).length;
   const lowStockProducts = products.filter(p => p.stock <= 5 && p.is_active);
 
+  // Customer analytics
+  const customerAnalytics = useMemo(() => {
+    const customerMap: Record<string, { orders: number; totalSpent: number; lastOrder: string; name: string | null; city: string | null }> = {};
+    orders.forEach(o => {
+      const email = (o as any).customer_email?.toLowerCase() || "unknown";
+      if (!customerMap[email]) {
+        customerMap[email] = { orders: 0, totalSpent: 0, lastOrder: o.created_at, name: o.shipping_name, city: (o as any).shipping_city };
+      }
+      customerMap[email].orders += 1;
+      customerMap[email].totalSpent += o.total_amount;
+      if (o.created_at > customerMap[email].lastOrder) {
+        customerMap[email].lastOrder = o.created_at;
+        customerMap[email].name = o.shipping_name || customerMap[email].name;
+      }
+    });
+
+    const customers = Object.entries(customerMap).map(([email, data]) => ({ email, ...data }));
+    const returning = customers.filter(c => c.orders > 1).length;
+    const topCustomers = [...customers].sort((a, b) => b.totalSpent - a.totalSpent).slice(0, 5);
+    const avgLifetimeValue = customers.length > 0 ? Math.round(customers.reduce((s, c) => s + c.totalSpent, 0) / customers.length) : 0;
+    const newThisMonth = customers.filter(c => {
+      const d = new Date(c.lastOrder);
+      const now = new Date();
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }).length;
+
+    // City distribution
+    const cityMap: Record<string, number> = {};
+    orders.forEach(o => {
+      const city = (o as any).shipping_city || "Ismeretlen";
+      cityMap[city] = (cityMap[city] || 0) + 1;
+    });
+    const topCities = Object.entries(cityMap)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+
+    // Payment method distribution
+    const payMap: Record<string, number> = {};
+    orders.forEach(o => {
+      const method = o.payment_method || "Ismeretlen";
+      payMap[method] = (payMap[method] || 0) + 1;
+    });
+    const paymentMethods = Object.entries(payMap).map(([name, value]) => ({ name: paymentLabel(name), value }));
+
+    return { returning, topCustomers, avgLifetimeValue, newThisMonth, topCities, paymentMethods, totalCustomers: customers.length };
+  }, [orders]);
+
   // Monthly revenue data for chart
   const monthlyData = useMemo(() => {
     const months: Record<string, { name: string; bevétel: number; rendelések: number }> = {};
@@ -71,6 +121,27 @@ const AdminDashboardEnhanced = ({
     return Object.values(months);
   }, [orders]);
 
+  // Daily orders for last 14 days
+  const dailyData = useMemo(() => {
+    const days: Record<string, { name: string; rendelések: number; bevétel: number }> = {};
+    const now = new Date();
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      const label = d.toLocaleDateString("hu-HU", { month: "short", day: "numeric" });
+      days[key] = { name: label, rendelések: 0, bevétel: 0 };
+    }
+    orders.forEach(o => {
+      const key = new Date(o.created_at).toISOString().slice(0, 10);
+      if (days[key]) {
+        days[key].rendelések += 1;
+        days[key].bevétel += o.total_amount;
+      }
+    });
+    return Object.values(days);
+  }, [orders]);
+
   // Order status pie data
   const statusData = useMemo(() => {
     const acc: Record<string, number> = {};
@@ -78,7 +149,7 @@ const AdminDashboardEnhanced = ({
     return Object.entries(acc).map(([name, value]) => ({ name: statusLabel(name), value, fill: STATUS_COLORS[name] || "#888" }));
   }, [orders]);
 
-  // Top selling products (by order frequency)
+  // Top selling products
   const topProducts = useMemo(() => {
     const counts: Record<string, { name: string; count: number; revenue: number; image: string | null }> = {};
     orders.forEach(o => {
@@ -108,20 +179,42 @@ const AdminDashboardEnhanced = ({
     return { thisWeek: thisRevenue, lastWeek: lastRevenue, change, thisCount: thisWeek.length, lastCount: lastWeek.length };
   }, [orders]);
 
+  // Hourly order distribution
+  const hourlyData = useMemo(() => {
+    const hours = Array.from({ length: 24 }, (_, i) => ({ name: `${i}:00`, rendelések: 0 }));
+    orders.forEach(o => {
+      const h = new Date(o.created_at).getHours();
+      hours[h].rendelések += 1;
+    });
+    return hours;
+  }, [orders]);
+
+  const returningRate = customerAnalytics.totalCustomers > 0
+    ? ((customerAnalytics.returning / customerAnalytics.totalCustomers) * 100).toFixed(1)
+    : "0";
+
   return (
     <div className="space-y-6">
       <h2 className="text-lg font-bold uppercase tracking-wider">Áttekintés</h2>
 
-      {/* KPI Cards */}
+      {/* KPI Cards - Row 1 */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <KpiCard icon={DollarSign} label="Bevétel" value={`${totalRevenue.toLocaleString()} Ft`} accent />
         <KpiCard icon={ShoppingCart} label="Rendelések" value={String(totalOrders)} />
         <KpiCard icon={TrendingUp} label="Átlagos kosár" value={`${avgOrderValue.toLocaleString()} Ft`} />
-        <KpiCard icon={Users} label="Felhasználók" value={String(totalUsers)} />
+        <KpiCard icon={Users} label="Vásárlók" value={String(totalUsers)} subtitle={`${customerAnalytics.newThisMonth} új e hónapban`} />
         <KpiCard icon={TrendingUp} label="Profit" value={`${totalProfit.toLocaleString()} Ft`} positive={totalProfit >= 0} />
         <KpiCard icon={TrendingUp} label="Profit %" value={`${profitMargin}%`} />
         <KpiCard icon={Package} label="Aktív termékek" value={String(activeProducts)} />
         <WeekCompareCard data={weekComparison} />
+      </div>
+
+      {/* Customer Analytics Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <KpiCard icon={Repeat} label="Visszatérő vásárlók" value={`${customerAnalytics.returning}`} subtitle={`${returningRate}% arány`} />
+        <KpiCard icon={Star} label="Átl. ügyfélérték" value={`${customerAnalytics.avgLifetimeValue.toLocaleString()} Ft`} />
+        <KpiCard icon={ShoppingCart} label="Rendelés/vásárló" value={customerAnalytics.totalCustomers > 0 ? (totalOrders / customerAnalytics.totalCustomers).toFixed(1) : "0"} />
+        <KpiCard icon={Clock} label="Mai rendelések" value={String(orders.filter(o => new Date(o.created_at).toDateString() === new Date().toDateString()).length)} />
       </div>
 
       {/* Charts Row */}
@@ -170,9 +263,117 @@ const AdminDashboardEnhanced = ({
         </div>
       </div>
 
+      {/* Daily Orders + Hourly Distribution */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="border bg-card p-4">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Napi rendelések (14 nap)</h3>
+          <ResponsiveContainer width="100%" height={180}>
+            <AreaChart data={dailyData}>
+              <XAxis dataKey="name" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} interval={2} />
+              <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={30} />
+              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 0, fontSize: 12 }} />
+              <Area type="monotone" dataKey="rendelések" stroke="hsl(var(--accent))" fill="hsl(var(--accent))" fillOpacity={0.15} strokeWidth={2} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="border bg-card p-4">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Rendelések óránként</h3>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={hourlyData}>
+              <XAxis dataKey="name" tick={{ fontSize: 8, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} interval={3} />
+              <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={20} />
+              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 0, fontSize: 12 }} />
+              <Bar dataKey="rendelések" fill="hsl(var(--muted-foreground))" radius={[2, 2, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Top Customers + Payment Methods + Cities */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Top Customers */}
+        <div className="border bg-card p-4">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+            <Users className="h-3.5 w-3.5 text-accent" />
+            Top vásárlók
+          </h3>
+          {customerAnalytics.topCustomers.length > 0 ? (
+            <div className="space-y-2">
+              {customerAnalytics.topCustomers.map((c, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <span className="text-xs font-bold text-accent w-5">{i + 1}.</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{c.name || c.email}</p>
+                    <p className="text-[10px] text-muted-foreground">{c.orders} rendelés · {c.totalSpent.toLocaleString()} Ft</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground text-center py-4">Nincs vásárló adat</p>
+          )}
+        </div>
+
+        {/* Payment Methods */}
+        <div className="border bg-card p-4">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+            <CreditCard className="h-3.5 w-3.5 text-accent" />
+            Fizetési módok
+          </h3>
+          {customerAnalytics.paymentMethods.length > 0 ? (
+            <div className="space-y-2">
+              {customerAnalytics.paymentMethods.map((pm, i) => {
+                const total = customerAnalytics.paymentMethods.reduce((s, p) => s + p.value, 0);
+                const pct = total > 0 ? ((pm.value / total) * 100).toFixed(0) : "0";
+                return (
+                  <div key={i} className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-foreground">{pm.name}</span>
+                      <span className="text-muted-foreground">{pm.value} ({pct}%)</span>
+                    </div>
+                    <div className="h-1.5 bg-muted overflow-hidden">
+                      <div className="h-full bg-accent transition-all" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground text-center py-4">Nincs adat</p>
+          )}
+        </div>
+
+        {/* Top Cities */}
+        <div className="border bg-card p-4">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+            <MapPin className="h-3.5 w-3.5 text-accent" />
+            Top városok
+          </h3>
+          {customerAnalytics.topCities.length > 0 ? (
+            <div className="space-y-2">
+              {customerAnalytics.topCities.map((city, i) => {
+                const total = customerAnalytics.topCities.reduce((s, c) => s + c.value, 0);
+                const pct = total > 0 ? ((city.value / total) * 100).toFixed(0) : "0";
+                return (
+                  <div key={i} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-accent w-5">{i + 1}.</span>
+                      <span className="text-sm text-foreground">{city.name}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">{city.value} rendelés ({pct}%)</span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground text-center py-4">Nincs adat</p>
+          )}
+        </div>
+      </div>
+
       {/* Top Products & Low Stock */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Top Products */}
         <div className="border bg-card p-4">
           <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Top termékek (eladás szerint)</h3>
           {topProducts.length > 0 ? (
@@ -193,7 +394,6 @@ const AdminDashboardEnhanced = ({
           )}
         </div>
 
-        {/* Low Stock Alert */}
         <div className="border bg-card p-4">
           <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
             <AlertTriangle className="h-3.5 w-3.5 text-yellow-500" />
@@ -252,8 +452,8 @@ const AdminDashboardEnhanced = ({
   );
 };
 
-function KpiCard({ icon: Icon, label, value, accent, positive }: {
-  icon: any; label: string; value: string; accent?: boolean; positive?: boolean;
+function KpiCard({ icon: Icon, label, value, accent, positive, subtitle }: {
+  icon: any; label: string; value: string; accent?: boolean; positive?: boolean; subtitle?: string;
 }) {
   return (
     <div className="border bg-card p-4">
@@ -262,6 +462,7 @@ function KpiCard({ icon: Icon, label, value, accent, positive }: {
         <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">{label}</span>
       </div>
       <p className={`text-xl font-bold ${accent ? "text-accent" : positive === false ? "text-destructive" : "text-foreground"}`}>{value}</p>
+      {subtitle && <p className="text-[10px] text-muted-foreground mt-1">{subtitle}</p>}
     </div>
   );
 }
@@ -286,6 +487,14 @@ function statusLabel(s: string) {
   const map: Record<string, string> = {
     pending: "Függőben", processing: "Feldolgozás", packed: "Csomagolva",
     shipped: "Elküldve", delivered: "Kézbesítve", cancelled: "Törölve",
+  };
+  return map[s] || s;
+}
+
+function paymentLabel(s: string) {
+  const map: Record<string, string> = {
+    card: "Bankkártya", cash: "Készpénz", transfer: "Átutalás", cod: "Utánvét",
+    bank_card: "Bankkártya", bank_transfer: "Átutalás",
   };
   return map[s] || s;
 }
