@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ShoppingCart, Plus, Trash2, Save, X, Pencil, Link, Loader2, Package, ArrowRight, BarChart3, AlertTriangle, TrendingUp, Clock, CheckCircle2, CreditCard, Truck, Filter, Search, ArrowUpDown, Zap, Target } from "lucide-react";
+import {
+  ShoppingCart, Plus, Trash2, Save, X, Pencil, Link, Loader2, Package, ArrowRight,
+  BarChart3, AlertTriangle, TrendingUp, Clock, CheckCircle2, CreditCard, Truck,
+  Filter, Search, ArrowUpDown, Zap, Target, Download, Copy, RefreshCw, Eye,
+  DollarSign, Star, Calendar, ChevronDown, ChevronUp, Layers, Shield, Hash
+} from "lucide-react";
 import ProcurementStats from "./ProcurementStats";
 import ProcurementAiChat from "./ProcurementAiChat";
 
@@ -111,8 +116,12 @@ const AdminProcurementTab = () => {
   const [filterOrderStatus, setFilterOrderStatus] = useState("all");
   const [filterPaymentStatus, setFilterPaymentStatus] = useState("all");
   const [filterPriority, setFilterPriority] = useState("all");
-  const [sortField, setSortField] = useState<"created_at" | "total_cost" | "priority" | "expected_arrival">("created_at");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [sortField, setSortField] = useState<"created_at" | "total_cost" | "priority" | "expected_arrival" | "margin_percent">("created_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [showAdvancedAnalytics, setShowAdvancedAnalytics] = useState(false);
 
   const fetchOrders = async () => {
     const { data } = await supabase
@@ -132,6 +141,69 @@ const AdminProcurementTab = () => {
   };
 
   useEffect(() => { fetchOrders(); fetchShopProducts(); }, []);
+
+  // ====== ADVANCED ANALYTICS ======
+  const advAnalytics = useMemo(() => {
+    const now = new Date();
+    const thisMonth = orders.filter(o => {
+      const d = new Date(o.created_at);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+    const lastMonth = orders.filter(o => {
+      const d = new Date(o.created_at);
+      const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      return d.getMonth() === lm.getMonth() && d.getFullYear() === lm.getFullYear();
+    });
+
+    const totalCostAll = orders.reduce((s, o) => s + Number(o.total_cost || 0), 0);
+    const totalPaidCost = orders.filter(o => o.payment_status === "paid").reduce((s, o) => s + Number(o.total_cost || 0), 0);
+    const totalProfitAll = orders.filter(o => o.selling_price > 0).reduce((s, o) => s + (o.selling_price - o.unit_cost) * o.quantity, 0);
+    const thisMonthCost = thisMonth.reduce((s, o) => s + Number(o.total_cost || 0), 0);
+    const lastMonthCost = lastMonth.reduce((s, o) => s + Number(o.total_cost || 0), 0);
+    const costTrend = lastMonthCost > 0 ? ((thisMonthCost - lastMonthCost) / lastMonthCost * 100) : 0;
+
+    const supplierMap: Record<string, { count: number; cost: number; onTime: number; total: number }> = {};
+    orders.forEach(o => {
+      const s = o.supplier_name || "Ismeretlen";
+      if (!supplierMap[s]) supplierMap[s] = { count: 0, cost: 0, onTime: 0, total: 0 };
+      supplierMap[s].count++;
+      supplierMap[s].cost += Number(o.total_cost || 0);
+      supplierMap[s].total++;
+      if (o.order_status === "received" && o.expected_arrival && o.actual_arrival) {
+        if (new Date(o.actual_arrival) <= new Date(o.expected_arrival)) supplierMap[s].onTime++;
+      }
+    });
+    const topSuppliers = Object.entries(supplierMap)
+      .map(([name, d]) => ({ name, ...d, reliability: d.total > 0 ? Math.round(d.onTime / d.total * 100) : 0 }))
+      .sort((a, b) => b.cost - a.cost)
+      .slice(0, 5);
+
+    const categoryMap: Record<string, number> = {};
+    orders.forEach(o => { categoryMap[o.category || "general"] = (categoryMap[o.category || "general"] || 0) + Number(o.total_cost || 0); });
+    const categoryBreakdown = Object.entries(categoryMap).sort((a, b) => b[1] - a[1]);
+
+    const avgDeliveryDays = orders
+      .filter(o => o.order_status === "received" && o.actual_arrival && o.created_at)
+      .map(o => (new Date(o.actual_arrival!).getTime() - new Date(o.created_at).getTime()) / (1000 * 60 * 60 * 24))
+      .reduce((s, d, _, a) => s + d / a.length, 0);
+
+    const roi = totalPaidCost > 0 ? ((totalProfitAll / totalPaidCost) * 100) : 0;
+
+    // Reorder alerts - products linked to procurement with low stock
+    const lowStockLinked = orders
+      .filter(o => o.linked_product_id && o.order_status === "received")
+      .map(o => {
+        const product = shopProducts.find(p => p.id === o.linked_product_id);
+        return product && product.stock <= 5 ? { order: o, product } : null;
+      })
+      .filter(Boolean) as { order: ProcurementOrder; product: ShopProduct }[];
+
+    return {
+      totalCostAll, totalPaidCost, totalProfitAll, thisMonthCost, lastMonthCost, costTrend,
+      topSuppliers, categoryBreakdown, avgDeliveryDays, roi, lowStockLinked,
+      thisMonthCount: thisMonth.length, lastMonthCount: lastMonth.length,
+    };
+  }, [orders, shopProducts]);
 
   const importFromUrl = async () => {
     if (!importUrl.trim()) return;
@@ -174,23 +246,14 @@ const AdminProcurementTab = () => {
 
   const importBatchFromUrls = async () => {
     const urls = batchUrls.split("\n").map(u => u.trim()).filter(u => u.startsWith("http"));
-    if (urls.length === 0) {
-      toast({ title: "Hiba", description: "Adj meg legalább egy érvényes URL-t!", variant: "destructive" });
-      return;
-    }
-    if (urls.length > 20) {
-      toast({ title: "Hiba", description: "Maximum 20 URL egyszerre!", variant: "destructive" });
-      return;
-    }
+    if (urls.length === 0) { toast({ title: "Hiba", description: "Adj meg legalább egy érvényes URL-t!", variant: "destructive" }); return; }
+    if (urls.length > 20) { toast({ title: "Hiba", description: "Maximum 20 URL egyszerre!", variant: "destructive" }); return; }
     setImporting(true);
     setBatchResults([]);
     try {
       const { data, error } = await supabase.functions.invoke("scrape-product", { body: { urls } });
       if (error) throw error;
-      if (!data?.success || !data?.results) {
-        toast({ title: "Hiba", description: "Tömeges import sikertelen", variant: "destructive" });
-        return;
-      }
+      if (!data?.success || !data?.results) { toast({ title: "Hiba", description: "Tömeges import sikertelen", variant: "destructive" }); return; }
       const successful = data.results.filter((r: any) => r.success);
       const failed = data.results.filter((r: any) => !r.success);
       for (const r of successful) {
@@ -300,6 +363,30 @@ const AdminProcurementTab = () => {
     setShowForm(true);
   };
 
+  // ====== DUPLICATE ORDER ======
+  const duplicateOrder = async (o: ProcurementOrder) => {
+    const payload: any = {
+      supplier_name: o.supplier_name,
+      supplier_url: o.supplier_url,
+      product_name: o.product_name,
+      product_sku: o.product_sku,
+      quantity: o.quantity,
+      unit_cost: o.unit_cost,
+      selling_price: o.selling_price,
+      currency: o.currency,
+      payment_method: o.payment_method,
+      notes: o.notes ? `[Másolat] ${o.notes}` : "[Másolat]",
+      expected_arrival: null,
+      linked_product_id: o.linked_product_id,
+      priority: o.priority,
+      category: o.category,
+    };
+    const { error } = await supabase.from("admin_procurement_orders").insert(payload);
+    if (error) { toast({ title: "Duplikálás sikertelen", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Beszerzés duplikálva ✓", description: o.product_name });
+    fetchOrders();
+  };
+
   const autoLinkProduct = (o: ProcurementOrder) => {
     const match = shopProducts.find(p =>
       p.name.toLowerCase().includes(o.product_name.toLowerCase()) ||
@@ -311,6 +398,68 @@ const AdminProcurementTab = () => {
     } else {
       toast({ title: "Nem találtam egyező terméket", variant: "destructive" });
     }
+  };
+
+  // ====== BATCH OPERATIONS ======
+  const batchUpdateStatus = async (field: string, value: string) => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    for (const id of ids) {
+      const update: any = { [field]: value };
+      if (field === "order_status" && value === "received") {
+        update.actual_arrival = new Date().toISOString().split("T")[0];
+      }
+      await supabase.from("admin_procurement_orders").update(update).eq("id", id);
+    }
+    toast({ title: `${ids.length} tétel frissítve!` });
+    setSelectedIds(new Set());
+    fetchOrders();
+    fetchShopProducts();
+  };
+
+  const batchDelete = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    for (const id of ids) {
+      await supabase.from("admin_procurement_orders").delete().eq("id", id);
+    }
+    toast({ title: `${ids.length} tétel törölve!` });
+    setSelectedIds(new Set());
+    fetchOrders();
+  };
+
+  // ====== EXPORT ======
+  const exportCSV = () => {
+    const headers = ["Termék", "SKU", "Beszállító", "Mennyiség", "Egységár", "Össz. költség", "Eladási ár", "Margin %", "Profit", "Kategória", "Prioritás", "Rendelés státusz", "Fizetés", "Tracking", "Várható érkezés", "Tényleges érkezés", "Pénznem", "Dátum"];
+    const rows = orders.map(o => [
+      o.product_name,
+      o.product_sku || "-",
+      o.supplier_name,
+      o.quantity,
+      o.unit_cost,
+      o.total_cost || 0,
+      o.selling_price || 0,
+      o.margin_percent != null ? `${o.margin_percent}%` : "-",
+      o.selling_price > 0 ? (o.selling_price - o.unit_cost) * o.quantity : 0,
+      CATEGORY_OPTIONS.find(c => c.value === o.category)?.label || o.category,
+      PRIORITY_OPTIONS.find(p => p.value === o.priority)?.label || o.priority,
+      ORDER_STATUSES.find(s => s.value === o.order_status)?.label || o.order_status,
+      PAYMENT_STATUSES.find(s => s.value === o.payment_status)?.label || o.payment_status,
+      o.tracking_number || "-",
+      o.expected_arrival || "-",
+      o.actual_arrival || "-",
+      o.currency,
+      new Date(o.created_at).toLocaleDateString("hu-HU"),
+    ]);
+    const csv = [headers.join(";"), ...rows.map(r => r.join(";"))].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `beszerzesek_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "CSV exportálva!" });
   };
 
   const getLinkedProductName = (id: string | null) => {
@@ -344,10 +493,12 @@ const AdminProcurementTab = () => {
   if (filterOrderStatus !== "all") filteredOrders = filteredOrders.filter(o => o.order_status === filterOrderStatus);
   if (filterPaymentStatus !== "all") filteredOrders = filteredOrders.filter(o => o.payment_status === filterPaymentStatus);
   if (filterPriority !== "all") filteredOrders = filteredOrders.filter(o => o.priority === filterPriority);
+  if (filterCategory !== "all") filteredOrders = filteredOrders.filter(o => o.category === filterCategory);
 
   filteredOrders = [...filteredOrders].sort((a, b) => {
     const dir = sortDir === "asc" ? 1 : -1;
     if (sortField === "total_cost") return (Number(a.total_cost) - Number(b.total_cost)) * dir;
+    if (sortField === "margin_percent") return ((a.margin_percent || 0) - (b.margin_percent || 0)) * dir;
     if (sortField === "priority") {
       const pOrder = { urgent: 4, high: 3, normal: 2, low: 1 };
       return ((pOrder[a.priority as keyof typeof pOrder] || 0) - (pOrder[b.priority as keyof typeof pOrder] || 0)) * dir;
@@ -365,24 +516,30 @@ const AdminProcurementTab = () => {
   const urgentCount = orders.filter(o => o.priority === "urgent" || o.priority === "high").length;
   const avgMargin = orders.filter(o => o.margin_percent != null).reduce((s, o) => s + (o.margin_percent || 0), 0) / (orders.filter(o => o.margin_percent != null).length || 1);
   const overdueCount = orders.filter(o => o.expected_arrival && new Date(o.expected_arrival) < new Date() && o.order_status !== "received" && o.order_status !== "cancelled").length;
+  const allSelected = filteredOrders.length > 0 && filteredOrders.every(o => selectedIds.has(o.id));
 
   if (loading) return <p className="text-muted-foreground p-4">Betöltés...</p>;
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <ShoppingCart className="w-5 h-5" />
           <h2 className="font-bold text-lg uppercase tracking-wider">Beszerzés / Előrendelés</h2>
         </div>
-        <Button size="sm" onClick={() => { setShowForm(!showForm); setEditingId(null); setForm(emptyForm); }}>
-          <Plus className="w-4 h-4 mr-1" /> Új beszerzés
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={exportCSV}>
+            <Download className="w-3.5 h-3.5 mr-1" /> Export
+          </Button>
+          <Button size="sm" onClick={() => { setShowForm(!showForm); setEditingId(null); setForm(emptyForm); }}>
+            <Plus className="w-4 h-4 mr-1" /> Új beszerzés
+          </Button>
+        </div>
       </div>
 
       {/* Enhanced stats dashboard */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
         <div className="border border-border bg-card p-3">
           <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Összes</span>
           <p className="text-xl font-bold text-foreground">{orders.length}</p>
@@ -403,6 +560,10 @@ const AdminProcurementTab = () => {
           <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Átl. margin</span>
           <p className="text-xl font-bold text-foreground">{avgMargin.toFixed(1)}%</p>
         </div>
+        <div className="border border-border bg-card p-3">
+          <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">ROI</span>
+          <p className={`text-xl font-bold ${advAnalytics.roi > 0 ? "text-green-500" : "text-destructive"}`}>{advAnalytics.roi.toFixed(1)}%</p>
+        </div>
         {urgentCount > 0 && (
           <div className="border border-destructive/30 bg-destructive/5 p-3">
             <span className="text-[10px] font-medium uppercase tracking-widest text-destructive">🔥 Sürgős</span>
@@ -410,6 +571,105 @@ const AdminProcurementTab = () => {
           </div>
         )}
       </div>
+
+      {/* Advanced analytics toggle */}
+      <div className="flex justify-end gap-2">
+        <Button size="sm" variant="outline" onClick={() => setShowAdvancedAnalytics(!showAdvancedAnalytics)}>
+          <BarChart3 className="w-3.5 h-3.5 mr-1" /> {showAdvancedAnalytics ? "Analitika elrejtése" : "Részletes analitika"}
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => setShowStats(!showStats)}>
+          <BarChart3 className="w-4 h-4 mr-1" /> {showStats ? "Grafikonok elrejtése" : "Grafikonok"}
+        </Button>
+      </div>
+
+      {/* Advanced analytics panel */}
+      {showAdvancedAnalytics && (
+        <div className="border border-accent/20 bg-accent/5 p-4 space-y-4">
+          <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-accent" /> Részletes beszerzési analitika
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="border border-border bg-card p-3">
+              <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Ez a hónap</span>
+              <p className="text-lg font-bold">{advAnalytics.thisMonthCount} rendelés</p>
+              <p className="text-xs text-accent">{advAnalytics.thisMonthCost.toLocaleString("hu-HU")} Ft</p>
+            </div>
+            <div className="border border-border bg-card p-3">
+              <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Előző hónap</span>
+              <p className="text-lg font-bold">{advAnalytics.lastMonthCount} rendelés</p>
+              <p className="text-xs text-muted-foreground">{advAnalytics.lastMonthCost.toLocaleString("hu-HU")} Ft</p>
+            </div>
+            <div className="border border-border bg-card p-3">
+              <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Költség trend</span>
+              <p className={`text-lg font-bold flex items-center gap-1 ${advAnalytics.costTrend > 0 ? "text-destructive" : "text-green-500"}`}>
+                {advAnalytics.costTrend > 0 ? <TrendingUp className="w-4 h-4" /> : "↓"}
+                {advAnalytics.costTrend > 0 ? "+" : ""}{advAnalytics.costTrend.toFixed(1)}%
+              </p>
+            </div>
+            <div className="border border-border bg-card p-3">
+              <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Átl. szállítási idő</span>
+              <p className="text-lg font-bold">{advAnalytics.avgDeliveryDays.toFixed(1)} nap</p>
+            </div>
+          </div>
+
+          {/* Supplier performance */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="border border-border bg-card p-3">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 block">
+                <Star className="inline w-3 h-3 mr-1" />Top beszállítók (megbízhatóság)
+              </span>
+              <div className="space-y-2">
+                {advAnalytics.topSuppliers.map((s, i) => (
+                  <div key={i} className="flex items-center justify-between text-xs">
+                    <span className="text-foreground font-medium truncate mr-2">{s.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">{s.count} rendelés</span>
+                      <span className={`font-bold ${s.reliability > 70 ? "text-green-500" : s.reliability > 40 ? "text-yellow-500" : "text-destructive"}`}>
+                        {s.reliability}% ✓
+                      </span>
+                    </div>
+                  </div>
+                ))}
+                {advAnalytics.topSuppliers.length === 0 && <p className="text-xs text-muted-foreground">Nincs adat</p>}
+              </div>
+            </div>
+            <div className="border border-border bg-card p-3">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 block">
+                <Layers className="inline w-3 h-3 mr-1" />Kategória bontás
+              </span>
+              <div className="space-y-2">
+                {advAnalytics.categoryBreakdown.map(([cat, cost], i) => (
+                  <div key={i} className="flex items-center justify-between text-xs">
+                    <span className="text-foreground">{CATEGORY_OPTIONS.find(c => c.value === cat)?.label || cat}</span>
+                    <span className="font-bold text-accent">{Math.round(cost).toLocaleString("hu-HU")} Ft</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reorder alerts */}
+      {advAnalytics.lowStockLinked.length > 0 && (
+        <div className="border border-yellow-500/30 bg-yellow-500/5 p-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <RefreshCw className="h-5 w-5 text-yellow-500" />
+            <span className="text-sm font-bold text-yellow-500">Újrarendelési javaslatok ({advAnalytics.lowStockLinked.length})</span>
+          </div>
+          {advAnalytics.lowStockLinked.slice(0, 3).map(({ order, product }, i) => (
+            <div key={i} className="flex items-center justify-between text-xs bg-card border border-border p-2">
+              <div>
+                <span className="font-medium">{product.name}</span>
+                <span className="text-destructive ml-2">({product.stock} db maradt)</span>
+              </div>
+              <Button size="sm" variant="outline" className="h-6 text-[10px]" onClick={() => duplicateOrder(order)}>
+                <Copy className="w-3 h-3 mr-1" /> Újrarendelés
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Alerts */}
       {overdueCount > 0 && (
@@ -461,11 +721,6 @@ const AdminProcurementTab = () => {
       </div>
 
       {/* Stats & AI */}
-      <div className="flex justify-end gap-2">
-        <Button size="sm" variant="outline" onClick={() => setShowStats(!showStats)}>
-          <BarChart3 className="w-4 h-4 mr-1" /> {showStats ? "Statisztikák elrejtése" : "Statisztikák"}
-        </Button>
-      </div>
       {showStats && <ProcurementStats orders={orders as any} />}
       <ProcurementAiChat />
 
@@ -501,10 +756,18 @@ const AdminProcurementTab = () => {
               {PRIORITY_OPTIONS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Select value={filterCategory} onValueChange={setFilterCategory}>
+            <SelectTrigger className="h-8 text-xs w-[120px]"><SelectValue placeholder="Kategória" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Mind</SelectItem>
+              {CATEGORY_OPTIONS.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
           <Select value={`${sortField}_${sortDir}`} onValueChange={v => {
-            const [f, d] = v.split("_") as [typeof sortField, typeof sortDir];
-            setSortField(f);
-            setSortDir(d);
+            const parts = v.split("_");
+            const d = parts.pop() as "asc" | "desc";
+            const f = parts.join("_") as typeof sortField;
+            setSortField(f); setSortDir(d);
           }}>
             <SelectTrigger className="h-8 text-xs w-[140px]"><ArrowUpDown className="w-3 h-3 mr-1" /><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -512,12 +775,36 @@ const AdminProcurementTab = () => {
               <SelectItem value="created_at_asc">Legrégebbi</SelectItem>
               <SelectItem value="total_cost_desc">Legdrágább</SelectItem>
               <SelectItem value="total_cost_asc">Legolcsóbb</SelectItem>
+              <SelectItem value="margin_percent_desc">Legjobb margin</SelectItem>
+              <SelectItem value="margin_percent_asc">Legrosszabb margin</SelectItem>
               <SelectItem value="priority_desc">Prioritás ↓</SelectItem>
               <SelectItem value="expected_arrival_asc">Érkezés ↑</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
+
+      {/* Batch actions */}
+      {selectedIds.size > 0 && (
+        <div className="border border-accent/30 bg-accent/5 p-3 flex flex-wrap items-center gap-3">
+          <span className="text-xs font-bold text-accent">{selectedIds.size} kiválasztva</span>
+          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => batchUpdateStatus("order_status", "ordered")}>
+            <Package className="w-3 h-3 mr-1" /> Megrendelve
+          </Button>
+          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => batchUpdateStatus("order_status", "received")}>
+            <CheckCircle2 className="w-3 h-3 mr-1" /> Megérkezett
+          </Button>
+          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => batchUpdateStatus("payment_status", "paid")}>
+            <CreditCard className="w-3 h-3 mr-1" /> Kifizetve
+          </Button>
+          <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive" onClick={batchDelete}>
+            <Trash2 className="w-3 h-3 mr-1" /> Törlés
+          </Button>
+          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setSelectedIds(new Set())}>
+            Kiválasztás törlése
+          </Button>
+        </div>
+      )}
 
       {/* Form */}
       {showForm && (
@@ -614,13 +901,29 @@ const AdminProcurementTab = () => {
             </div>
           </div>
           {form.selling_price > 0 && form.unit_cost > 0 && (
-            <div className="bg-green-500/10 border border-green-500/20 p-2 text-xs flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-green-500" />
-              <span className="text-green-500 font-bold">
-                Profit/db: {(form.selling_price - form.unit_cost).toLocaleString()} {form.currency} •
-                Margin: {((form.selling_price - form.unit_cost) / form.selling_price * 100).toFixed(1)}% •
-                Össz profit: {((form.selling_price - form.unit_cost) * form.quantity).toLocaleString()} {form.currency}
-              </span>
+            <div className="bg-green-500/10 border border-green-500/20 p-3 text-xs space-y-1">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-green-500" />
+                <span className="text-green-500 font-bold">Kalkuláció</span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-1">
+                <div>
+                  <span className="text-muted-foreground">Profit/db</span>
+                  <p className="font-bold text-green-500">{(form.selling_price - form.unit_cost).toLocaleString()} {form.currency}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Margin</span>
+                  <p className="font-bold text-green-500">{((form.selling_price - form.unit_cost) / form.selling_price * 100).toFixed(1)}%</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Össz profit</span>
+                  <p className="font-bold text-green-500">{((form.selling_price - form.unit_cost) * form.quantity).toLocaleString()} {form.currency}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Össz költség</span>
+                  <p className="font-bold text-accent">{(form.unit_cost * form.quantity).toLocaleString()} {form.currency}</p>
+                </div>
+              </div>
             </div>
           )}
           <div>
@@ -639,6 +942,17 @@ const AdminProcurementTab = () => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-8">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={() => {
+                    if (allSelected) setSelectedIds(new Set());
+                    else setSelectedIds(new Set(filteredOrders.map(o => o.id)));
+                  }}
+                  className="accent-[hsl(var(--accent))]"
+                />
+              </TableHead>
               <TableHead className="text-[10px]">P</TableHead>
               <TableHead className="text-[10px]">Termék</TableHead>
               <TableHead className="text-[10px]">Beszállító</TableHead>
@@ -658,13 +972,27 @@ const AdminProcurementTab = () => {
             {filteredOrders.map(o => {
               const isOverdue = o.expected_arrival && new Date(o.expected_arrival) < new Date() && o.order_status !== "received" && o.order_status !== "cancelled";
               const orderStatusInfo = ORDER_STATUSES.find(s => s.value === o.order_status);
+              const isSelected = selectedIds.has(o.id);
+              const profitPerUnit = o.selling_price > 0 ? o.selling_price - o.unit_cost : 0;
 
               return (
-                <TableRow key={o.id} className={isOverdue ? "bg-destructive/5" : ""}>
+                <TableRow key={o.id} className={`${isOverdue ? "bg-destructive/5" : ""} ${isSelected ? "bg-accent/5" : ""}`}>
+                  <TableCell>
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => {
+                        const next = new Set(selectedIds);
+                        if (isSelected) next.delete(o.id); else next.add(o.id);
+                        setSelectedIds(next);
+                      }}
+                      className="accent-[hsl(var(--accent))]"
+                    />
+                  </TableCell>
                   <TableCell>{getPriorityBadge(o.priority)}</TableCell>
                   <TableCell>
                     <p className="font-medium text-xs">{o.product_name}</p>
-                    {o.product_sku && <p className="text-[10px] text-muted-foreground">{o.product_sku}</p>}
+                    {o.product_sku && <p className="text-[10px] text-muted-foreground font-mono">{o.product_sku}</p>}
                     {o.category !== "general" && <span className="text-[9px] text-muted-foreground">{CATEGORY_OPTIONS.find(c => c.value === o.category)?.label}</span>}
                   </TableCell>
                   <TableCell>
@@ -722,11 +1050,12 @@ const AdminProcurementTab = () => {
                       {o.actual_arrival && <p className="text-green-500">✓ {new Date(o.actual_arrival).toLocaleDateString("hu-HU")}</p>}
                     </div>
                   </TableCell>
-                  <TableCell className="text-[10px] text-muted-foreground">{o.tracking_number || "—"}</TableCell>
+                  <TableCell className="text-[10px] text-muted-foreground font-mono">{o.tracking_number || "—"}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => edit(o)}><Pencil className="w-3 h-3" /></Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => remove(o.id)}><Trash2 className="w-3 h-3 text-destructive" /></Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => edit(o)} title="Szerkesztés"><Pencil className="w-3 h-3" /></Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => duplicateOrder(o)} title="Duplikálás"><Copy className="w-3 h-3" /></Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => remove(o.id)} title="Törlés"><Trash2 className="w-3 h-3 text-destructive" /></Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -734,7 +1063,7 @@ const AdminProcurementTab = () => {
             })}
             {filteredOrders.length === 0 && (
               <TableRow>
-                <TableCell colSpan={13} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={14} className="text-center text-muted-foreground py-8">
                   {orders.length === 0 ? "Még nincs beszerzési rendelés." : "Nincs találat a szűrésre."}
                 </TableCell>
               </TableRow>
