@@ -129,6 +129,7 @@ import AdminDashboardEnhanced from "@/components/admin/AdminDashboardEnhanced";
 import AdminOrderDetail from "@/components/admin/AdminOrderDetail";
 import AdminUserProfile from "@/components/admin/AdminUserProfile";
 import { Textarea } from "@/components/ui/textarea";
+import { sendAppEmail } from "@/lib/app-email";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
@@ -976,7 +977,42 @@ const Admin = () => {
 
   // ─── Order status ───
   const updateOrderStatus = async (id: string, status: string) => {
-    await supabase.from("orders").update({ status } as any).eq("id", id);
+    const order = orders.find((item) => item.id === id);
+    if (!order) return;
+    if (order.status === status) return;
+
+    const { error } = await supabase.from("orders").update({ status } as any).eq("id", id);
+    if (error) {
+      toast({ title: "Hiba", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    if (order.customer_email && status === "shipped") {
+      try {
+        await sendAppEmail({
+          templateName: "shipping-notification",
+          recipientEmail: order.customer_email,
+          idempotencyKey: `shipping-${order.id}`,
+          templateData: { name: order.shipping_name ?? undefined },
+        });
+      } catch (emailError) {
+        console.error("Shipping email error:", emailError);
+      }
+    }
+
+    if (order.customer_email && status === "delivered") {
+      try {
+        await sendAppEmail({
+          templateName: "delivery-confirmation",
+          recipientEmail: order.customer_email,
+          idempotencyKey: `delivery-${order.id}`,
+          templateData: { name: order.shipping_name ?? undefined },
+        });
+      } catch (emailError) {
+        console.error("Delivery email error:", emailError);
+      }
+    }
+
     toast({ title: `Rendelés státusza: ${statusLabel(status)}` });
     fetchOrders();
   };
