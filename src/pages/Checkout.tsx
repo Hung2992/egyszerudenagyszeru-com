@@ -33,8 +33,54 @@ interface SavedAddress {
 interface CheckoutSessionResponse {
   clientSecret?: string;
   order_id?: string;
+  total_amount?: number;
   error?: string;
   fallback?: boolean;
+}
+
+const FUNCTIONS_BASE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+const FUNCTION_REQUEST_TIMEOUT_MS = 15000;
+
+async function invokeCheckoutFunction<T>(functionName: string, body: unknown): Promise<T> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), FUNCTION_REQUEST_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(`${FUNCTIONS_BASE_URL}/${functionName}`, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        ...(session?.access_token
+          ? { Authorization: `Bearer ${session.access_token}` }
+          : {}),
+      },
+      body: JSON.stringify(body),
+    });
+
+    const responseText = await response.text();
+    const payload = responseText ? JSON.parse(responseText) : null;
+
+    if (!response.ok) {
+      throw new Error(payload?.error || "Hálózati hiba történt");
+    }
+
+    return payload as T;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("A kérés túl sokáig tartott. Próbáld újra.");
+    }
+
+    if (error instanceof SyntaxError) {
+      throw new Error("Érvénytelen válasz érkezett a szervertől.");
+    }
+
+    throw error instanceof Error ? error : new Error("Hálózati hiba történt");
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
 }
 
 const Checkout = () => {
@@ -198,6 +244,8 @@ const Checkout = () => {
   const finalTotal = totalPrice - couponDiscount + giftWrapPrice;
 
   const handleSubmit = async () => {
+    if (submitting) return;
+
     if (!name.trim() || !phone.trim() || !zip.trim() || !city.trim() || !address.trim()) {
       toast({ title: "Töltsd ki az összes kötelező mezőt!", variant: "destructive" });
       return;
@@ -222,8 +270,9 @@ const Checkout = () => {
     if (paymentMethod === "card") {
       try {
         console.log("[Checkout] Starting card payment flow...");
-        const response = await supabase.functions.invoke("create-checkout-session", {
-          body: {
+        const data = await invokeCheckoutFunction<CheckoutSessionResponse>(
+          "create-checkout-session",
+          {
             orderData: {
               shipping_name: name,
               shipping_phone: phone,
@@ -237,16 +286,9 @@ const Checkout = () => {
             returnUrl: window.location.origin,
             environment: getStripeEnvironment(),
           },
-        });
+        );
 
-        console.log("[Checkout] Edge function response:", JSON.stringify(response));
-
-        const { data, error } = response;
-
-        if (error) {
-          console.error("[Checkout] Invoke error:", error);
-          throw new Error(error.message || "Hálózati hiba történt");
-        }
+        console.log("[Checkout] Edge function response:", JSON.stringify(data));
 
         if (!data || data.error) {
           console.error("[Checkout] Data error:", data);
@@ -277,8 +319,7 @@ const Checkout = () => {
 
     // Non-card payment: validate server-side via edge function
     try {
-      const { data, error: invokeErr } = await supabase.functions.invoke("place-order", {
-        body: {
+      const data = await invokeCheckoutFunction<CheckoutSessionResponse>("place-order", {
           items: orderItems,
           coupon_code: appliedCoupon || null,
           shipping_name: name,
@@ -289,12 +330,8 @@ const Checkout = () => {
           payment_method: paymentMethod,
           notes: notes || null,
           gift_wrap_id: selectedGiftWrap || null,
-        },
       });
 
-      if (invokeErr) {
-        throw new Error(invokeErr.message || "Hálózati hiba történt");
-      }
       if (!data || data.error) {
         throw new Error(data?.error || "Nem sikerült a rendelés létrehozása");
       }
