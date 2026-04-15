@@ -95,9 +95,10 @@ const Orders = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) { navigate("/auth"); return; }
       setUserId(session.user.id);
+      const userEmail = session.user.email || "";
 
       const [ordersRes, trackingRes, returnsRes, orderTrackingRes] = await Promise.all([
-        supabase.from("orders").select("*").eq("user_id", session.user.id).order("created_at", { ascending: false }),
+        supabase.from("orders").select("*").or(`user_id.eq.${session.user.id},customer_email.eq.${userEmail}`).order("created_at", { ascending: false }),
         (supabase.from("package_tracking" as any) as any).select("*"),
         (supabase.from("return_requests" as any) as any).select("*").eq("user_id", session.user.id).order("created_at", { ascending: false }),
         (supabase.from("order_tracking" as any) as any).select("*").order("created_at", { ascending: true }),
@@ -147,18 +148,23 @@ const Orders = () => {
   const submitReturn = async (orderId: string) => {
     if (!userId || !returnReason) return;
     setReturnSubmitting(true);
-    await (supabase.from("return_requests" as any) as any).insert({
+    const { error } = await (supabase.from("return_requests" as any) as any).insert({
       user_id: userId,
       order_id: orderId,
       reason: returnReason,
       description: returnNotes || null,
     });
+    if (error) {
+      console.error("Return request error:", error);
+      toast({ title: "Hiba történt", description: "A visszaküldési kérelem nem sikerült. Kérjük próbáld újra.", variant: "destructive" });
+      setReturnSubmitting(false);
+      return;
+    }
     toast({ title: "Visszaküldési kérelem elküldve! 📦", description: "Hamarosan feldolgozzuk." });
     setShowReturnForm(null);
     setReturnReason("");
     setReturnNotes("");
     setReturnSubmitting(false);
-    // Refresh returns
     const { data } = await (supabase.from("return_requests" as any) as any).select("*").eq("user_id", userId).order("created_at", { ascending: false });
     setReturnRequests((data || []) as ReturnRequest[]);
   };
