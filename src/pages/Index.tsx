@@ -46,7 +46,9 @@ const Index = () => {
       <section className="relative min-h-[85vh] md:min-h-[90vh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="https://images.unsplash.com/photo-1617137968427-85924c800a22?w=1400&h=900&fit=crop&q=80"
+            src="https://images.unsplash.com/photo-1617137968427-85924c800a22?w=1335&h=858&fit=crop&q=80"
+            srcSet="https://images.unsplash.com/photo-1617137968427-85924c800a22?w=768&h=494&fit=crop&q=80 768w, https://images.unsplash.com/photo-1617137968427-85924c800a22?w=1335&h=858&fit=crop&q=80 1335w"
+            sizes="100vw"
             alt="Streetwear stílus"
             className="h-full w-full object-cover"
             fetchPriority="high"
