@@ -250,8 +250,14 @@ const Checkout = () => {
   const handleSubmit = async () => {
     if (submitting) return;
 
-    if (!name.trim() || !phone.trim() || !zip.trim() || !city.trim() || !address.trim()) {
+    const trimmedEmail = email.trim();
+
+    if (!name.trim() || !trimmedEmail || !phone.trim() || !zip.trim() || !city.trim() || !address.trim()) {
       toast({ title: "Töltsd ki az összes kötelező mezőt!", variant: "destructive" });
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      toast({ title: "Adj meg egy érvényes e-mail címet!", variant: "destructive" });
       return;
     }
     if (items.length === 0) {
@@ -279,6 +285,7 @@ const Checkout = () => {
           {
             orderData: {
               shipping_name: name,
+              email: trimmedEmail,
               shipping_phone: phone,
               shipping_zip: zip,
               shipping_city: city,
@@ -327,6 +334,7 @@ const Checkout = () => {
           items: orderItems,
           coupon_code: appliedCoupon || null,
           shipping_name: name,
+          email: trimmedEmail,
           shipping_phone: phone,
           shipping_zip: zip,
           shipping_city: city,
@@ -343,29 +351,6 @@ const Checkout = () => {
       clearCart();
       toast({ title: "Rendelés leadva! 🎉", description: "Hamarosan feldolgozzuk." });
       navigate("/");
-
-      const orderEmail = email || user?.email || null;
-      if (orderEmail) {
-        fetch(`${FUNCTIONS_BASE_URL}/send-transactional-email`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-          body: JSON.stringify({
-            templateName: "order-confirmation",
-            recipientEmail: orderEmail,
-            idempotencyKey: `order-confirm-${data.order_id}`,
-            templateData: {
-              name,
-              totalAmount: (data.total_amount ?? finalTotal).toLocaleString(),
-              itemCount: items.length,
-            },
-          }),
-        }).catch((emailError) => {
-          console.error("Order confirmation email error:", emailError);
-        });
-      }
     } catch (err: any) {
       const msg = typeof err === "string" ? err : (err?.message || "Próbáld újra később.");
       toast({ title: "Rendelési hiba", description: msg, variant: "destructive" });

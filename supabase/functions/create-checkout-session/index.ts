@@ -25,6 +25,7 @@ interface OrderItem {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_ITEM_QTY = 99;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -40,6 +41,9 @@ serve(async (req) => {
     if (orderData.items.length > 50) {
       return jsonResponse({ error: "Too many items", fallback: false }, 400);
     }
+    const normalizedEmail = typeof orderData.email === "string" && EMAIL_RE.test(orderData.email.trim())
+      ? orderData.email.trim().toLowerCase()
+      : null;
 
     // ── 0. Authenticate caller from JWT ─────────────────────────────
     const authHeader = req.headers.get("Authorization");
@@ -222,11 +226,13 @@ serve(async (req) => {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       ui_mode: "embedded",
+      customer_email: normalizedEmail ?? undefined,
       line_items: lineItems,
       discounts: discounts.length > 0 ? discounts : undefined,
       return_url: `${returnUrl}/checkout/return?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
       metadata: {
         order_id: order.id,
+        ...(normalizedEmail ? { customer_email: normalizedEmail } : {}),
       },
     });
 
