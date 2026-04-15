@@ -848,6 +848,7 @@ const Orders = () => {
                                 setReturnType("return");
                                 setReturnReason("");
                                 setReturnNotes("");
+                                setRefundMethod("bank_card");
                               }}
                             >
                               <RotateCcw className="h-3 w-3 mr-1" />
