@@ -518,6 +518,42 @@ export type Database = {
         }
         Relationships: []
       }
+      return_preferences: {
+        Row: {
+          auto_label: boolean | null
+          created_at: string
+          default_reason: string | null
+          id: string
+          pickup_address: string | null
+          preferred_method: string | null
+          preferred_refund_method: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_label?: boolean | null
+          created_at?: string
+          default_reason?: string | null
+          id?: string
+          pickup_address?: string | null
+          preferred_method?: string | null
+          preferred_refund_method?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_label?: boolean | null
+          created_at?: string
+          default_reason?: string | null
+          id?: string
+          pickup_address?: string | null
+          preferred_method?: string | null
+          preferred_refund_method?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       return_requests: {
         Row: {
           admin_notes: string | null

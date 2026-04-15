@@ -4,12 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { Undo2, Save } from "lucide-react";
+import { Undo2, Save, CreditCard, Banknote } from "lucide-react";
 
 const METHODS = [
   { value: "courier", label: "Futár" },
   { value: "post", label: "Posta" },
   { value: "store", label: "Üzletben" },
+];
+
+const REFUND_METHODS = [
+  { value: "bank_card", label: "Bankkártyára", icon: CreditCard },
+  { value: "cash", label: "Készpénz", icon: Banknote },
 ];
 
 const REASONS = [
@@ -27,11 +32,12 @@ const ReturnPreferences = ({ userId }: Props) => {
   const [reason, setReason] = useState("");
   const [autoLabel, setAutoLabel] = useState(false);
   const [pickupAddress, setPickupAddress] = useState("");
+  const [refundMethod, setRefundMethod] = useState("bank_card");
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchData = async () => {
       const { data } = await (supabase.from("return_preferences" as any) as any)
         .select("*").eq("user_id", userId).maybeSingle();
       if (data) {
@@ -39,23 +45,29 @@ const ReturnPreferences = ({ userId }: Props) => {
         setReason(data.default_reason || "");
         setAutoLabel(data.auto_label ?? false);
         setPickupAddress(data.pickup_address || "");
+        setRefundMethod(data.preferred_refund_method || "bank_card");
       }
       setLoaded(true);
     };
-    fetch();
+    fetchData();
   }, [userId]);
 
   const save = async () => {
     setSaving(true);
-    await (supabase.from("return_preferences" as any) as any).upsert({
+    const { error } = await (supabase.from("return_preferences" as any) as any).upsert({
       user_id: userId,
       preferred_method: method,
       default_reason: reason || null,
       auto_label: autoLabel,
       pickup_address: pickupAddress || null,
+      preferred_refund_method: refundMethod,
       updated_at: new Date().toISOString(),
     }, { onConflict: "user_id" });
-    toast({ title: "Visszaküldési preferenciák mentve! ✓" });
+    if (error) {
+      toast({ title: "Mentés sikertelen", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Visszaküldési preferenciák mentve! ✓" });
+    }
     setSaving(false);
   };
 
@@ -81,6 +93,27 @@ const ReturnPreferences = ({ userId }: Props) => {
                 }`}
               >{m.label}</button>
             ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Visszatérítés módja</p>
+          <div className="grid grid-cols-2 gap-2">
+            {REFUND_METHODS.map(rm => {
+              const Icon = rm.icon;
+              return (
+                <button key={rm.value} onClick={() => setRefundMethod(rm.value)}
+                  className={`flex items-center justify-center gap-1.5 text-[10px] px-3 py-2.5 border transition-all ${
+                    refundMethod === rm.value
+                      ? "border-accent text-accent bg-accent/10 font-bold"
+                      : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {rm.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
