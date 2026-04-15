@@ -7,6 +7,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/contexts/CartContext";
 import Index from "./pages/Index.tsx";
 import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner.tsx";
+import { usePageTracking } from "@/hooks/usePageTracking";
+
+const PageTracker = () => { usePageTracking(); return null; };
 
 // Lazy-loaded components that appear with delay or on interaction
 const CartDrawer = lazy(() => import("@/components/CartDrawer"));
@@ -47,6 +50,7 @@ const App = () => (
           <Sonner />
         </Suspense>
         <BrowserRouter>
+          <PageTracker />
           <PaymentTestModeBanner />
           <Suspense fallback={null}>
             <CartDrawer />
