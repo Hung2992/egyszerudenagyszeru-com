@@ -35,6 +35,7 @@ import ProductPreorders from "@/components/ProductPreorders";
 import LoyaltyRedemption from "@/components/LoyaltyRedemption";
 import AiSizeRecommender from "@/components/AiSizeRecommender";
 import type { User as SupaUser } from "@supabase/supabase-js";
+import { sendAppEmail } from "@/lib/app-email";
 
 interface ProfileData {
   display_name: string;
@@ -145,12 +146,10 @@ const PasswordChangeSection = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user?.email) {
         try {
-          await supabase.functions.invoke("send-transactional-email", {
-            body: {
-              templateName: "password-changed",
-              recipientEmail: user.email,
-              idempotencyKey: `password-changed-${user.id}-${Date.now()}`,
-            },
+          await sendAppEmail({
+            templateName: "password-changed",
+            recipientEmail: user.email,
+            idempotencyKey: `password-changed-${user.id}-${Date.now()}`,
           });
         } catch (e) {
           console.error("Password change email error:", e);
@@ -310,11 +309,11 @@ const ProfilePage = () => {
     if (!user) return;
     setSaving(true);
     const updateData = {
-      display_name: profile.display_name, email: profile.email, phone: profile.phone,
-      address_line: profile.address_line, city: profile.city, zip_code: profile.zip_code,
-      country: profile.country, preferred_payment: profile.preferred_payment,
-      card_holder_name: profile.card_holder_name, card_last4: profile.card_last4,
-      updated_at: new Date().toISOString(),
+      display_name: profile.display_name,
+      email: profile.email,
+      phone: profile.phone,
+      city: profile.city,
+      preferred_payment: profile.preferred_payment,
     };
     const { data: existing } = await supabase.from("profiles").select("id").eq("user_id", user.id).maybeSingle();
     let error;
@@ -329,13 +328,11 @@ const ProfilePage = () => {
       toast({ title: "Profil mentve!" });
       // Send profile update confirmation email
       try {
-        await supabase.functions.invoke("send-transactional-email", {
-          body: {
-            templateName: "profile-update",
-            recipientEmail: user.email,
-            idempotencyKey: `profile-update-${user.id}-${Date.now()}`,
-            templateData: { name: profile.display_name },
-          },
+        await sendAppEmail({
+          templateName: "profile-update",
+          recipientEmail: user.email,
+          idempotencyKey: `profile-update-${user.id}-${Date.now()}`,
+          templateData: { name: profile.display_name },
         });
       } catch (e) {
         console.error("Profile update email error:", e);

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
 import { Mail, Phone, MapPin, Clock, Send } from "lucide-react";
+import { sendAppEmail } from "@/lib/app-email";
 
 const CONTACT_INFO = [
   { icon: Mail, label: "Email", value: "info@egyszerudenagyszeru.hu" },
@@ -30,13 +31,11 @@ const Contact = () => {
     setSending(true);
     try {
       const id = crypto.randomUUID();
-      await supabase.functions.invoke("send-transactional-email", {
-        body: {
-          templateName: "contact-confirmation",
-          recipientEmail: email,
-          idempotencyKey: `contact-confirm-${id}`,
-          templateData: { name },
-        },
+      await sendAppEmail({
+        templateName: "contact-confirmation",
+        recipientEmail: email,
+        idempotencyKey: `contact-confirm-${id}`,
+        templateData: { name },
       });
       toast({ title: "Üzenet elküldve! ✉️", description: "Hamarosan válaszolunk." });
       setName("");

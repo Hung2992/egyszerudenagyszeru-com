@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/untyped-client";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { X, Package, Truck, CheckCircle, Clock, XCircle, ArrowRight } from "lucide-react";
+import { sendAppEmail } from "@/lib/app-email";
 
 interface Order {
   id: string;
@@ -63,19 +64,22 @@ const AdminOrderDetail = ({ order, onClose, onUpdate }: Props) => {
 
   const updateStatus = async (newStatus: string) => {
     setUpdating(true);
-    await supabase.from("orders").update({ status: newStatus } as any).eq("id", order.id);
+    const { error: updateError } = await supabase.from("orders").update({ status: newStatus } as any).eq("id", order.id);
+    if (updateError) {
+      toast({ title: "Hiba", description: updateError.message, variant: "destructive" });
+      setUpdating(false);
+      return;
+    }
     toast({ title: `Státusz: ${STATUS_LABELS[newStatus]}` });
 
     // Send shipping notification email when status changes to "shipped"
     if (newStatus === "shipped" && order.customer_email) {
       try {
-        await supabase.functions.invoke("send-transactional-email", {
-          body: {
-            templateName: "shipping-notification",
-            recipientEmail: order.customer_email,
-            idempotencyKey: `shipping-${order.id}`,
-            templateData: { name: order.shipping_name },
-          },
+        await sendAppEmail({
+          templateName: "shipping-notification",
+          recipientEmail: order.customer_email,
+          idempotencyKey: `shipping-${order.id}`,
+          templateData: { name: order.shipping_name ?? undefined },
         });
       } catch (e) {
         console.error("Shipping email error:", e);
@@ -85,13 +89,11 @@ const AdminOrderDetail = ({ order, onClose, onUpdate }: Props) => {
     // Send delivery confirmation email when status changes to "delivered"
     if (newStatus === "delivered" && order.customer_email) {
       try {
-        await supabase.functions.invoke("send-transactional-email", {
-          body: {
-            templateName: "delivery-confirmation",
-            recipientEmail: order.customer_email,
-            idempotencyKey: `delivery-${order.id}`,
-            templateData: { name: order.shipping_name },
-          },
+        await sendAppEmail({
+          templateName: "delivery-confirmation",
+          recipientEmail: order.customer_email,
+          idempotencyKey: `delivery-${order.id}`,
+          templateData: { name: order.shipping_name ?? undefined },
         });
       } catch (e) {
         console.error("Delivery email error:", e);

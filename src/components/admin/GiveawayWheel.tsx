@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/untyped-client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { RotateCcw, Trophy } from "lucide-react";
+import { sendAppEmail } from "@/lib/app-email";
 
 const COLORS = [
   "#c9a84c", "#1a1a1a", "#333333", "#b8860b",
@@ -154,15 +155,17 @@ const GiveawayWheel = () => {
       .eq("email", winner);
 
     // Send winner email
-    await supabase.functions.invoke("send-transactional-email", {
-      body: {
+    try {
+      await sendAppEmail({
         templateName: "giveaway-winner",
         recipientEmail: winner,
         idempotencyKey: `giveaway-winner-${winner}`,
-      },
-    });
-
-    toast.success(`${winner} megjelölve nyertesként és e-mail elküldve!`);
+      });
+      toast.success(`${winner} megjelölve nyertesként és e-mail elküldve!`);
+    } catch (emailError) {
+      console.error("Giveaway winner email error:", emailError);
+      toast.error("A nyertes mentve lett, de az e-mail küldése nem sikerült.");
+    }
   };
 
   return (
