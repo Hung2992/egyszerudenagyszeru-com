@@ -222,18 +222,43 @@ const AdminReturnsTab = () => {
   const processRefund = async (request: ReturnRequest) => {
     const refundAmount = Number(refundDrafts[request.id] ?? request.refund_amount ?? 0);
     if (refundAmount <= 0) { toast({ title: "Nincs visszatérítendő összeg", variant: "destructive" }); return; }
+    const transactionId = refundTransactionDrafts[request.id]?.trim() || `REF-${Date.now().toString(36).toUpperCase()}`;
+    const cardLast4 = refundCardDrafts[request.id]?.trim() || null;
+    const refundNotes = refundNotesDrafts[request.id]?.trim() || null;
+    const orderDetails = getOrderDetails(request);
+
     const payload: Record<string, unknown> = {
       refund_status: "completed",
       refund_processed_at: new Date().toISOString(),
       refund_amount: refundAmount,
-      refund_transaction_id: refundTransactionDrafts[request.id]?.trim() || `REF-${Date.now().toString(36).toUpperCase()}`,
-      bank_card_last4: refundCardDrafts[request.id]?.trim() || null,
-      refund_notes: refundNotesDrafts[request.id]?.trim() || null,
+      refund_transaction_id: transactionId,
+      bank_card_last4: cardLast4,
+      refund_notes: refundNotes,
       status: "completed",
     };
     const { error } = await supabase.from("return_requests").update(payload as any).eq("id", request.id);
     if (error) { toast({ title: "Visszatérítés feldolgozása sikertelen", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "💰 Visszatérítés sikeresen feldolgozva!", description: `${refundAmount.toLocaleString()} Ft visszatérítve` });
+
+    // Auto-create refund record in Financial Center
+    const refundRecord: Record<string, unknown> = {
+      order_id: request.order_id,
+      customer_name: orderDetails?.shipping_name || orderDetails?.customer_email || "Ismeretlen vásárló",
+      amount: refundAmount,
+      currency: "HUF",
+      reason: request.reason,
+      method: request.preferred_refund_method === "bank_card" ? "bank_card" : request.preferred_refund_method === "cash" ? "cash" : "bank_transfer",
+      status: "completed",
+      bank_details: cardLast4 ? { card_last4: cardLast4 } : null,
+      notes: `Auto: ${request.request_type === "return" ? "Visszáru" : "Csere"} #${request.order_id.slice(0, 8).toUpperCase()} — Tranzakció: ${transactionId}${refundNotes ? ` — ${refundNotes}` : ""}`,
+    };
+    await supabase.from("refunds").insert(refundRecord as any);
+
+    // Auto-update order status to reflect refund
+    if (request.order_id) {
+      await supabase.from("orders").update({ status: "refunded" } as any).eq("id", request.order_id);
+    }
+
+    toast({ title: "💰 Visszatérítés sikeresen feldolgozva!", description: `${refundAmount.toLocaleString()} Ft visszatérítve — Pénzügyi Központba is rögzítve` });
     fetchRequests();
   };
 
@@ -255,14 +280,31 @@ const AdminReturnsTab = () => {
     const eligible = requests.filter(r => ids.includes(r.id) && r.status === "approved" && r.refund_status !== "completed" && r.refund_amount > 0);
     if (eligible.length === 0) { toast({ title: "Nincs feldolgozható visszatérítés", variant: "destructive" }); return; }
     for (const req of eligible) {
+      const od = getOrderDetails(req);
+      const txId = req.refund_transaction_id || `REF-${Date.now().toString(36).toUpperCase()}-${req.id.slice(0, 4)}`;
       await supabase.from("return_requests").update({
         refund_status: "completed",
         refund_processed_at: new Date().toISOString(),
-        refund_transaction_id: req.refund_transaction_id || `REF-${Date.now().toString(36).toUpperCase()}-${req.id.slice(0, 4)}`,
+        refund_transaction_id: txId,
         status: "completed",
       } as any).eq("id", req.id);
+
+      // Auto-create refund in Financial Center
+      await supabase.from("refunds").insert({
+        order_id: req.order_id,
+        customer_name: od?.shipping_name || od?.customer_email || "Ismeretlen",
+        amount: req.refund_amount,
+        currency: "HUF",
+        reason: req.reason,
+        method: req.preferred_refund_method === "bank_card" ? "bank_card" : "bank_transfer",
+        status: "completed",
+        notes: `Auto batch: ${req.request_type === "return" ? "Visszáru" : "Csere"} #${req.order_id.slice(0, 8).toUpperCase()} — ${txId}`,
+      } as any);
+
+      // Auto-update order
+      await supabase.from("orders").update({ status: "refunded" } as any).eq("id", req.order_id);
     }
-    toast({ title: `💰 ${eligible.length} visszatérítés feldolgozva!`, description: `Összesen: ${eligible.reduce((s, r) => s + r.refund_amount, 0).toLocaleString()} Ft` });
+    toast({ title: `💰 ${eligible.length} visszatérítés feldolgozva!`, description: `Összesen: ${eligible.reduce((s, r) => s + r.refund_amount, 0).toLocaleString()} Ft — Pénzügyi Központba rögzítve` });
     setSelectedIds(new Set());
     fetchRequests();
   };
