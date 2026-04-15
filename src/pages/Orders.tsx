@@ -859,7 +859,7 @@ const Orders = () => {
                                   size="sm"
                                   variant="outline"
                                   className="rounded-none uppercase tracking-wider text-[10px]"
-                                  onClick={() => { setShowReturnForm(null); setReturnType("return"); setReturnReason(""); setReturnNotes(""); setRefundMethod("bank_card"); }}
+                                  onClick={() => { setShowReturnForm(null); setReturnType("return"); setReturnReason(""); setReturnNotes(""); setRefundMethod("bank_card"); setBankHolderName(""); setBankCardLast4(""); setBankIban(""); }}
                                 >
                                   Mégse
                                 </Button>
