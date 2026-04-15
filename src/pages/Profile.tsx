@@ -141,6 +141,21 @@ const PasswordChangeSection = () => {
       toast({ title: "Jelszó megváltoztatva! ✓" });
       setNewPassword("");
       setConfirmPassword("");
+      // Send password changed notification email
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        try {
+          await supabase.functions.invoke("send-transactional-email", {
+            body: {
+              templateName: "password-changed",
+              recipientEmail: user.email,
+              idempotencyKey: `password-changed-${user.id}-${Date.now()}`,
+            },
+          });
+        } catch (e) {
+          console.error("Password change email error:", e);
+        }
+      }
     }
   };
 
@@ -310,7 +325,22 @@ const ProfilePage = () => {
     }
     setSaving(false);
     if (error) toast({ title: "Hiba", description: error.message, variant: "destructive" });
-    else toast({ title: "Profil mentve!" });
+    else {
+      toast({ title: "Profil mentve!" });
+      // Send profile update confirmation email
+      try {
+        await supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "profile-update",
+            recipientEmail: user.email,
+            idempotencyKey: `profile-update-${user.id}-${Date.now()}`,
+            templateData: { name: profile.display_name },
+          },
+        });
+      } catch (e) {
+        console.error("Profile update email error:", e);
+      }
+    }
   };
 
   // -- Address CRUD --
