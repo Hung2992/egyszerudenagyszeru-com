@@ -16,48 +16,84 @@ export type Database = {
     Tables: {
       admin_procurement_orders: {
         Row: {
+          actual_arrival: string | null
+          category: string | null
           created_at: string
           currency: string | null
+          expected_arrival: string | null
           id: string
           linked_order_id: string | null
+          linked_product_id: string | null
+          margin_percent: number | null
           notes: string | null
+          order_status: string
           payment_method: string | null
+          payment_status: string
+          priority: string
           product_name: string
+          product_sku: string | null
           profit_amount: number | null
           quantity: number
           selling_price: number
           status: string | null
           supplier_name: string | null
+          supplier_url: string | null
+          total_cost: number | null
+          tracking_number: string | null
           unit_cost: number
         }
         Insert: {
+          actual_arrival?: string | null
+          category?: string | null
           created_at?: string
           currency?: string | null
+          expected_arrival?: string | null
           id?: string
           linked_order_id?: string | null
+          linked_product_id?: string | null
+          margin_percent?: number | null
           notes?: string | null
+          order_status?: string
           payment_method?: string | null
+          payment_status?: string
+          priority?: string
           product_name: string
+          product_sku?: string | null
           profit_amount?: number | null
           quantity?: number
           selling_price?: number
           status?: string | null
           supplier_name?: string | null
+          supplier_url?: string | null
+          total_cost?: number | null
+          tracking_number?: string | null
           unit_cost?: number
         }
         Update: {
+          actual_arrival?: string | null
+          category?: string | null
           created_at?: string
           currency?: string | null
+          expected_arrival?: string | null
           id?: string
           linked_order_id?: string | null
+          linked_product_id?: string | null
+          margin_percent?: number | null
           notes?: string | null
+          order_status?: string
           payment_method?: string | null
+          payment_status?: string
+          priority?: string
           product_name?: string
+          product_sku?: string | null
           profit_amount?: number | null
           quantity?: number
           selling_price?: number
           status?: string | null
           supplier_name?: string | null
+          supplier_url?: string | null
+          total_cost?: number | null
+          tracking_number?: string | null
           unit_cost?: number
         }
         Relationships: [
@@ -66,6 +102,13 @@ export type Database = {
             columns: ["linked_order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_procurement_orders_linked_product_id_fkey"
+            columns: ["linked_product_id"]
+            isOneToOne: false
+            referencedRelation: "shop_products"
             referencedColumns: ["id"]
           },
         ]
@@ -557,6 +600,7 @@ export type Database = {
       return_requests: {
         Row: {
           admin_notes: string | null
+          bank_card_last4: string | null
           created_at: string
           description: string | null
           exchange_product_id: string | null
@@ -565,12 +609,17 @@ export type Database = {
           preferred_refund_method: string | null
           reason: string
           refund_amount: number
+          refund_notes: string | null
+          refund_processed_at: string | null
+          refund_status: string
+          refund_transaction_id: string | null
           request_type: string
           status: string
           user_id: string
         }
         Insert: {
           admin_notes?: string | null
+          bank_card_last4?: string | null
           created_at?: string
           description?: string | null
           exchange_product_id?: string | null
@@ -579,12 +628,17 @@ export type Database = {
           preferred_refund_method?: string | null
           reason: string
           refund_amount?: number
+          refund_notes?: string | null
+          refund_processed_at?: string | null
+          refund_status?: string
+          refund_transaction_id?: string | null
           request_type?: string
           status?: string
           user_id: string
         }
         Update: {
           admin_notes?: string | null
+          bank_card_last4?: string | null
           created_at?: string
           description?: string | null
           exchange_product_id?: string | null
@@ -593,6 +647,10 @@ export type Database = {
           preferred_refund_method?: string | null
           reason?: string
           refund_amount?: number
+          refund_notes?: string | null
+          refund_processed_at?: string | null
+          refund_status?: string
+          refund_transaction_id?: string | null
           request_type?: string
           status?: string
           user_id?: string
