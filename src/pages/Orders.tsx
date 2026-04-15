@@ -148,18 +148,23 @@ const Orders = () => {
   const submitReturn = async (orderId: string) => {
     if (!userId || !returnReason) return;
     setReturnSubmitting(true);
-    await (supabase.from("return_requests" as any) as any).insert({
+    const { error } = await (supabase.from("return_requests" as any) as any).insert({
       user_id: userId,
       order_id: orderId,
       reason: returnReason,
       description: returnNotes || null,
     });
+    if (error) {
+      console.error("Return request error:", error);
+      toast({ title: "Hiba történt", description: "A visszaküldési kérelem nem sikerült. Kérjük próbáld újra.", variant: "destructive" });
+      setReturnSubmitting(false);
+      return;
+    }
     toast({ title: "Visszaküldési kérelem elküldve! 📦", description: "Hamarosan feldolgozzuk." });
     setShowReturnForm(null);
     setReturnReason("");
     setReturnNotes("");
     setReturnSubmitting(false);
-    // Refresh returns
     const { data } = await (supabase.from("return_requests" as any) as any).select("*").eq("user_id", userId).order("created_at", { ascending: false });
     setReturnRequests((data || []) as ReturnRequest[]);
   };
