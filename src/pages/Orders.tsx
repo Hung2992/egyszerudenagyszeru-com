@@ -312,6 +312,10 @@ const Orders = () => {
         description: sanitizedNotes || null,
         preferred_refund_method: returnType === "return" ? refundMethod : null,
         refund_amount: returnType === "return" ? selectedOrder.total_amount : 0,
+        bank_card_last4: returnType === "return" && refundMethod === "bank_card" ? bankCardLast4 || null : null,
+        refund_notes: returnType === "return" && refundMethod === "bank_card"
+          ? [bankHolderName && `Név: ${bankHolderName}`, bankIban && `IBAN: ${bankIban}`].filter(Boolean).join(" | ") || null
+          : null,
       })
       .select("id")
       .single();
@@ -801,6 +805,30 @@ const Orders = () => {
                                       );
                                     })}
                                   </div>
+                                </div>
+                              )}
+                              {returnType === "return" && refundMethod === "bank_card" && (
+                                <div className="space-y-2 border border-border bg-secondary/20 p-3">
+                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Banki adatok a visszatérítéshez</p>
+                                  <Input
+                                    value={bankHolderName}
+                                    onChange={e => setBankHolderName(e.target.value)}
+                                    placeholder="Számlatulajdonos neve"
+                                    className="text-xs h-8 rounded-none"
+                                  />
+                                  <Input
+                                    value={bankCardLast4}
+                                    onChange={e => setBankCardLast4(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                                    placeholder="Kártyaszám utolsó 4 számjegye"
+                                    className="text-xs h-8 rounded-none"
+                                    maxLength={4}
+                                  />
+                                  <Input
+                                    value={bankIban}
+                                    onChange={e => setBankIban(e.target.value.toUpperCase())}
+                                    placeholder="IBAN (pl. HU42 1234 5678 9012 3456 7890 1234)"
+                                    className="text-xs h-8 rounded-none"
+                                  />
                                 </div>
                               )}
                               <div>
