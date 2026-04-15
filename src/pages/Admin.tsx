@@ -645,8 +645,83 @@ const Admin = () => {
   };
 
   const fetchUsers = async () => {
-    const { data } = await supabase.from("profiles").select("id, display_name, email, phone, city, preferred_payment, created_at, user_id").order("created_at", { ascending: false });
-    if (data) setUsers(data as any);
+    // Merge users from profiles, orders, giveaway entries, and subscribers
+    const [profilesRes, ordersRes, giveawayRes, subscribersRes] = await Promise.all([
+      supabase.from("profiles").select("id, display_name, email, phone, city, preferred_payment, created_at, user_id").order("created_at", { ascending: false }),
+      supabase.from("orders").select("customer_email, shipping_name, shipping_city, shipping_phone, created_at, user_id"),
+      supabase.from("giveaway_entries").select("email, created_at"),
+      supabase.from("launch_subscribers").select("email, created_at"),
+    ]);
+
+    const mergedMap: Record<string, ProfileRow> = {};
+
+    // Add profiles first (highest priority)
+    (profilesRes.data || []).forEach((p: any) => {
+      const key = (p.email || p.id).toLowerCase();
+      mergedMap[key] = p;
+    });
+
+    // Add order customers
+    (ordersRes.data || []).forEach((o: any) => {
+      const email = o.customer_email?.toLowerCase();
+      if (!email || email === "missing-email@invalid.local") return;
+      if (!mergedMap[email]) {
+        mergedMap[email] = {
+          id: email,
+          display_name: o.shipping_name || null,
+          email: o.customer_email,
+          phone: o.shipping_phone || null,
+          city: o.shipping_city || null,
+          preferred_payment: null,
+          created_at: o.created_at,
+          user_id: o.user_id || null,
+        };
+      } else {
+        // Update with latest data
+        if (o.shipping_name && !mergedMap[email].display_name) mergedMap[email].display_name = o.shipping_name;
+        if (o.shipping_phone && !mergedMap[email].phone) mergedMap[email].phone = o.shipping_phone;
+        if (o.shipping_city && !mergedMap[email].city) mergedMap[email].city = o.shipping_city;
+      }
+    });
+
+    // Add giveaway entries
+    (giveawayRes.data || []).forEach((g: any) => {
+      const email = g.email?.toLowerCase();
+      if (!email) return;
+      if (!mergedMap[email]) {
+        mergedMap[email] = {
+          id: email,
+          display_name: null,
+          email: g.email,
+          phone: null,
+          city: null,
+          preferred_payment: null,
+          created_at: g.created_at,
+          user_id: null,
+        };
+      }
+    });
+
+    // Add subscribers
+    (subscribersRes.data || []).forEach((s: any) => {
+      const email = s.email?.toLowerCase();
+      if (!email) return;
+      if (!mergedMap[email]) {
+        mergedMap[email] = {
+          id: email,
+          display_name: null,
+          email: s.email,
+          phone: null,
+          city: null,
+          preferred_payment: null,
+          created_at: s.created_at,
+          user_id: null,
+        };
+      }
+    });
+
+    const merged = Object.values(mergedMap).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    setUsers(merged);
   };
 
   const fetchSettings = async () => {
