@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_bank_cards: {
+        Row: {
+          bank_name: string | null
+          card_last4: string
+          card_name: string
+          card_type: string | null
+          created_at: string | null
+          expiry_month: number | null
+          expiry_year: number | null
+          holder_name: string | null
+          iban: string | null
+          id: string
+          is_default: boolean | null
+          user_id: string
+        }
+        Insert: {
+          bank_name?: string | null
+          card_last4?: string
+          card_name?: string
+          card_type?: string | null
+          created_at?: string | null
+          expiry_month?: number | null
+          expiry_year?: number | null
+          holder_name?: string | null
+          iban?: string | null
+          id?: string
+          is_default?: boolean | null
+          user_id: string
+        }
+        Update: {
+          bank_name?: string | null
+          card_last4?: string
+          card_name?: string
+          card_type?: string | null
+          created_at?: string | null
+          expiry_month?: number | null
+          expiry_year?: number | null
+          holder_name?: string | null
+          iban?: string | null
+          id?: string
+          is_default?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_procurement_orders: {
         Row: {
           actual_arrival: string | null
@@ -109,6 +154,65 @@ export type Database = {
             columns: ["linked_product_id"]
             isOneToOne: false
             referencedRelation: "shop_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_transactions: {
+        Row: {
+          amount: number
+          card_id: string | null
+          completed_at: string | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          fee: number | null
+          id: string
+          method: string | null
+          net_amount: number
+          reference_id: string | null
+          status: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          card_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          fee?: number | null
+          id?: string
+          method?: string | null
+          net_amount?: number
+          reference_id?: string | null
+          status?: string | null
+          type?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          card_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          fee?: number | null
+          id?: string
+          method?: string | null
+          net_amount?: number
+          reference_id?: string | null
+          status?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_transactions_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "admin_bank_cards"
             referencedColumns: ["id"]
           },
         ]
@@ -413,6 +517,51 @@ export type Database = {
         }
         Relationships: []
       }
+      payouts: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          failed_reason: string | null
+          fee: number | null
+          id: string
+          net_amount: number
+          payment_details: Json | null
+          payment_method: string | null
+          processed_at: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          failed_reason?: string | null
+          fee?: number | null
+          id?: string
+          net_amount?: number
+          payment_details?: Json | null
+          payment_method?: string | null
+          processed_at?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          failed_reason?: string | null
+          fee?: number | null
+          id?: string
+          net_amount?: number
+          payment_details?: Json | null
+          payment_method?: string | null
+          processed_at?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       product_categories: {
         Row: {
           id: string
@@ -596,6 +745,56 @@ export type Database = {
           valid_until?: string | null
         }
         Relationships: []
+      }
+      refunds: {
+        Row: {
+          amount: number
+          bank_details: Json | null
+          created_at: string | null
+          currency: string | null
+          customer_name: string
+          id: string
+          method: string | null
+          notes: string | null
+          order_id: string | null
+          reason: string | null
+          status: string | null
+        }
+        Insert: {
+          amount?: number
+          bank_details?: Json | null
+          created_at?: string | null
+          currency?: string | null
+          customer_name?: string
+          id?: string
+          method?: string | null
+          notes?: string | null
+          order_id?: string | null
+          reason?: string | null
+          status?: string | null
+        }
+        Update: {
+          amount?: number
+          bank_details?: Json | null
+          created_at?: string | null
+          currency?: string | null
+          customer_name?: string
+          id?: string
+          method?: string | null
+          notes?: string | null
+          order_id?: string | null
+          reason?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refunds_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       return_preferences: {
         Row: {
@@ -1385,6 +1584,45 @@ export type Database = {
           theme_logo_position?: string | null
           theme_primary_color?: string | null
           warranty_info?: string | null
+        }
+        Relationships: []
+      }
+      supplier_payments: {
+        Row: {
+          amount: number
+          bank_details: Json | null
+          created_at: string | null
+          currency: string | null
+          id: string
+          invoice_ref: string | null
+          method: string | null
+          notes: string | null
+          status: string | null
+          supplier_name: string
+        }
+        Insert: {
+          amount?: number
+          bank_details?: Json | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          invoice_ref?: string | null
+          method?: string | null
+          notes?: string | null
+          status?: string | null
+          supplier_name?: string
+        }
+        Update: {
+          amount?: number
+          bank_details?: Json | null
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          invoice_ref?: string | null
+          method?: string | null
+          notes?: string | null
+          status?: string | null
+          supplier_name?: string
         }
         Relationships: []
       }
