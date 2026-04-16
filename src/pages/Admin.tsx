@@ -739,7 +739,7 @@ const Admin = () => {
   };
 
   const fetchSettings = async () => {
-    const { data } = await supabase.from("store_settings").select("*").limit(1).single();
+    const { data } = await supabase.from("store_settings").select("*").limit(1).maybeSingle();
     if (data) setSettings(data as any);
   };
 
@@ -1066,9 +1066,16 @@ const Admin = () => {
         setShowProductForm(false);
         setEditProduct(null);
       } else {
-        const { data, error } = await supabase.from("shop_products").insert(payload).select().single();
+        const { data, error } = await supabase.from("shop_products").insert(payload).select("id, created_at").maybeSingle();
         if (error) {
           toast({ title: "Mentési hiba", description: error.message, variant: "destructive" });
+          return;
+        }
+        if (!data) {
+          toast({ title: "Mentési hiba", description: "A termék elmentődött, de a visszaolvasás nem sikerült. Frissítsd a listát.", variant: "destructive" });
+          await fetchProducts();
+          setShowProductForm(false);
+          setEditProduct(null);
           return;
         }
         toast({ title: "Termék hozzáadva! Most feltölthetsz képeket." });
