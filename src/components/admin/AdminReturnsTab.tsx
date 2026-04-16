@@ -9,7 +9,7 @@ import {
   Clock, CheckCircle2, XCircle, AlertTriangle, RefreshCw, DollarSign, FileText,
   Download, Search, Filter, TrendingDown, TrendingUp, Calendar, Eye, EyeOff,
   Zap, BarChart3, Shield, History, Copy, ChevronDown, ChevronUp, Plus,
-  ArrowUp, Bell, Layers, Receipt, Loader2
+  ArrowUp, Bell, Layers, Receipt, Loader2, Wifi, WifiOff, Info
 } from "lucide-react";
 
 interface OrderDetails {
@@ -56,6 +56,23 @@ interface RefundHistoryEntry {
   created_at: string;
 }
 
+interface StripePaymentInfo {
+  found: boolean;
+  payment_intent_id?: string;
+  total_paid?: number;
+  total_refunded?: number;
+  remaining?: number;
+  refunds?: Array<{
+    id: string;
+    amount: number;
+    status: string;
+    created: string | null;
+    reason: string | null;
+  }>;
+  refund_count?: number;
+  message?: string;
+}
+
 const STATUS_OPTIONS = [
   { value: "pending", label: "Függőben", icon: Clock, color: "text-yellow-500" },
   { value: "approved", label: "Jóváhagyva", icon: CheckCircle2, color: "text-emerald-500" },
@@ -96,6 +113,9 @@ const getOrderDetails = (request: ReturnRequest): OrderDetails | null => {
   return request.orders ?? null;
 };
 
+const getStripeEnv = () =>
+  import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN?.startsWith("pk_test_") ? "sandbox" : "live";
+
 const AdminReturnsTab = () => {
   const [requests, setRequests] = useState<ReturnRequest[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -117,6 +137,10 @@ const AdminReturnsTab = () => {
   const [showTimeline, setShowTimeline] = useState<string | null>(null);
   const [partialAmount, setPartialAmount] = useState<Record<string, string>>({});
   const [stripeRefundLoading, setStripeRefundLoading] = useState<Record<string, boolean>>({});
+  const [stripePaymentInfo, setStripePaymentInfo] = useState<Record<string, StripePaymentInfo>>({});
+  const [stripeInfoLoading, setStripeInfoLoading] = useState<Record<string, boolean>>({});
+  const [batchStripeLoading, setBatchStripeLoading] = useState(false);
+
   const fetchRequests = async () => {
     const { data, error } = await supabase
       .from("return_requests")
@@ -157,6 +181,26 @@ const AdminReturnsTab = () => {
   };
 
   useEffect(() => { fetchRequests(); }, []);
+
+  // ====== STRIPE: CHECK PAYMENT ======
+  const checkStripePayment = async (request: ReturnRequest) => {
+    setStripeInfoLoading(c => ({ ...c, [request.id]: true }));
+    try {
+      const { data, error } = await supabase.functions.invoke("process-stripe-refund", {
+        body: {
+          action: "check_payment",
+          orderId: request.order_id,
+          environment: getStripeEnv(),
+        },
+      });
+      if (error) throw new Error(error.message);
+      setStripePaymentInfo(c => ({ ...c, [request.id]: data as StripePaymentInfo }));
+    } catch (err: any) {
+      toast({ title: "Stripe lekérdezés hiba", description: err.message, variant: "destructive" });
+    } finally {
+      setStripeInfoLoading(c => ({ ...c, [request.id]: false }));
+    }
+  };
 
   // ====== ANALYTICS ======
   const analytics = useMemo(() => {
@@ -202,7 +246,6 @@ const AdminReturnsTab = () => {
       return daysSince > 3;
     });
 
-    // SLA: % of refunds completed within 3 days
     const completedRefunds = requests.filter(r => r.refund_status === "completed" && r.refund_processed_at);
     const withinSla = completedRefunds.filter(r => {
       const days = (new Date(r.refund_processed_at!).getTime() - new Date(r.created_at).getTime()) / (1000 * 60 * 60 * 24);
@@ -211,13 +254,14 @@ const AdminReturnsTab = () => {
     const slaRate = completedRefunds.length > 0 ? (withinSla.length / completedRefunds.length * 100) : 100;
 
     const partialRefunds = requests.filter(r => r.refund_status === "partial").length;
+    const stripeRefunds = requests.filter(r => r.refund_transaction_id?.startsWith("STRIPE-")).length;
 
     return {
       totalRefunded, thisMonthRefunded, lastMonthRefunded, refundTrend,
       avgProcessingDays, returnRate, exchangeRate, escalatedCount, approvalRate,
       topReasons, bankCardRefunds, cashRefunds, overdueRefunds,
       thisMonthCount: thisMonth.length, lastMonthCount: lastMonth.length,
-      slaRate, partialRefunds,
+      slaRate, partialRefunds, stripeRefunds,
     };
   }, [requests]);
 
@@ -318,7 +362,6 @@ const AdminReturnsTab = () => {
     const orderDetails = getOrderDetails(request);
     const orderTotal = Number(orderDetails?.total_amount ?? 0);
 
-    // Calculate total already refunded from history
     const history = historyMap[request.id] || [];
     const alreadyRefunded = history
       .filter(h => h.action_type === "partial_refund" || h.action_type === "full_refund")
@@ -332,7 +375,6 @@ const AdminReturnsTab = () => {
     const txId = `PREF-${Date.now().toString(36).toUpperCase()}-${request.id.slice(0, 4)}`;
     const cardLast4 = refundCardDrafts[request.id]?.trim() || request.bank_card_last4 || null;
 
-    // Log partial refund in history
     await logHistory(request.id, {
       action_type: "partial_refund",
       amount,
@@ -342,7 +384,6 @@ const AdminReturnsTab = () => {
       notes: `Részleges visszatérítés: ${amount.toLocaleString()} Ft`,
     });
 
-    // Update request
     const newTotal = (request.refund_amount || 0) + amount;
     const isFullyRefunded = orderTotal > 0 && newTotal >= orderTotal;
 
@@ -353,7 +394,6 @@ const AdminReturnsTab = () => {
       status: isFullyRefunded ? "completed" : request.status,
     } as any).eq("id", request.id);
 
-    // Auto-create in Financial Center
     await supabase.from("refunds").insert({
       order_id: request.order_id,
       customer_name: orderDetails?.shipping_name || orderDetails?.customer_email || "Ismeretlen",
@@ -399,7 +439,6 @@ const AdminReturnsTab = () => {
     const { error } = await supabase.from("return_requests").update(payload as any).eq("id", request.id);
     if (error) { toast({ title: "Visszatérítés feldolgozása sikertelen", description: error.message, variant: "destructive" }); return; }
 
-    // Log to history
     await logHistory(request.id, {
       action_type: "full_refund",
       amount: refundAmount,
@@ -411,7 +450,6 @@ const AdminReturnsTab = () => {
       notes: `Teljes visszatérítés: ${refundAmount.toLocaleString()} Ft — ${transactionId}`,
     });
 
-    // Auto-create refund record in Financial Center
     await supabase.from("refunds").insert({
       order_id: request.order_id,
       customer_name: orderDetails?.shipping_name || orderDetails?.customer_email || "Ismeretlen vásárló",
@@ -436,7 +474,7 @@ const AdminReturnsTab = () => {
   const processStripeRefund = async (request: ReturnRequest, isPartial = false) => {
     const orderDetails = getOrderDetails(request);
     if (!orderDetails || orderDetails.payment_method !== "card") {
-      toast({ title: "Ez a rendelés nem kártyával lett fizetve", description: "Stripe visszatérítés csak kártyás fizetésnél lehetséges.", variant: "destructive" });
+      toast({ title: "Ez a rendelés nem kártyával lett fizetve", variant: "destructive" });
       return;
     }
 
@@ -457,7 +495,7 @@ const AdminReturnsTab = () => {
           orderId: request.order_id,
           amount,
           reason: request.reason,
-          environment: import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN?.startsWith("pk_test_") ? "sandbox" : "live",
+          environment: getStripeEnv(),
         },
       });
 
@@ -475,7 +513,6 @@ const AdminReturnsTab = () => {
       const txId = `STRIPE-${stripeRefundId}`;
       const cardLast4 = refundCardDrafts[request.id]?.trim() || request.bank_card_last4 || null;
 
-      // Log to history
       await logHistory(request.id, {
         action_type: isPartial ? "partial_refund" : "full_refund",
         amount,
@@ -484,10 +521,9 @@ const AdminReturnsTab = () => {
         card_last4: cardLast4,
         previous_status: request.refund_status,
         new_status: isPartial ? "partial" : "completed",
-        notes: `Stripe visszatérítés: ${amount.toLocaleString()} Ft — Refund ID: ${stripeRefundId} — Státusz: ${data.status}`,
+        notes: `Stripe visszatérítés: ${amount.toLocaleString()} Ft — Refund ID: ${stripeRefundId} — Státusz: ${data.status} — Maradék: ${(data.remaining ?? 0).toLocaleString()} Ft`,
       });
 
-      // Update request
       if (isPartial) {
         const orderTotal = Number(orderDetails.total_amount ?? 0);
         const newTotal = (request.refund_amount || 0) + amount;
@@ -516,7 +552,6 @@ const AdminReturnsTab = () => {
         await supabase.from("orders").update({ status: "refunded" } as any).eq("id", request.order_id);
       }
 
-      // Auto-create in Financial Center
       await supabase.from("refunds").insert({
         order_id: request.order_id,
         customer_name: orderDetails.shipping_name || orderDetails.customer_email || "Ismeretlen",
@@ -525,14 +560,19 @@ const AdminReturnsTab = () => {
         reason: `${isPartial ? "Részleges Stripe: " : "Stripe: "}${request.reason}`,
         method: "stripe",
         status: "completed",
-        notes: `Stripe automatikus visszatérítés #${request.order_id.slice(0, 8).toUpperCase()} — ${txId}`,
-        bank_details: { stripe_refund_id: stripeRefundId, stripe_status: data.status },
+        notes: `Stripe visszatérítés #${request.order_id.slice(0, 8).toUpperCase()} — ${txId}`,
+        bank_details: { stripe_refund_id: stripeRefundId, stripe_status: data.status, remaining: data.remaining },
       } as any);
 
       toast({
         title: `💳 Stripe visszatérítés sikeres!`,
-        description: `${amount.toLocaleString()} Ft visszautalva a vásárló kártyájára — Refund: ${stripeRefundId.slice(0, 12)}...`,
+        description: `${amount.toLocaleString()} Ft visszautalva — Maradék: ${(data.remaining ?? 0).toLocaleString()} Ft`,
       });
+
+      // Refresh Stripe info if loaded
+      if (stripePaymentInfo[request.id]) {
+        checkStripePayment(request);
+      }
 
       if (isPartial) setPartialAmount(c => ({ ...c, [request.id]: "" }));
       fetchRequests();
@@ -541,6 +581,93 @@ const AdminReturnsTab = () => {
       toast({ title: "Stripe visszatérítés hiba", description: err.message, variant: "destructive" });
     } finally {
       setStripeRefundLoading(c => ({ ...c, [request.id]: false }));
+    }
+  };
+
+  // ====== BATCH STRIPE REFUND ======
+  const batchStripeRefund = async () => {
+    const ids = Array.from(selectedIds);
+    const eligible = requests.filter(r => {
+      if (!ids.includes(r.id)) return false;
+      const od = getOrderDetails(r);
+      return od?.payment_method === "card" && r.refund_status !== "completed" && r.refund_amount > 0 && r.status !== "rejected";
+    });
+
+    if (eligible.length === 0) {
+      toast({ title: "Nincs Stripe-pal visszatéríthető kérelem a kiválasztottak között", variant: "destructive" });
+      return;
+    }
+
+    setBatchStripeLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("process-stripe-refund", {
+        body: {
+          action: "batch_refund",
+          orders: eligible.map(r => ({
+            orderId: r.order_id,
+            amount: r.refund_amount,
+            reason: r.reason,
+          })),
+          environment: getStripeEnv(),
+        },
+      });
+
+      if (error) throw new Error(error.message);
+
+      // Update successful ones in DB
+      for (const result of (data?.results || [])) {
+        if (!result.success) continue;
+        const req = eligible.find(r => r.order_id === result.orderId);
+        if (!req) continue;
+
+        const txId = `STRIPE-${result.refund_id}`;
+        const od = getOrderDetails(req);
+
+        await supabase.from("return_requests").update({
+          refund_status: "completed",
+          refund_processed_at: new Date().toISOString(),
+          refund_transaction_id: txId,
+          status: "completed",
+        } as any).eq("id", req.id);
+
+        await logHistory(req.id, {
+          action_type: "full_refund",
+          amount: result.amount,
+          method: "stripe",
+          transaction_id: txId,
+          notes: `Tömeges Stripe visszatérítés: ${result.amount.toLocaleString()} Ft`,
+        });
+
+        await supabase.from("refunds").insert({
+          order_id: req.order_id,
+          customer_name: od?.shipping_name || od?.customer_email || "Ismeretlen",
+          amount: result.amount,
+          currency: "HUF",
+          reason: `Stripe batch: ${req.reason}`,
+          method: "stripe",
+          status: "completed",
+          notes: `Tömeges Stripe visszatérítés — ${txId}`,
+          bank_details: { stripe_refund_id: result.refund_id },
+        } as any);
+
+        await supabase.from("orders").update({ status: "refunded" } as any).eq("id", req.order_id);
+      }
+
+      const succeeded = data?.succeeded || 0;
+      const failed = data?.failed || 0;
+      const totalAmount = (data?.results || []).filter((r: any) => r.success).reduce((s: number, r: any) => s + r.amount, 0);
+
+      toast({
+        title: `💳 Tömeges Stripe visszatérítés: ${succeeded}/${eligible.length}`,
+        description: `Sikeres: ${succeeded} (${totalAmount.toLocaleString()} Ft)${failed > 0 ? ` • Sikertelen: ${failed}` : ""}`,
+      });
+
+      setSelectedIds(new Set());
+      fetchRequests();
+    } catch (err: any) {
+      toast({ title: "Tömeges Stripe visszatérítés hiba", description: err.message, variant: "destructive" });
+    } finally {
+      setBatchStripeLoading(false);
     }
   };
 
@@ -594,7 +721,7 @@ const AdminReturnsTab = () => {
 
       await supabase.from("orders").update({ status: "refunded" } as any).eq("id", req.order_id);
     }
-    toast({ title: `💰 ${eligible.length} visszatérítés feldolgozva!`, description: `Összesen: ${eligible.reduce((s, r) => s + r.refund_amount, 0).toLocaleString()} Ft — Pénzügyi Központba rögzítve` });
+    toast({ title: `💰 ${eligible.length} visszatérítés feldolgozva!`, description: `Összesen: ${eligible.reduce((s, r) => s + r.refund_amount, 0).toLocaleString()} Ft` });
     setSelectedIds(new Set());
     fetchRequests();
   };
@@ -681,6 +808,13 @@ const AdminReturnsTab = () => {
   const pendingRefunds = requests.filter(r => r.refund_status === "processing" || (r.refund_status === "pending" && r.status === "approved"));
   const allSelected = filtered.length > 0 && filtered.every(r => selectedIds.has(r.id));
 
+  const cardPaymentSelected = Array.from(selectedIds).some(id => {
+    const r = requests.find(rr => rr.id === id);
+    if (!r) return false;
+    const od = getOrderDetails(r);
+    return od?.payment_method === "card";
+  });
+
   const toggleSelectAll = () => {
     if (allSelected) { setSelectedIds(new Set()); }
     else { setSelectedIds(new Set(filtered.map(r => r.id))); }
@@ -740,8 +874,8 @@ const AdminReturnsTab = () => {
           <p className="text-lg font-bold text-green-500">{totalRefunded.toLocaleString()} Ft</p>
         </div>
         <div className="border border-border bg-card p-3">
-          <span className="text-[10px] font-medium uppercase tracking-widest text-purple-400">Részleges</span>
-          <p className="text-xl font-bold text-purple-400">{analytics.partialRefunds}</p>
+          <span className="text-[10px] font-medium uppercase tracking-widest text-blue-400">💳 Stripe</span>
+          <p className="text-xl font-bold text-blue-400">{analytics.stripeRefunds}</p>
         </div>
         <div className="border border-border bg-card p-3">
           <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">SLA ≤3nap</span>
@@ -781,7 +915,7 @@ const AdminReturnsTab = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="border border-border bg-card p-3">
               <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 block">Visszatérítési módok</span>
-              <div className="flex gap-4">
+              <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
                   <CreditCard className="w-4 h-4 text-blue-400" />
                   <span className="text-sm font-bold">{analytics.bankCardRefunds} bankkártyás</span>
@@ -789,6 +923,10 @@ const AdminReturnsTab = () => {
                 <div className="flex items-center gap-2">
                   <Banknote className="w-4 h-4 text-green-500" />
                   <span className="text-sm font-bold">{analytics.cashRefunds} készpénzes</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Wifi className="w-4 h-4 text-blue-400" />
+                  <span className="text-sm font-bold">{analytics.stripeRefunds} Stripe auto</span>
                 </div>
               </div>
             </div>
@@ -897,6 +1035,17 @@ const AdminReturnsTab = () => {
           <Button size="sm" className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white" onClick={batchProcessRefund}>
             <Zap className="w-3 h-3 mr-1" /> Tömeges visszatérítés
           </Button>
+          {cardPaymentSelected && (
+            <Button
+              size="sm"
+              className="h-7 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={batchStripeRefund}
+              disabled={batchStripeLoading}
+            >
+              {batchStripeLoading ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <CreditCard className="w-3 h-3 mr-1" />}
+              💳 Tömeges Stripe visszatérítés
+            </Button>
+          )}
           <Button size="sm" variant="outline" className="h-7 text-xs border-orange-500/30 text-orange-500 hover:bg-orange-500/10" onClick={batchEscalate}>
             <ArrowUp className="w-3 h-3 mr-1" /> Tömeges eszkaláció
           </Button>
@@ -930,6 +1079,8 @@ const AdminReturnsTab = () => {
           const history = historyMap[request.id] || [];
           const isTimelineOpen = showTimeline === request.id;
           const totalPartialRefunded = history.filter(h => h.action_type === "partial_refund").reduce((s, h) => s + (h.amount || 0), 0);
+          const isCardPayment = orderDetails?.payment_method === "card";
+          const stripeInfo = stripePaymentInfo[request.id];
 
           return (
             <div key={request.id} className={`space-y-3 border p-4 transition-colors ${isEscalated ? "border-orange-500/40 bg-orange-500/5" : isOverdue ? "border-destructive/40 bg-destructive/5" : isSelected ? "border-accent/40 bg-accent/5" : "border-border bg-card"}`}>
@@ -957,6 +1108,11 @@ const AdminReturnsTab = () => {
                         <span className={`rounded-sm border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${refundStatusInfo.color}`}>
                           <RefundIcon className="h-3 w-3" />
                           {refundStatusInfo.label}
+                        </span>
+                      )}
+                      {isCardPayment && (
+                        <span className="rounded-sm border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1">
+                          <CreditCard className="h-3 w-3" /> STRIPE
                         </span>
                       )}
                       {isEscalated && (
@@ -1009,14 +1165,17 @@ const AdminReturnsTab = () => {
                     <div className="relative pl-4 border-l-2 border-accent/20 space-y-3">
                       {history.map((h) => (
                         <div key={h.id} className="relative">
-                          <div className="absolute -left-[21px] w-3 h-3 rounded-full bg-accent border-2 border-background" />
+                          <div className={`absolute -left-[21px] w-3 h-3 rounded-full border-2 border-background ${
+                            h.method === "stripe" ? "bg-blue-400" : "bg-accent"
+                          }`} />
                           <div className="text-xs space-y-0.5">
                             <div className="flex items-center gap-2">
                               <span className="font-bold text-foreground">{ACTION_LABELS[h.action_type] || h.action_type}</span>
                               {h.amount > 0 && <span className="font-bold text-green-500">{h.amount.toLocaleString()} Ft</span>}
+                              {h.method === "stripe" && <span className="text-[9px] font-bold text-blue-400 bg-blue-400/10 border border-blue-400/20 px-1 py-0.5 rounded">STRIPE</span>}
                             </div>
                             {h.notes && <p className="text-muted-foreground">{h.notes}</p>}
-                            {h.transaction_id && <p className="text-muted-foreground font-mono">TX: {h.transaction_id}</p>}
+                            {h.transaction_id && <p className="text-muted-foreground font-mono text-[10px]">TX: {h.transaction_id}</p>}
                             {h.previous_status && h.new_status && (
                               <p className="text-muted-foreground">{h.previous_status} → {h.new_status}</p>
                             )}
@@ -1052,6 +1211,78 @@ const AdminReturnsTab = () => {
                       {request.preferred_refund_method === "bank_card" ? "💳 Bankkártyára visszatérítés" : "💵 Készpénz visszatérítés"}
                     </p>
                   </div>
+                </div>
+              )}
+
+              {/* ====== STRIPE PAYMENT INFO PANEL ====== */}
+              {isCardPayment && (
+                <div className="border-2 border-blue-500/20 bg-blue-500/5 p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1">
+                      <CreditCard className="h-3 w-3" /> STRIPE FIZETÉS INFORMÁCIÓK
+                    </span>
+                    <Button
+                      size="sm" variant="outline"
+                      className="h-6 text-[10px] border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                      onClick={() => checkStripePayment(request)}
+                      disabled={!!stripeInfoLoading[request.id]}
+                    >
+                      {stripeInfoLoading[request.id] ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3 mr-1" />}
+                      {stripeInfo ? "Frissítés" : "Lekérdezés"}
+                    </Button>
+                  </div>
+                  {stripeInfo && (
+                    stripeInfo.found ? (
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                          <div className="bg-card border border-border p-2">
+                            <span className="text-[9px] font-bold uppercase text-muted-foreground block">Fizetve</span>
+                            <span className="text-sm font-bold text-foreground">{(stripeInfo.total_paid || 0).toLocaleString()} Ft</span>
+                          </div>
+                          <div className="bg-card border border-border p-2">
+                            <span className="text-[9px] font-bold uppercase text-muted-foreground block">Visszatérítve</span>
+                            <span className="text-sm font-bold text-green-500">{(stripeInfo.total_refunded || 0).toLocaleString()} Ft</span>
+                          </div>
+                          <div className="bg-card border border-border p-2">
+                            <span className="text-[9px] font-bold uppercase text-muted-foreground block">Maradék</span>
+                            <span className={`text-sm font-bold ${(stripeInfo.remaining || 0) > 0 ? "text-yellow-500" : "text-green-500"}`}>{(stripeInfo.remaining || 0).toLocaleString()} Ft</span>
+                          </div>
+                          <div className="bg-card border border-border p-2">
+                            <span className="text-[9px] font-bold uppercase text-muted-foreground block">Refund db</span>
+                            <span className="text-sm font-bold text-foreground">{stripeInfo.refund_count || 0}</span>
+                          </div>
+                        </div>
+                        {/* Progress bar */}
+                        {(stripeInfo.total_paid || 0) > 0 && (
+                          <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-blue-400 transition-all"
+                              style={{ width: `${Math.min(((stripeInfo.total_refunded || 0) / (stripeInfo.total_paid || 1)) * 100, 100)}%` }}
+                            />
+                          </div>
+                        )}
+                        <p className="text-[9px] font-mono text-muted-foreground">PI: {stripeInfo.payment_intent_id}</p>
+                        {/* Existing Stripe refunds list */}
+                        {(stripeInfo.refunds || []).length > 0 && (
+                          <div className="space-y-1">
+                            <span className="text-[9px] font-bold uppercase text-muted-foreground">Korábbi Stripe visszatérítések:</span>
+                            {stripeInfo.refunds!.map(r => (
+                              <div key={r.id} className="flex items-center justify-between text-[10px] bg-card border border-border px-2 py-1">
+                                <span className="font-mono text-muted-foreground">{r.id.slice(0, 16)}...</span>
+                                <span className="font-bold text-green-500">{r.amount.toLocaleString()} Ft</span>
+                                <span className={`font-bold ${r.status === "succeeded" ? "text-green-500" : r.status === "pending" ? "text-yellow-500" : "text-destructive"}`}>{r.status}</span>
+                                {r.created && <span className="text-muted-foreground">{new Date(r.created).toLocaleDateString("hu-HU")}</span>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <WifiOff className="w-3 h-3" /> {stripeInfo.message || "Stripe fizetés nem található"}
+                      </p>
+                    )
+                  )}
                 </div>
               )}
 
@@ -1171,13 +1402,13 @@ const AdminReturnsTab = () => {
                       <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1">
                         <Layers className="h-3 w-3" /> Részleges visszatérítés
                       </span>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
                         <Input
                           type="number" min={1}
                           value={partialAmount[request.id] || ""}
                           onChange={e => setPartialAmount(c => ({ ...c, [request.id]: e.target.value }))}
                           placeholder="Összeg (Ft)"
-                          className="h-8 text-xs flex-1"
+                          className="h-8 text-xs flex-1 min-w-[100px]"
                           disabled={isRejected || request.refund_status === "completed"}
                         />
                         <Button
@@ -1186,9 +1417,9 @@ const AdminReturnsTab = () => {
                           onClick={() => processPartialRefund(request)}
                           disabled={isRejected || request.refund_status === "completed"}
                         >
-                          <Plus className="mr-1 h-3 w-3" /> Részleges visszatérítés
+                          <Plus className="mr-1 h-3 w-3" /> Részleges
                         </Button>
-                        {orderDetails?.payment_method === "card" && (
+                        {isCardPayment && (
                           <Button
                             size="sm"
                             className="rounded-none text-xs bg-blue-600 hover:bg-blue-700 text-white"
@@ -1206,13 +1437,16 @@ const AdminReturnsTab = () => {
                     </div>
 
                     {/* Stripe refund section */}
-                    {orderDetails?.payment_method === "card" && (
+                    {isCardPayment && (
                       <div className="border-2 border-blue-500/30 bg-blue-500/5 p-3 space-y-2">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1">
                           <CreditCard className="h-3 w-3" /> 💳 STRIPE AUTOMATIKUS VISSZATÉRÍTÉS
                         </span>
                         <p className="text-xs text-muted-foreground">
-                          Ez a rendelés kártyával lett fizetve. A Stripe visszatérítés automatikusan visszautalja a pénzt a vásárló kártyájára.
+                          A Stripe visszatérítés automatikusan visszautalja a pénzt a vásárló kártyájára.
+                          {stripeInfo?.remaining !== undefined && stripeInfo.remaining > 0 && (
+                            <span className="ml-1 font-bold text-blue-400">Elérhető keret: {stripeInfo.remaining.toLocaleString()} Ft</span>
+                          )}
                         </p>
                         <Button
                           size="sm"
@@ -1249,7 +1483,14 @@ const AdminReturnsTab = () => {
                       <div className="bg-green-500/10 border border-green-500/20 p-3 text-xs space-y-1">
                         <p className="font-bold text-green-500">✅ Visszatérítés teljesítve</p>
                         <p className="text-muted-foreground">Dátum: {new Date(request.refund_processed_at).toLocaleString("hu-HU")}</p>
-                        {request.refund_transaction_id && <p className="text-muted-foreground">Tranzakció: <span className="font-mono">{request.refund_transaction_id}</span></p>}
+                        {request.refund_transaction_id && (
+                          <p className="text-muted-foreground">
+                            Tranzakció: <span className="font-mono">{request.refund_transaction_id}</span>
+                            {request.refund_transaction_id.startsWith("STRIPE-") && (
+                              <span className="ml-1 text-blue-400 font-bold">(Stripe auto)</span>
+                            )}
+                          </p>
+                        )}
                         {request.bank_card_last4 && <p className="text-muted-foreground">Kártya: •••• {request.bank_card_last4}</p>}
                         {request.refund_notes && <p className="text-muted-foreground">Megjegyzés: {request.refund_notes}</p>}
                         <p className="text-muted-foreground">Feldolgozási idő: {Math.ceil((new Date(request.refund_processed_at).getTime() - new Date(request.created_at).getTime()) / (1000 * 60 * 60 * 24))} nap</p>
