@@ -1020,7 +1020,7 @@ const Admin = () => {
 
     const name = editProduct.name?.trim() || "";
     const price = Number(editProduct.price);
-    const originalPrice = editProduct.original_price === null || editProduct.original_price === undefined || String(editProduct.original_price) === ""
+    const originalPrice = editProduct.original_price === null || editProduct.original_price === undefined || String(editProduct.original_price).trim() === ""
       ? null
       : Number(editProduct.original_price);
     const stock = Number(editProduct.stock ?? 0);
@@ -1567,15 +1567,15 @@ const Admin = () => {
                   </div>
                   <div>
                     <Label className="text-xs uppercase tracking-wider text-muted-foreground">Ár (Ft) *</Label>
-                    <Input type="number" value={editProduct.price || ""} onChange={e => setEditProduct({ ...editProduct, price: Number(e.target.value) })} className="mt-1" />
+                    <Input type="number" value={editProduct.price ?? ""} onChange={e => setEditProduct({ ...editProduct, price: e.target.value === "" ? 0 : Number(e.target.value) })} className="mt-1" />
                   </div>
                   <div>
                     <Label className="text-xs uppercase tracking-wider text-muted-foreground">Eredeti ár (Ft)</Label>
-                    <Input type="number" value={editProduct.original_price || ""} onChange={e => setEditProduct({ ...editProduct, original_price: Number(e.target.value) })} className="mt-1" />
+                    <Input type="number" value={editProduct.original_price ?? ""} onChange={e => setEditProduct({ ...editProduct, original_price: e.target.value === "" ? null : Number(e.target.value) })} className="mt-1" />
                   </div>
                   <div>
                     <Label className="text-xs uppercase tracking-wider text-muted-foreground">Készlet</Label>
-                    <Input type="number" value={editProduct.stock || 0} onChange={e => setEditProduct({ ...editProduct, stock: Number(e.target.value) })} className="mt-1" />
+                    <Input type="number" value={editProduct.stock ?? 0} onChange={e => setEditProduct({ ...editProduct, stock: e.target.value === "" ? 0 : Number(e.target.value) })} className="mt-1" />
                   </div>
                   <div>
                     <Label className="text-xs uppercase tracking-wider text-muted-foreground">Méretek (vesszővel)</Label>

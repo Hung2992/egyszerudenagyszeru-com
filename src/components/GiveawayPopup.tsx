@@ -1,25 +1,32 @@
 import { useState, useEffect } from "react";
 import { Gift, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const GiveawayPopup = () => {
   const [visible, setVisible] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith("/admin");
 
   useEffect(() => {
+    if (isAdminRoute) {
+      setVisible(false);
+      return;
+    }
+
     const dismissed = sessionStorage.getItem("giveaway_popup_dismissed");
     if (dismissed) return;
     const timer = setTimeout(() => setVisible(true), 5000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [isAdminRoute]);
 
   const handleDismiss = () => {
     setVisible(false);
     sessionStorage.setItem("giveaway_popup_dismissed", "1");
   };
 
-  if (!visible) return null;
+  if (!visible || isAdminRoute) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">

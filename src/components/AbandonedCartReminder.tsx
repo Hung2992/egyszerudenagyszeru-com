@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { ShoppingBag, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,26 +9,28 @@ const REMINDER_DELAY = 30000; // 30 seconds
 
 const AbandonedCartReminder = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { items, totalPrice, setIsCartOpen } = useCart();
   const [show, setShow] = useState(false);
+  const isAdminRoute = location.pathname.startsWith("/admin");
 
   useEffect(() => {
-    if (items.length === 0) { setShow(false); return; }
+    if (items.length === 0 || isAdminRoute) { setShow(false); return; }
 
     const dismissed = sessionStorage.getItem(REMINDER_KEY);
     if (dismissed) return;
 
     const timer = setTimeout(() => {
       // Only show if user is NOT on checkout page
-      if (!window.location.pathname.includes("checkout")) {
+      if (!window.location.pathname.includes("checkout") && !window.location.pathname.startsWith("/admin")) {
         setShow(true);
       }
     }, REMINDER_DELAY);
 
     return () => clearTimeout(timer);
-  }, [items.length]);
+  }, [isAdminRoute, items.length]);
 
-  if (!show || items.length === 0) return null;
+  if (!show || items.length === 0 || isAdminRoute) return null;
 
   const dismiss = () => {
     setShow(false);
