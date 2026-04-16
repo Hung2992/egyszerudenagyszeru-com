@@ -31,69 +31,128 @@ const ProductImageGallery = ({ productId, images, onImagesChange }: ProductImage
     if (!files || files.length === 0) return;
     setUploading(true);
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const ext = file.name.split(".").pop();
-      const fileName = `${productId}/${Date.now()}-${i}.${ext}`;
+    let uploadedCount = 0;
 
-      const { error: uploadError } = await supabase.storage
-        .from("product-images")
-        .upload(fileName, file);
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
 
-      if (uploadError) {
-        toast({ title: "Feltöltési hiba", description: uploadError.message, variant: "destructive" });
-        continue;
+        if (!file.type.startsWith("image/")) {
+          toast({ title: `A(z) ${file.name} nem képfájl`, variant: "destructive" });
+          continue;
+        }
+
+        const ext = file.name.split(".").pop() || "jpg";
+        const fileName = `${productId}/${Date.now()}-${i}.${ext}`;
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("product-images")
+          .upload(fileName, file);
+
+        if (uploadError) {
+          toast({ title: "Feltöltési hiba", description: uploadError.message, variant: "destructive" });
+          continue;
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from("product-images")
+          .getPublicUrl(uploadData?.path || fileName);
+
+        const publicUrl = publicUrlData.publicUrl;
+        const isPrimary = images.length === 0 && i === 0;
+
+        const { error: insertError } = await supabase.from("product_images").insert({
+          product_id: productId,
+          image_url: publicUrl,
+          sort_order: images.length + i,
+          is_primary: isPrimary,
+        } as any);
+
+        if (insertError) {
+          await supabase.storage.from("product-images").remove([uploadData?.path || fileName]);
+          toast({ title: "Mentési hiba", description: insertError.message, variant: "destructive" });
+          continue;
+        }
+
+        if (isPrimary) {
+          const { error: productUpdateError } = await supabase.from("shop_products").update({ image_url: publicUrl }).eq("id", productId);
+          if (productUpdateError) {
+            toast({ title: "Főkép mentési hiba", description: productUpdateError.message, variant: "destructive" });
+            continue;
+          }
+        }
+
+        uploadedCount += 1;
       }
-
-      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/product-images/${fileName}`;
-      const isPrimary = images.length === 0 && i === 0;
-
-      await supabase.from("product_images").insert({
-        product_id: productId,
-        image_url: publicUrl,
-        sort_order: images.length + i,
-        is_primary: isPrimary,
-      } as any);
-
-      // Also set as main image_url on product if primary
-      if (isPrimary) {
-        await supabase.from("shop_products").update({ image_url: publicUrl }).eq("id", productId);
-      }
+    } finally {
+      setUploading(false);
+      onImagesChange();
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
 
-    toast({ title: `${files.length} kép feltöltve!` });
-    setUploading(false);
-    onImagesChange();
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (uploadedCount > 0) {
+      toast({ title: `${uploadedCount} kép feltöltve!` });
+    }
   };
 
   const setPrimary = async (img: ProductImage) => {
-    // Unset all primary
-    await supabase.from("product_images").update({ is_primary: false } as any).eq("product_id", productId);
-    // Set this one
-    await supabase.from("product_images").update({ is_primary: true } as any).eq("id", img.id);
-    // Update main product image
-    await supabase.from("shop_products").update({ image_url: img.image_url }).eq("id", productId);
+    const { error: clearPrimaryError } = await supabase.from("product_images").update({ is_primary: false } as any).eq("product_id", productId);
+    if (clearPrimaryError) {
+      toast({ title: "Hiba", description: clearPrimaryError.message, variant: "destructive" });
+      return;
+    }
+
+    const { error: setPrimaryError } = await supabase.from("product_images").update({ is_primary: true } as any).eq("id", img.id);
+    if (setPrimaryError) {
+      toast({ title: "Hiba", description: setPrimaryError.message, variant: "destructive" });
+      return;
+    }
+
+    const { error: updateProductError } = await supabase.from("shop_products").update({ image_url: img.image_url }).eq("id", productId);
+    if (updateProductError) {
+      toast({ title: "Hiba", description: updateProductError.message, variant: "destructive" });
+      return;
+    }
+
     toast({ title: "Főkép beállítva!" });
     onImagesChange();
   };
 
   const deleteImage = async (img: ProductImage) => {
-    // Extract path from URL
     const path = img.image_url.split("/product-images/")[1];
     if (path) {
-      await supabase.storage.from("product-images").remove([path]);
+      const { error: storageDeleteError } = await supabase.storage.from("product-images").remove([path]);
+      if (storageDeleteError) {
+        toast({ title: "Kép törlési hiba", description: storageDeleteError.message, variant: "destructive" });
+        return;
+      }
     }
-    await supabase.from("product_images").delete().eq("id", img.id);
+    const { error: imageDeleteError } = await supabase.from("product_images").delete().eq("id", img.id);
+    if (imageDeleteError) {
+      toast({ title: "Kép törlési hiba", description: imageDeleteError.message, variant: "destructive" });
+      return;
+    }
     
-    // If was primary, set next as primary
     if (img.is_primary) {
       const remaining = images.filter(i => i.id !== img.id);
       if (remaining.length > 0) {
-        await supabase.from("product_images").update({ is_primary: true } as any).eq("id", remaining[0].id);
-        await supabase.from("shop_products").update({ image_url: remaining[0].image_url }).eq("id", productId);
+        const { error: nextPrimaryError } = await supabase.from("product_images").update({ is_primary: true } as any).eq("id", remaining[0].id);
+        if (nextPrimaryError) {
+          toast({ title: "Hiba", description: nextPrimaryError.message, variant: "destructive" });
+          return;
+        }
+
+        const { error: productUpdateError } = await supabase.from("shop_products").update({ image_url: remaining[0].image_url }).eq("id", productId);
+        if (productUpdateError) {
+          toast({ title: "Hiba", description: productUpdateError.message, variant: "destructive" });
+          return;
+        }
       } else {
-        await supabase.from("shop_products").update({ image_url: null }).eq("id", productId);
+        const { error: clearProductImageError } = await supabase.from("shop_products").update({ image_url: null }).eq("id", productId);
+        if (clearProductImageError) {
+          toast({ title: "Hiba", description: clearProductImageError.message, variant: "destructive" });
+          return;
+        }
       }
     }
     
