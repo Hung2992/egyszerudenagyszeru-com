@@ -1056,20 +1056,25 @@ const Admin = () => {
     setSavingProduct(true);
 
     try {
-      const query = editProduct.id
-        ? supabase.from("shop_products").update(payload).eq("id", editProduct.id)
-        : supabase.from("shop_products").insert(payload);
-
-      const { error } = await query;
-
-      if (error) {
-        toast({ title: "Mentési hiba", description: error.message, variant: "destructive" });
-        return;
+      if (editProduct.id) {
+        const { error } = await supabase.from("shop_products").update(payload).eq("id", editProduct.id);
+        if (error) {
+          toast({ title: "Mentési hiba", description: error.message, variant: "destructive" });
+          return;
+        }
+        toast({ title: "Termék frissítve!" });
+        setShowProductForm(false);
+        setEditProduct(null);
+      } else {
+        const { data, error } = await supabase.from("shop_products").insert(payload).select().single();
+        if (error) {
+          toast({ title: "Mentési hiba", description: error.message, variant: "destructive" });
+          return;
+        }
+        toast({ title: "Termék hozzáadva! Most feltölthetsz képeket." });
+        // Keep form open with the new product ID so images can be uploaded
+        setEditProduct({ ...payload, id: data.id, created_at: data.created_at } as any);
       }
-
-      toast({ title: editProduct.id ? "Termék frissítve!" : "Termék hozzáadva!" });
-      setShowProductForm(false);
-      setEditProduct(null);
       fetchProducts();
     } catch (error) {
       toast({
