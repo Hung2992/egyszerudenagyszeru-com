@@ -432,6 +432,118 @@ const AdminReturnsTab = () => {
     fetchRequests();
   };
 
+  // ====== STRIPE REFUND ======
+  const processStripeRefund = async (request: ReturnRequest, isPartial = false) => {
+    const orderDetails = getOrderDetails(request);
+    if (!orderDetails || orderDetails.payment_method !== "card") {
+      toast({ title: "Ez a rendelés nem kártyával lett fizetve", description: "Stripe visszatérítés csak kártyás fizetésnél lehetséges.", variant: "destructive" });
+      return;
+    }
+
+    const amount = isPartial
+      ? Number(partialAmount[request.id] || 0)
+      : Number(refundDrafts[request.id] ?? request.refund_amount ?? 0);
+
+    if (amount <= 0) {
+      toast({ title: "Add meg a visszatérítendő összeget", variant: "destructive" });
+      return;
+    }
+
+    setStripeRefundLoading(c => ({ ...c, [request.id]: true }));
+
+    try {
+      const { data, error } = await supabase.functions.invoke("process-stripe-refund", {
+        body: {
+          orderId: request.order_id,
+          amount,
+          reason: request.reason,
+          environment: import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN?.startsWith("pk_test_") ? "sandbox" : "live",
+        },
+      });
+
+      if (error) throw new Error(error.message);
+      if (data?.error) {
+        if (data.stripe_not_found) {
+          toast({ title: "Stripe fizetés nem található", description: data.error, variant: "destructive" });
+        } else {
+          toast({ title: "Stripe visszatérítés sikertelen", description: data.error, variant: "destructive" });
+        }
+        return;
+      }
+
+      const stripeRefundId = data.refund_id;
+      const txId = `STRIPE-${stripeRefundId}`;
+      const cardLast4 = refundCardDrafts[request.id]?.trim() || request.bank_card_last4 || null;
+
+      // Log to history
+      await logHistory(request.id, {
+        action_type: isPartial ? "partial_refund" : "full_refund",
+        amount,
+        method: "stripe",
+        transaction_id: txId,
+        card_last4: cardLast4,
+        previous_status: request.refund_status,
+        new_status: isPartial ? "partial" : "completed",
+        notes: `Stripe visszatérítés: ${amount.toLocaleString()} Ft — Refund ID: ${stripeRefundId} — Státusz: ${data.status}`,
+      });
+
+      // Update request
+      if (isPartial) {
+        const orderTotal = Number(orderDetails.total_amount ?? 0);
+        const newTotal = (request.refund_amount || 0) + amount;
+        const isFullyRefunded = orderTotal > 0 && newTotal >= orderTotal;
+
+        await supabase.from("return_requests").update({
+          refund_amount: newTotal,
+          refund_status: isFullyRefunded ? "completed" : "partial",
+          refund_processed_at: isFullyRefunded ? new Date().toISOString() : request.refund_processed_at,
+          refund_transaction_id: txId,
+          status: isFullyRefunded ? "completed" : request.status,
+        } as any).eq("id", request.id);
+
+        if (isFullyRefunded) {
+          await supabase.from("orders").update({ status: "refunded" } as any).eq("id", request.order_id);
+        }
+      } else {
+        await supabase.from("return_requests").update({
+          refund_status: "completed",
+          refund_processed_at: new Date().toISOString(),
+          refund_amount: amount,
+          refund_transaction_id: txId,
+          status: "completed",
+        } as any).eq("id", request.id);
+
+        await supabase.from("orders").update({ status: "refunded" } as any).eq("id", request.order_id);
+      }
+
+      // Auto-create in Financial Center
+      await supabase.from("refunds").insert({
+        order_id: request.order_id,
+        customer_name: orderDetails.shipping_name || orderDetails.customer_email || "Ismeretlen",
+        amount,
+        currency: "HUF",
+        reason: `${isPartial ? "Részleges Stripe: " : "Stripe: "}${request.reason}`,
+        method: "stripe",
+        status: "completed",
+        notes: `Stripe automatikus visszatérítés #${request.order_id.slice(0, 8).toUpperCase()} — ${txId}`,
+        bank_details: { stripe_refund_id: stripeRefundId, stripe_status: data.status },
+      } as any);
+
+      toast({
+        title: `💳 Stripe visszatérítés sikeres!`,
+        description: `${amount.toLocaleString()} Ft visszautalva a vásárló kártyájára — Refund: ${stripeRefundId.slice(0, 12)}...`,
+      });
+
+      if (isPartial) setPartialAmount(c => ({ ...c, [request.id]: "" }));
+      fetchRequests();
+      fetchHistory(request.id);
+    } catch (err: any) {
+      toast({ title: "Stripe visszatérítés hiba", description: err.message, variant: "destructive" });
+    } finally {
+      setStripeRefundLoading(c => ({ ...c, [request.id]: false }));
+    }
+  };
+
   // ====== BATCH OPERATIONS ======
   const batchApprove = async () => {
     const ids = Array.from(selectedIds);
