@@ -9,7 +9,7 @@ import {
   Clock, CheckCircle2, XCircle, AlertTriangle, RefreshCw, DollarSign, FileText,
   Download, Search, Filter, TrendingDown, TrendingUp, Calendar, Eye, EyeOff,
   Zap, BarChart3, Shield, History, Copy, ChevronDown, ChevronUp, Plus,
-  ArrowUp, Bell, Layers, Receipt
+  ArrowUp, Bell, Layers, Receipt, Loader2
 } from "lucide-react";
 
 interface OrderDetails {
