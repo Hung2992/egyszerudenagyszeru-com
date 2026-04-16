@@ -1188,11 +1188,46 @@ const AdminReturnsTab = () => {
                         >
                           <Plus className="mr-1 h-3 w-3" /> Részleges visszatérítés
                         </Button>
+                        {orderDetails?.payment_method === "card" && (
+                          <Button
+                            size="sm"
+                            className="rounded-none text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                            onClick={() => processStripeRefund(request, true)}
+                            disabled={isRejected || request.refund_status === "completed" || !!stripeRefundLoading[request.id]}
+                          >
+                            {stripeRefundLoading[request.id] ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <CreditCard className="mr-1 h-3 w-3" />}
+                            Stripe részleges
+                          </Button>
+                        )}
                       </div>
                       {totalPartialRefunded > 0 && (
                         <p className="text-xs text-purple-400">Eddigi részleges összeg: {totalPartialRefunded.toLocaleString()} Ft ({history.filter(h => h.action_type === "partial_refund").length} tranzakció)</p>
                       )}
                     </div>
+
+                    {/* Stripe refund section */}
+                    {orderDetails?.payment_method === "card" && (
+                      <div className="border-2 border-blue-500/30 bg-blue-500/5 p-3 space-y-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1">
+                          <CreditCard className="h-3 w-3" /> 💳 STRIPE AUTOMATIKUS VISSZATÉRÍTÉS
+                        </span>
+                        <p className="text-xs text-muted-foreground">
+                          Ez a rendelés kártyával lett fizetve. A Stripe visszatérítés automatikusan visszautalja a pénzt a vásárló kártyájára.
+                        </p>
+                        <Button
+                          size="sm"
+                          className="rounded-none text-xs bg-blue-600 hover:bg-blue-700 text-white w-full"
+                          onClick={() => processStripeRefund(request, false)}
+                          disabled={isRejected || request.refund_status === "completed" || !!stripeRefundLoading[request.id]}
+                        >
+                          {stripeRefundLoading[request.id] ? (
+                            <><Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> Stripe feldolgozás...</>
+                          ) : (
+                            <><CreditCard className="mr-1 h-3.5 w-3.5" /> 💳 Stripe teljes visszatérítés ({(Number(refundDrafts[request.id] ?? request.refund_amount ?? 0)).toLocaleString()} Ft)</>
+                          )}
+                        </Button>
+                      </div>
+                    )}
 
                     <div className="flex gap-2 flex-wrap">
                       <Button size="sm" variant="outline" className="rounded-none text-xs" onClick={() => saveRefundDetails(request)}>
@@ -1205,7 +1240,7 @@ const AdminReturnsTab = () => {
                         disabled={isRejected || request.refund_status === "completed"}
                       >
                         <CheckCircle2 className="mr-1 h-3 w-3" />
-                        {request.refund_status === "completed" ? "Visszatérítve ✓" : "Teljes visszatérítés véglegesítése"}
+                        {request.refund_status === "completed" ? "Visszatérítve ✓" : "Manuális teljes visszatérítés"}
                       </Button>
                     </div>
 
