@@ -116,7 +116,7 @@ const AdminReturnsTab = () => {
   const [historyMap, setHistoryMap] = useState<Record<string, RefundHistoryEntry[]>>({});
   const [showTimeline, setShowTimeline] = useState<string | null>(null);
   const [partialAmount, setPartialAmount] = useState<Record<string, string>>({});
-
+  const [stripeRefundLoading, setStripeRefundLoading] = useState<Record<string, boolean>>({});
   const fetchRequests = async () => {
     const { data, error } = await supabase
       .from("return_requests")
