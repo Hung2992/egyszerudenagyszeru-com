@@ -1020,7 +1020,7 @@ const Admin = () => {
 
     const name = editProduct.name?.trim() || "";
     const price = Number(editProduct.price);
-    const originalPrice = editProduct.original_price === null || editProduct.original_price === undefined || editProduct.original_price === ""
+    const originalPrice = editProduct.original_price === null || editProduct.original_price === undefined || String(editProduct.original_price) === ""
       ? null
       : Number(editProduct.original_price);
     const stock = Number(editProduct.stock ?? 0);
