@@ -150,6 +150,19 @@ interface ShopProduct {
   created_at: string;
 }
 
+const createEmptyProductDraft = (): Partial<ShopProduct> => ({
+  name: "",
+  description: "",
+  price: 0,
+  original_price: null,
+  category: "Egyéb",
+  sizes: [],
+  colors: [],
+  image_url: null,
+  is_active: true,
+  stock: 0,
+});
+
 interface Order {
   id: string;
   customer_email: string;
@@ -526,6 +539,7 @@ const Admin = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [savingProduct, setSavingProduct] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
 
   // Products state
@@ -940,22 +954,43 @@ const Admin = () => {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploading(true);
-    const fileExt = file.name.split(".").pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
-    const { error } = await supabase.storage
-      .from("product-images")
-      .upload(fileName, file);
-    if (error) {
-      toast({ title: "Feltöltési hiba", description: error.message, variant: "destructive" });
-      setUploading(false);
+
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Csak képfájl tölthető fel", variant: "destructive" });
+      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
-    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/product-images/${fileName}`;
-    setEditProduct(prev => prev ? { ...prev, image_url: publicUrl } : prev);
-    toast({ title: "Kép feltöltve!" });
-    setUploading(false);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+
+    setUploading(true);
+
+    try {
+      const fileExt = file.name.split(".").pop() || "jpg";
+      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+      const { data, error } = await supabase.storage
+        .from("product-images")
+        .upload(fileName, file);
+
+      if (error) {
+        toast({ title: "Feltöltési hiba", description: error.message, variant: "destructive" });
+        return;
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(data?.path || fileName);
+
+      setEditProduct((prev) => (prev ? { ...prev, image_url: publicUrlData.publicUrl } : prev));
+      toast({ title: "Kép feltöltve!" });
+    } catch (error) {
+      toast({
+        title: "Feltöltési hiba",
+        description: error instanceof Error ? error.message : "Ismeretlen hiba történt.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -981,37 +1016,78 @@ const Admin = () => {
 
   // ─── Product CRUD ───
   const saveProduct = async () => {
-    if (!editProduct?.name || !editProduct?.price) {
-      toast({ title: "Hiba", description: "Név és ár kötelező!", variant: "destructive" });
+    if (!editProduct || savingProduct) return;
+
+    const name = editProduct.name?.trim() || "";
+    const price = Number(editProduct.price);
+    const originalPrice = editProduct.original_price === null || editProduct.original_price === undefined || editProduct.original_price === ""
+      ? null
+      : Number(editProduct.original_price);
+    const stock = Number(editProduct.stock ?? 0);
+
+    if (!name || Number.isNaN(price) || price < 0) {
+      toast({ title: "Hiba", description: "Adj meg érvényes nevet és árat!", variant: "destructive" });
       return;
     }
+
+    if (originalPrice !== null && Number.isNaN(originalPrice)) {
+      toast({ title: "Hiba", description: "Az eredeti ár nem érvényes.", variant: "destructive" });
+      return;
+    }
+
+    if (Number.isNaN(stock) || stock < 0) {
+      toast({ title: "Hiba", description: "A készlet nem lehet negatív.", variant: "destructive" });
+      return;
+    }
+
     const payload = {
-      name: editProduct.name,
-      description: editProduct.description || null,
-      price: Number(editProduct.price),
-      original_price: editProduct.original_price ? Number(editProduct.original_price) : null,
+      name,
+      description: editProduct.description?.trim() || null,
+      price,
+      original_price: originalPrice,
       category: editProduct.category || "Egyéb",
-      sizes: editProduct.sizes || [],
-      colors: editProduct.colors || [],
-      image_url: editProduct.image_url || null,
+      sizes: (editProduct.sizes || []).map((size) => size.trim()).filter(Boolean),
+      colors: (editProduct.colors || []).map((color) => color.trim()).filter(Boolean),
+      image_url: editProduct.image_url?.trim() || null,
       is_active: editProduct.is_active ?? true,
-      stock: Number(editProduct.stock) || 0,
+      stock,
     };
 
-    if (editProduct.id) {
-      await supabase.from("shop_products").update(payload).eq("id", editProduct.id);
-      toast({ title: "Termék frissítve!" });
-    } else {
-      await supabase.from("shop_products").insert(payload);
-      toast({ title: "Termék hozzáadva!" });
+    setSavingProduct(true);
+
+    try {
+      const query = editProduct.id
+        ? supabase.from("shop_products").update(payload).eq("id", editProduct.id)
+        : supabase.from("shop_products").insert(payload);
+
+      const { error } = await query;
+
+      if (error) {
+        toast({ title: "Mentési hiba", description: error.message, variant: "destructive" });
+        return;
+      }
+
+      toast({ title: editProduct.id ? "Termék frissítve!" : "Termék hozzáadva!" });
+      setShowProductForm(false);
+      setEditProduct(null);
+      fetchProducts();
+    } catch (error) {
+      toast({
+        title: "Mentési hiba",
+        description: error instanceof Error ? error.message : "Ismeretlen hiba történt.",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingProduct(false);
     }
-    setShowProductForm(false);
-    setEditProduct(null);
-    fetchProducts();
   };
 
   const deleteProduct = async (id: string) => {
-    await supabase.from("shop_products").delete().eq("id", id);
+    const { error } = await supabase.from("shop_products").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Törlési hiba", description: error.message, variant: "destructive" });
+      return;
+    }
     toast({ title: "Termék törölve!" });
     fetchProducts();
   };
@@ -1390,7 +1466,7 @@ const Admin = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold uppercase tracking-wider">Termékek ({products.length})</h2>
-              <Button size="sm" className="rounded-none uppercase tracking-wider text-xs" onClick={() => { setEditProduct({}); setShowProductForm(true); }}>
+              <Button size="sm" className="rounded-none uppercase tracking-wider text-xs" onClick={() => { setEditProduct(createEmptyProductDraft()); setShowProductForm(true); }}>
                 <Plus className="h-3.5 w-3.5 mr-1" /> Új termék
               </Button>
             </div>
@@ -1524,8 +1600,8 @@ const Admin = () => {
                     Aktív
                   </label>
                 </div>
-                <Button className="rounded-none uppercase tracking-wider text-xs" onClick={saveProduct}>
-                  <Check className="h-3.5 w-3.5 mr-1" /> Mentés
+                <Button className="rounded-none uppercase tracking-wider text-xs" onClick={saveProduct} disabled={savingProduct || uploading}>
+                  {savingProduct ? <RefreshCw className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Check className="h-3.5 w-3.5 mr-1" />} {savingProduct ? "Mentés..." : "Mentés"}
                 </Button>
 
                 {/* Multi-image gallery for existing products */}
@@ -1557,7 +1633,7 @@ const Admin = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 ml-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditProduct(p); setShowProductForm(true); }}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditProduct({ ...p }); setShowProductForm(true); }}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteProduct(p.id)}>
