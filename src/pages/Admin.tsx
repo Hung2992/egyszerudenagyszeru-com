@@ -644,7 +644,11 @@ const Admin = () => {
 
   // ─── Fetch functions ───
   const fetchProducts = async () => {
-    const { data } = await supabase.from("shop_products").select("*").order("created_at", { ascending: false });
+    const { data, error } = await supabase.from("shop_products").select("*").order("created_at", { ascending: false });
+    if (error) {
+      console.error("Product fetch failed:", error);
+      throw error;
+    }
     if (data) setProducts(data as any);
   };
 
@@ -1059,6 +1063,7 @@ const Admin = () => {
       if (editProduct.id) {
         const { error } = await supabase.from("shop_products").update(payload).eq("id", editProduct.id);
         if (error) {
+          console.error("Product update failed:", error, payload);
           toast({ title: "Mentési hiba", description: error.message, variant: "destructive" });
           return;
         }
@@ -1068,6 +1073,7 @@ const Admin = () => {
       } else {
         const { error } = await supabase.from("shop_products").insert(payload);
         if (error) {
+          console.error("Product insert failed:", error, payload);
           toast({ title: "Mentési hiba", description: error.message, variant: "destructive" });
           return;
         }
@@ -1075,8 +1081,19 @@ const Admin = () => {
         setShowProductForm(false);
         setEditProduct(null);
       }
-      await fetchProducts();
+
+      setSavingProduct(false);
+      void fetchProducts().catch((error) => {
+        console.error("Product refresh failed after save:", error);
+        toast({
+          title: "Frissítési hiba",
+          description: error instanceof Error ? error.message : "A termék mentve lett, de a lista nem frissült automatikusan.",
+          variant: "destructive",
+        });
+      });
+      return;
     } catch (error) {
+      console.error("Unexpected product save error:", error);
       toast({
         title: "Mentési hiba",
         description: error instanceof Error ? error.message : "Ismeretlen hiba történt.",

@@ -22,11 +22,7 @@ export const useAdminCheck = () => {
       setIsAdmin(!!data);
     };
 
-    const syncSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
+    const applySession = async (session: Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"]) => {
       if (!session?.user) {
         setUserId(null);
         setIsAdmin(false);
@@ -39,21 +35,22 @@ export const useAdminCheck = () => {
       setLoading(false);
     };
 
-    syncSession();
+    const syncSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      await applySession(session);
+    };
+
+    void syncSession();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!session?.user) {
-        setUserId(null);
-        setIsAdmin(false);
-        setLoading(false);
-        return;
-      }
-
-      setUserId(session.user.id);
-      await checkAdmin(session.user.id);
-      setLoading(false);
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setTimeout(() => {
+        void applySession(session);
+      }, 0);
     });
 
     return () => subscription.unsubscribe();
