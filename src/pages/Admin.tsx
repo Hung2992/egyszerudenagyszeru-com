@@ -1066,23 +1066,16 @@ const Admin = () => {
         setShowProductForm(false);
         setEditProduct(null);
       } else {
-        const { data, error } = await supabase.from("shop_products").insert(payload).select("id, created_at").maybeSingle();
+        const { error } = await supabase.from("shop_products").insert(payload);
         if (error) {
           toast({ title: "Mentési hiba", description: error.message, variant: "destructive" });
           return;
         }
-        if (!data) {
-          toast({ title: "Mentési hiba", description: "A termék elmentődött, de a visszaolvasás nem sikerült. Frissítsd a listát.", variant: "destructive" });
-          await fetchProducts();
-          setShowProductForm(false);
-          setEditProduct(null);
-          return;
-        }
-        toast({ title: "Termék hozzáadva! Most feltölthetsz képeket." });
-        // Keep form open with the new product ID so images can be uploaded
-        setEditProduct({ ...payload, id: data.id, created_at: data.created_at } as any);
+        toast({ title: "Termék hozzáadva!" });
+        setShowProductForm(false);
+        setEditProduct(null);
       }
-      fetchProducts();
+      await fetchProducts();
     } catch (error) {
       toast({
         title: "Mentési hiba",
@@ -1488,19 +1481,29 @@ const Admin = () => {
 
             {/* Link Import */}
             <ProductLinkImport
-              onProductImported={(p) => {
-                setEditProduct({
-                  name: p.name,
-                  description: p.description,
-                  price: p.price,
-                  category: p.category,
+              onProductImported={async (p) => {
+                const payload = {
+                  name: p.name.trim(),
+                  description: p.description.trim() || null,
+                  price: Number(p.price) || 0,
+                  category: p.category || "Egyéb",
                   image_url: p.image_url,
                   is_active: true,
-                  stock: 0,
-                  sizes: [],
-                  colors: [],
-                });
-                setShowProductForm(true);
+                  stock: p.stock,
+                  sizes: p.sizes,
+                  colors: p.colors,
+                };
+
+                if (!payload.name) {
+                  throw new Error("A termék neve kötelező.");
+                }
+
+                const { error } = await supabase.from("shop_products").insert(payload);
+                if (error) {
+                  throw new Error(error.message);
+                }
+
+                await fetchProducts();
               }}
               onBatchImported={fetchProducts}
             />

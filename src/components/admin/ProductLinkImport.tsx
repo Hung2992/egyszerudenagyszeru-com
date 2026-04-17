@@ -27,7 +27,10 @@ interface ProductLinkImportProps {
     price: number;
     category: string;
     image_url: string | null;
-  }) => void;
+    stock: number;
+    sizes: string[];
+    colors: string[];
+  }) => Promise<void> | void;
   onBatchImported?: () => void;
 }
 
@@ -69,20 +72,34 @@ const ProductLinkImport = ({ onProductImported, onBatchImported }: ProductLinkIm
     }
   };
 
-  const confirmImport = () => {
+  const confirmImport = async () => {
     if (!editingPreview) return;
-    onProductImported({
-      name: editingPreview.product_name || "",
-      description: editingPreview.description || "",
-      price: editingPreview.unit_cost || 0,
-      category: editingPreview.category || "Egyéb",
-      image_url: editingPreview.image_url || null,
-    });
-    setUrl("");
-    setPreview(null);
-    setEditingPreview(null);
-    setSourceUrl("");
-    toast({ title: "Termék hozzáadva!", description: `${editingPreview.product_name}` });
+    setLoading(true);
+    try {
+      await onProductImported({
+        name: editingPreview.product_name || "",
+        description: editingPreview.description || "",
+        price: editingPreview.unit_cost || 0,
+        category: editingPreview.category || "Egyéb",
+        image_url: editingPreview.image_url || null,
+        stock: 0,
+        sizes: editingPreview.sizes_available
+          ? editingPreview.sizes_available.split(",").map((s: string) => s.trim()).filter(Boolean)
+          : [],
+        colors: editingPreview.colors_available
+          ? editingPreview.colors_available.split(",").map((s: string) => s.trim()).filter(Boolean)
+          : [],
+      });
+      setUrl("");
+      setPreview(null);
+      setEditingPreview(null);
+      setSourceUrl("");
+      toast({ title: "Termék hozzáadva!", description: `${editingPreview.product_name}` });
+    } catch (err: any) {
+      toast({ title: "Mentési hiba", description: err?.message || "A termék mentése nem sikerült.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const cancelPreview = () => {
@@ -200,8 +217,8 @@ const ProductLinkImport = ({ onProductImported, onBatchImported }: ProductLinkIm
                   <Button size="sm" variant="ghost" onClick={cancelPreview} className="rounded-none text-xs h-7 px-2">
                     <X className="w-3 h-3 mr-1" /> Mégse
                   </Button>
-                  <Button size="sm" onClick={confirmImport} className="rounded-none text-xs h-7 px-2">
-                    <Check className="w-3 h-3 mr-1" /> Mentés termékként
+                   <Button size="sm" onClick={confirmImport} disabled={loading} className="rounded-none text-xs h-7 px-2">
+                     {loading ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Check className="w-3 h-3 mr-1" />} {loading ? "Mentés..." : "Mentés termékként"}
                   </Button>
                 </div>
               </div>
