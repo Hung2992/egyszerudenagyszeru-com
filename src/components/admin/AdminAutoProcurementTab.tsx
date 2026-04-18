@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Save, Truck, MapPin, Zap, AlertCircle, History } from "lucide-react";
+import SheinQuickOrderButton from "./SheinQuickOrderButton";
 
 const AdminAutoProcurementTab = () => {
   const [settings, setSettings] = useState<any>(null);
   const [logs, setLogs] = useState<any[]>([]);
+  const [procurementOrders, setProcurementOrders] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
 
   const loadAll = async () => {
@@ -18,7 +20,19 @@ const AdminAutoProcurementTab = () => {
       supabase.from("auto_procurement_log").select("*").order("created_at", { ascending: false }).limit(20),
     ]);
     if (s) setSettings(s);
-    if (l) setLogs(l);
+    if (l) {
+      setLogs(l);
+      const ids = l.map((x: any) => x.procurement_order_id).filter(Boolean);
+      if (ids.length) {
+        const { data: orders } = await supabase
+          .from("admin_procurement_orders")
+          .select("id,supplier_url,product_name")
+          .in("id", ids);
+        const map: Record<string, any> = {};
+        (orders || []).forEach((o: any) => { map[o.id] = o; });
+        setProcurementOrders(map);
+      }
+    }
   };
 
   useEffect(() => { loadAll(); }, []);
@@ -215,21 +229,44 @@ const AdminAutoProcurementTab = () => {
         {logs.length === 0 ? (
           <p className="text-xs text-muted-foreground">Még nincs automatikus rendelés.</p>
         ) : (
-          <div className="space-y-2 max-h-80 overflow-y-auto">
-            {logs.map(l => (
-              <div key={l.id} className="text-xs border p-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                <div>
-                  <div className="font-bold">{l.product_name}</div>
-                  <div className="text-muted-foreground">
-                    Készlet: {l.trigger_stock} → rendelve: {l.ordered_quantity} db
-                    {l.velocity_per_day != null && ` · ${Number(l.velocity_per_day).toFixed(2)}/nap`}
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {logs.map(l => {
+              const po = l.procurement_order_id ? procurementOrders[l.procurement_order_id] : null;
+              return (
+                <div key={l.id} className="text-xs border p-2 flex flex-col gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                    <div>
+                      <div className="font-bold">{l.product_name}</div>
+                      <div className="text-muted-foreground">
+                        Készlet: {l.trigger_stock} → rendelve: {l.ordered_quantity} db
+                        {l.velocity_per_day != null && ` · ${Number(l.velocity_per_day).toFixed(2)}/nap`}
+                      </div>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {new Date(l.created_at).toLocaleString("hu-HU")}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <SheinQuickOrderButton
+                      compact
+                      product={{
+                        productName: l.product_name,
+                        quantity: l.ordered_quantity,
+                        supplierUrl: po?.supplier_url ?? null,
+                      }}
+                      address={{
+                        name: settings.procurement_address_name,
+                        phone: settings.procurement_address_phone,
+                        street: settings.procurement_address_street,
+                        city: settings.procurement_address_city,
+                        zip: settings.procurement_address_zip,
+                        country: settings.procurement_address_country,
+                      }}
+                    />
                   </div>
                 </div>
-                <div className="text-[10px] text-muted-foreground">
-                  {new Date(l.created_at).toLocaleString("hu-HU")}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
