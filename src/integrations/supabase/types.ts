@@ -217,6 +217,63 @@ export type Database = {
           },
         ]
       }
+      auto_procurement_log: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          ordered_quantity: number
+          procurement_order_id: string | null
+          product_id: string | null
+          product_name: string
+          status: string
+          threshold: number
+          trigger_stock: number
+          velocity_per_day: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          ordered_quantity: number
+          procurement_order_id?: string | null
+          product_id?: string | null
+          product_name: string
+          status?: string
+          threshold: number
+          trigger_stock: number
+          velocity_per_day?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          ordered_quantity?: number
+          procurement_order_id?: string | null
+          product_id?: string | null
+          product_name?: string
+          status?: string
+          threshold?: number
+          trigger_stock?: number
+          velocity_per_day?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auto_procurement_log_procurement_order_id_fkey"
+            columns: ["procurement_order_id"]
+            isOneToOne: false
+            referencedRelation: "admin_procurement_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auto_procurement_log_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "shop_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coupons: {
         Row: {
           code: string
@@ -1014,6 +1071,16 @@ export type Database = {
           appearance_header_style: string | null
           appearance_product_card_style: string | null
           auto_hide_out_of_stock: boolean | null
+          auto_procurement_default_supplier: string | null
+          auto_procurement_default_supplier_url: string | null
+          auto_procurement_enabled: boolean | null
+          auto_procurement_max_qty: number | null
+          auto_procurement_min_qty: number | null
+          auto_procurement_notify_email: string | null
+          auto_procurement_notify_enabled: boolean | null
+          auto_procurement_threshold: number | null
+          auto_procurement_use_velocity: boolean | null
+          auto_procurement_velocity_days: number | null
           auto_reply_message: string | null
           business_hours: Json | null
           checkout_enable_gift_wrap: boolean | null
@@ -1137,6 +1204,12 @@ export type Database = {
           popup_promo_text: string | null
           popup_promo_title: string | null
           privacy_policy: string | null
+          procurement_address_city: string | null
+          procurement_address_country: string | null
+          procurement_address_name: string | null
+          procurement_address_phone: string | null
+          procurement_address_street: string | null
+          procurement_address_zip: string | null
           product_default_sort: string | null
           product_default_view: string | null
           product_filter_by_color: boolean | null
@@ -1227,6 +1300,16 @@ export type Database = {
           appearance_header_style?: string | null
           appearance_product_card_style?: string | null
           auto_hide_out_of_stock?: boolean | null
+          auto_procurement_default_supplier?: string | null
+          auto_procurement_default_supplier_url?: string | null
+          auto_procurement_enabled?: boolean | null
+          auto_procurement_max_qty?: number | null
+          auto_procurement_min_qty?: number | null
+          auto_procurement_notify_email?: string | null
+          auto_procurement_notify_enabled?: boolean | null
+          auto_procurement_threshold?: number | null
+          auto_procurement_use_velocity?: boolean | null
+          auto_procurement_velocity_days?: number | null
           auto_reply_message?: string | null
           business_hours?: Json | null
           checkout_enable_gift_wrap?: boolean | null
@@ -1350,6 +1433,12 @@ export type Database = {
           popup_promo_text?: string | null
           popup_promo_title?: string | null
           privacy_policy?: string | null
+          procurement_address_city?: string | null
+          procurement_address_country?: string | null
+          procurement_address_name?: string | null
+          procurement_address_phone?: string | null
+          procurement_address_street?: string | null
+          procurement_address_zip?: string | null
           product_default_sort?: string | null
           product_default_view?: string | null
           product_filter_by_color?: boolean | null
@@ -1440,6 +1529,16 @@ export type Database = {
           appearance_header_style?: string | null
           appearance_product_card_style?: string | null
           auto_hide_out_of_stock?: boolean | null
+          auto_procurement_default_supplier?: string | null
+          auto_procurement_default_supplier_url?: string | null
+          auto_procurement_enabled?: boolean | null
+          auto_procurement_max_qty?: number | null
+          auto_procurement_min_qty?: number | null
+          auto_procurement_notify_email?: string | null
+          auto_procurement_notify_enabled?: boolean | null
+          auto_procurement_threshold?: number | null
+          auto_procurement_use_velocity?: boolean | null
+          auto_procurement_velocity_days?: number | null
           auto_reply_message?: string | null
           business_hours?: Json | null
           checkout_enable_gift_wrap?: boolean | null
@@ -1563,6 +1662,12 @@ export type Database = {
           popup_promo_text?: string | null
           popup_promo_title?: string | null
           privacy_policy?: string | null
+          procurement_address_city?: string | null
+          procurement_address_country?: string | null
+          procurement_address_name?: string | null
+          procurement_address_phone?: string | null
+          procurement_address_street?: string | null
+          procurement_address_zip?: string | null
           product_default_sort?: string | null
           product_default_view?: string | null
           product_filter_by_color?: boolean | null
@@ -2137,6 +2242,13 @@ export type Database = {
     }
     Functions: {
       authenticated_email: { Args: never; Returns: string }
+      calc_reorder_quantity: {
+        Args: { _product_id: string; _product_name: string }
+        Returns: {
+          qty: number
+          velocity: number
+        }[]
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
