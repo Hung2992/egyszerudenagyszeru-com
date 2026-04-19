@@ -38,6 +38,7 @@ import AdminCurrencyTab from "@/components/admin/AdminCurrencyTab";
 import AdminSystemTab from "@/components/admin/AdminSystemTab";
 import AdminEmailAutomationTab from "@/components/admin/AdminEmailAutomationTab";
 import AdminEmailCenterTab from "@/components/admin/AdminEmailCenterTab";
+import AdminEmailMonitoringTab from "@/components/admin/AdminEmailMonitoringTab";
 import AdminApiWebhookTab from "@/components/admin/AdminApiWebhookTab";
 import AdminFaqKnowledgeTab from "@/components/admin/AdminFaqKnowledgeTab";
 import AdminAdvancedAnalyticsTab from "@/components/admin/AdminAdvancedAnalyticsTab";
@@ -2658,6 +2659,7 @@ const Admin = () => {
         {tab === "currency" && <AdminCurrencyTab />}
         {tab === "system" && <AdminSystemTab />}
         {tab === "email_automation" && <AdminEmailCenterTab />}
+        {tab === "email_monitoring" && <AdminEmailMonitoringTab />}
         {tab === "api_webhooks" && <AdminApiWebhookTab />}
         {tab === "faq_knowledge" && <AdminFaqKnowledgeTab />}
         {tab === "advanced_analytics" && <AdminAdvancedAnalyticsTab />}
