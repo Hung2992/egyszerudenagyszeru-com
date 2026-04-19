@@ -1095,11 +1095,11 @@ const AdminEmailCenterTab = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="border border-border bg-card p-5 space-y-3">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                <CheckCircle className="w-4 h-4 text-green-500" />
                 <h4 className="font-bold text-sm uppercase tracking-wider">Feladó domain</h4>
               </div>
               <div className="flex items-center gap-2 p-3 bg-green-500/10 border border-green-500/20">
-                <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
                 <div className="min-w-0">
                   <p className="text-sm text-green-500 font-bold truncate">info.egyszerudenagyszeru.com</p>
                   <p className="text-xs text-muted-foreground">Beállítva — DNS verifikáció folyamatban</p>
