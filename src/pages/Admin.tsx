@@ -2662,6 +2662,7 @@ const Admin = () => {
         {tab === "system" && <AdminSystemTab />}
         {tab === "email_automation" && <AdminEmailCenterTab />}
         {tab === "email_monitoring" && <AdminEmailMonitoringTab />}
+        {tab === "order_insights" && <AdminOrderInsightsTab />}
         {tab === "api_webhooks" && <AdminApiWebhookTab />}
         {tab === "faq_knowledge" && <AdminFaqKnowledgeTab />}
         {tab === "advanced_analytics" && <AdminAdvancedAnalyticsTab />}
