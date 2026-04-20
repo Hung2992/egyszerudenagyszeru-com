@@ -185,7 +185,7 @@ export default function AdminOrderInsightsTab() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground text-xs"><Clock className="w-3 h-3" /> Függő rendelés</div>
-            <div className="text-2xl font-bold mt-1 text-yellow-500">{stats?.pendingCount ?? "—"}</div>
+            <div className="text-2xl font-bold mt-1 text-accent">{stats?.pendingCount ?? "—"}</div>
           </CardContent>
         </Card>
         <Card>
