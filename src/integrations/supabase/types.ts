@@ -403,6 +403,56 @@ export type Database = {
         }
         Relationships: []
       }
+      fraud_signals: {
+        Row: {
+          ai_reasoning: string | null
+          created_at: string
+          id: string
+          order_id: string
+          review_outcome: string | null
+          reviewed: boolean | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          risk_level: string
+          risk_score: number
+          signals: Json
+        }
+        Insert: {
+          ai_reasoning?: string | null
+          created_at?: string
+          id?: string
+          order_id: string
+          review_outcome?: string | null
+          reviewed?: boolean | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_level?: string
+          risk_score?: number
+          signals?: Json
+        }
+        Update: {
+          ai_reasoning?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string
+          review_outcome?: string | null
+          reviewed?: boolean | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_level?: string
+          risk_score?: number
+          signals?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fraud_signals_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       giveaway_entries: {
         Row: {
           created_at: string
@@ -460,6 +510,95 @@ export type Database = {
         }
         Relationships: []
       }
+      invoices: {
+        Row: {
+          created_at: string
+          currency: string
+          customer_address: string | null
+          customer_city: string | null
+          customer_email: string
+          customer_name: string
+          customer_tax_number: string | null
+          customer_zip: string | null
+          discount_amount: number
+          id: string
+          invoice_number: string
+          items: Json
+          notes: string | null
+          order_id: string
+          paid_at: string | null
+          payment_method: string | null
+          pdf_url: string | null
+          shipping_amount: number
+          status: string
+          subtotal: number
+          tax_amount: number
+          tax_rate: number
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          customer_address?: string | null
+          customer_city?: string | null
+          customer_email: string
+          customer_name: string
+          customer_tax_number?: string | null
+          customer_zip?: string | null
+          discount_amount?: number
+          id?: string
+          invoice_number: string
+          items?: Json
+          notes?: string | null
+          order_id: string
+          paid_at?: string | null
+          payment_method?: string | null
+          pdf_url?: string | null
+          shipping_amount?: number
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          customer_address?: string | null
+          customer_city?: string | null
+          customer_email?: string
+          customer_name?: string
+          customer_tax_number?: string | null
+          customer_zip?: string | null
+          discount_amount?: number
+          id?: string
+          invoice_number?: string
+          items?: Json
+          notes?: string | null
+          order_id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          pdf_url?: string | null
+          shipping_amount?: number
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       launch_subscribers: {
         Row: {
           created_at: string
@@ -477,6 +616,47 @@ export type Database = {
           id?: string
         }
         Relationships: []
+      }
+      order_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          new_status: string | null
+          order_id: string
+          previous_status: string | null
+          triggered_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          new_status?: string | null
+          order_id: string
+          previous_status?: string | null
+          triggered_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          new_status?: string | null
+          order_id?: string
+          previous_status?: string | null
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       orders: {
         Row: {
@@ -573,6 +753,65 @@ export type Database = {
           visitor_id?: string | null
         }
         Relationships: []
+      }
+      payment_attempts: {
+        Row: {
+          amount: number
+          attempt_number: number
+          completed_at: string | null
+          created_at: string
+          currency: string | null
+          error_code: string | null
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          order_id: string
+          payment_method: string | null
+          provider: string | null
+          provider_intent_id: string | null
+          status: string
+        }
+        Insert: {
+          amount?: number
+          attempt_number?: number
+          completed_at?: string | null
+          created_at?: string
+          currency?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          order_id: string
+          payment_method?: string | null
+          provider?: string | null
+          provider_intent_id?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          attempt_number?: number
+          completed_at?: string | null
+          created_at?: string
+          currency?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          order_id?: string
+          payment_method?: string | null
+          provider?: string | null
+          provider_intent_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_attempts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payouts: {
         Row: {
@@ -1131,6 +1370,8 @@ export type Database = {
           email_welcome_body: string | null
           email_welcome_enabled: boolean | null
           email_welcome_subject: string | null
+          fraud_auto_block_threshold: number | null
+          fraud_detection_enabled: boolean | null
           free_shipping_above: number | null
           giftcard_custom_design: boolean | null
           giftcard_enabled: boolean | null
@@ -1143,10 +1384,15 @@ export type Database = {
           i18n_supported_languages: string[] | null
           id: string
           invoice_address: string | null
+          invoice_auto_generate: boolean | null
           invoice_bank_account: string | null
           invoice_company_name: string | null
+          invoice_default_tax_rate: number | null
           invoice_footer_text: string | null
           invoice_header_text: string | null
+          invoice_number_counter: number | null
+          invoice_number_prefix: string | null
+          invoice_number_year: number | null
           invoice_tax_number: string | null
           lang_auto_detect: boolean | null
           lang_available: string[] | null
@@ -1181,6 +1427,10 @@ export type Database = {
           notification_slack_webhook: string | null
           order_auto_cancel_hours: number | null
           order_auto_confirm: boolean | null
+          order_payment_retry_enabled: boolean | null
+          order_payment_retry_hours: number | null
+          order_reminder_after_hours: number | null
+          order_reminder_enabled: boolean | null
           order_require_payment_proof: boolean | null
           order_workflow_steps: Json | null
           payment_card_enabled: boolean | null
@@ -1360,6 +1610,8 @@ export type Database = {
           email_welcome_body?: string | null
           email_welcome_enabled?: boolean | null
           email_welcome_subject?: string | null
+          fraud_auto_block_threshold?: number | null
+          fraud_detection_enabled?: boolean | null
           free_shipping_above?: number | null
           giftcard_custom_design?: boolean | null
           giftcard_enabled?: boolean | null
@@ -1372,10 +1624,15 @@ export type Database = {
           i18n_supported_languages?: string[] | null
           id?: string
           invoice_address?: string | null
+          invoice_auto_generate?: boolean | null
           invoice_bank_account?: string | null
           invoice_company_name?: string | null
+          invoice_default_tax_rate?: number | null
           invoice_footer_text?: string | null
           invoice_header_text?: string | null
+          invoice_number_counter?: number | null
+          invoice_number_prefix?: string | null
+          invoice_number_year?: number | null
           invoice_tax_number?: string | null
           lang_auto_detect?: boolean | null
           lang_available?: string[] | null
@@ -1410,6 +1667,10 @@ export type Database = {
           notification_slack_webhook?: string | null
           order_auto_cancel_hours?: number | null
           order_auto_confirm?: boolean | null
+          order_payment_retry_enabled?: boolean | null
+          order_payment_retry_hours?: number | null
+          order_reminder_after_hours?: number | null
+          order_reminder_enabled?: boolean | null
           order_require_payment_proof?: boolean | null
           order_workflow_steps?: Json | null
           payment_card_enabled?: boolean | null
@@ -1589,6 +1850,8 @@ export type Database = {
           email_welcome_body?: string | null
           email_welcome_enabled?: boolean | null
           email_welcome_subject?: string | null
+          fraud_auto_block_threshold?: number | null
+          fraud_detection_enabled?: boolean | null
           free_shipping_above?: number | null
           giftcard_custom_design?: boolean | null
           giftcard_enabled?: boolean | null
@@ -1601,10 +1864,15 @@ export type Database = {
           i18n_supported_languages?: string[] | null
           id?: string
           invoice_address?: string | null
+          invoice_auto_generate?: boolean | null
           invoice_bank_account?: string | null
           invoice_company_name?: string | null
+          invoice_default_tax_rate?: number | null
           invoice_footer_text?: string | null
           invoice_header_text?: string | null
+          invoice_number_counter?: number | null
+          invoice_number_prefix?: string | null
+          invoice_number_year?: number | null
           invoice_tax_number?: string | null
           lang_auto_detect?: boolean | null
           lang_available?: string[] | null
@@ -1639,6 +1907,10 @@ export type Database = {
           notification_slack_webhook?: string | null
           order_auto_cancel_hours?: number | null
           order_auto_confirm?: boolean | null
+          order_payment_retry_enabled?: boolean | null
+          order_payment_retry_hours?: number | null
+          order_reminder_after_hours?: number | null
+          order_reminder_enabled?: boolean | null
           order_require_payment_proof?: boolean | null
           order_workflow_steps?: Json | null
           payment_card_enabled?: boolean | null
@@ -2257,6 +2529,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      generate_invoice_number: { Args: never; Returns: string }
       get_public_store_settings: {
         Args: never
         Returns: {
