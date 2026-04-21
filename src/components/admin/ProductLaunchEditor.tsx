@@ -203,14 +203,18 @@ const ProductLaunchEditor = ({ productId, onClose }: { productId: string; onClos
   };
 
   const generateMatrix = () => {
-    const sizes = prompt("Méretek (vesszővel elválasztva, pl. S,M,L,XL):", "S,M,L,XL");
-    const colors = prompt("Színek (vesszővel elválasztva, pl. Fekete,Fehér):", "Fekete,Fehér");
-    if (!sizes || !colors) return;
-    const sArr = sizes.split(",").map(s => s.trim()).filter(Boolean);
-    const cArr = colors.split(",").map(c => c.trim()).filter(Boolean);
+    setPickedSizes([]);
+    setPickedColors([]);
+    setShowMatrix(true);
+  };
+
+  const applyMatrix = () => {
+    const sArr = pickedSizes.length ? pickedSizes : [""];
+    const cArr = pickedColors.length ? pickedColors : [""];
     const newVariants: Variant[] = [];
     let idx = variants.length;
     for (const s of sArr) for (const c of cArr) {
+      if (!s && !c) continue;
       if (variants.some(v => v.size === s && v.color === c)) continue;
       newVariants.push({
         size: s, color: c, sku: "", stock: 0, preorder_limit: null,
@@ -218,7 +222,12 @@ const ProductLaunchEditor = ({ productId, onClose }: { productId: string; onClos
       });
     }
     setVariants([...variants, ...newVariants]);
+    setShowMatrix(false);
     toast({ title: `${newVariants.length} variáns hozzáadva` });
+  };
+
+  const togglePick = (list: string[], setList: (l: string[]) => void, val: string) => {
+    setList(list.includes(val) ? list.filter(x => x !== val) : [...list, val]);
   };
 
   const saveVariants = async () => {
