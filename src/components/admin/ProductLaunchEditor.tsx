@@ -349,24 +349,38 @@ const ProductLaunchEditor = ({ productId, onClose }: { productId: string; onClos
                 <div className="border-t pt-4 space-y-3">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-accent">Launch beállítások</h4>
                   <div className="grid md:grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs uppercase tracking-wider">Launch állapot</Label>
-                      <select value={product.launch_status} onChange={e => setProduct({ ...product, launch_status: e.target.value })} className="w-full mt-1 h-9 px-3 text-xs bg-background border">
-                        <option value="live">Élő</option>
-                        <option value="coming_soon">Hamarosan (féligazság teaser)</option>
-                        <option value="pre_order">Előrendelhető</option>
-                        <option value="waitlist">Várólistás</option>
-                      </select>
+                    <div className="md:col-span-2">
+                      <Label className="text-xs uppercase tracking-wider mb-2 block">Launch állapot</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {[
+                          { v: "live", label: "Élő", desc: "Most vásárolható", color: "border-green-500/50 bg-green-500/10 text-green-500", dot: "bg-green-500" },
+                          { v: "coming_soon", label: "Hamarosan", desc: "Teaser / sneak peek", color: "border-blue-500/50 bg-blue-500/10 text-blue-500", dot: "bg-blue-500" },
+                          { v: "pre_order", label: "Előrendelhető", desc: "Foglalóval, limittel", color: "border-purple-500/50 bg-purple-500/10 text-purple-500", dot: "bg-purple-500" },
+                          { v: "waitlist", label: "Várólistás", desc: "Csak email gyűjtés", color: "border-yellow-500/50 bg-yellow-500/10 text-yellow-500", dot: "bg-yellow-500" },
+                        ].map(s => (
+                          <button
+                            key={s.v}
+                            type="button"
+                            onClick={() => setProduct({ ...product, launch_status: s.v })}
+                            className={`text-left p-3 border-2 transition-all ${product.launch_status === s.v ? s.color : "border-border hover:border-foreground/30"}`}
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className={`h-2 w-2 rounded-full ${s.dot}`} />
+                              <span className="text-xs font-bold uppercase tracking-wider">{s.label}</span>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground">{s.desc}</p>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                     <div>
                       <Label className="text-xs uppercase tracking-wider">Megjelenés dátuma</Label>
                       <Input type="datetime-local" value={product.launch_date ? new Date(product.launch_date).toISOString().slice(0, 16) : ""} onChange={e => setProduct({ ...product, launch_date: e.target.value ? new Date(e.target.value).toISOString() : null })} className="mt-1 rounded-none text-xs" />
                     </div>
-                  </div>
-                  <div>
-                    <Label className="text-xs uppercase tracking-wider">Teaser kép URL (homályos)</Label>
-                    <Input value={product.teaser_image_url || ""} onChange={e => setProduct({ ...product, teaser_image_url: e.target.value })} className="mt-1 rounded-none text-xs" />
-                  </div>
+                    <div>
+                      <Label className="text-xs uppercase tracking-wider">Teaser kép URL (homályos)</Label>
+                      <Input value={product.teaser_image_url || ""} onChange={e => setProduct({ ...product, teaser_image_url: e.target.value })} className="mt-1 rounded-none text-xs" />
+                    </div>
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <Label className="text-xs uppercase tracking-wider">Teaser leírás</Label>
