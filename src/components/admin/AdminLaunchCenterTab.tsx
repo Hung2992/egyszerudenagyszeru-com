@@ -201,7 +201,7 @@ const AdminLaunchCenterTab = () => {
             </div>
             <div className="flex flex-col gap-1">
               <Button size="sm" variant="outline" className="rounded-none text-xs" onClick={() => setEditing(p)}>
-                Szerkeszt
+                <Settings className="h-3 w-3 mr-1" /> Teljes szerk.
               </Button>
               {p.launch_status !== "live" && (
                 <Button
@@ -271,106 +271,9 @@ const AdminLaunchCenterTab = () => {
         )} />
       </div>
 
-      {/* Editor modal */}
+      {/* Full editor with images, variants, size chart, materials */}
       {editing && (
-        <div className="fixed inset-0 bg-background/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="border bg-card max-w-2xl w-full p-6 space-y-4 my-8">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold uppercase tracking-wider">{editing.name}</h3>
-              <Button variant="ghost" size="sm" onClick={() => setEditing(null)} className="rounded-none">Mégse</Button>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <Label className="text-xs uppercase tracking-wider">Launch állapot</Label>
-                <select
-                  value={editing.launch_status}
-                  onChange={e => setEditing({ ...editing, launch_status: e.target.value as LaunchStatus })}
-                  className="w-full mt-1 h-9 px-3 text-sm bg-background border"
-                >
-                  <option value="live">Élő</option>
-                  <option value="coming_soon">Hamarosan (féligazság teaser)</option>
-                  <option value="pre_order">Előrendelhető (foglalóval)</option>
-                  <option value="waitlist">Várólistás (early access)</option>
-                </select>
-              </div>
-
-              <div>
-                <Label className="text-xs uppercase tracking-wider">Megjelenés dátuma</Label>
-                <Input
-                  type="datetime-local"
-                  value={editing.launch_date ? new Date(editing.launch_date).toISOString().slice(0, 16) : ""}
-                  onChange={e => setEditing({ ...editing, launch_date: e.target.value ? new Date(e.target.value).toISOString() : null })}
-                  className="mt-1 rounded-none text-xs"
-                />
-              </div>
-
-              <div>
-                <Label className="text-xs uppercase tracking-wider">Teaser kép URL (homályosítva jelenik meg)</Label>
-                <Input
-                  value={editing.teaser_image_url || ""}
-                  onChange={e => setEditing({ ...editing, teaser_image_url: e.target.value })}
-                  className="mt-1 rounded-none text-xs"
-                  placeholder="https://..."
-                />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <Label className="text-xs uppercase tracking-wider">Teaser leírás (féligazság)</Label>
-                  <Button size="sm" variant="ghost" onClick={generateTeaser} disabled={aiLoading} className="text-[10px] h-6 rounded-none uppercase tracking-wider">
-                    <Wand2 className="h-3 w-3 mr-1" /> {aiLoading ? "Generálás..." : "AI generál"}
-                  </Button>
-                </div>
-                <Textarea
-                  value={editing.teaser_description || ""}
-                  onChange={e => setEditing({ ...editing, teaser_description: e.target.value })}
-                  className="rounded-none text-xs"
-                  rows={3}
-                  placeholder="Valami nagyon különleges közelít..."
-                />
-              </div>
-
-              {(editing.launch_status === "pre_order") && (
-                <div className="border p-3 space-y-3 bg-accent/5">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs uppercase tracking-wider flex items-center gap-2"><ShoppingCart className="h-3.5 w-3.5" /> Előrendelés engedélyezve</Label>
-                    <Switch checked={editing.preorder_enabled} onCheckedChange={v => setEditing({ ...editing, preorder_enabled: v })} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs uppercase tracking-wider">Foglaló (%)</Label>
-                      <Input type="number" min={0} max={100} value={editing.preorder_deposit_percent}
-                        onChange={e => setEditing({ ...editing, preorder_deposit_percent: Number(e.target.value) })}
-                        className="mt-1 rounded-none text-xs" />
-                    </div>
-                    <div>
-                      <Label className="text-xs uppercase tracking-wider">Limit (db, üres = ∞)</Label>
-                      <Input type="number" value={editing.preorder_limit ?? ""}
-                        onChange={e => setEditing({ ...editing, preorder_limit: e.target.value ? Number(e.target.value) : null })}
-                        className="mt-1 rounded-none text-xs" />
-                    </div>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground">Eddig: {editing.preorder_count} előrendelés.</p>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between border p-3">
-                <div>
-                  <Label className="text-xs uppercase tracking-wider flex items-center gap-2"><Vote className="h-3.5 w-3.5" /> Sneak peek (szavazható)</Label>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">A vásárlók szavazhatnak, hogy ez a termék induljon-e először.</p>
-                </div>
-                <Switch checked={editing.is_sneak_peek} onCheckedChange={v => setEditing({ ...editing, is_sneak_peek: v })} />
-              </div>
-            </div>
-
-            <div className="flex gap-2 pt-2 border-t">
-              <Button onClick={save} className="rounded-none uppercase tracking-wider text-xs">
-                <Save className="h-3.5 w-3.5 mr-1" /> Mentés
-              </Button>
-            </div>
-          </div>
-        </div>
+        <ProductLaunchEditor productId={editing.id} onClose={() => { setEditing(null); fetchAll(); }} />
       )}
     </div>
   );
