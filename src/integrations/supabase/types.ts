@@ -316,6 +316,45 @@ export type Database = {
         }
         Relationships: []
       }
+      early_access_codes: {
+        Row: {
+          code: string
+          created_at: string
+          discount_percent: number
+          email: string
+          id: string
+          product_id: string
+          used_at: string | null
+          used_order_id: string | null
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          discount_percent?: number
+          email: string
+          id?: string
+          product_id: string
+          used_at?: string | null
+          used_order_id?: string | null
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          discount_percent?: number
+          email?: string
+          id?: string
+          product_id?: string
+          used_at?: string | null
+          used_order_id?: string | null
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -599,21 +638,63 @@ export type Database = {
           },
         ]
       }
+      launch_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          product_id: string | null
+          triggered_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          product_id?: string | null
+          triggered_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          product_id?: string | null
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
       launch_subscribers: {
         Row: {
           created_at: string
           email: string
           id: string
+          interested_product_id: string | null
+          notified_at: string | null
+          share_code: string | null
+          shares_count: number | null
+          source: string | null
         }
         Insert: {
           created_at?: string
           email: string
           id?: string
+          interested_product_id?: string | null
+          notified_at?: string | null
+          share_code?: string | null
+          shares_count?: number | null
+          source?: string | null
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
+          interested_product_id?: string | null
+          notified_at?: string | null
+          share_code?: string | null
+          shares_count?: number | null
+          source?: string | null
         }
         Relationships: []
       }
@@ -1063,6 +1144,7 @@ export type Database = {
       }
       product_waitlist: {
         Row: {
+          boost_position: number | null
           converted_at: string | null
           created_at: string
           early_access: boolean
@@ -1073,10 +1155,13 @@ export type Database = {
           notified_at: string | null
           position: number | null
           product_id: string
+          share_code: string | null
+          shares_count: number | null
           source: string | null
           user_id: string | null
         }
         Insert: {
+          boost_position?: number | null
           converted_at?: string | null
           created_at?: string
           early_access?: boolean
@@ -1087,10 +1172,13 @@ export type Database = {
           notified_at?: string | null
           position?: number | null
           product_id: string
+          share_code?: string | null
+          shares_count?: number | null
           source?: string | null
           user_id?: string | null
         }
         Update: {
+          boost_position?: number | null
           converted_at?: string | null
           created_at?: string
           early_access?: boolean
@@ -1101,6 +1189,8 @@ export type Database = {
           notified_at?: string | null
           position?: number | null
           product_id?: string
+          share_code?: string | null
+          shares_count?: number | null
           source?: string | null
           user_id?: string | null
         }
@@ -1401,16 +1491,23 @@ export type Database = {
       }
       shop_products: {
         Row: {
+          auto_launch_enabled: boolean | null
           category: string
           colors: string[] | null
           created_at: string
           description: string | null
+          early_access_discount_percent: number | null
+          early_access_enabled: boolean | null
+          early_access_hours: number | null
+          early_access_top_n: number | null
+          featured_launch: boolean | null
           id: string
           image_url: string | null
           is_active: boolean
           is_sneak_peek: boolean
           launch_date: string | null
           launch_status: string
+          launched_at: string | null
           name: string
           original_price: number | null
           poll_votes: number
@@ -1419,6 +1516,7 @@ export type Database = {
           preorder_enabled: boolean
           preorder_limit: number | null
           price: number
+          share_count: number | null
           sizes: string[] | null
           stock: number
           teaser_description: string | null
@@ -1426,16 +1524,23 @@ export type Database = {
           waitlist_count: number
         }
         Insert: {
+          auto_launch_enabled?: boolean | null
           category?: string
           colors?: string[] | null
           created_at?: string
           description?: string | null
+          early_access_discount_percent?: number | null
+          early_access_enabled?: boolean | null
+          early_access_hours?: number | null
+          early_access_top_n?: number | null
+          featured_launch?: boolean | null
           id?: string
           image_url?: string | null
           is_active?: boolean
           is_sneak_peek?: boolean
           launch_date?: string | null
           launch_status?: string
+          launched_at?: string | null
           name: string
           original_price?: number | null
           poll_votes?: number
@@ -1444,6 +1549,7 @@ export type Database = {
           preorder_enabled?: boolean
           preorder_limit?: number | null
           price?: number
+          share_count?: number | null
           sizes?: string[] | null
           stock?: number
           teaser_description?: string | null
@@ -1451,16 +1557,23 @@ export type Database = {
           waitlist_count?: number
         }
         Update: {
+          auto_launch_enabled?: boolean | null
           category?: string
           colors?: string[] | null
           created_at?: string
           description?: string | null
+          early_access_discount_percent?: number | null
+          early_access_enabled?: boolean | null
+          early_access_hours?: number | null
+          early_access_top_n?: number | null
+          featured_launch?: boolean | null
           id?: string
           image_url?: string | null
           is_active?: boolean
           is_sneak_peek?: boolean
           launch_date?: string | null
           launch_status?: string
+          launched_at?: string | null
           name?: string
           original_price?: number | null
           poll_votes?: number
@@ -1469,6 +1582,7 @@ export type Database = {
           preorder_enabled?: boolean
           preorder_limit?: number | null
           price?: number
+          share_count?: number | null
           sizes?: string[] | null
           stock?: number
           teaser_description?: string | null
@@ -2882,6 +2996,11 @@ export type Database = {
           read_ct: number
         }[]
       }
+      recalc_waitlist_share_boost: {
+        Args: { _waitlist_id: string }
+        Returns: undefined
+      }
+      register_waitlist_share: { Args: { _share_code: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

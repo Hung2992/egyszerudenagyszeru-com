@@ -3,10 +3,11 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { toast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
+import LaunchHero from "@/components/LaunchHero";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Rocket, Calendar, ShoppingCart, Users, Vote, Sparkles, Lock, Mail, Check } from "lucide-react";
+import { Rocket, Calendar, ShoppingCart, Users, Vote, Sparkles, Lock, Mail, Check, Share2, Flame, AlertTriangle } from "lucide-react";
 
 interface LaunchProduct {
   id: string;
@@ -25,6 +26,9 @@ interface LaunchProduct {
   waitlist_count: number;
   is_sneak_peek: boolean;
   poll_votes: number;
+  share_count?: number;
+  early_access_enabled?: boolean;
+  early_access_top_n?: number;
 }
 
 const Countdown = ({ date }: { date: string }) => {
@@ -165,8 +169,26 @@ const LaunchCard = ({ product, onAction }: { product: LaunchProduct; onAction: (
         )}
 
         {done && (
-          <div className="text-center py-2 text-xs text-green-500 font-bold uppercase tracking-wider">
-            <Check className="h-4 w-4 inline mr-1" /> Köszönjük!
+          <div className="space-y-2">
+            <div className="text-center py-1 text-xs text-green-500 font-bold uppercase tracking-wider">
+              <Check className="h-4 w-4 inline mr-1" /> Köszönjük!
+            </div>
+            <Button
+              size="sm" variant="outline"
+              className="w-full rounded-none uppercase tracking-wider text-[10px] h-8"
+              onClick={async () => {
+                const url = `${window.location.origin}/launch?ref=${product.id}`;
+                const text = `Nézd meg: ${product.name} hamarosan érkezik! 🔥`;
+                if (navigator.share) {
+                  try { await navigator.share({ title: product.name, text, url }); } catch {}
+                } else {
+                  await navigator.clipboard.writeText(`${text}\n${url}`);
+                  toast({ title: "Link másolva!", description: "Oszd meg és kerülj előbbre a várólistán!" });
+                }
+              }}
+            >
+              <Share2 className="h-3 w-3 mr-1" /> Megosztás (3 share = 1 hely előrébb)
+            </Button>
           </div>
         )}
 
@@ -247,6 +269,7 @@ const Launch = () => {
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8 space-y-6">
+        <LaunchHero />
         <div className="text-center space-y-2 max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1 border border-accent/30 bg-accent/5 text-accent text-[10px] font-bold uppercase tracking-widest">
             <Rocket className="h-3 w-3" /> Launch Center
