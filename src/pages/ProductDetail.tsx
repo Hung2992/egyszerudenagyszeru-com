@@ -59,6 +59,12 @@ const ProductDetail = () => {
   const [isFollowingBrand, setIsFollowingBrand] = useState(false);
   const [isPreordered, setIsPreordered] = useState(false);
   const [preorderSubmitting, setPreorderSubmitting] = useState(false);
+  const [showPreorderForm, setShowPreorderForm] = useState(false);
+  const [preorderName, setPreorderName] = useState("");
+  const [preorderPhone, setPreorderPhone] = useState("");
+  const [preorderZip, setPreorderZip] = useState("");
+  const [preorderCity, setPreorderCity] = useState("");
+  const [preorderAddress, setPreorderAddress] = useState("");
 
   const [reviews, setReviews] = useState<any[]>([]);
   const [reviewImagesMap, setReviewImagesMap] = useState<Record<string, string[]>>({});
@@ -333,44 +339,69 @@ const ProductDetail = () => {
     }
   };
 
-  const handlePreorder = async () => {
+  const cancelPreorder = async () => {
+    if (!userId || !product) return;
+    const { error } = await supabase
+      .from("product_preorders")
+      .delete()
+      .eq("user_id", userId)
+      .eq("product_id", product.id)
+      .in("status", ["pending", "confirmed"]);
+    if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
+    setIsPreordered(false);
+    toast({ title: "Előrendelés törölve" });
+  };
+
+  const openPreorderForm = async () => {
     if (!userId || !product) { navigate("/auth"); return; }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.email) { navigate("/auth"); return; }
+    // Prefill from profile if available
+    const { data: profile } = await supabase
+      .from("profiles").select("display_name, phone, city").eq("user_id", userId).maybeSingle();
+    if (profile) {
+      setPreorderName(profile.display_name || session.user.user_metadata?.full_name || "");
+      setPreorderPhone(profile.phone || "");
+      setPreorderCity(profile.city || "");
+    }
+    setShowPreorderForm(true);
+  };
+
+  const submitPreorder = async () => {
+    if (!userId || !product) return;
+    if (!preorderName.trim() || !preorderPhone.trim() || !preorderZip.trim() || !preorderCity.trim() || !preorderAddress.trim()) {
+      toast({ title: "Hiányzó adatok", description: "Minden mező kötelező!", variant: "destructive" });
+      return;
+    }
     const { data: { session } } = await supabase.auth.getSession();
     const userEmail = session?.user?.email || "";
     if (!userEmail) { navigate("/auth"); return; }
-    if (isPreordered) {
-      const { error } = await supabase
-        .from("product_preorders")
-        .delete()
-        .eq("user_id", userId)
-        .eq("product_id", product.id)
-        .in("status", ["pending", "confirmed"]);
-      if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
-      setIsPreordered(false);
-      toast({ title: "Előrendelés törölve" });
-    } else {
-      setPreorderSubmitting(true);
-      // Calculate deposit (default 20% if no setting)
-      const depositPercent = 20;
-      const totalAmount = Number(product.price) * quantity;
-      const depositAmount = Math.round((totalAmount * depositPercent) / 100);
-      const { error } = await supabase.from("product_preorders").insert({
-        product_id: product.id,
-        user_id: userId,
-        customer_email: userEmail,
-        customer_name: session?.user?.user_metadata?.full_name || null,
-        quantity,
-        selected_size: selectedSize || null,
-        selected_color: selectedColor || null,
-        deposit_amount: depositAmount,
-        total_amount: totalAmount,
-        status: "pending",
-      });
-      setPreorderSubmitting(false);
-      if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
-      setIsPreordered(true);
-      toast({ title: "Előrendelés rögzítve! 📦", description: `Foglaló: ${depositAmount.toLocaleString()} Ft` });
-    }
+
+    setPreorderSubmitting(true);
+    const totalAmount = Number(product.price) * quantity;
+    const noteText = `GLS készpénzes előrendelés | Cím: ${preorderZip} ${preorderCity}, ${preorderAddress}`;
+    const { error } = await supabase.from("product_preorders").insert({
+      product_id: product.id,
+      user_id: userId,
+      customer_email: userEmail,
+      customer_name: preorderName.trim(),
+      customer_phone: preorderPhone.trim(),
+      quantity,
+      selected_size: selectedSize || null,
+      selected_color: selectedColor || null,
+      deposit_amount: 0,
+      total_amount: totalAmount,
+      status: "pending",
+      notes: noteText,
+    });
+    setPreorderSubmitting(false);
+    if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
+    setIsPreordered(true);
+    setShowPreorderForm(false);
+    toast({
+      title: "Előrendelés rögzítve! 📦",
+      description: "GLS futár hozza, fizetés készpénzben átvételkor. Felvesszük veled a kapcsolatot!"
+    });
   };
 
   const submitReview = async () => {
