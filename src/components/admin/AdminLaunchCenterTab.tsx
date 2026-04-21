@@ -214,7 +214,6 @@ const AdminLaunchCenterTab = () => {
                       toast({ title: "Hiba", description: error.message, variant: "destructive" });
                     } else {
                       toast({ title: "🚀 Drop elindítva!", description: `${data?.processed || 0} művelet végrehajtva` });
-                      load();
                       fetchAll();
                     }
                   }}
