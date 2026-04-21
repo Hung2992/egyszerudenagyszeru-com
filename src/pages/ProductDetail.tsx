@@ -137,21 +137,32 @@ const ProductDetail = () => {
       const p = prod as any as Product;
 
       // Fetch variants — use them as the source of truth for sizes/colors when present
-      const { data: variants } = await (supabase.from("product_variants" as any) as any)
-        .select("size, color, is_active")
+      const { data: variantData } = await (supabase.from("product_variants" as any) as any)
+        .select("size, color, stock, is_active")
         .eq("product_id", id)
         .eq("is_active", true);
 
-      if (variants && variants.length > 0) {
-        const sizesFromVar = Array.from(new Set(variants.map((v: any) => v.size).filter(Boolean)));
-        const colorsFromVar = Array.from(new Set(variants.map((v: any) => v.color).filter(Boolean)));
+      const vList = (variantData || []) as Array<{ size: string | null; color: string | null; stock: number }>;
+      setVariants(vList);
+
+      if (vList.length > 0) {
+        const sizesFromVar = Array.from(new Set(vList.map((v) => v.size).filter(Boolean)));
+        const colorsFromVar = Array.from(new Set(vList.map((v) => v.color).filter(Boolean)));
         if (sizesFromVar.length > 0) p.sizes = sizesFromVar as string[];
         if (colorsFromVar.length > 0) p.colors = colorsFromVar as string[];
       }
 
       setProduct(p);
-      setSelectedSize((p.sizes || [])[0] || "");
-      setSelectedColor((p.colors || [])[0] || "");
+      // Pick first size/color that's actually in stock if possible
+      const firstAvailableSize = (p.sizes || []).find((s) =>
+        vList.length === 0 ? true : vList.some((v) => v.size === s && (v.stock || 0) > 0)
+      ) || (p.sizes || [])[0] || "";
+      const firstAvailableColor = (p.colors || []).find((c) =>
+        vList.length === 0 ? true : vList.some((v) => v.color === c && (v.stock || 0) > 0)
+      ) || (p.colors || [])[0] || "";
+      setSelectedSize(firstAvailableSize);
+      setSelectedColor(firstAvailableColor);
+
 
       // Fetch gallery images
       const { data: imgs } = await (supabase.from("product_images" as any) as any)
