@@ -50,6 +50,7 @@ import AdminProcurementTab from "@/components/admin/AdminProcurementTab";
 import AdminBulkProductImport from "@/components/admin/AdminBulkProductImport";
 import AdminCustomerSegmentationTab from "@/components/admin/AdminCustomerSegmentationTab";
 import GiveawayWheel from "@/components/admin/GiveawayWheel";
+import GiveawayPrizeManager from "@/components/admin/GiveawayPrizeManager";
 import AdminProductBundlesTab from "@/components/admin/AdminProductBundlesTab";
 import AdminSocialMediaTab from "@/components/admin/AdminSocialMediaTab";
 import AdminDeliverySlotsTab from "@/components/admin/AdminDeliverySlotsTab";
