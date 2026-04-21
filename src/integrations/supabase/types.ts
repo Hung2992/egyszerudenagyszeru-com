@@ -920,6 +920,103 @@ export type Database = {
           },
         ]
       }
+      product_polls: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          product_id: string
+          vote_weight: number
+          voter_email: string
+          voter_id: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          product_id: string
+          vote_weight?: number
+          voter_email: string
+          voter_id?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          product_id?: string
+          vote_weight?: number
+          voter_email?: string
+          voter_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_polls_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "shop_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_preorders: {
+        Row: {
+          created_at: string
+          customer_email: string
+          customer_name: string | null
+          customer_phone: string | null
+          deposit_amount: number
+          id: string
+          notes: string | null
+          notified_at: string | null
+          payment_intent_id: string | null
+          product_id: string
+          quantity: number
+          status: string
+          total_amount: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_email: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          deposit_amount?: number
+          id?: string
+          notes?: string | null
+          notified_at?: string | null
+          payment_intent_id?: string | null
+          product_id: string
+          quantity?: number
+          status?: string
+          total_amount?: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          deposit_amount?: number
+          id?: string
+          notes?: string | null
+          notified_at?: string | null
+          payment_intent_id?: string | null
+          product_id?: string
+          quantity?: number
+          status?: string
+          total_amount?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_preorders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "shop_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_reviews: {
         Row: {
           admin_reply: string | null
@@ -957,6 +1054,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "shop_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_waitlist: {
+        Row: {
+          converted_at: string | null
+          created_at: string
+          early_access: boolean
+          early_access_code: string | null
+          email: string
+          id: string
+          name: string | null
+          notified_at: string | null
+          position: number | null
+          product_id: string
+          source: string | null
+          user_id: string | null
+        }
+        Insert: {
+          converted_at?: string | null
+          created_at?: string
+          early_access?: boolean
+          early_access_code?: string | null
+          email: string
+          id?: string
+          name?: string | null
+          notified_at?: string | null
+          position?: number | null
+          product_id: string
+          source?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          converted_at?: string | null
+          created_at?: string
+          early_access?: boolean
+          early_access_code?: string | null
+          email?: string
+          id?: string
+          name?: string | null
+          notified_at?: string | null
+          position?: number | null
+          product_id?: string
+          source?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_waitlist_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "shop_products"
@@ -1258,11 +1408,22 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean
+          is_sneak_peek: boolean
+          launch_date: string | null
+          launch_status: string
           name: string
           original_price: number | null
+          poll_votes: number
+          preorder_count: number
+          preorder_deposit_percent: number
+          preorder_enabled: boolean
+          preorder_limit: number | null
           price: number
           sizes: string[] | null
           stock: number
+          teaser_description: string | null
+          teaser_image_url: string | null
+          waitlist_count: number
         }
         Insert: {
           category?: string
@@ -1272,11 +1433,22 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_sneak_peek?: boolean
+          launch_date?: string | null
+          launch_status?: string
           name: string
           original_price?: number | null
+          poll_votes?: number
+          preorder_count?: number
+          preorder_deposit_percent?: number
+          preorder_enabled?: boolean
+          preorder_limit?: number | null
           price?: number
           sizes?: string[] | null
           stock?: number
+          teaser_description?: string | null
+          teaser_image_url?: string | null
+          waitlist_count?: number
         }
         Update: {
           category?: string
@@ -1286,11 +1458,22 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_sneak_peek?: boolean
+          launch_date?: string | null
+          launch_status?: string
           name?: string
           original_price?: number | null
+          poll_votes?: number
+          preorder_count?: number
+          preorder_deposit_percent?: number
+          preorder_enabled?: boolean
+          preorder_limit?: number | null
           price?: number
           sizes?: string[] | null
           stock?: number
+          teaser_description?: string | null
+          teaser_image_url?: string | null
+          waitlist_count?: number
         }
         Relationships: []
       }
