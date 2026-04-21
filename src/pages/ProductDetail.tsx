@@ -826,7 +826,9 @@ const ProductDetail = () => {
                 )}
                 <ProductWaitlist productId={product.id} userId={userId} onAuth={() => navigate("/auth")} />
               </div>
-            )}
+            );
+            })()}
+
 
             {/* Installment */}
             {product.price >= 10000 && (
