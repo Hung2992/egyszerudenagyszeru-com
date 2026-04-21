@@ -56,6 +56,14 @@ const ProductLaunchEditor = ({ productId, onClose }: { productId: string; onClos
   const [aiLoading, setAiLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+  const [showMatrix, setShowMatrix] = useState(false);
+  const [pickedSizes, setPickedSizes] = useState<string[]>([]);
+  const [pickedColors, setPickedColors] = useState<string[]>([]);
+  const [customSize, setCustomSize] = useState("");
+  const [customColor, setCustomColor] = useState("");
+
+  const SIZE_PRESETS = ["XS", "S", "M", "L", "XL", "XXL", "XXXL", "One Size", "34", "36", "38", "40", "42", "44"];
+  const COLOR_PRESETS = ["Fekete", "Fehér", "Szürke", "Bézs", "Barna", "Kék", "Piros", "Zöld", "Sárga", "Rózsaszín"];
 
   const load = async () => {
     const [{ data: p }, { data: imgs }, { data: vars }, { data: chart }] = await Promise.all([
