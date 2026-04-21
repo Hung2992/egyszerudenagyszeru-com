@@ -38,6 +38,7 @@ const Unsubscribe = lazy(() => import("./pages/Unsubscribe.tsx"));
 const EmailUnsubscribe = lazy(() => import("./pages/EmailUnsubscribe.tsx"));
 const Giveaway = lazy(() => import("./pages/Giveaway.tsx"));
 const CheckoutReturn = lazy(() => import("./pages/CheckoutReturn.tsx"));
+const Launch = lazy(() => import("./pages/Launch.tsx"));
 
 const queryClient = new QueryClient();
 
