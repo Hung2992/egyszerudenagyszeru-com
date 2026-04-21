@@ -84,6 +84,31 @@ const ProductDetail = () => {
 
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [showSizeQuiz, setShowSizeQuiz] = useState(false);
+  const [variants, setVariants] = useState<Array<{ size: string | null; color: string | null; stock: number }>>([]);
+
+  // Stock helpers based on variants (size+color combinations)
+  const getStockForSize = (size: string): number => {
+    if (variants.length === 0) return product?.stock ?? 0;
+    return variants
+      .filter((v) => v.size === size && (!selectedColor || !v.color || v.color === selectedColor))
+      .reduce((sum, v) => sum + (v.stock || 0), 0);
+  };
+  const getStockForColor = (color: string): number => {
+    if (variants.length === 0) return product?.stock ?? 0;
+    return variants
+      .filter((v) => v.color === color && (!selectedSize || !v.size || v.size === selectedSize))
+      .reduce((sum, v) => sum + (v.stock || 0), 0);
+  };
+  const getCurrentStock = (): number => {
+    if (variants.length === 0) return product?.stock ?? 0;
+    const matches = variants.filter((v) =>
+      (!selectedSize || v.size === selectedSize) &&
+      (!selectedColor || v.color === selectedColor)
+    );
+    if (matches.length === 0) return 0;
+    return matches.reduce((sum, v) => sum + (v.stock || 0), 0);
+  };
+
 
   // Avg rating
   const avgRating = reviews.length > 0
@@ -112,21 +137,32 @@ const ProductDetail = () => {
       const p = prod as any as Product;
 
       // Fetch variants — use them as the source of truth for sizes/colors when present
-      const { data: variants } = await (supabase.from("product_variants" as any) as any)
-        .select("size, color, is_active")
+      const { data: variantData } = await (supabase.from("product_variants" as any) as any)
+        .select("size, color, stock, is_active")
         .eq("product_id", id)
         .eq("is_active", true);
 
-      if (variants && variants.length > 0) {
-        const sizesFromVar = Array.from(new Set(variants.map((v: any) => v.size).filter(Boolean)));
-        const colorsFromVar = Array.from(new Set(variants.map((v: any) => v.color).filter(Boolean)));
+      const vList = (variantData || []) as Array<{ size: string | null; color: string | null; stock: number }>;
+      setVariants(vList);
+
+      if (vList.length > 0) {
+        const sizesFromVar = Array.from(new Set(vList.map((v) => v.size).filter(Boolean)));
+        const colorsFromVar = Array.from(new Set(vList.map((v) => v.color).filter(Boolean)));
         if (sizesFromVar.length > 0) p.sizes = sizesFromVar as string[];
         if (colorsFromVar.length > 0) p.colors = colorsFromVar as string[];
       }
 
       setProduct(p);
-      setSelectedSize((p.sizes || [])[0] || "");
-      setSelectedColor((p.colors || [])[0] || "");
+      // Pick first size/color that's actually in stock if possible
+      const firstAvailableSize = (p.sizes || []).find((s) =>
+        vList.length === 0 ? true : vList.some((v) => v.size === s && (v.stock || 0) > 0)
+      ) || (p.sizes || [])[0] || "";
+      const firstAvailableColor = (p.colors || []).find((c) =>
+        vList.length === 0 ? true : vList.some((v) => v.color === c && (v.stock || 0) > 0)
+      ) || (p.colors || [])[0] || "";
+      setSelectedSize(firstAvailableSize);
+      setSelectedColor(firstAvailableColor);
+
 
       // Fetch gallery images
       const { data: imgs } = await (supabase.from("product_images" as any) as any)
@@ -600,20 +636,45 @@ const ProductDetail = () => {
                   </button>
                 </div>
                 <div className="flex gap-1.5 flex-wrap">
-                  {(product.sizes || []).map(s => (
-                    <button
-                      key={s}
-                      onClick={() => setSelectedSize(s)}
-                      className={`text-xs px-5 py-2.5 border transition-all ${
-                        selectedSize === s
-                          ? "bg-foreground text-background border-foreground font-bold"
-                          : "text-muted-foreground border-border hover:text-foreground hover:border-muted-foreground"
-                      }`}
-                    >
-                      {s}
-                    </button>
-                  ))}
+                  {(product.sizes || []).map(s => {
+                    const sizeStock = getStockForSize(s);
+                    const soldOut = variants.length > 0 && sizeStock <= 0;
+                    return (
+                      <button
+                        key={s}
+                        onClick={() => !soldOut && setSelectedSize(s)}
+                        disabled={soldOut}
+                        title={soldOut ? "Elfogyott" : `${sizeStock} db készleten`}
+                        className={`relative text-xs px-5 py-2.5 border transition-all ${
+                          soldOut
+                            ? "text-muted-foreground/40 border-border/40 line-through cursor-not-allowed bg-muted/20"
+                            : selectedSize === s
+                              ? "bg-foreground text-background border-foreground font-bold"
+                              : "text-muted-foreground border-border hover:text-foreground hover:border-muted-foreground"
+                        }`}
+                      >
+                        {s}
+                        {!soldOut && variants.length > 0 && sizeStock <= 3 && (
+                          <span className="absolute -top-1.5 -right-1.5 text-[8px] bg-accent text-accent-foreground px-1 py-0.5 font-bold rounded-sm">
+                            {sizeStock}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
+                {variants.length > 0 && (
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+                    {(product.sizes || []).map(s => {
+                      const ss = getStockForSize(s);
+                      return (
+                        <span key={`legend-${s}`} className={`text-[10px] ${ss <= 0 ? "text-destructive" : ss <= 3 ? "text-accent" : "text-muted-foreground"}`}>
+                          {s}: {ss <= 0 ? "elfogyott" : `${ss} db`}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
@@ -622,44 +683,60 @@ const ProductDetail = () => {
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Szín</p>
                 <div className="flex gap-1.5 flex-wrap">
-                  {(product.colors || []).map(c => (
-                    <button
-                      key={c}
-                      onClick={() => setSelectedColor(c)}
-                      className={`text-xs px-5 py-2.5 border transition-all ${
-                        selectedColor === c
-                          ? "bg-foreground text-background border-foreground font-bold"
-                          : "text-muted-foreground border-border hover:text-foreground hover:border-muted-foreground"
-                      }`}
-                    >
-                      {c}
-                    </button>
-                  ))}
+                  {(product.colors || []).map(c => {
+                    const colorStock = getStockForColor(c);
+                    const soldOut = variants.length > 0 && colorStock <= 0;
+                    return (
+                      <button
+                        key={c}
+                        onClick={() => !soldOut && setSelectedColor(c)}
+                        disabled={soldOut}
+                        title={soldOut ? "Elfogyott" : `${colorStock} db készleten`}
+                        className={`text-xs px-5 py-2.5 border transition-all ${
+                          soldOut
+                            ? "text-muted-foreground/40 border-border/40 line-through cursor-not-allowed bg-muted/20"
+                            : selectedColor === c
+                              ? "bg-foreground text-background border-foreground font-bold"
+                              : "text-muted-foreground border-border hover:text-foreground hover:border-muted-foreground"
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
             {/* Quantity + Add to Cart */}
-            {product.stock > 0 ? (
+            {(() => {
+              const currentStock = getCurrentStock();
+              return currentStock > 0 ? (
               <div className="space-y-3">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Darabszám</p>
                   <div className="flex items-center border border-border">
                     <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="px-3 py-2 text-muted-foreground hover:text-foreground transition-colors text-sm">-</button>
                     <span className="px-4 py-2 text-sm font-bold text-foreground min-w-[40px] text-center">{quantity}</span>
-                    <button onClick={() => setQuantity(q => Math.min(product.stock, q + 1))} className="px-3 py-2 text-muted-foreground hover:text-foreground transition-colors text-sm">+</button>
+                    <button onClick={() => setQuantity(q => Math.min(currentStock, q + 1))} className="px-3 py-2 text-muted-foreground hover:text-foreground transition-colors text-sm">+</button>
                   </div>
-                  <span className="text-[10px] text-muted-foreground">Készleten: {product.stock} db</span>
+                  <span className="text-[10px] text-muted-foreground">
+                    Készleten: <span className="text-foreground font-bold">{currentStock} db</span>
+                    {variants.length > 0 && (selectedSize || selectedColor) && (
+                      <> ({[selectedSize, selectedColor].filter(Boolean).join(" / ")})</>
+                    )}
+                  </span>
                 </div>
 
-                {product.stock <= 5 && (
-                  <p className="text-xs text-accent font-bold uppercase tracking-wider">⚡ Utolsó {product.stock} darab!</p>
+                {currentStock <= 5 && (
+                  <p className="text-xs text-accent font-bold uppercase tracking-wider">⚡ Utolsó {currentStock} darab!</p>
                 )}
 
                 <div className="flex gap-2">
                   <Button
                     className="flex-1 rounded-none uppercase tracking-widest text-xs h-12 font-bold"
                     onClick={handleAddToCart}
+                    disabled={quantity > currentStock}
                   >
                     <ShoppingCart className="h-4 w-4 mr-2" />
                     Kosárba teszem
@@ -749,7 +826,9 @@ const ProductDetail = () => {
                 )}
                 <ProductWaitlist productId={product.id} userId={userId} onAuth={() => navigate("/auth")} />
               </div>
-            )}
+            );
+            })()}
+
 
             {/* Installment */}
             {product.price >= 10000 && (

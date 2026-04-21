@@ -619,6 +619,16 @@ const Shop = () => {
                       <span className="text-[11px] text-muted-foreground line-through">{product.original_price.toLocaleString("hu-HU")} Ft</span>
                     )}
                   </div>
+                  {product.stock > 0 && product.stock <= 5 && (
+                    <p className="text-[10px] text-accent font-bold uppercase tracking-wider mt-1">
+                      ⚡ Utolsó {product.stock} db!
+                    </p>
+                  )}
+                  {product.stock > 5 && (
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Készleten: <span className="text-foreground font-semibold">{product.stock} db</span>
+                    </p>
+                  )}
                   <Button
                     size="sm"
                     className="w-full mt-2.5 rounded-none uppercase tracking-wider text-[10px] h-8 md:hidden"
