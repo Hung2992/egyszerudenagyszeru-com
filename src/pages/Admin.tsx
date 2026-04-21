@@ -2034,6 +2034,25 @@ const Admin = () => {
                         <div><p className="text-[10px] uppercase text-muted-foreground">Dátum</p><p>{new Date(p.created_at).toLocaleDateString("hu-HU")}</p></div>
                         <div><p className="text-[10px] uppercase text-muted-foreground">Értesítve</p><p>{p.notified_at ? "✓" : "—"}</p></div>
                       </div>
+                      {p.notes && (
+                        <div className="border border-purple-500/30 bg-purple-500/5 p-3 space-y-1">
+                          <p className="text-[10px] uppercase tracking-widest text-purple-400 font-bold">📍 Szállítási cím / Megjegyzés</p>
+                          <p className="text-xs whitespace-pre-wrap break-words">{p.notes}</p>
+                          {(() => {
+                            const m = String(p.notes).match(/Cím:\s*(.+)$/);
+                            if (!m) return null;
+                            const addr = m[1].trim();
+                            return (
+                              <button
+                                onClick={() => { navigator.clipboard.writeText(addr); toast({ title: "Cím másolva" }); }}
+                                className="text-[10px] uppercase tracking-wider text-accent hover:underline mt-1"
+                              >
+                                📋 Cím másolása
+                              </button>
+                            );
+                          })()}
+                        </div>
+                      )}
                       <div className="flex flex-wrap gap-1 pt-2 border-t border-border/50">
                         {["pending", "confirmed", "paid", "ready", "shipped", "cancelled"].map(s => (
                           <button
