@@ -89,6 +89,7 @@ import AdminWebhookEventsTab from "@/components/admin/AdminWebhookEventsTab";
 import AdminInventoryForecastTab from "@/components/admin/AdminInventoryForecastTab";
 import AdminOrderAutomationTab from "@/components/admin/AdminOrderAutomationTab";
 import AdminOrderInsightsTab from "@/components/admin/AdminOrderInsightsTab";
+import AdminLaunchCenterTab from "@/components/admin/AdminLaunchCenterTab";
 import AdminMediaManagerTab from "@/components/admin/AdminMediaManagerTab";
 import AdminRetentionTab from "@/components/admin/AdminRetentionTab";
 import AdminReviewModerationTab from "@/components/admin/AdminReviewModerationTab";
