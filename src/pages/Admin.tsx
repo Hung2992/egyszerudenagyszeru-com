@@ -676,8 +676,14 @@ const Admin = () => {
   };
 
   const fetchOrders = async () => {
-    const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
-    if (data) setOrders(data as any);
+    const [oRes, pRes, wRes] = await Promise.all([
+      supabase.from("orders").select("*").order("created_at", { ascending: false }),
+      supabase.from("product_preorders").select("*, shop_products(name, image_url, price)").order("created_at", { ascending: false }),
+      supabase.from("product_waitlist").select("*, shop_products(name, image_url)").order("created_at", { ascending: false }),
+    ]);
+    if (oRes.data) setOrders(oRes.data as any);
+    if (pRes.data) setPreorders(pRes.data as any);
+    if (wRes.data) setWaitlistEntries(wRes.data as any);
   };
 
   const fetchCoupons = async () => {
