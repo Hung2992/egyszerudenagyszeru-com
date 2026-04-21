@@ -479,6 +479,64 @@ const ProductLaunchEditor = ({ productId, onClose }: { productId: string; onClos
                   </Button>
                 </div>
 
+                {showMatrix && (
+                  <div className="border-2 border-accent bg-accent/5 p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-accent">Gyors méret + szín választó</h4>
+                      <Button size="sm" variant="ghost" className="h-7 rounded-none" onClick={() => setShowMatrix(false)}><X className="h-3 w-3" /></Button>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs uppercase tracking-wider mb-2 block">Méretek (kattints rá amelyik kell)</Label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {SIZE_PRESETS.map(s => (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => togglePick(pickedSizes, setPickedSizes, s)}
+                            className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider border-2 transition-all ${pickedSizes.includes(s) ? "border-accent bg-accent text-accent-foreground" : "border-border hover:border-foreground/40"}`}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex gap-1 mt-2">
+                        <Input value={customSize} onChange={e => setCustomSize(e.target.value)} placeholder="Egyedi méret (pl. 46)" className="h-8 rounded-none text-xs" />
+                        <Button size="sm" variant="outline" className="h-8 rounded-none text-xs" onClick={() => { if (customSize.trim()) { setPickedSizes([...pickedSizes, customSize.trim()]); setCustomSize(""); } }}>+</Button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs uppercase tracking-wider mb-2 block">Színek</Label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {COLOR_PRESETS.map(c => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => togglePick(pickedColors, setPickedColors, c)}
+                            className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider border-2 transition-all ${pickedColors.includes(c) ? "border-accent bg-accent text-accent-foreground" : "border-border hover:border-foreground/40"}`}
+                          >
+                            {c}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex gap-1 mt-2">
+                        <Input value={customColor} onChange={e => setCustomColor(e.target.value)} placeholder="Egyedi szín (pl. Khaki)" className="h-8 rounded-none text-xs" />
+                        <Button size="sm" variant="outline" className="h-8 rounded-none text-xs" onClick={() => { if (customColor.trim()) { setPickedColors([...pickedColors, customColor.trim()]); setCustomColor(""); } }}>+</Button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <p className="text-[11px] text-muted-foreground">
+                        {pickedSizes.length || "0"} méret × {pickedColors.length || "0"} szín = <strong className="text-foreground">{Math.max(pickedSizes.length, 1) * Math.max(pickedColors.length, 1)}</strong> új variáns
+                      </p>
+                      <Button onClick={applyMatrix} disabled={pickedSizes.length === 0 && pickedColors.length === 0} className="rounded-none text-xs">
+                        <Wand2 className="h-3.5 w-3.5 mr-1" /> Generálás
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs border">
                     <thead className="bg-muted/30">
