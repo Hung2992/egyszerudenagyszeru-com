@@ -1852,109 +1852,276 @@ const Admin = () => {
           </div>
         )}
 
-        {/* ─── ORDERS TAB ─── */}
+        {/* ─── ORDERS TAB — 3 RENDSZER ─── */}
         {tab === "orders" && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold uppercase tracking-wider">Rendelések ({orders.length})</h2>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <h2 className="text-lg font-bold uppercase tracking-wider">Rendelés központ</h2>
               <div className="text-xs text-muted-foreground">
-                Összesen: <span className="font-semibold text-accent">{totalRevenue.toLocaleString()} Ft</span>
+                Bevétel: <span className="font-semibold text-accent">{totalRevenue.toLocaleString()} Ft</span>
               </div>
             </div>
-            <div className="space-y-3">
-              {orders.map(o => (
-                <div key={o.id} className="border bg-card p-4 space-y-3 cursor-pointer hover:border-accent/30 transition-colors" onClick={() => setSelectedOrderId(o.id)}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-muted-foreground font-mono">#{o.id.slice(0, 8)}</span>
-                      <span className="text-sm font-semibold text-accent">{o.total_amount.toLocaleString()} Ft</span>
-                      {o.discount_amount && o.discount_amount > 0 && (
-                        <span className="text-[10px] text-green-400">-{o.discount_amount.toLocaleString()} Ft</span>
+
+            {/* SUB-TAB SWITCHER — 3 színkódolt kártya */}
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => setOrdersSubTab("live")}
+                className={`border p-3 text-left transition-all ${ordersSubTab === "live" ? "border-accent bg-accent/10" : "border-border hover:border-accent/40"}`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-[10px] uppercase tracking-widest font-bold">Élő</span>
+                </div>
+                <div className="text-2xl font-bold">{orders.length}</div>
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Rendelés</div>
+              </button>
+              <button
+                onClick={() => setOrdersSubTab("preorder")}
+                className={`border p-3 text-left transition-all ${ordersSubTab === "preorder" ? "border-purple-500 bg-purple-500/10" : "border-border hover:border-purple-500/40"}`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="h-2 w-2 rounded-full bg-purple-500" />
+                  <span className="text-[10px] uppercase tracking-widest font-bold">🟣 Előrendelés</span>
+                </div>
+                <div className="text-2xl font-bold">{preorders.length}</div>
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Foglaló</div>
+              </button>
+              <button
+                onClick={() => setOrdersSubTab("waitlist")}
+                className={`border p-3 text-left transition-all ${ordersSubTab === "waitlist" ? "border-yellow-500 bg-yellow-500/10" : "border-border hover:border-yellow-500/40"}`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="h-2 w-2 rounded-full bg-yellow-500" />
+                  <span className="text-[10px] uppercase tracking-widest font-bold">🟡 Várólista</span>
+                </div>
+                <div className="text-2xl font-bold">{waitlistEntries.length}</div>
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Email</div>
+              </button>
+            </div>
+
+            {/* ─── 1. ÉLŐ RENDELÉSEK ─── */}
+            {ordersSubTab === "live" && (
+              <div className="space-y-3">
+                {orders.map(o => (
+                  <div key={o.id} className="border bg-card p-4 space-y-3 cursor-pointer hover:border-accent/30 transition-colors" onClick={() => setSelectedOrderId(o.id)}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-muted-foreground font-mono">#{o.id.slice(0, 8)}</span>
+                        <span className="text-sm font-semibold text-accent">{o.total_amount.toLocaleString()} Ft</span>
+                        {o.discount_amount && o.discount_amount > 0 && (
+                          <span className="text-[10px] text-green-400">-{o.discount_amount.toLocaleString()} Ft</span>
+                        )}
+                      </div>
+                      <StatusBadge status={o.status} />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-muted-foreground">
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] uppercase tracking-widest font-medium text-foreground/60">Ki rendelte</p>
+                        <p>{o.shipping_name || "—"}</p>
+                        {o.shipping_phone && <p>📱 {o.shipping_phone}</p>}
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] uppercase tracking-widest font-medium text-foreground/60">Cím</p>
+                        <p>{[o.shipping_zip, o.shipping_city, o.shipping_address].filter(Boolean).join(", ") || "—"}</p>
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] uppercase tracking-widest font-medium text-foreground/60">Fizetés</p>
+                        <p>{o.payment_method === "cash" ? "Készpénz" : o.payment_method === "card" ? "Bankkártya" : o.payment_method === "cod" ? "Utánvét" : o.payment_method || "—"}</p>
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] uppercase tracking-widest font-medium text-foreground/60">Dátum</p>
+                        <p>{new Date(o.created_at).toLocaleDateString("hu-HU", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                      </div>
+                      {o.coupon_code && (
+                        <div className="space-y-0.5">
+                          <p className="text-[10px] uppercase tracking-widest font-medium text-foreground/60">Kupon</p>
+                          <p className="font-mono text-accent">{o.coupon_code}</p>
+                        </div>
                       )}
                     </div>
-                    <StatusBadge status={o.status} />
+                    <div className="flex gap-1 flex-wrap pt-1 border-t border-border/50" onClick={e => e.stopPropagation()}>
+                      {["pending", "processing", "packed", "shipped", "delivered", "cancelled"].map(s => (
+                        <button
+                          key={s}
+                          onClick={() => updateOrderStatus(o.id, s)}
+                          className={`text-[10px] uppercase tracking-wider px-2.5 py-1 border transition-colors ${
+                            o.status === s ? "bg-accent text-accent-foreground font-bold" : "text-muted-foreground hover:text-foreground hover:border-foreground/30"
+                          }`}
+                        >
+                          {statusLabel(s)}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-border/50" onClick={e => e.stopPropagation()}>
+                      <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Beszerzés:</span>
+                      <ProcurementBadge status={(o as any).procurement_status || "pending"} />
+                      {(!(o as any).procurement_status || (o as any).procurement_status === "pending") && (
+                        <Button size="sm" variant="outline" className="rounded-none text-[10px] uppercase tracking-wider h-6 px-2" onClick={() => createProcurementFromOrder(o)}>
+                          🛒 Beszerzés indítása
+                        </Button>
+                      )}
+                      {(o as any).procurement_status && (o as any).procurement_status !== "pending" && (
+                        <div className="flex gap-1">
+                          {["ordered", "shipped", "received", "delivered"].map(ps => (
+                            <button
+                              key={ps}
+                              onClick={() => updateProcurementStatus(o.id, ps)}
+                              className={`text-[10px] uppercase tracking-wider px-2 py-0.5 border transition-colors ${
+                                (o as any).procurement_status === ps ? "bg-accent text-accent-foreground font-bold" : "text-muted-foreground hover:text-foreground hover:border-foreground/30"
+                              }`}
+                            >
+                              {procurementStatusLabel(ps)}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  
-                  {/* Order details */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-muted-foreground">
-                    <div className="space-y-0.5">
-                      <p className="text-[10px] uppercase tracking-widest font-medium text-foreground/60">Ki rendelte</p>
-                      <p>{o.shipping_name || "—"}</p>
-                      {o.shipping_phone && <p>📱 {o.shipping_phone}</p>}
-                    </div>
-                    <div className="space-y-0.5">
-                      <p className="text-[10px] uppercase tracking-widest font-medium text-foreground/60">Cím</p>
-                      <p>{[o.shipping_zip, o.shipping_city, o.shipping_address].filter(Boolean).join(", ") || "—"}</p>
-                    </div>
-                    <div className="space-y-0.5">
-                      <p className="text-[10px] uppercase tracking-widest font-medium text-foreground/60">Fizetés</p>
-                      <p>{o.payment_method === "cash" ? "Készpénz" : o.payment_method === "card" ? "Bankkártya" : o.payment_method === "cod" ? "Utánvét" : o.payment_method || "—"}</p>
-                    </div>
-                    <div className="space-y-0.5">
-                      <p className="text-[10px] uppercase tracking-widest font-medium text-foreground/60">Dátum</p>
-                      <p>{new Date(o.created_at).toLocaleDateString("hu-HU", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
-                    </div>
-                    {o.coupon_code && (
-                      <div className="space-y-0.5">
-                        <p className="text-[10px] uppercase tracking-widest font-medium text-foreground/60">Kupon</p>
-                        <p className="font-mono text-accent">{o.coupon_code}</p>
+                ))}
+                {orders.length === 0 && (
+                  <p className="text-center text-sm text-muted-foreground py-8">Még nincsenek élő rendelések.</p>
+                )}
+              </div>
+            )}
+
+            {/* ─── 2. ELŐRENDELÉSEK ─── */}
+            {ordersSubTab === "preorder" && (
+              <div className="space-y-3">
+                <div className="border border-purple-500/30 bg-purple-500/5 p-3 text-xs text-muted-foreground">
+                  🟣 <span className="font-bold text-purple-400">Előrendelések</span> — Foglalóval lefoglalt termékek. Készlet érkezésekor értesítsd a vásárlókat és válts át "kész"-re.
+                </div>
+                {preorders.map((p: any) => {
+                  const product = p.shop_products;
+                  const statusColors: Record<string, string> = {
+                    pending: "text-yellow-500 border-yellow-500/30",
+                    confirmed: "text-blue-500 border-blue-500/30",
+                    paid: "text-green-500 border-green-500/30",
+                    ready: "text-accent border-accent/30",
+                    shipped: "text-purple-500 border-purple-500/30",
+                    cancelled: "text-destructive border-destructive/30",
+                  };
+                  return (
+                    <div key={p.id} className="border bg-card p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          {product?.image_url && <img src={product.image_url} alt="" className="h-12 w-12 object-cover border" />}
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold truncate">{product?.name || "Ismeretlen termék"}</p>
+                            <p className="text-[10px] text-muted-foreground font-mono">#{p.id.slice(0, 8)}</p>
+                          </div>
+                        </div>
+                        <span className={`text-[9px] uppercase tracking-widest border px-2 py-0.5 ${statusColors[p.status] || "text-muted-foreground border-border"}`}>
+                          {p.status}
+                        </span>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Status buttons */}
-                  <div className="flex gap-1 flex-wrap pt-1 border-t border-border/50">
-                    {["pending", "processing", "packed", "shipped", "delivered", "cancelled"].map(s => (
-                      <button
-                        key={s}
-                        onClick={() => updateOrderStatus(o.id, s)}
-                        className={`text-[10px] uppercase tracking-wider px-2.5 py-1 border transition-colors ${
-                          o.status === s ? "bg-accent text-accent-foreground font-bold" : "text-muted-foreground hover:text-foreground hover:border-foreground/30"
-                        }`}
-                      >
-                        {statusLabel(s)}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Procurement status & actions */}
-                  <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-border/50">
-                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Beszerzés:</span>
-                    <ProcurementBadge status={(o as any).procurement_status || "pending"} />
-                    {(!(o as any).procurement_status || (o as any).procurement_status === "pending") && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="rounded-none text-[10px] uppercase tracking-wider h-6 px-2"
-                        onClick={() => createProcurementFromOrder(o)}
-                      >
-                        🛒 Beszerzés indítása
-                      </Button>
-                    )}
-                    {(o as any).procurement_status && (o as any).procurement_status !== "pending" && (
-                      <div className="flex gap-1">
-                        {["ordered", "shipped", "received", "delivered"].map(ps => (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                        <div><p className="text-[10px] uppercase text-muted-foreground">Vásárló</p><p className="truncate">{p.customer_name || p.customer_email}</p></div>
+                        <div><p className="text-[10px] uppercase text-muted-foreground">Mennyiség</p><p className="font-bold">{p.quantity} db</p></div>
+                        <div><p className="text-[10px] uppercase text-muted-foreground">Variáns</p><p>{[p.selected_size, p.selected_color].filter(Boolean).join(" / ") || "—"}</p></div>
+                        <div><p className="text-[10px] uppercase text-muted-foreground">Foglaló</p><p className="font-bold text-purple-400">{Number(p.deposit_amount).toLocaleString()} Ft</p></div>
+                        <div><p className="text-[10px] uppercase text-muted-foreground">Teljes ár</p><p className="font-bold text-accent">{Number(p.total_amount).toLocaleString()} Ft</p></div>
+                        <div><p className="text-[10px] uppercase text-muted-foreground">Telefon</p><p>{p.customer_phone || "—"}</p></div>
+                        <div><p className="text-[10px] uppercase text-muted-foreground">Dátum</p><p>{new Date(p.created_at).toLocaleDateString("hu-HU")}</p></div>
+                        <div><p className="text-[10px] uppercase text-muted-foreground">Értesítve</p><p>{p.notified_at ? "✓" : "—"}</p></div>
+                      </div>
+                      <div className="flex flex-wrap gap-1 pt-2 border-t border-border/50">
+                        {["pending", "confirmed", "paid", "ready", "shipped", "cancelled"].map(s => (
                           <button
-                            key={ps}
-                            onClick={() => updateProcurementStatus(o.id, ps)}
-                            className={`text-[10px] uppercase tracking-wider px-2 py-0.5 border transition-colors ${
-                              (o as any).procurement_status === ps ? "bg-accent text-accent-foreground font-bold" : "text-muted-foreground hover:text-foreground hover:border-foreground/30"
+                            key={s}
+                            onClick={async () => {
+                              await supabase.from("product_preorders").update({ status: s }).eq("id", p.id);
+                              toast({ title: `Státusz: ${s}` });
+                              fetchOrders();
+                            }}
+                            className={`text-[10px] uppercase tracking-wider px-2 py-1 border transition-colors ${
+                              p.status === s ? "bg-purple-500 text-white font-bold border-purple-500" : "text-muted-foreground hover:border-foreground/30"
                             }`}
                           >
-                            {procurementStatusLabel(ps)}
+                            {s}
                           </button>
                         ))}
+                        {!p.notified_at && (
+                          <Button size="sm" variant="outline" className="rounded-none text-[10px] uppercase tracking-wider h-6 px-2 ml-auto" onClick={async () => {
+                            await supabase.from("product_preorders").update({ notified_at: new Date().toISOString() }).eq("id", p.id);
+                            toast({ title: "Megjelölve értesítettként" });
+                            fetchOrders();
+                          }}>
+                            ✉️ Értesítés
+                          </Button>
+                        )}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  );
+                })}
+                {preorders.length === 0 && (
+                  <p className="text-center text-sm text-muted-foreground py-8">Még nincsenek előrendelések.</p>
+                )}
+              </div>
+            )}
+
+            {/* ─── 3. VÁRÓLISTA ─── */}
+            {ordersSubTab === "waitlist" && (
+              <div className="space-y-3">
+                <div className="border border-yellow-500/30 bg-yellow-500/5 p-3 text-xs text-muted-foreground">
+                  🟡 <span className="font-bold text-yellow-500">Várólista</span> — Email gyűjtés érdeklődő vásárlókról. Megosztásokkal előrébb sorolva.
                 </div>
-              ))}
-              {orders.length === 0 && (
-                <p className="text-center text-sm text-muted-foreground py-8">Még nincsenek rendelések.</p>
-              )}
-            </div>
+                {waitlistEntries.map((w: any) => {
+                  const product = w.shop_products;
+                  return (
+                    <div key={w.id} className="border bg-card p-4 space-y-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          {product?.image_url && <img src={product.image_url} alt="" className="h-10 w-10 object-cover border" />}
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold truncate">{product?.name || "Ismeretlen termék"}</p>
+                            <p className="text-xs text-muted-foreground truncate">{w.email}{w.name ? ` · ${w.name}` : ""}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {w.early_access && <span className="text-[9px] uppercase tracking-widest text-accent border border-accent/30 px-1.5 py-0.5">Early Access</span>}
+                          <span className="text-[10px] uppercase tracking-widest text-yellow-500 border border-yellow-500/30 px-2 py-0.5 font-bold">#{(w.position || 0) - (w.boost_position || 0)}</span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                        <div><p className="text-[10px] uppercase text-muted-foreground">Pozíció</p><p className="font-bold">#{w.position || "—"}</p></div>
+                        <div><p className="text-[10px] uppercase text-muted-foreground">Boost</p><p className="text-green-400 font-bold">-{w.boost_position || 0}</p></div>
+                        <div><p className="text-[10px] uppercase text-muted-foreground">Megosztások</p><p className="font-bold">{w.shares_count || 0}</p></div>
+                        <div><p className="text-[10px] uppercase text-muted-foreground">Forrás</p><p>{w.source || "—"}</p></div>
+                        <div><p className="text-[10px] uppercase text-muted-foreground">Csatlakozott</p><p>{new Date(w.created_at).toLocaleDateString("hu-HU")}</p></div>
+                        <div><p className="text-[10px] uppercase text-muted-foreground">Értesítve</p><p>{w.notified_at ? "✓" : "—"}</p></div>
+                        <div><p className="text-[10px] uppercase text-muted-foreground">Konvertált</p><p>{w.converted_at ? "✓" : "—"}</p></div>
+                        <div><p className="text-[10px] uppercase text-muted-foreground">Share kód</p><p className="font-mono text-[10px] truncate">{w.share_code || "—"}</p></div>
+                      </div>
+                      <div className="flex gap-1 pt-2 border-t border-border/50">
+                        {!w.notified_at && (
+                          <Button size="sm" variant="outline" className="rounded-none text-[10px] uppercase tracking-wider h-6 px-2" onClick={async () => {
+                            await supabase.from("product_waitlist").update({ notified_at: new Date().toISOString() }).eq("id", w.id);
+                            toast({ title: "Értesítés megjelölve" });
+                            fetchOrders();
+                          }}>
+                            ✉️ Értesítés
+                          </Button>
+                        )}
+                        <Button size="sm" variant="outline" className="rounded-none text-[10px] uppercase tracking-wider h-6 px-2 text-destructive" onClick={async () => {
+                          if (!confirm("Törlöd a várólistából?")) return;
+                          await supabase.from("product_waitlist").delete().eq("id", w.id);
+                          toast({ title: "Törölve" });
+                          fetchOrders();
+                        }}>
+                          🗑️ Törlés
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+                {waitlistEntries.length === 0 && (
+                  <p className="text-center text-sm text-muted-foreground py-8">Még nincsenek várólistás érdeklődők.</p>
+                )}
+              </div>
+            )}
           </div>
         )}
+
 
         {/* ─── COUPONS TAB ─── */}
         {tab === "coupons" && (
