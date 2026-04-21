@@ -1857,8 +1857,18 @@ const Admin = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <h2 className="text-lg font-bold uppercase tracking-wider">Rendelés központ</h2>
-              <div className="text-xs text-muted-foreground">
-                Bevétel: <span className="font-semibold text-accent">{totalRevenue.toLocaleString()} Ft</span>
+              <div className="flex items-center gap-3">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-none uppercase tracking-wider text-[10px] h-7 px-2"
+                  onClick={() => { fetchOrders(); toast({ title: "Frissítve" }); }}
+                >
+                  ↻ Frissítés
+                </Button>
+                <div className="text-xs text-muted-foreground">
+                  Bevétel: <span className="font-semibold text-accent">{totalRevenue.toLocaleString()} Ft</span>
+                </div>
               </div>
             </div>
 
