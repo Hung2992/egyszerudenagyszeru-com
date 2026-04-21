@@ -198,9 +198,30 @@ const AdminLaunchCenterTab = () => {
                 {p.is_sneak_peek && <span>· {p.poll_votes} szavazat</span>}
               </div>
             </div>
-            <Button size="sm" variant="outline" className="rounded-none text-xs" onClick={() => setEditing(p)}>
-              Szerkeszt
-            </Button>
+            <div className="flex flex-col gap-1">
+              <Button size="sm" variant="outline" className="rounded-none text-xs" onClick={() => setEditing(p)}>
+                Szerkeszt
+              </Button>
+              {p.launch_status !== "live" && (
+                <Button
+                  size="sm"
+                  className="rounded-none text-[10px] h-7"
+                  onClick={async () => {
+                    if (!confirm(`Most indítod élesben a "${p.name}" terméket? Minden várólistás és feliratkozó email értesítést kap.`)) return;
+                    await supabase.from("shop_products").update({ launch_date: new Date().toISOString() }).eq("id", p.id);
+                    const { data, error } = await supabase.functions.invoke("launch-automation");
+                    if (error) {
+                      toast({ title: "Hiba", description: error.message, variant: "destructive" });
+                    } else {
+                      toast({ title: "🚀 Drop elindítva!", description: `${data?.processed || 0} művelet végrehajtva` });
+                      load();
+                    }
+                  }}
+                >
+                  🚀 Drop most
+                </Button>
+              )}
+            </div>
           </div>
         ))}
         {filtered.length === 0 && (
