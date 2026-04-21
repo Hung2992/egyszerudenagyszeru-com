@@ -152,6 +152,14 @@ interface ShopProduct {
   is_active: boolean;
   stock: number;
   created_at: string;
+  launch_status?: string;
+  launch_date?: string | null;
+  preorder_enabled?: boolean;
+  preorder_deposit_percent?: number;
+  preorder_limit?: number | null;
+  teaser_description?: string | null;
+  teaser_image_url?: string | null;
+  is_sneak_peek?: boolean;
 }
 
 const createEmptyProductDraft = (): Partial<ShopProduct> => ({
@@ -165,6 +173,14 @@ const createEmptyProductDraft = (): Partial<ShopProduct> => ({
   image_url: null,
   is_active: true,
   stock: 0,
+  launch_status: "live",
+  launch_date: null,
+  preorder_enabled: false,
+  preorder_deposit_percent: 20,
+  preorder_limit: null,
+  teaser_description: null,
+  teaser_image_url: null,
+  is_sneak_peek: false,
 });
 
 interface Order {
@@ -1059,6 +1075,14 @@ const Admin = () => {
       image_url: editProduct.image_url?.trim() || null,
       is_active: editProduct.is_active ?? true,
       stock,
+      launch_status: editProduct.launch_status || "live",
+      launch_date: editProduct.launch_date || null,
+      preorder_enabled: editProduct.preorder_enabled ?? false,
+      preorder_deposit_percent: Number(editProduct.preorder_deposit_percent ?? 20),
+      preorder_limit: editProduct.preorder_limit === null || editProduct.preorder_limit === undefined || String(editProduct.preorder_limit).trim() === "" ? null : Number(editProduct.preorder_limit),
+      teaser_description: editProduct.teaser_description?.trim() || null,
+      teaser_image_url: editProduct.teaser_image_url?.trim() || null,
+      is_sneak_peek: editProduct.is_sneak_peek ?? false,
     };
 
     setSavingProduct(true);
@@ -1633,10 +1657,83 @@ const Admin = () => {
                     />
                   </div>
                 </div>
+                {/* Launch / Pre-order állapot */}
+                <div className="border-t pt-4 space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-accent">
+                    <Rocket className="h-3.5 w-3.5" /> Launch állapot
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div>
+                      <Label className="text-xs uppercase tracking-wider text-muted-foreground">Állapot</Label>
+                      <select
+                        value={editProduct.launch_status || "live"}
+                        onChange={e => setEditProduct({ ...editProduct, launch_status: e.target.value })}
+                        className="w-full mt-1 h-9 px-3 text-xs bg-background border border-input rounded-md"
+                      >
+                        <option value="live">🟢 Élő (aktívan vásárolható)</option>
+                        <option value="coming_soon">🔵 Hamarosan (teaser, sneak peek)</option>
+                        <option value="pre_order">🟣 Előrendelhető (foglalóval)</option>
+                        <option value="waitlist">🟡 Várólistás (csak email gyűjtés)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label className="text-xs uppercase tracking-wider text-muted-foreground">Megjelenés dátuma</Label>
+                      <Input
+                        type="datetime-local"
+                        value={editProduct.launch_date ? new Date(editProduct.launch_date).toISOString().slice(0, 16) : ""}
+                        onChange={e => setEditProduct({ ...editProduct, launch_date: e.target.value ? new Date(e.target.value).toISOString() : null })}
+                        className="mt-1 h-9 text-xs"
+                      />
+                    </div>
+                    {(editProduct.launch_status === "pre_order" || editProduct.launch_status === "coming_soon") && (
+                      <>
+                        <div className="flex items-center justify-between md:col-span-2 border-t pt-3">
+                          <label className="flex items-center gap-2 text-xs cursor-pointer">
+                            <input type="checkbox" checked={editProduct.preorder_enabled ?? false} onChange={e => setEditProduct({ ...editProduct, preorder_enabled: e.target.checked })} className="rounded" />
+                            Előrendelés engedélyezése
+                          </label>
+                          <label className="flex items-center gap-2 text-xs cursor-pointer">
+                            <input type="checkbox" checked={editProduct.is_sneak_peek ?? false} onChange={e => setEditProduct({ ...editProduct, is_sneak_peek: e.target.checked })} className="rounded" />
+                            Sneak peek (homályos kép, szavazás)
+                          </label>
+                        </div>
+                        {editProduct.preorder_enabled && (
+                          <>
+                            <div>
+                              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Foglaló (%)</Label>
+                              <Input type="number" min={0} max={100} value={editProduct.preorder_deposit_percent ?? 20} onChange={e => setEditProduct({ ...editProduct, preorder_deposit_percent: Number(e.target.value) })} className="mt-1 h-9 text-xs" />
+                            </div>
+                            <div>
+                              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Max előrendelés (db)</Label>
+                              <Input type="number" min={0} value={editProduct.preorder_limit ?? ""} onChange={e => setEditProduct({ ...editProduct, preorder_limit: e.target.value === "" ? null : Number(e.target.value) })} placeholder="Korlátlan" className="mt-1 h-9 text-xs" />
+                            </div>
+                          </>
+                        )}
+                        <div className="md:col-span-2">
+                          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Teaser leírás (féligazság)</Label>
+                          <textarea
+                            value={editProduct.teaser_description || ""}
+                            onChange={e => setEditProduct({ ...editProduct, teaser_description: e.target.value })}
+                            placeholder="Kelts kíváncsiságot, ne áruld el a részleteket..."
+                            className="mt-1 flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs"
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Teaser kép URL (opcionális, blur effekttel jelenik meg)</Label>
+                          <Input value={editProduct.teaser_image_url || ""} onChange={e => setEditProduct({ ...editProduct, teaser_image_url: e.target.value })} placeholder="https://..." className="mt-1 h-9 text-xs" />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    💡 A részletes szerkesztéshez (galéria, méret-szín mátrix, méret-táblázat) használd a <strong>Launch Center</strong> fület.
+                  </p>
+                </div>
+
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
                     <input type="checkbox" checked={editProduct.is_active ?? true} onChange={e => setEditProduct({ ...editProduct, is_active: e.target.checked })} className="rounded" />
-                    Aktív
+                    Látható a shopban
                   </label>
                 </div>
                 <Button className="rounded-none uppercase tracking-wider text-xs" onClick={saveProduct} disabled={savingProduct || uploading}>
@@ -1661,9 +1758,13 @@ const Admin = () => {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-semibold text-foreground truncate">{p.name}</span>
                       {!p.is_active && <span className="text-[9px] font-bold uppercase tracking-widest text-destructive">Inaktív</span>}
+                      {p.launch_status === "coming_soon" && <span className="text-[9px] font-bold uppercase tracking-widest text-blue-500 border border-blue-500/30 px-1.5 py-0.5">Hamarosan</span>}
+                      {p.launch_status === "pre_order" && <span className="text-[9px] font-bold uppercase tracking-widest text-accent border border-accent/30 px-1.5 py-0.5">Előrendelhető</span>}
+                      {p.launch_status === "waitlist" && <span className="text-[9px] font-bold uppercase tracking-widest text-yellow-500 border border-yellow-500/30 px-1.5 py-0.5">Várólista</span>}
+                      {p.preorder_enabled && <span className="text-[9px] font-bold uppercase tracking-widest text-purple-500">Pre-order ON</span>}
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                       <span>{p.category}</span>
