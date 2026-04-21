@@ -130,7 +130,7 @@ const Giveaway = () => {
   return (
     <Layout>
       <div className="min-h-screen flex items-center justify-center px-4 py-16">
-        <div className="max-w-lg w-full text-center">
+        <div className="max-w-3xl w-full text-center">
           {/* Header */}
           <div className="mb-8">
             <div className="inline-flex items-center gap-2 bg-accent/20 border border-accent/40 px-4 py-1.5 mb-6">
