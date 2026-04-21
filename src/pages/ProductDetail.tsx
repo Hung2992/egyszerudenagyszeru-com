@@ -84,6 +84,31 @@ const ProductDetail = () => {
 
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [showSizeQuiz, setShowSizeQuiz] = useState(false);
+  const [variants, setVariants] = useState<Array<{ size: string | null; color: string | null; stock: number }>>([]);
+
+  // Stock helpers based on variants (size+color combinations)
+  const getStockForSize = (size: string): number => {
+    if (variants.length === 0) return product?.stock ?? 0;
+    return variants
+      .filter((v) => v.size === size && (!selectedColor || !v.color || v.color === selectedColor))
+      .reduce((sum, v) => sum + (v.stock || 0), 0);
+  };
+  const getStockForColor = (color: string): number => {
+    if (variants.length === 0) return product?.stock ?? 0;
+    return variants
+      .filter((v) => v.color === color && (!selectedSize || !v.size || v.size === selectedSize))
+      .reduce((sum, v) => sum + (v.stock || 0), 0);
+  };
+  const getCurrentStock = (): number => {
+    if (variants.length === 0) return product?.stock ?? 0;
+    const matches = variants.filter((v) =>
+      (!selectedSize || v.size === selectedSize) &&
+      (!selectedColor || v.color === selectedColor)
+    );
+    if (matches.length === 0) return 0;
+    return matches.reduce((sum, v) => sum + (v.stock || 0), 0);
+  };
+
 
   // Avg rating
   const avgRating = reviews.length > 0
