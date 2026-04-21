@@ -186,7 +186,50 @@ const Giveaway = () => {
             ))}
           </div>
 
-          {/* Form or Done or Ended */}
+          {/* Prize products gallery */}
+          {prizes.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <Trophy className="h-4 w-4 text-accent" />
+                <p className="text-[11px] uppercase tracking-[0.25em] text-accent font-bold">
+                  Ezeket nyerheted meg
+                </p>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {prizes.map((p) => (
+                  <div
+                    key={p.id}
+                    className="bg-secondary border border-border overflow-hidden group"
+                  >
+                    <div className="aspect-square bg-background overflow-hidden">
+                      {p.image_url ? (
+                        <img
+                          src={p.image_url}
+                          alt={p.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Gift className="h-10 w-10 text-muted-foreground/40" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-3 text-left">
+                      <p className="text-xs font-bold text-foreground line-clamp-1">{p.name}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Érték: <span className="text-accent font-bold">{Number(p.price).toLocaleString("hu-HU")} Ft</span>
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-3 italic">
+                A nyertes mindegyikből 1 darabot kap ingyen!
+              </p>
+            </div>
+          )}
+
           {ended ? (
             <div className="bg-secondary border border-border p-8 text-center">
               <Trophy className="h-10 w-10 text-accent mx-auto mb-3" />
