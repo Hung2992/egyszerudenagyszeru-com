@@ -161,11 +161,16 @@ const LaunchCard = ({ product, onAction }: { product: LaunchProduct; onAction: (
         </div>
 
         {!open && !done && (
-          <Button size="sm" className="w-full rounded-none uppercase tracking-wider text-[10px] h-8" onClick={() => setOpen(true)}>
-            {product.launch_status === "pre_order" && product.preorder_enabled ? `Előrendelés (${product.preorder_deposit_percent}% foglaló)` :
-             product.launch_status === "waitlist" || product.launch_status === "coming_soon" ? "Feliratkozás várólistára" :
-             "Szavazok rá"}
-          </Button>
+          <div className="space-y-1">
+            <Button size="sm" className="w-full rounded-none uppercase tracking-wider text-[10px] h-8" onClick={() => setOpen(true)}>
+              {product.launch_status === "pre_order" && product.preorder_enabled ? `Előrendelés (${product.preorder_deposit_percent}% foglaló)` :
+               product.launch_status === "waitlist" || product.launch_status === "coming_soon" ? "Feliratkozás várólistára" :
+               "Szavazok rá"}
+            </Button>
+            <Link to={`/launch/${product.id}`} className="block text-center text-[10px] uppercase tracking-wider text-muted-foreground hover:text-accent py-1">
+              Részletek · méretek · galéria →
+            </Link>
+          </div>
         )}
 
         {done && (
