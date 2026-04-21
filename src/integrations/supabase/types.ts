@@ -516,6 +516,38 @@ export type Database = {
         }
         Relationships: []
       }
+      giveaway_prizes: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          product_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          product_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          product_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "giveaway_prizes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "shop_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       homepage_banners: {
         Row: {
           button_text: string | null

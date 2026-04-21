@@ -10,12 +10,37 @@ import { sendAppEmail } from "@/lib/app-email";
 // Giveaway end date: 51 days from 2026-04-14
 const GIVEAWAY_END = new Date("2026-06-04T23:59:59");
 
+type PrizeProduct = {
+  id: string;
+  name: string;
+  price: number;
+  image_url: string | null;
+};
+
 const Giveaway = () => {
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [ended, setEnded] = useState(false);
+  const [prizes, setPrizes] = useState<PrizeProduct[]>([]);
+
+  useEffect(() => {
+    const fetchPrizes = async () => {
+      const { data } = await supabase
+        .from("giveaway_prizes")
+        .select("sort_order, shop_products(id, name, price, image_url)")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+      if (data) {
+        const list = data
+          .map((row: any) => row.shop_products)
+          .filter(Boolean) as PrizeProduct[];
+        setPrizes(list);
+      }
+    };
+    fetchPrizes();
+  }, []);
 
   useEffect(() => {
     const tick = () => {
@@ -105,7 +130,7 @@ const Giveaway = () => {
   return (
     <Layout>
       <div className="min-h-screen flex items-center justify-center px-4 py-16">
-        <div className="max-w-lg w-full text-center">
+        <div className="max-w-3xl w-full text-center">
           {/* Header */}
           <div className="mb-8">
             <div className="inline-flex items-center gap-2 bg-accent/20 border border-accent/40 px-4 py-1.5 mb-6">
@@ -161,7 +186,50 @@ const Giveaway = () => {
             ))}
           </div>
 
-          {/* Form or Done or Ended */}
+          {/* Prize products gallery */}
+          {prizes.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <Trophy className="h-4 w-4 text-accent" />
+                <p className="text-[11px] uppercase tracking-[0.25em] text-accent font-bold">
+                  Ezeket nyerheted meg
+                </p>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {prizes.map((p) => (
+                  <div
+                    key={p.id}
+                    className="bg-secondary border border-border overflow-hidden group"
+                  >
+                    <div className="aspect-square bg-background overflow-hidden">
+                      {p.image_url ? (
+                        <img
+                          src={p.image_url}
+                          alt={p.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Gift className="h-10 w-10 text-muted-foreground/40" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-3 text-left">
+                      <p className="text-xs font-bold text-foreground line-clamp-1">{p.name}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Érték: <span className="text-accent font-bold">{Number(p.price).toLocaleString("hu-HU")} Ft</span>
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-3 italic">
+                A nyertes mindegyikből 1 darabot kap ingyen!
+              </p>
+            </div>
+          )}
+
           {ended ? (
             <div className="bg-secondary border border-border p-8 text-center">
               <Trophy className="h-10 w-10 text-accent mx-auto mb-3" />
