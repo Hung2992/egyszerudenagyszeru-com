@@ -570,6 +570,9 @@ const Admin = () => {
   // Orders state
   const [orders, setOrders] = useState<Order[]>([]);
   const [procurementForProfit, setProcurementForProfit] = useState<any[]>([]);
+  const [preorders, setPreorders] = useState<any[]>([]);
+  const [waitlistEntries, setWaitlistEntries] = useState<any[]>([]);
+  const [ordersSubTab, setOrdersSubTab] = useState<"live" | "preorder" | "waitlist">("live");
 
   // Coupons state
   const [coupons, setCoupons] = useState<Coupon[]>([]);
