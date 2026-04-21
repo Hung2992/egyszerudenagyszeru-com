@@ -56,6 +56,14 @@ const ProductLaunchEditor = ({ productId, onClose }: { productId: string; onClos
   const [aiLoading, setAiLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+  const [showMatrix, setShowMatrix] = useState(false);
+  const [pickedSizes, setPickedSizes] = useState<string[]>([]);
+  const [pickedColors, setPickedColors] = useState<string[]>([]);
+  const [customSize, setCustomSize] = useState("");
+  const [customColor, setCustomColor] = useState("");
+
+  const SIZE_PRESETS = ["XS", "S", "M", "L", "XL", "XXL", "XXXL", "One Size", "34", "36", "38", "40", "42", "44"];
+  const COLOR_PRESETS = ["Fekete", "Fehér", "Szürke", "Bézs", "Barna", "Kék", "Piros", "Zöld", "Sárga", "Rózsaszín"];
 
   const load = async () => {
     const [{ data: p }, { data: imgs }, { data: vars }, { data: chart }] = await Promise.all([
@@ -195,14 +203,18 @@ const ProductLaunchEditor = ({ productId, onClose }: { productId: string; onClos
   };
 
   const generateMatrix = () => {
-    const sizes = prompt("Méretek (vesszővel elválasztva, pl. S,M,L,XL):", "S,M,L,XL");
-    const colors = prompt("Színek (vesszővel elválasztva, pl. Fekete,Fehér):", "Fekete,Fehér");
-    if (!sizes || !colors) return;
-    const sArr = sizes.split(",").map(s => s.trim()).filter(Boolean);
-    const cArr = colors.split(",").map(c => c.trim()).filter(Boolean);
+    setPickedSizes([]);
+    setPickedColors([]);
+    setShowMatrix(true);
+  };
+
+  const applyMatrix = () => {
+    const sArr = pickedSizes.length ? pickedSizes : [""];
+    const cArr = pickedColors.length ? pickedColors : [""];
     const newVariants: Variant[] = [];
     let idx = variants.length;
     for (const s of sArr) for (const c of cArr) {
+      if (!s && !c) continue;
       if (variants.some(v => v.size === s && v.color === c)) continue;
       newVariants.push({
         size: s, color: c, sku: "", stock: 0, preorder_limit: null,
@@ -210,7 +222,12 @@ const ProductLaunchEditor = ({ productId, onClose }: { productId: string; onClos
       });
     }
     setVariants([...variants, ...newVariants]);
+    setShowMatrix(false);
     toast({ title: `${newVariants.length} variáns hozzáadva` });
+  };
+
+  const togglePick = (list: string[], setList: (l: string[]) => void, val: string) => {
+    setList(list.includes(val) ? list.filter(x => x !== val) : [...list, val]);
   };
 
   const saveVariants = async () => {
@@ -332,23 +349,38 @@ const ProductLaunchEditor = ({ productId, onClose }: { productId: string; onClos
                 <div className="border-t pt-4 space-y-3">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-accent">Launch beállítások</h4>
                   <div className="grid md:grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs uppercase tracking-wider">Launch állapot</Label>
-                      <select value={product.launch_status} onChange={e => setProduct({ ...product, launch_status: e.target.value })} className="w-full mt-1 h-9 px-3 text-xs bg-background border">
-                        <option value="live">Élő</option>
-                        <option value="coming_soon">Hamarosan (féligazság teaser)</option>
-                        <option value="pre_order">Előrendelhető</option>
-                        <option value="waitlist">Várólistás</option>
-                      </select>
+                    <div className="md:col-span-2">
+                      <Label className="text-xs uppercase tracking-wider mb-2 block">Launch állapot</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {[
+                          { v: "live", label: "Élő", desc: "Most vásárolható", color: "border-green-500/50 bg-green-500/10 text-green-500", dot: "bg-green-500" },
+                          { v: "coming_soon", label: "Hamarosan", desc: "Teaser / sneak peek", color: "border-blue-500/50 bg-blue-500/10 text-blue-500", dot: "bg-blue-500" },
+                          { v: "pre_order", label: "Előrendelhető", desc: "Foglalóval, limittel", color: "border-purple-500/50 bg-purple-500/10 text-purple-500", dot: "bg-purple-500" },
+                          { v: "waitlist", label: "Várólistás", desc: "Csak email gyűjtés", color: "border-yellow-500/50 bg-yellow-500/10 text-yellow-500", dot: "bg-yellow-500" },
+                        ].map(s => (
+                          <button
+                            key={s.v}
+                            type="button"
+                            onClick={() => setProduct({ ...product, launch_status: s.v })}
+                            className={`text-left p-3 border-2 transition-all ${product.launch_status === s.v ? s.color : "border-border hover:border-foreground/30"}`}
+                          >
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className={`h-2 w-2 rounded-full ${s.dot}`} />
+                              <span className="text-xs font-bold uppercase tracking-wider">{s.label}</span>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground">{s.desc}</p>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                     <div>
                       <Label className="text-xs uppercase tracking-wider">Megjelenés dátuma</Label>
                       <Input type="datetime-local" value={product.launch_date ? new Date(product.launch_date).toISOString().slice(0, 16) : ""} onChange={e => setProduct({ ...product, launch_date: e.target.value ? new Date(e.target.value).toISOString() : null })} className="mt-1 rounded-none text-xs" />
                     </div>
-                  </div>
-                  <div>
-                    <Label className="text-xs uppercase tracking-wider">Teaser kép URL (homályos)</Label>
-                    <Input value={product.teaser_image_url || ""} onChange={e => setProduct({ ...product, teaser_image_url: e.target.value })} className="mt-1 rounded-none text-xs" />
+                    <div>
+                      <Label className="text-xs uppercase tracking-wider">Teaser kép URL (homályos)</Label>
+                      <Input value={product.teaser_image_url || ""} onChange={e => setProduct({ ...product, teaser_image_url: e.target.value })} className="mt-1 rounded-none text-xs" />
+                    </div>
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-1">
@@ -446,6 +478,64 @@ const ProductLaunchEditor = ({ productId, onClose }: { productId: string; onClos
                     <Save className="h-3.5 w-3.5 mr-1" /> Variánsok mentése
                   </Button>
                 </div>
+
+                {showMatrix && (
+                  <div className="border-2 border-accent bg-accent/5 p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-accent">Gyors méret + szín választó</h4>
+                      <Button size="sm" variant="ghost" className="h-7 rounded-none" onClick={() => setShowMatrix(false)}><X className="h-3 w-3" /></Button>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs uppercase tracking-wider mb-2 block">Méretek (kattints rá amelyik kell)</Label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {SIZE_PRESETS.map(s => (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => togglePick(pickedSizes, setPickedSizes, s)}
+                            className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider border-2 transition-all ${pickedSizes.includes(s) ? "border-accent bg-accent text-accent-foreground" : "border-border hover:border-foreground/40"}`}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex gap-1 mt-2">
+                        <Input value={customSize} onChange={e => setCustomSize(e.target.value)} placeholder="Egyedi méret (pl. 46)" className="h-8 rounded-none text-xs" />
+                        <Button size="sm" variant="outline" className="h-8 rounded-none text-xs" onClick={() => { if (customSize.trim()) { setPickedSizes([...pickedSizes, customSize.trim()]); setCustomSize(""); } }}>+</Button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs uppercase tracking-wider mb-2 block">Színek</Label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {COLOR_PRESETS.map(c => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => togglePick(pickedColors, setPickedColors, c)}
+                            className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider border-2 transition-all ${pickedColors.includes(c) ? "border-accent bg-accent text-accent-foreground" : "border-border hover:border-foreground/40"}`}
+                          >
+                            {c}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex gap-1 mt-2">
+                        <Input value={customColor} onChange={e => setCustomColor(e.target.value)} placeholder="Egyedi szín (pl. Khaki)" className="h-8 rounded-none text-xs" />
+                        <Button size="sm" variant="outline" className="h-8 rounded-none text-xs" onClick={() => { if (customColor.trim()) { setPickedColors([...pickedColors, customColor.trim()]); setCustomColor(""); } }}>+</Button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <p className="text-[11px] text-muted-foreground">
+                        {pickedSizes.length || "0"} méret × {pickedColors.length || "0"} szín = <strong className="text-foreground">{Math.max(pickedSizes.length, 1) * Math.max(pickedColors.length, 1)}</strong> új variáns
+                      </p>
+                      <Button onClick={applyMatrix} disabled={pickedSizes.length === 0 && pickedColors.length === 0} className="rounded-none text-xs">
+                        <Wand2 className="h-3.5 w-3.5 mr-1" /> Generálás
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs border">
