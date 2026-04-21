@@ -688,12 +688,65 @@ const ProductDetail = () => {
                 <Button
                   className={`w-full rounded-none uppercase tracking-widest text-xs h-10 ${isPreordered ? "bg-accent/20 text-accent border border-accent" : ""}`}
                   variant={isPreordered ? "outline" : "default"}
-                  onClick={handlePreorder}
+                  onClick={isPreordered ? cancelPreorder : openPreorderForm}
                   disabled={preorderSubmitting}
                 >
                   <PackagePlus className="h-4 w-4 mr-2" />
-                  {isPreordered ? "Előrendelve ✓" : "Előrendelés"}
+                  {isPreordered ? "Előrendelve ✓ (kattints a törléshez)" : "Előrendelés (GLS, készpénz)"}
                 </Button>
+
+                {showPreorderForm && (
+                  <div className="border border-accent bg-card p-4 space-y-3">
+                    <div className="border-b border-border pb-2 mb-1">
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-foreground">Előrendelés adatai</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">Nincs előleg • Nincs online fizetés • Csak készpénz GLS futárnál</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Teljes név *</p>
+                      <Input value={preorderName} onChange={e => setPreorderName(e.target.value)} placeholder="Példa Béla" className="rounded-none h-9 text-xs" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Telefonszám *</p>
+                      <Input value={preorderPhone} onChange={e => setPreorderPhone(e.target.value)} placeholder="+36 30 123 4567" className="rounded-none h-9 text-xs" />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="col-span-1">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Irsz. *</p>
+                        <Input value={preorderZip} onChange={e => setPreorderZip(e.target.value)} placeholder="1234" className="rounded-none h-9 text-xs" />
+                      </div>
+                      <div className="col-span-2">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Város *</p>
+                        <Input value={preorderCity} onChange={e => setPreorderCity(e.target.value)} placeholder="Budapest" className="rounded-none h-9 text-xs" />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Utca, házszám *</p>
+                      <Input value={preorderAddress} onChange={e => setPreorderAddress(e.target.value)} placeholder="Példa utca 12. 3/4" className="rounded-none h-9 text-xs" />
+                    </div>
+                    <div className="border border-border bg-muted/30 p-2 space-y-1">
+                      <div className="flex justify-between text-[10px] uppercase tracking-wider">
+                        <span className="text-muted-foreground">Termék összesen</span>
+                        <span className="text-foreground font-bold">{(Number(product.price) * quantity).toLocaleString()} Ft</span>
+                      </div>
+                      <div className="flex justify-between text-[10px] uppercase tracking-wider">
+                        <span className="text-muted-foreground">Szállítás (GLS)</span>
+                        <span className="text-foreground">Készpénzben átvételkor</span>
+                      </div>
+                      <div className="flex justify-between text-[10px] uppercase tracking-wider">
+                        <span className="text-muted-foreground">Előleg</span>
+                        <span className="text-accent font-bold">0 Ft</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={() => setShowPreorderForm(false)} variant="outline" className="flex-1 rounded-none uppercase tracking-wider text-[10px] h-9">
+                        Mégse
+                      </Button>
+                      <Button onClick={submitPreorder} disabled={preorderSubmitting} className="flex-1 rounded-none uppercase tracking-wider text-[10px] h-9 font-bold">
+                        {preorderSubmitting ? "Küldés..." : "Előrendelés véglegesítése"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 <ProductWaitlist productId={product.id} userId={userId} onAuth={() => navigate("/auth")} />
               </div>
             )}
