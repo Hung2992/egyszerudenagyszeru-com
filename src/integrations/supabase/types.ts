@@ -1052,9 +1052,12 @@ export type Database = {
           payment_intent_id: string | null
           product_id: string
           quantity: number
+          selected_color: string | null
+          selected_size: string | null
           status: string
           total_amount: number
           user_id: string | null
+          variant_id: string | null
         }
         Insert: {
           created_at?: string
@@ -1068,9 +1071,12 @@ export type Database = {
           payment_intent_id?: string | null
           product_id: string
           quantity?: number
+          selected_color?: string | null
+          selected_size?: string | null
           status?: string
           total_amount?: number
           user_id?: string | null
+          variant_id?: string | null
         }
         Update: {
           created_at?: string
@@ -1084,9 +1090,12 @@ export type Database = {
           payment_intent_id?: string | null
           product_id?: string
           quantity?: number
+          selected_color?: string | null
+          selected_size?: string | null
           status?: string
           total_amount?: number
           user_id?: string | null
+          variant_id?: string | null
         }
         Relationships: [
           {
@@ -1094,6 +1103,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "shop_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_preorders_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
             referencedColumns: ["id"]
           },
         ]
@@ -1135,6 +1151,118 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "shop_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_size_chart: {
+        Row: {
+          chest_cm: number | null
+          created_at: string
+          extra_measurements: Json | null
+          hip_cm: number | null
+          id: string
+          inseam_cm: number | null
+          length_cm: number | null
+          product_id: string
+          shoulder_cm: number | null
+          size: string
+          sleeve_cm: number | null
+          sort_order: number
+          waist_cm: number | null
+        }
+        Insert: {
+          chest_cm?: number | null
+          created_at?: string
+          extra_measurements?: Json | null
+          hip_cm?: number | null
+          id?: string
+          inseam_cm?: number | null
+          length_cm?: number | null
+          product_id: string
+          shoulder_cm?: number | null
+          size: string
+          sleeve_cm?: number | null
+          sort_order?: number
+          waist_cm?: number | null
+        }
+        Update: {
+          chest_cm?: number | null
+          created_at?: string
+          extra_measurements?: Json | null
+          hip_cm?: number | null
+          id?: string
+          inseam_cm?: number | null
+          length_cm?: number | null
+          product_id?: string
+          shoulder_cm?: number | null
+          size?: string
+          sleeve_cm?: number | null
+          sort_order?: number
+          waist_cm?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_size_chart_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "shop_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_variants: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          preorder_count: number
+          preorder_limit: number | null
+          price_modifier: number
+          product_id: string
+          size: string | null
+          sku: string | null
+          sort_order: number
+          stock: number
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          preorder_count?: number
+          preorder_limit?: number | null
+          price_modifier?: number
+          product_id: string
+          size?: string | null
+          sku?: string | null
+          sort_order?: number
+          stock?: number
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          preorder_count?: number
+          preorder_limit?: number | null
+          price_modifier?: number
+          product_id?: string
+          size?: string | null
+          sku?: string | null
+          sort_order?: number
+          stock?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "shop_products"
@@ -1492,6 +1620,7 @@ export type Database = {
       shop_products: {
         Row: {
           auto_launch_enabled: boolean | null
+          care_instructions: string | null
           category: string
           colors: string[] | null
           created_at: string
@@ -1501,6 +1630,7 @@ export type Database = {
           early_access_hours: number | null
           early_access_top_n: number | null
           featured_launch: boolean | null
+          has_variants: boolean
           id: string
           image_url: string | null
           is_active: boolean
@@ -1508,7 +1638,10 @@ export type Database = {
           launch_date: string | null
           launch_status: string
           launched_at: string | null
+          manufacturer: string | null
+          material: string | null
           name: string
+          origin_country: string | null
           original_price: number | null
           poll_votes: number
           preorder_count: number
@@ -1517,14 +1650,17 @@ export type Database = {
           preorder_limit: number | null
           price: number
           share_count: number | null
+          size_chart_type: string | null
           sizes: string[] | null
           stock: number
           teaser_description: string | null
           teaser_image_url: string | null
           waitlist_count: number
+          weight_grams: number | null
         }
         Insert: {
           auto_launch_enabled?: boolean | null
+          care_instructions?: string | null
           category?: string
           colors?: string[] | null
           created_at?: string
@@ -1534,6 +1670,7 @@ export type Database = {
           early_access_hours?: number | null
           early_access_top_n?: number | null
           featured_launch?: boolean | null
+          has_variants?: boolean
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -1541,7 +1678,10 @@ export type Database = {
           launch_date?: string | null
           launch_status?: string
           launched_at?: string | null
+          manufacturer?: string | null
+          material?: string | null
           name: string
+          origin_country?: string | null
           original_price?: number | null
           poll_votes?: number
           preorder_count?: number
@@ -1550,14 +1690,17 @@ export type Database = {
           preorder_limit?: number | null
           price?: number
           share_count?: number | null
+          size_chart_type?: string | null
           sizes?: string[] | null
           stock?: number
           teaser_description?: string | null
           teaser_image_url?: string | null
           waitlist_count?: number
+          weight_grams?: number | null
         }
         Update: {
           auto_launch_enabled?: boolean | null
+          care_instructions?: string | null
           category?: string
           colors?: string[] | null
           created_at?: string
@@ -1567,6 +1710,7 @@ export type Database = {
           early_access_hours?: number | null
           early_access_top_n?: number | null
           featured_launch?: boolean | null
+          has_variants?: boolean
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -1574,7 +1718,10 @@ export type Database = {
           launch_date?: string | null
           launch_status?: string
           launched_at?: string | null
+          manufacturer?: string | null
+          material?: string | null
           name?: string
+          origin_country?: string | null
           original_price?: number | null
           poll_votes?: number
           preorder_count?: number
@@ -1583,11 +1730,13 @@ export type Database = {
           preorder_limit?: number | null
           price?: number
           share_count?: number | null
+          size_chart_type?: string | null
           sizes?: string[] | null
           stock?: number
           teaser_description?: string | null
           teaser_image_url?: string | null
           waitlist_count?: number
+          weight_grams?: number | null
         }
         Relationships: []
       }
