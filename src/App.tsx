@@ -39,6 +39,7 @@ const EmailUnsubscribe = lazy(() => import("./pages/EmailUnsubscribe.tsx"));
 const Giveaway = lazy(() => import("./pages/Giveaway.tsx"));
 const CheckoutReturn = lazy(() => import("./pages/CheckoutReturn.tsx"));
 const Launch = lazy(() => import("./pages/Launch.tsx"));
+const LaunchProductDetail = lazy(() => import("./pages/LaunchProductDetail.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -82,6 +83,7 @@ const App = () => (
             <Route path="/nyeremenyjatek" element={<Giveaway />} />
             <Route path="/checkout/return" element={<CheckoutReturn />} />
             <Route path="/launch" element={<Launch />} />
+            <Route path="/launch/:id" element={<LaunchProductDetail />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -8,8 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
   Rocket, Calendar, Users, ShoppingCart, Vote, Sparkles, Save, Trash2,
-  Eye, AlertTriangle, TrendingUp, Mail, Wand2, Plus
+  Eye, AlertTriangle, TrendingUp, Mail, Wand2, Plus, Settings
 } from "lucide-react";
+import ProductLaunchEditor from "./ProductLaunchEditor";
 
 type LaunchStatus = "live" | "coming_soon" | "pre_order" | "waitlist";
 
