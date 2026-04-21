@@ -3001,7 +3001,14 @@ const Admin = () => {
           </div>
         )}
 
-        {tab === "giveaway_wheel" && <GiveawayWheel />}
+        {tab === "giveaway_wheel" && (
+          <div className="space-y-6">
+            <GiveawayPrizeManager />
+            <div className="border-t border-border pt-6">
+              <GiveawayWheel />
+            </div>
+          </div>
+        )}
         {tab === "shipping_mgmt" && <AdminShippingTab />}
         {tab === "inventory" && <AdminInventoryTab />}
         {tab === "seo_marketing" && <AdminSeoMarketingTab />}
