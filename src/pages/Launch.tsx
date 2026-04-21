@@ -169,8 +169,26 @@ const LaunchCard = ({ product, onAction }: { product: LaunchProduct; onAction: (
         )}
 
         {done && (
-          <div className="text-center py-2 text-xs text-green-500 font-bold uppercase tracking-wider">
-            <Check className="h-4 w-4 inline mr-1" /> Köszönjük!
+          <div className="space-y-2">
+            <div className="text-center py-1 text-xs text-green-500 font-bold uppercase tracking-wider">
+              <Check className="h-4 w-4 inline mr-1" /> Köszönjük!
+            </div>
+            <Button
+              size="sm" variant="outline"
+              className="w-full rounded-none uppercase tracking-wider text-[10px] h-8"
+              onClick={async () => {
+                const url = `${window.location.origin}/launch?ref=${product.id}`;
+                const text = `Nézd meg: ${product.name} hamarosan érkezik! 🔥`;
+                if (navigator.share) {
+                  try { await navigator.share({ title: product.name, text, url }); } catch {}
+                } else {
+                  await navigator.clipboard.writeText(`${text}\n${url}`);
+                  toast({ title: "Link másolva!", description: "Oszd meg és kerülj előbbre a várólistán!" });
+                }
+              }}
+            >
+              <Share2 className="h-3 w-3 mr-1" /> Megosztás (3 share = 1 hely előrébb)
+            </Button>
           </div>
         )}
 
