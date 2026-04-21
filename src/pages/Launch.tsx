@@ -3,10 +3,11 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { toast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
+import LaunchHero from "@/components/LaunchHero";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Rocket, Calendar, ShoppingCart, Users, Vote, Sparkles, Lock, Mail, Check } from "lucide-react";
+import { Rocket, Calendar, ShoppingCart, Users, Vote, Sparkles, Lock, Mail, Check, Share2, Flame, AlertTriangle } from "lucide-react";
 
 interface LaunchProduct {
   id: string;
