@@ -104,6 +104,20 @@ const ProductDetail = () => {
         return;
       }
       const p = prod as any as Product;
+
+      // Fetch variants — use them as the source of truth for sizes/colors when present
+      const { data: variants } = await (supabase.from("product_variants" as any) as any)
+        .select("size, color, is_active")
+        .eq("product_id", id)
+        .eq("is_active", true);
+
+      if (variants && variants.length > 0) {
+        const sizesFromVar = Array.from(new Set(variants.map((v: any) => v.size).filter(Boolean)));
+        const colorsFromVar = Array.from(new Set(variants.map((v: any) => v.color).filter(Boolean)));
+        if (sizesFromVar.length > 0) p.sizes = sizesFromVar as string[];
+        if (colorsFromVar.length > 0) p.colors = colorsFromVar as string[];
+      }
+
       setProduct(p);
       setSelectedSize((p.sizes || [])[0] || "");
       setSelectedColor((p.colors || [])[0] || "");
