@@ -13,7 +13,7 @@ import {
   Palette, Clock, FileText, SearchIcon, Star, MessageSquare, Gift, ListChecks, Ruler,
   Truck, Bell, AlertTriangle, Receipt, RotateCcw, Zap, Megaphone, Shield, Headphones, Lock, FileDown, CreditCard as CreditCardIcon,
   Link2, MousePointerClick, Globe as GlobeIcon, Wrench, Key, HelpCircle, BarChart3 as BarChart3Icon, Heart, SlidersHorizontal,
-  MonitorSmartphone, Factory, Trophy, Rss, Database, RefreshCw, Globe as Globe2, ShieldCheck, Sparkles, Layers, Wallet
+  MonitorSmartphone, Factory, Trophy, Rss, Database, RefreshCw, Globe as Globe2, ShieldCheck, Sparkles, Layers, Wallet, Rocket
 } from "lucide-react";
 import AdminShippingTab from "@/components/admin/AdminShippingTab";
 import AdminInventoryTab from "@/components/admin/AdminInventoryTab";
@@ -1359,6 +1359,7 @@ const Admin = () => {
     { key: "inventory_forecast", label: "Készlet előrej.", icon: TrendingUp },
     { key: "order_automation", label: "Rend. autom.", icon: Zap },
     { key: "order_insights", label: "Rend. AI", icon: Sparkles },
+    { key: "launch_center", label: "Launch Center", icon: Rocket },
     { key: "media_manager", label: "Média kezelő", icon: Image },
     { key: "retention", label: "Visszatérők", icon: Heart },
     { key: "review_moderation", label: "Vélemény mod.", icon: MessageSquare },
@@ -2664,6 +2665,7 @@ const Admin = () => {
         {tab === "email_automation" && <AdminEmailCenterTab />}
         {tab === "email_monitoring" && <AdminEmailMonitoringTab />}
         {tab === "order_insights" && <AdminOrderInsightsTab />}
+        {tab === "launch_center" && <AdminLaunchCenterTab />}
         {tab === "api_webhooks" && <AdminApiWebhookTab />}
         {tab === "faq_knowledge" && <AdminFaqKnowledgeTab />}
         {tab === "advanced_analytics" && <AdminAdvancedAnalyticsTab />}
