@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { Clock, Users } from "lucide-react";
+import { Clock } from "lucide-react";
 
 interface Props {
   productId: string;
@@ -13,23 +13,54 @@ interface Props {
 const ProductWaitlist = ({ productId, userId, onAuth }: Props) => {
   const [joined, setJoined] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState<string>("");
+
+  useEffect(() => {
+    const init = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const e = session?.user?.email || "";
+      setEmail(e);
+      if (e) {
+        const { data } = await supabase
+          .from("product_waitlist")
+          .select("id")
+          .eq("product_id", productId)
+          .eq("email", e)
+          .maybeSingle();
+        setJoined(!!data);
+      }
+    };
+    init();
+  }, [productId, userId]);
 
   const toggleWaitlist = async () => {
-    if (!userId) { onAuth(); return; }
+    if (!userId || !email) { onAuth(); return; }
     setLoading(true);
     if (joined) {
-      await (supabase.from("product_waitlists" as any) as any).delete().eq("user_id", userId).eq("product_id", productId);
-      setJoined(false);
-      toast({ title: "Várólistáról levéve" });
+      const { error } = await supabase
+        .from("product_waitlist")
+        .delete()
+        .eq("product_id", productId)
+        .eq("email", email);
+      if (error) {
+        toast({ title: "Hiba", description: error.message, variant: "destructive" });
+      } else {
+        setJoined(false);
+        toast({ title: "Várólistáról levéve" });
+      }
     } else {
-      const { data: { session } } = await supabase.auth.getSession();
-      await (supabase.from("product_waitlists" as any) as any).insert({
-        user_id: userId,
+      const { error } = await supabase.from("product_waitlist").insert({
         product_id: productId,
-        email: session?.user?.email || "",
+        email,
+        user_id: userId,
+        source: "product_page",
       });
-      setJoined(true);
-      toast({ title: "Feliratkoztál a várólistára! ⏳", description: "Értesítünk, amint elérhető." });
+      if (error) {
+        toast({ title: "Hiba", description: error.message, variant: "destructive" });
+      } else {
+        setJoined(true);
+        toast({ title: "Feliratkoztál a várólistára! ⏳", description: "Értesítünk, amint elérhető." });
+      }
     }
     setLoading(false);
   };

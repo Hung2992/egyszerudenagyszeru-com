@@ -131,12 +131,16 @@ const ProductDetail = () => {
 
       // Fetch user-specific data
       if (uid) {
+        const userEmail = session?.user?.email || "";
         const [wl, alert, priceAlert, brand, preorder] = await Promise.all([
           supabase.from("wishlists").select("id").eq("user_id", uid).eq("product_id", id).maybeSingle(),
-          (supabase.from("product_alerts" as any) as any).select("id").eq("user_id", uid).eq("product_id", id).eq("alert_type", "back_in_stock").maybeSingle(),
+          // Stock alert = waitlist subscription with source 'stock_alert'
+          userEmail
+            ? supabase.from("product_waitlist").select("id").eq("product_id", id).eq("email", userEmail).eq("source", "stock_alert").maybeSingle()
+            : Promise.resolve({ data: null }),
           (supabase.from("price_alerts" as any) as any).select("id").eq("user_id", uid).eq("product_id", id).eq("is_active", true).maybeSingle(),
           (supabase.from("followed_brands" as any) as any).select("id").eq("user_id", uid).eq("brand_name", p.category).maybeSingle(),
-          (supabase.from("preorders" as any) as any).select("id").eq("user_id", uid).eq("product_id", id).eq("status", "pending").maybeSingle(),
+          supabase.from("product_preorders").select("id").eq("user_id", uid).eq("product_id", id).in("status", ["pending", "confirmed"]).maybeSingle(),
         ]);
         setIsWishlisted(!!wl.data);
         setHasAlert(!!alert.data);
@@ -275,12 +279,27 @@ const ProductDetail = () => {
 
   const toggleAlert = async () => {
     if (!userId || !product) { navigate("/auth"); return; }
+    const { data: { session } } = await supabase.auth.getSession();
+    const userEmail = session?.user?.email || "";
+    if (!userEmail) { navigate("/auth"); return; }
     if (hasAlert) {
-      await (supabase.from("product_alerts" as any) as any).delete().eq("user_id", userId).eq("product_id", product.id);
+      const { error } = await supabase
+        .from("product_waitlist")
+        .delete()
+        .eq("product_id", product.id)
+        .eq("email", userEmail)
+        .eq("source", "stock_alert");
+      if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
       setHasAlert(false);
       toast({ title: "Értesítő eltávolítva" });
     } else {
-      await (supabase.from("product_alerts" as any) as any).insert({ user_id: userId, product_id: product.id, alert_type: "back_in_stock" });
+      const { error } = await supabase.from("product_waitlist").insert({
+        product_id: product.id,
+        email: userEmail,
+        user_id: userId,
+        source: "stock_alert",
+      });
+      if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
       setHasAlert(true);
       toast({ title: "Értesítünk, ha újra elérhető! 🔔" });
     }
@@ -316,19 +335,41 @@ const ProductDetail = () => {
 
   const handlePreorder = async () => {
     if (!userId || !product) { navigate("/auth"); return; }
+    const { data: { session } } = await supabase.auth.getSession();
+    const userEmail = session?.user?.email || "";
+    if (!userEmail) { navigate("/auth"); return; }
     if (isPreordered) {
-      await (supabase.from("preorders" as any) as any).delete().eq("user_id", userId).eq("product_id", product.id).eq("status", "pending");
+      const { error } = await supabase
+        .from("product_preorders")
+        .delete()
+        .eq("user_id", userId)
+        .eq("product_id", product.id)
+        .in("status", ["pending", "confirmed"]);
+      if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
       setIsPreordered(false);
       toast({ title: "Előrendelés törölve" });
     } else {
       setPreorderSubmitting(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      await (supabase.from("preorders" as any) as any).insert({
-        user_id: userId, product_id: product.id, email: session?.user?.email || "",
+      // Calculate deposit (default 20% if no setting)
+      const depositPercent = 20;
+      const totalAmount = Number(product.price) * quantity;
+      const depositAmount = Math.round((totalAmount * depositPercent) / 100);
+      const { error } = await supabase.from("product_preorders").insert({
+        product_id: product.id,
+        user_id: userId,
+        customer_email: userEmail,
+        customer_name: session?.user?.user_metadata?.full_name || null,
+        quantity,
+        selected_size: selectedSize || null,
+        selected_color: selectedColor || null,
+        deposit_amount: depositAmount,
+        total_amount: totalAmount,
+        status: "pending",
       });
-      setIsPreordered(true);
-      toast({ title: "Előrendelés rögzítve! 📦" });
       setPreorderSubmitting(false);
+      if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
+      setIsPreordered(true);
+      toast({ title: "Előrendelés rögzítve! 📦", description: `Foglaló: ${depositAmount.toLocaleString()} Ft` });
     }
   };
 
