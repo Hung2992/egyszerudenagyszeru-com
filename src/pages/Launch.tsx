@@ -26,6 +26,9 @@ interface LaunchProduct {
   waitlist_count: number;
   is_sneak_peek: boolean;
   poll_votes: number;
+  share_count?: number;
+  early_access_enabled?: boolean;
+  early_access_top_n?: number;
 }
 
 const Countdown = ({ date }: { date: string }) => {
