@@ -381,6 +381,7 @@ const ProductLaunchEditor = ({ productId, onClose }: { productId: string; onClos
                       <Label className="text-xs uppercase tracking-wider">Teaser kép URL (homályos)</Label>
                       <Input value={product.teaser_image_url || ""} onChange={e => setProduct({ ...product, teaser_image_url: e.target.value })} className="mt-1 rounded-none text-xs" />
                     </div>
+                  </div>
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <Label className="text-xs uppercase tracking-wider">Teaser leírás</Label>
