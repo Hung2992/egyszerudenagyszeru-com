@@ -10,12 +10,37 @@ import { sendAppEmail } from "@/lib/app-email";
 // Giveaway end date: 51 days from 2026-04-14
 const GIVEAWAY_END = new Date("2026-06-04T23:59:59");
 
+type PrizeProduct = {
+  id: string;
+  name: string;
+  price: number;
+  image_url: string | null;
+};
+
 const Giveaway = () => {
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [ended, setEnded] = useState(false);
+  const [prizes, setPrizes] = useState<PrizeProduct[]>([]);
+
+  useEffect(() => {
+    const fetchPrizes = async () => {
+      const { data } = await supabase
+        .from("giveaway_prizes")
+        .select("sort_order, shop_products(id, name, price, image_url)")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+      if (data) {
+        const list = data
+          .map((row: any) => row.shop_products)
+          .filter(Boolean) as PrizeProduct[];
+        setPrizes(list);
+      }
+    };
+    fetchPrizes();
+  }, []);
 
   useEffect(() => {
     const tick = () => {
