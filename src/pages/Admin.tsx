@@ -1640,13 +1640,67 @@ const Admin = () => {
                     <Label className="text-xs uppercase tracking-wider text-muted-foreground">Készlet</Label>
                     <Input type="number" value={editProduct.stock ?? 0} onChange={e => setEditProduct({ ...editProduct, stock: e.target.value === "" ? 0 : Number(e.target.value) })} className="mt-1" />
                   </div>
-                  <div>
-                    <Label className="text-xs uppercase tracking-wider text-muted-foreground">Méretek (vesszővel)</Label>
-                    <Input value={(editProduct.sizes || []).join(", ")} onChange={e => setEditProduct({ ...editProduct, sizes: e.target.value.split(",").map(s => s.trim()).filter(Boolean) })} className="mt-1" placeholder="S, M, L, XL" />
+                  <div className="md:col-span-2">
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Méretek (kattints a kívántakra)</Label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {["XS","S","M","L","XL","XXL","XXXL","One Size","34","36","38","40","42","44"].map(s => {
+                        const active = (editProduct.sizes || []).includes(s);
+                        return (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => {
+                              const cur = editProduct.sizes || [];
+                              setEditProduct({ ...editProduct, sizes: active ? cur.filter(x => x !== s) : [...cur, s] });
+                            }}
+                            className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider border-2 transition-all ${active ? "border-accent bg-accent text-accent-foreground" : "border-border hover:border-foreground/40"}`}
+                          >
+                            {s}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <Input
+                      value={(editProduct.sizes || []).filter(s => !["XS","S","M","L","XL","XXL","XXXL","One Size","34","36","38","40","42","44"].includes(s)).join(", ")}
+                      onChange={e => {
+                        const presets = (editProduct.sizes || []).filter(s => ["XS","S","M","L","XL","XXL","XXXL","One Size","34","36","38","40","42","44"].includes(s));
+                        const customs = e.target.value.split(",").map(s => s.trim()).filter(Boolean);
+                        setEditProduct({ ...editProduct, sizes: [...presets, ...customs] });
+                      }}
+                      className="mt-2 text-xs"
+                      placeholder="Egyedi méretek vesszővel (opcionális)"
+                    />
                   </div>
-                  <div>
-                    <Label className="text-xs uppercase tracking-wider text-muted-foreground">Színek (vesszővel)</Label>
-                    <Input value={(editProduct.colors || []).join(", ")} onChange={e => setEditProduct({ ...editProduct, colors: e.target.value.split(",").map(s => s.trim()).filter(Boolean) })} className="mt-1" placeholder="Fekete, Fehér" />
+                  <div className="md:col-span-2">
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Színek</Label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {["Fekete","Fehér","Szürke","Bézs","Barna","Kék","Piros","Zöld","Sárga","Rózsaszín","Lila","Narancs"].map(c => {
+                        const active = (editProduct.colors || []).includes(c);
+                        return (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => {
+                              const cur = editProduct.colors || [];
+                              setEditProduct({ ...editProduct, colors: active ? cur.filter(x => x !== c) : [...cur, c] });
+                            }}
+                            className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider border-2 transition-all ${active ? "border-accent bg-accent text-accent-foreground" : "border-border hover:border-foreground/40"}`}
+                          >
+                            {c}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <Input
+                      value={(editProduct.colors || []).filter(c => !["Fekete","Fehér","Szürke","Bézs","Barna","Kék","Piros","Zöld","Sárga","Rózsaszín","Lila","Narancs"].includes(c)).join(", ")}
+                      onChange={e => {
+                        const presets = (editProduct.colors || []).filter(c => ["Fekete","Fehér","Szürke","Bézs","Barna","Kék","Piros","Zöld","Sárga","Rózsaszín","Lila","Narancs"].includes(c));
+                        const customs = e.target.value.split(",").map(s => s.trim()).filter(Boolean);
+                        setEditProduct({ ...editProduct, colors: [...presets, ...customs] });
+                      }}
+                      className="mt-2 text-xs"
+                      placeholder="Egyedi színek vesszővel (opcionális)"
+                    />
                   </div>
                   <div className="md:col-span-2">
                     <Label className="text-xs uppercase tracking-wider text-muted-foreground">Leírás</Label>
