@@ -21,6 +21,7 @@ import { template as paymentConfirmation } from './payment-confirmation.tsx'
 import { template as profileUpdate } from './profile-update.tsx'
 import { template as passwordChanged } from './password-changed.tsx'
 import { template as returnRequest } from './return-request.tsx'
+import { template as contactReply } from './contact-reply.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'contact-confirmation': contactConfirmation,
@@ -35,4 +36,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'profile-update': profileUpdate,
   'password-changed': passwordChanged,
   'return-request': returnRequest,
+  'contact-reply': contactReply,
 }
