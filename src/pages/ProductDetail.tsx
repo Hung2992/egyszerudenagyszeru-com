@@ -100,17 +100,17 @@ const ProductDetail = () => {
       .filter((v) => v.color === color && (!selectedSize || !v.size || v.size === selectedSize))
       .reduce((sum, v) => sum + (v.stock || 0), 0);
   };
-  // Is this size pre-orderable when sold out? (any matching variant has preorder_enabled)
+  // Is this size pre-orderable when sold out?
+  // Variant-level preorder_enabled is the source of truth when variants exist;
+  // product-level flag is only used as fallback when there are no variants.
   const isSizePreorderable = (size: string): boolean => {
-    if (!product?.preorder_enabled) return false;
-    if (variants.length === 0) return true;
+    if (variants.length === 0) return !!product?.preorder_enabled;
     return variants
       .filter((v) => v.size === size && (!selectedColor || !v.color || v.color === selectedColor))
       .some((v) => v.preorder_enabled !== false);
   };
   const isColorPreorderable = (color: string): boolean => {
-    if (!product?.preorder_enabled) return false;
-    if (variants.length === 0) return true;
+    if (variants.length === 0) return !!product?.preorder_enabled;
     return variants
       .filter((v) => v.color === color && (!selectedSize || !v.size || v.size === selectedSize))
       .some((v) => v.preorder_enabled !== false);
