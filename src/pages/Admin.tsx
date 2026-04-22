@@ -1735,7 +1735,8 @@ const Admin = () => {
                           </thead>
                           <tbody>
                             {(editProduct.colors || []).map((c: string) => {
-                              const matrix = editProduct._stockMatrix || {};
+                              const ep: any = editProduct;
+                              const matrix: Record<string, Record<string, number>> = ep._stockMatrix || {};
                               const rowSum = (editProduct.sizes || []).reduce((acc: number, s: string) => acc + Number(matrix?.[c]?.[s] || 0), 0);
                               return (
                                 <tr key={c}>
@@ -1744,11 +1745,13 @@ const Admin = () => {
                                     const val = Number(matrix?.[c]?.[s] || 0);
                                     const setVal = (n: number) => {
                                       const safe = Math.max(0, Math.floor(n));
-                                      const next = { ...(editProduct._stockMatrix || {}) };
+                                      const next: Record<string, Record<string, number>> = { ...((editProduct as any)._stockMatrix || {}) };
                                       next[c] = { ...(next[c] || {}), [s]: safe };
-                                      const total = Object.values(next).reduce((a: number, row: any) =>
-                                        a + Object.values(row || {}).reduce((b: number, v: any) => b + Number(v || 0), 0), 0);
-                                      setEditProduct({ ...editProduct, _stockMatrix: next, stock: total });
+                                      let total = 0;
+                                      for (const row of Object.values(next)) {
+                                        for (const v of Object.values(row || {})) total += Number(v || 0);
+                                      }
+                                      setEditProduct({ ...(editProduct as any), _stockMatrix: next, stock: total });
                                     };
                                     const out = val === 0;
                                     const low = val > 0 && val < 5;
@@ -1786,13 +1789,19 @@ const Admin = () => {
                             <tr>
                               <td className="border border-border bg-accent/20 p-1.5 font-bold uppercase tracking-wider text-[10px]">Σ Méret</td>
                               {(editProduct.sizes || []).map((s: string) => {
-                                const matrix = editProduct._stockMatrix || {};
+                                const matrix: Record<string, Record<string, number>> = (editProduct as any)._stockMatrix || {};
                                 const colSum = (editProduct.colors || []).reduce((acc: number, c: string) => acc + Number(matrix?.[c]?.[s] || 0), 0);
                                 return <td key={s} className="border border-border bg-accent/10 p-1.5 text-center font-bold">{colSum}</td>;
                               })}
                               <td className="border border-border bg-accent/30 p-1.5 text-center font-bold text-accent">
-                                {Object.values(editProduct._stockMatrix || {}).reduce((a: number, row: any) =>
-                                  a + Object.values(row || {}).reduce((b: number, v: any) => b + Number(v || 0), 0), 0)}
+                                {(() => {
+                                  const matrix: Record<string, Record<string, number>> = (editProduct as any)._stockMatrix || {};
+                                  let total = 0;
+                                  for (const row of Object.values(matrix)) {
+                                    for (const v of Object.values(row || {})) total += Number(v || 0);
+                                  }
+                                  return total;
+                                })()}
                               </td>
                             </tr>
                           </tbody>
