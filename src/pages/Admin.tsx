@@ -1098,6 +1098,7 @@ const Admin = () => {
     setSavingProduct(true);
 
     try {
+      let productId = editProduct.id;
       if (editProduct.id) {
         const { error } = await supabase.from("shop_products").update(payload).eq("id", editProduct.id);
         if (error) {
@@ -1106,19 +1107,47 @@ const Admin = () => {
           return;
         }
         toast({ title: "Termék frissítve!" });
-        setShowProductForm(false);
-        setEditProduct(null);
       } else {
-        const { error } = await supabase.from("shop_products").insert(payload);
+        const { data: inserted, error } = await supabase.from("shop_products").insert(payload).select("id").single();
         if (error) {
           console.error("Product insert failed:", error, payload);
           toast({ title: "Mentési hiba", description: error.message, variant: "destructive" });
           return;
         }
+        productId = inserted?.id;
         toast({ title: "Termék hozzáadva!" });
-        setShowProductForm(false);
-        setEditProduct(null);
       }
+
+      // ─── Szín × méret darabszám mátrix mentése product_variants-be ───
+      const matrix: Record<string, Record<string, number>> = (editProduct as any)._stockMatrix || {};
+      const hasMatrix = Object.keys(matrix).length > 0;
+      if (productId && hasMatrix) {
+        try {
+          await supabase.from("product_variants").delete().eq("product_id", productId);
+          const rows: any[] = [];
+          for (const [color, sizes] of Object.entries(matrix)) {
+            for (const [size, stock] of Object.entries(sizes || {})) {
+              rows.push({
+                product_id: productId,
+                color: color === "—" ? null : color,
+                size: size === "—" ? null : size,
+                stock: Number(stock || 0),
+                is_active: true,
+              });
+            }
+          }
+          if (rows.length > 0) {
+            const { error: varErr } = await supabase.from("product_variants").insert(rows);
+            if (varErr) console.error("Variant sync failed:", varErr);
+          }
+          await supabase.from("shop_products").update({ has_variants: true }).eq("id", productId);
+        } catch (err) {
+          console.error("Variant matrix save failed:", err);
+        }
+      }
+
+      setShowProductForm(false);
+      setEditProduct(null);
 
       setSavingProduct(false);
       void fetchProducts().catch((error) => {
@@ -1712,6 +1741,107 @@ const Admin = () => {
                       placeholder="Egyedi színek vesszővel (opcionális)"
                     />
                   </div>
+
+                  {/* ─── Szín × Méret darabszám mátrix ─── */}
+                  {(editProduct.colors?.length || 0) > 0 && (editProduct.sizes?.length || 0) > 0 && (
+                    <div className="md:col-span-2 border-2 border-accent/40 bg-accent/5 p-3 rounded-md">
+                      <Label className="text-xs uppercase tracking-wider text-accent font-bold mb-1 block">
+                        🎯 Darabszám szín × méret szerint
+                      </Label>
+                      <p className="text-[10px] text-muted-foreground mb-3 uppercase tracking-wider">
+                        Írd be / léptetsd a darabszámot minden cellába. Az összesítés automatikusan frissíti a fenti Készlet mezőt.
+                      </p>
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse text-xs">
+                          <thead>
+                            <tr>
+                              <th className="border border-border bg-muted p-1.5 text-left uppercase tracking-wider text-[10px]">Szín \ Méret</th>
+                              {(editProduct.sizes || []).map((s: string) => (
+                                <th key={s} className="border border-border bg-muted p-1.5 text-center uppercase tracking-wider text-[10px] min-w-[80px]">{s}</th>
+                              ))}
+                              <th className="border border-border bg-accent/20 p-1.5 text-center uppercase tracking-wider text-[10px]">Σ</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(editProduct.colors || []).map((c: string) => {
+                              const ep: any = editProduct;
+                              const matrix: Record<string, Record<string, number>> = ep._stockMatrix || {};
+                              const rowSum = (editProduct.sizes || []).reduce((acc: number, s: string) => acc + Number(matrix?.[c]?.[s] || 0), 0);
+                              return (
+                                <tr key={c}>
+                                  <td className="border border-border bg-muted/50 p-1.5 font-bold uppercase tracking-wider text-[10px]">{c}</td>
+                                  {(editProduct.sizes || []).map((s: string) => {
+                                    const val = Number(matrix?.[c]?.[s] || 0);
+                                    const setVal = (n: number) => {
+                                      const safe = Math.max(0, Math.floor(n));
+                                      const next: Record<string, Record<string, number>> = { ...((editProduct as any)._stockMatrix || {}) };
+                                      next[c] = { ...(next[c] || {}), [s]: safe };
+                                      let total = 0;
+                                      for (const row of Object.values(next)) {
+                                        for (const v of Object.values(row || {})) total += Number(v || 0);
+                                      }
+                                      setEditProduct({ ...(editProduct as any), _stockMatrix: next, stock: total });
+                                    };
+                                    const out = val === 0;
+                                    const low = val > 0 && val < 5;
+                                    return (
+                                      <td key={s} className={`border border-border p-1 ${out ? "bg-destructive/10" : low ? "bg-yellow-500/10" : ""}`}>
+                                        <div className="flex flex-col gap-1">
+                                          <Input
+                                            type="number"
+                                            inputMode="numeric"
+                                            min={0}
+                                            value={val}
+                                            onFocus={(e) => e.currentTarget.select()}
+                                            onChange={(e) => setVal(Number(e.target.value) || 0)}
+                                            className={`h-9 text-center text-base font-bold ${out ? "text-destructive border-destructive" : low ? "border-yellow-500" : ""}`}
+                                          />
+                                          <div className="flex gap-0.5">
+                                            <button type="button" onClick={() => setVal(val - 1)} className="flex-1 px-1 py-0.5 text-[10px] font-bold border border-border hover:bg-muted">−</button>
+                                            <button type="button" onClick={() => setVal(val + 1)} className="flex-1 px-1 py-0.5 text-[10px] font-bold border border-border hover:bg-muted">+</button>
+                                          </div>
+                                          <div className="flex gap-0.5">
+                                            <button type="button" onClick={() => setVal(val + 5)} className="flex-1 px-1 py-0.5 text-[10px] font-bold border border-accent/50 text-accent hover:bg-accent/10">+5</button>
+                                            <button type="button" onClick={() => setVal(val + 10)} className="flex-1 px-1 py-0.5 text-[10px] font-bold border border-accent/50 text-accent hover:bg-accent/10">+10</button>
+                                            <button type="button" onClick={() => setVal(0)} className="flex-1 px-1 py-0.5 text-[10px] font-bold border border-destructive/50 text-destructive hover:bg-destructive/10">0</button>
+                                          </div>
+                                          {out && <div className="text-[9px] text-destructive font-bold text-center uppercase">Elfogyott</div>}
+                                          {low && <div className="text-[9px] text-yellow-600 font-bold text-center uppercase">Kevés</div>}
+                                        </div>
+                                      </td>
+                                    );
+                                  })}
+                                  <td className="border border-border bg-accent/10 p-1.5 text-center font-bold">{rowSum}</td>
+                                </tr>
+                              );
+                            })}
+                            <tr>
+                              <td className="border border-border bg-accent/20 p-1.5 font-bold uppercase tracking-wider text-[10px]">Σ Méret</td>
+                              {(editProduct.sizes || []).map((s: string) => {
+                                const matrix: Record<string, Record<string, number>> = (editProduct as any)._stockMatrix || {};
+                                const colSum = (editProduct.colors || []).reduce((acc: number, c: string) => acc + Number(matrix?.[c]?.[s] || 0), 0);
+                                return <td key={s} className="border border-border bg-accent/10 p-1.5 text-center font-bold">{colSum}</td>;
+                              })}
+                              <td className="border border-border bg-accent/30 p-1.5 text-center font-bold text-accent">
+                                {(() => {
+                                  const matrix: Record<string, Record<string, number>> = (editProduct as any)._stockMatrix || {};
+                                  let total = 0;
+                                  for (const row of Object.values(matrix)) {
+                                    for (const v of Object.values(row || {})) total += Number(v || 0);
+                                  }
+                                  return total;
+                                })()}
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-2">
+                        💡 A darabszámok mentéskor a variánsok közé kerülnek és külön-külön nyomon követhetők (méret + szín szerint).
+                      </p>
+                    </div>
+                  )}
+
                   <div className="md:col-span-2">
                     <Label className="text-xs uppercase tracking-wider text-muted-foreground">Leírás</Label>
                     <textarea
@@ -1837,7 +1967,21 @@ const Admin = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 ml-2">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditProduct({ ...p }); setShowProductForm(true); }}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={async () => {
+                      // Variánsok betöltése a mátrixhoz
+                      const matrix: Record<string, Record<string, number>> = {};
+                      try {
+                        const { data: vars } = await supabase.from("product_variants").select("color,size,stock").eq("product_id", p.id);
+                        (vars || []).forEach((v: any) => {
+                          const c = v.color || "—";
+                          const s = v.size || "—";
+                          if (!matrix[c]) matrix[c] = {};
+                          matrix[c][s] = Number(v.stock || 0);
+                        });
+                      } catch (err) { console.error("variant load failed", err); }
+                      setEditProduct({ ...p, _stockMatrix: matrix } as any);
+                      setShowProductForm(true);
+                    }}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteProduct(p.id)}>
