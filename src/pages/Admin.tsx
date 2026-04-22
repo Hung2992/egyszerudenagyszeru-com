@@ -1098,6 +1098,7 @@ const Admin = () => {
     setSavingProduct(true);
 
     try {
+      let productId = editProduct.id;
       if (editProduct.id) {
         const { error } = await supabase.from("shop_products").update(payload).eq("id", editProduct.id);
         if (error) {
@@ -1106,19 +1107,47 @@ const Admin = () => {
           return;
         }
         toast({ title: "Termék frissítve!" });
-        setShowProductForm(false);
-        setEditProduct(null);
       } else {
-        const { error } = await supabase.from("shop_products").insert(payload);
+        const { data: inserted, error } = await supabase.from("shop_products").insert(payload).select("id").single();
         if (error) {
           console.error("Product insert failed:", error, payload);
           toast({ title: "Mentési hiba", description: error.message, variant: "destructive" });
           return;
         }
+        productId = inserted?.id;
         toast({ title: "Termék hozzáadva!" });
-        setShowProductForm(false);
-        setEditProduct(null);
       }
+
+      // ─── Szín × méret darabszám mátrix mentése product_variants-be ───
+      const matrix: Record<string, Record<string, number>> = (editProduct as any)._stockMatrix || {};
+      const hasMatrix = Object.keys(matrix).length > 0;
+      if (productId && hasMatrix) {
+        try {
+          await supabase.from("product_variants").delete().eq("product_id", productId);
+          const rows: any[] = [];
+          for (const [color, sizes] of Object.entries(matrix)) {
+            for (const [size, stock] of Object.entries(sizes || {})) {
+              rows.push({
+                product_id: productId,
+                color: color === "—" ? null : color,
+                size: size === "—" ? null : size,
+                stock: Number(stock || 0),
+                is_active: true,
+              });
+            }
+          }
+          if (rows.length > 0) {
+            const { error: varErr } = await supabase.from("product_variants").insert(rows);
+            if (varErr) console.error("Variant sync failed:", varErr);
+          }
+          await supabase.from("shop_products").update({ has_variants: true }).eq("id", productId);
+        } catch (err) {
+          console.error("Variant matrix save failed:", err);
+        }
+      }
+
+      setShowProductForm(false);
+      setEditProduct(null);
 
       setSavingProduct(false);
       void fetchProducts().catch((error) => {
