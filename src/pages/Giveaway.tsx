@@ -42,9 +42,14 @@ const Giveaway = () => {
   }, []);
 
   useEffect(() => {
+    if (!endDate) {
+      setEnded(hasEnded);
+      setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      return;
+    }
     const tick = () => {
       const now = new Date();
-      const diff = GIVEAWAY_END.getTime() - now.getTime();
+      const diff = endDate.getTime() - now.getTime();
       if (diff <= 0) {
         setEnded(true);
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -60,7 +65,7 @@ const Giveaway = () => {
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [endDate, hasEnded]);
 
   const handleEnter = async (e: React.FormEvent) => {
     e.preventDefault();
