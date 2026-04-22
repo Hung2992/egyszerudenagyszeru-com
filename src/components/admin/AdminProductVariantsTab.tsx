@@ -483,6 +483,16 @@ const AdminProductVariantsTab = () => {
                                     </div>
                                     {out && <span className="text-[9px] text-destructive font-bold">ELFOGYOTT</span>}
                                     {low && <span className="text-[9px] text-yellow-600 font-bold">KEVÉS</span>}
+                                    {/* Pre-order allowed toggle (mainly relevant when sold out) */}
+                                    <label className={`flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider cursor-pointer ${v.preorder_enabled ? "text-accent" : "text-muted-foreground"}`} title="Vásárlók előrendelhetik, ha elfogyott">
+                                      <input
+                                        type="checkbox"
+                                        checked={v.preorder_enabled !== false}
+                                        onChange={(e) => updateVariant(idx, { preorder_enabled: e.target.checked })}
+                                        className="w-3 h-3 accent-accent"
+                                      />
+                                      📦 Előr.
+                                    </label>
                                   </div>
                                 </td>
                               );
