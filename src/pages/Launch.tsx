@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/untyped-client";
 import { toast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
 import LaunchHero from "@/components/LaunchHero";
+import PreorderShowcase from "@/components/PreorderShowcase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
