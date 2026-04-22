@@ -27,6 +27,7 @@ interface Product {
   image_url: string | null;
   is_active: boolean;
   stock: number;
+  preorder_enabled?: boolean;
 }
 
 interface ProductImage {

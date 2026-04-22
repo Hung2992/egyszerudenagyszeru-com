@@ -142,6 +142,7 @@ const AdminProductVariantsTab = () => {
           sku: null,
           price_modifier: 0,
           is_active: true,
+          preorder_enabled: true,
           _isNew: true,
           _dirty: true,
         });
