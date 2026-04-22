@@ -27,6 +27,7 @@ interface Product {
   image_url: string | null;
   is_active: boolean;
   stock: number;
+  preorder_enabled?: boolean;
 }
 
 interface ProductImage {
@@ -84,7 +85,7 @@ const ProductDetail = () => {
 
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [showSizeQuiz, setShowSizeQuiz] = useState(false);
-  const [variants, setVariants] = useState<Array<{ size: string | null; color: string | null; stock: number }>>([]);
+  const [variants, setVariants] = useState<Array<{ size: string | null; color: string | null; stock: number; preorder_enabled?: boolean }>>([]);
 
   // Stock helpers based on variants (size+color combinations)
   const getStockForSize = (size: string): number => {
@@ -98,6 +99,21 @@ const ProductDetail = () => {
     return variants
       .filter((v) => v.color === color && (!selectedSize || !v.size || v.size === selectedSize))
       .reduce((sum, v) => sum + (v.stock || 0), 0);
+  };
+  // Is this size pre-orderable when sold out? (any matching variant has preorder_enabled)
+  const isSizePreorderable = (size: string): boolean => {
+    if (!product?.preorder_enabled) return false;
+    if (variants.length === 0) return true;
+    return variants
+      .filter((v) => v.size === size && (!selectedColor || !v.color || v.color === selectedColor))
+      .some((v) => v.preorder_enabled !== false);
+  };
+  const isColorPreorderable = (color: string): boolean => {
+    if (!product?.preorder_enabled) return false;
+    if (variants.length === 0) return true;
+    return variants
+      .filter((v) => v.color === color && (!selectedSize || !v.size || v.size === selectedSize))
+      .some((v) => v.preorder_enabled !== false);
   };
   const getCurrentStock = (): number => {
     if (variants.length === 0) return product?.stock ?? 0;
@@ -138,11 +154,11 @@ const ProductDetail = () => {
 
       // Fetch variants — use them as the source of truth for sizes/colors when present
       const { data: variantData } = await (supabase.from("product_variants" as any) as any)
-        .select("size, color, stock, is_active")
+        .select("size, color, stock, is_active, preorder_enabled")
         .eq("product_id", id)
         .eq("is_active", true);
 
-      const vList = (variantData || []) as Array<{ size: string | null; color: string | null; stock: number }>;
+      const vList = (variantData || []) as Array<{ size: string | null; color: string | null; stock: number; preorder_enabled?: boolean }>;
       setVariants(vList);
 
       if (vList.length > 0) {
@@ -639,24 +655,35 @@ const ProductDetail = () => {
                   {(product.sizes || []).map(s => {
                     const sizeStock = getStockForSize(s);
                     const soldOut = variants.length > 0 && sizeStock <= 0;
+                    const preorderable = soldOut && isSizePreorderable(s);
+                    const disabled = soldOut && !preorderable;
                     return (
                       <button
                         key={s}
-                        onClick={() => !soldOut && setSelectedSize(s)}
-                        disabled={soldOut}
-                        title={soldOut ? "Elfogyott" : `${sizeStock} db készleten`}
+                        onClick={() => !disabled && setSelectedSize(s)}
+                        disabled={disabled}
+                        title={disabled ? "Elfogyott" : preorderable ? "Elfogyott — előrendelhető 📦" : `${sizeStock} db készleten`}
                         className={`relative text-xs px-5 py-2.5 border transition-all ${
-                          soldOut
+                          disabled
                             ? "text-muted-foreground/40 border-border/40 line-through cursor-not-allowed bg-muted/20"
-                            : selectedSize === s
-                              ? "bg-foreground text-background border-foreground font-bold"
-                              : "text-muted-foreground border-border hover:text-foreground hover:border-muted-foreground"
+                            : preorderable
+                              ? selectedSize === s
+                                ? "bg-accent text-accent-foreground border-accent font-bold"
+                                : "text-accent border-accent/60 border-dashed hover:bg-accent/10"
+                              : selectedSize === s
+                                ? "bg-foreground text-background border-foreground font-bold"
+                                : "text-muted-foreground border-border hover:text-foreground hover:border-muted-foreground"
                         }`}
                       >
                         {s}
                         {!soldOut && variants.length > 0 && sizeStock <= 3 && (
                           <span className="absolute -top-1.5 -right-1.5 text-[8px] bg-accent text-accent-foreground px-1 py-0.5 font-bold rounded-sm">
                             {sizeStock}
+                          </span>
+                        )}
+                        {preorderable && (
+                          <span className="absolute -top-1.5 -right-1.5 text-[8px] bg-accent text-accent-foreground px-1 py-0.5 font-bold rounded-sm">
+                            📦
                           </span>
                         )}
                       </button>
@@ -667,9 +694,10 @@ const ProductDetail = () => {
                   <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
                     {(product.sizes || []).map(s => {
                       const ss = getStockForSize(s);
+                      const pre = ss <= 0 && isSizePreorderable(s);
                       return (
-                        <span key={`legend-${s}`} className={`text-[10px] ${ss <= 0 ? "text-destructive" : ss <= 3 ? "text-accent" : "text-muted-foreground"}`}>
-                          {s}: {ss <= 0 ? "elfogyott" : `${ss} db`}
+                        <span key={`legend-${s}`} className={`text-[10px] ${ss <= 0 ? (pre ? "text-accent font-bold" : "text-destructive") : ss <= 3 ? "text-accent" : "text-muted-foreground"}`}>
+                          {s}: {ss <= 0 ? (pre ? "📦 előrendelhető" : "elfogyott") : `${ss} db`}
                         </span>
                       );
                     })}
@@ -686,21 +714,32 @@ const ProductDetail = () => {
                   {(product.colors || []).map(c => {
                     const colorStock = getStockForColor(c);
                     const soldOut = variants.length > 0 && colorStock <= 0;
+                    const preorderable = soldOut && isColorPreorderable(c);
+                    const disabled = soldOut && !preorderable;
                     return (
                       <button
                         key={c}
-                        onClick={() => !soldOut && setSelectedColor(c)}
-                        disabled={soldOut}
-                        title={soldOut ? "Elfogyott" : `${colorStock} db készleten`}
-                        className={`text-xs px-5 py-2.5 border transition-all ${
-                          soldOut
+                        onClick={() => !disabled && setSelectedColor(c)}
+                        disabled={disabled}
+                        title={disabled ? "Elfogyott" : preorderable ? "Elfogyott — előrendelhető 📦" : `${colorStock} db készleten`}
+                        className={`relative text-xs px-5 py-2.5 border transition-all ${
+                          disabled
                             ? "text-muted-foreground/40 border-border/40 line-through cursor-not-allowed bg-muted/20"
-                            : selectedColor === c
-                              ? "bg-foreground text-background border-foreground font-bold"
-                              : "text-muted-foreground border-border hover:text-foreground hover:border-muted-foreground"
+                            : preorderable
+                              ? selectedColor === c
+                                ? "bg-accent text-accent-foreground border-accent font-bold"
+                                : "text-accent border-accent/60 border-dashed hover:bg-accent/10"
+                              : selectedColor === c
+                                ? "bg-foreground text-background border-foreground font-bold"
+                                : "text-muted-foreground border-border hover:text-foreground hover:border-muted-foreground"
                         }`}
                       >
                         {c}
+                        {preorderable && (
+                          <span className="absolute -top-1.5 -right-1.5 text-[8px] bg-accent text-accent-foreground px-1 py-0.5 font-bold rounded-sm">
+                            📦
+                          </span>
+                        )}
                       </button>
                     );
                   })}

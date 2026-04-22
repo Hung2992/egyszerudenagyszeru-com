@@ -1254,6 +1254,7 @@ export type Database = {
           image_url: string | null
           is_active: boolean
           preorder_count: number
+          preorder_enabled: boolean
           preorder_limit: number | null
           price_modifier: number
           product_id: string
@@ -1269,6 +1270,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           preorder_count?: number
+          preorder_enabled?: boolean
           preorder_limit?: number | null
           price_modifier?: number
           product_id: string
@@ -1284,6 +1286,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           preorder_count?: number
+          preorder_enabled?: boolean
           preorder_limit?: number | null
           price_modifier?: number
           product_id?: string
