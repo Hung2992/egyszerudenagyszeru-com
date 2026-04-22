@@ -2,15 +2,17 @@ import { useState, useEffect } from "react";
 import { Gift, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useGiveawayStatus } from "@/hooks/useGiveawayStatus";
 
 const GiveawayPopup = () => {
   const [visible, setVisible] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
+  const { isActive, loading } = useGiveawayStatus();
 
   useEffect(() => {
-    if (isAdminRoute) {
+    if (isAdminRoute || loading || !isActive) {
       setVisible(false);
       return;
     }
@@ -19,14 +21,14 @@ const GiveawayPopup = () => {
     if (dismissed) return;
     const timer = setTimeout(() => setVisible(true), 5000);
     return () => clearTimeout(timer);
-  }, [isAdminRoute]);
+  }, [isAdminRoute, isActive, loading]);
 
   const handleDismiss = () => {
     setVisible(false);
     sessionStorage.setItem("giveaway_popup_dismissed", "1");
   };
 
-  if (!visible || isAdminRoute) return null;
+  if (!visible || isAdminRoute || !isActive) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">

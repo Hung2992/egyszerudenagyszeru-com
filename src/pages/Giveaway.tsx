@@ -6,9 +6,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { toast } from "sonner";
 import { sendAppEmail } from "@/lib/app-email";
-
-// Giveaway end date: 51 days from 2026-04-14
-const GIVEAWAY_END = new Date("2026-06-04T23:59:59");
+import { useGiveawayStatus } from "@/hooks/useGiveawayStatus";
 
 type PrizeProduct = {
   id: string;
@@ -24,6 +22,7 @@ const Giveaway = () => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [ended, setEnded] = useState(false);
   const [prizes, setPrizes] = useState<PrizeProduct[]>([]);
+  const { isEnabled, isActive, hasEnded, notStarted, endDate, startDate, loading: statusLoading } = useGiveawayStatus();
 
   useEffect(() => {
     const fetchPrizes = async () => {
