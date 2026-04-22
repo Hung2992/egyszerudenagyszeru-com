@@ -27,6 +27,7 @@ type Variant = {
   sku: string | null;
   price_modifier: number;
   is_active: boolean;
+  preorder_enabled: boolean;
   _isNew?: boolean;
   _dirty?: boolean;
 };
@@ -108,6 +109,7 @@ const AdminProductVariantsTab = () => {
         sku: null,
         price_modifier: 0,
         is_active: true,
+        preorder_enabled: true,
         _isNew: true,
         _dirty: true,
       },
