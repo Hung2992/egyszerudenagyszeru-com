@@ -240,7 +240,7 @@ export default function AdminInboxTab() {
         </aside>
 
         {/* Message list */}
-        <section className={`md:col-span-${selected ? 4 : 10} border border-border bg-card overflow-hidden ${selected ? "hidden md:block" : ""}`}>
+        <section className={`${selected ? "md:col-span-4 hidden md:block" : "md:col-span-10"} border border-border bg-card overflow-hidden`}>
           {loading ? (
             <div className="flex items-center justify-center h-full p-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
