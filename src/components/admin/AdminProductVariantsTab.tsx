@@ -408,15 +408,56 @@ const AdminProductVariantsTab = () => {
                               return (
                                 <td key={s} className={`p-1 border-r border-border ${v._dirty ? "bg-yellow-500/5" : ""}`}>
                                   <div className="flex flex-col items-center gap-1">
-                                    <Input
-                                      type="number"
-                                      min={0}
-                                      value={v.stock}
-                                      onChange={(e) => updateVariant(idx, { stock: Number(e.target.value) })}
-                                      className={`h-9 text-center text-sm font-bold ${
-                                        out ? "border-destructive text-destructive" : low ? "border-yellow-500" : "border-accent/40"
-                                      }`}
-                                    />
+                                    {/* Quick step buttons +/- */}
+                                    <div className="flex items-center gap-0.5 w-full">
+                                      <button
+                                        onClick={() => updateVariant(idx, { stock: Math.max(0, (v.stock || 0) - 1) })}
+                                        className="flex-1 h-7 bg-destructive/10 hover:bg-destructive/20 text-destructive font-bold text-sm rounded transition-colors"
+                                        title="-1"
+                                      >
+                                        −
+                                      </button>
+                                      <Input
+                                        type="number"
+                                        min={0}
+                                        value={v.stock}
+                                        onChange={(e) => updateVariant(idx, { stock: Number(e.target.value) })}
+                                        className={`h-7 text-center text-sm font-bold px-1 w-12 ${
+                                          out ? "border-destructive text-destructive" : low ? "border-yellow-500" : "border-accent/40"
+                                        }`}
+                                      />
+                                      <button
+                                        onClick={() => updateVariant(idx, { stock: (v.stock || 0) + 1 })}
+                                        className="flex-1 h-7 bg-accent/10 hover:bg-accent/20 text-accent font-bold text-sm rounded transition-colors"
+                                        title="+1"
+                                      >
+                                        +
+                                      </button>
+                                    </div>
+                                    {/* Quick add presets */}
+                                    <div className="flex items-center gap-0.5 w-full">
+                                      <button
+                                        onClick={() => updateVariant(idx, { stock: (v.stock || 0) + 5 })}
+                                        className="flex-1 h-5 bg-accent/5 hover:bg-accent/15 text-accent text-[10px] font-bold rounded transition-colors"
+                                        title="+5"
+                                      >
+                                        +5
+                                      </button>
+                                      <button
+                                        onClick={() => updateVariant(idx, { stock: (v.stock || 0) + 10 })}
+                                        className="flex-1 h-5 bg-accent/5 hover:bg-accent/15 text-accent text-[10px] font-bold rounded transition-colors"
+                                        title="+10"
+                                      >
+                                        +10
+                                      </button>
+                                      <button
+                                        onClick={() => updateVariant(idx, { stock: 0 })}
+                                        className="flex-1 h-5 bg-muted hover:bg-muted/70 text-muted-foreground text-[10px] font-bold rounded transition-colors"
+                                        title="Nulla"
+                                      >
+                                        0
+                                      </button>
+                                    </div>
                                     <div className="flex items-center gap-1">
                                       <input
                                         type="checkbox"
@@ -444,7 +485,7 @@ const AdminProductVariantsTab = () => {
                       </tbody>
                     </table>
                     <p className="text-[10px] text-muted-foreground p-2 bg-muted/20 border-t border-border">
-                      💡 Írd be egyszerűen a darabszámot minden szín-méret cellába. A "+ új" gombbal hozhatsz létre új kombinációt.
+                      💡 Egy kattintással növelheted a darabszámot: <strong>+/−</strong> léptetők, vagy <strong>+5 / +10</strong> gyorsgombok. A <strong>0</strong> gomb azonnal nullázza.
                     </p>
                   </div>
                 );
