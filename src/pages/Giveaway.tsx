@@ -69,7 +69,15 @@ const Giveaway = () => {
 
   const handleEnter = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (ended) {
+    if (!isEnabled) {
+      toast.error("A nyereményjáték jelenleg nem aktív.");
+      return;
+    }
+    if (notStarted) {
+      toast.error("A nyereményjáték még nem indult el.");
+      return;
+    }
+    if (ended || hasEnded) {
       toast.error("A nyereményjáték már lezárult!");
       return;
     }
@@ -234,7 +242,39 @@ const Giveaway = () => {
             </div>
           )}
 
-          {ended ? (
+          {!statusLoading && !isEnabled ? (
+            <div className="bg-secondary border border-border p-8 text-center">
+              <Gift className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+              <p className="text-lg font-bold text-foreground mb-2">
+                A nyereményjáték jelenleg nem aktív
+              </p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Hamarosan újra indul — addig is nézd meg a kollekciót!
+              </p>
+              <Button
+                className="rounded-none uppercase tracking-[0.15em] text-xs bg-accent text-accent-foreground hover:bg-accent/90 font-bold"
+                onClick={() => window.location.href = "/shop"}
+              >
+                Vásárlás
+              </Button>
+            </div>
+          ) : notStarted ? (
+            <div className="bg-secondary border border-border p-8 text-center">
+              <Clock className="h-10 w-10 text-accent mx-auto mb-3" />
+              <p className="text-lg font-bold text-foreground mb-2">
+                A nyereményjáték hamarosan indul!
+              </p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Indulás: <span className="text-accent font-bold">{startDate?.toLocaleString("hu-HU")}</span>
+              </p>
+              <Button
+                className="rounded-none uppercase tracking-[0.15em] text-xs bg-accent text-accent-foreground hover:bg-accent/90 font-bold"
+                onClick={() => window.location.href = "/shop"}
+              >
+                Vásárlás
+              </Button>
+            </div>
+          ) : ended ? (
             <div className="bg-secondary border border-border p-8 text-center">
               <Trophy className="h-10 w-10 text-accent mx-auto mb-3" />
               <p className="text-lg font-bold text-foreground mb-2">
