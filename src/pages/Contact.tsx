@@ -10,8 +10,8 @@ import { sendAppEmail } from "@/lib/app-email";
 
 const CONTACT_INFO = [
   { icon: Mail, label: "Email", value: "info@egyszerudenagyszeru.hu" },
-  { icon: Phone, label: "Telefon", value: "+36 30 123 4567" },
-  { icon: MapPin, label: "Cím", value: "1052 Budapest, Váci utca 10." },
+  { icon: Phone, label: "Telefon", value: "+36 70 707 9985" },
+  { icon: MapPin, label: "Cím", value: "8125 Sárkeresztúr, Fő u. 35., Fejér megye, Magyarország" },
   { icon: Clock, label: "Nyitvatartás", value: "H-P: 9:00 - 17:00" },
 ];
 
