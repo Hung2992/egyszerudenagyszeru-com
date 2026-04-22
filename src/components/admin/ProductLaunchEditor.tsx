@@ -97,6 +97,9 @@ const ProductLaunchEditor = ({ productId, onClose }: { productId: string; onClos
       preorder_deposit_percent: product.preorder_deposit_percent,
       preorder_limit: product.preorder_limit,
       is_sneak_peek: product.is_sneak_peek,
+      preorder_count: Number(product.preorder_count ?? 0),
+      waitlist_count: Number(product.waitlist_count ?? 0),
+      poll_votes: Number(product.poll_votes ?? 0),
       material: product.material,
       care_instructions: product.care_instructions,
       origin_country: product.origin_country,
@@ -408,6 +411,52 @@ const ProductLaunchEditor = ({ productId, onClose }: { productId: string; onClos
                       </div>
                     </div>
                     <p className="text-[10px] text-muted-foreground">Variánsonkénti limitet a "Variánsok" fülön állíthatod.</p>
+                  </div>
+
+                  {/* MANUAL COUNTERS - admin írja be kézzel */}
+                  <div className="border-2 border-accent/40 p-3 space-y-3 bg-accent/10">
+                    <div>
+                      <Label className="text-xs uppercase tracking-wider font-bold text-accent">📊 Kézi számlálók (admin írja be)</Label>
+                      <p className="text-[10px] text-muted-foreground mt-1">Ezek a számok jelennek meg a felhasználóknak. Bármilyen értéket beállíthatsz — nem a webshop számolja automatikusan.</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <Label className="text-[10px] uppercase tracking-wider">📦 Előrendelés db</Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          inputMode="numeric"
+                          value={product.preorder_count ?? 0}
+                          onFocus={(e) => e.target.select()}
+                          onChange={e => setProduct({ ...product, preorder_count: Number(e.target.value) })}
+                          className="mt-1 rounded-none text-sm h-10 text-center font-bold"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-[10px] uppercase tracking-wider">👥 Várólista db</Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          inputMode="numeric"
+                          value={product.waitlist_count ?? 0}
+                          onFocus={(e) => e.target.select()}
+                          onChange={e => setProduct({ ...product, waitlist_count: Number(e.target.value) })}
+                          className="mt-1 rounded-none text-sm h-10 text-center font-bold"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-[10px] uppercase tracking-wider">🗳 Szavazat db</Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          inputMode="numeric"
+                          value={product.poll_votes ?? 0}
+                          onFocus={(e) => e.target.select()}
+                          onChange={e => setProduct({ ...product, poll_votes: Number(e.target.value) })}
+                          className="mt-1 rounded-none text-sm h-10 text-center font-bold"
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   <div className="flex items-center justify-between border p-3">
