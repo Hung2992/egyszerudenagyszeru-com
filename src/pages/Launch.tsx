@@ -276,6 +276,7 @@ const Launch = () => {
     <Layout>
       <div className="container mx-auto px-4 py-8 space-y-6">
         <LaunchHero />
+        <PreorderShowcase />
         <div className="text-center space-y-2 max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1 border border-accent/30 bg-accent/5 text-accent text-[10px] font-bold uppercase tracking-widest">
             <Rocket className="h-3 w-3" /> Launch Center
