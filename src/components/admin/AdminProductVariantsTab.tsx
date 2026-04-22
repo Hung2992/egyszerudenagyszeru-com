@@ -408,27 +408,31 @@ const AdminProductVariantsTab = () => {
                               return (
                                 <td key={s} className={`p-1 border-r border-border ${v._dirty ? "bg-yellow-500/5" : ""}`}>
                                   <div className="flex flex-col items-center gap-1">
+                                    {/* Big keyboard input */}
+                                    <Input
+                                      type="number"
+                                      inputMode="numeric"
+                                      min={0}
+                                      value={v.stock}
+                                      onFocus={(e) => e.target.select()}
+                                      onChange={(e) => updateVariant(idx, { stock: Number(e.target.value) })}
+                                      className={`h-11 text-center text-lg font-bold w-full px-1 ${
+                                        out ? "border-destructive text-destructive" : low ? "border-yellow-500" : "border-accent/40"
+                                      }`}
+                                      placeholder="0"
+                                    />
                                     {/* Quick step buttons +/- */}
                                     <div className="flex items-center gap-0.5 w-full">
                                       <button
                                         onClick={() => updateVariant(idx, { stock: Math.max(0, (v.stock || 0) - 1) })}
-                                        className="flex-1 h-7 bg-destructive/10 hover:bg-destructive/20 text-destructive font-bold text-sm rounded transition-colors"
+                                        className="flex-1 h-7 bg-destructive/10 hover:bg-destructive/20 text-destructive font-bold text-base rounded transition-colors"
                                         title="-1"
                                       >
                                         −
                                       </button>
-                                      <Input
-                                        type="number"
-                                        min={0}
-                                        value={v.stock}
-                                        onChange={(e) => updateVariant(idx, { stock: Number(e.target.value) })}
-                                        className={`h-7 text-center text-sm font-bold px-1 w-12 ${
-                                          out ? "border-destructive text-destructive" : low ? "border-yellow-500" : "border-accent/40"
-                                        }`}
-                                      />
                                       <button
                                         onClick={() => updateVariant(idx, { stock: (v.stock || 0) + 1 })}
-                                        className="flex-1 h-7 bg-accent/10 hover:bg-accent/20 text-accent font-bold text-sm rounded transition-colors"
+                                        className="flex-1 h-7 bg-accent/10 hover:bg-accent/20 text-accent font-bold text-base rounded transition-colors"
                                         title="+1"
                                       >
                                         +
