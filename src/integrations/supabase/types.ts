@@ -274,6 +274,63 @@ export type Database = {
           },
         ]
       }
+      contact_messages: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          is_archived: boolean
+          is_starred: boolean
+          message: string
+          name: string
+          read_at: string | null
+          replied_at: string | null
+          replied_by: string | null
+          reply_text: string | null
+          status: string
+          subject: string | null
+          updated_at: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          is_archived?: boolean
+          is_starred?: boolean
+          message: string
+          name: string
+          read_at?: string | null
+          replied_at?: string | null
+          replied_by?: string | null
+          reply_text?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          is_archived?: boolean
+          is_starred?: boolean
+          message?: string
+          name?: string
+          read_at?: string | null
+          replied_at?: string | null
+          replied_by?: string | null
+          reply_text?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       coupons: {
         Row: {
           code: string
