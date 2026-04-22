@@ -504,7 +504,7 @@ const Orders = () => {
                                 <span className="text-foreground font-medium">Csomagolás alatt</span>
                               </div>
                             )}
-                            {stepIdx >= 2 && (
+                            {stepIdx >= 4 && (
                               <div className="flex items-center gap-2">
                                 <Truck className="h-3 w-3 text-accent" />
                                 <span className="text-muted-foreground">Szállítás:</span>
@@ -513,14 +513,14 @@ const Orders = () => {
                                 </span>
                               </div>
                             )}
-                            {stepIdx >= 3 && (
+                            {stepIdx >= 5 && (
                               <div className="flex items-center gap-2">
                                 <CheckCircle2 className="h-3 w-3 text-green-500" />
                                 <span className="text-muted-foreground">Kézbesítve:</span>
                                 <span className="text-foreground font-medium">Sikeresen átvéve ✓</span>
                               </div>
                             )}
-                            {stepIdx < 3 && (
+                            {stepIdx < 5 && (
                               <div className="flex items-center gap-2 border-t border-border pt-2 mt-2">
                                 <Clock className="h-3 w-3 text-accent" />
                                 <span className="text-accent font-medium">Várható kézbesítés: {
