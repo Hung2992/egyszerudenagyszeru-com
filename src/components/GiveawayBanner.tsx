@@ -1,9 +1,13 @@
 import { Gift, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useGiveawayStatus } from "@/hooks/useGiveawayStatus";
 
 const GiveawayBanner = () => {
   const navigate = useNavigate();
+  const { isActive, loading } = useGiveawayStatus();
+
+  if (loading || !isActive) return null;
 
   return (
     <section className="border-y border-accent/30 bg-accent/5">

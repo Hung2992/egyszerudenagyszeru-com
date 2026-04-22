@@ -6,9 +6,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { toast } from "sonner";
 import { sendAppEmail } from "@/lib/app-email";
-
-// Giveaway end date: 51 days from 2026-04-14
-const GIVEAWAY_END = new Date("2026-06-04T23:59:59");
+import { useGiveawayStatus } from "@/hooks/useGiveawayStatus";
 
 type PrizeProduct = {
   id: string;
@@ -24,6 +22,7 @@ const Giveaway = () => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [ended, setEnded] = useState(false);
   const [prizes, setPrizes] = useState<PrizeProduct[]>([]);
+  const { isEnabled, isActive, hasEnded, notStarted, endDate, startDate, loading: statusLoading } = useGiveawayStatus();
 
   useEffect(() => {
     const fetchPrizes = async () => {
@@ -43,9 +42,14 @@ const Giveaway = () => {
   }, []);
 
   useEffect(() => {
+    if (!endDate) {
+      setEnded(hasEnded);
+      setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      return;
+    }
     const tick = () => {
       const now = new Date();
-      const diff = GIVEAWAY_END.getTime() - now.getTime();
+      const diff = endDate.getTime() - now.getTime();
       if (diff <= 0) {
         setEnded(true);
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -61,11 +65,19 @@ const Giveaway = () => {
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [endDate, hasEnded]);
 
   const handleEnter = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (ended) {
+    if (!isEnabled) {
+      toast.error("A nyereményjáték jelenleg nem aktív.");
+      return;
+    }
+    if (notStarted) {
+      toast.error("A nyereményjáték még nem indult el.");
+      return;
+    }
+    if (ended || hasEnded) {
       toast.error("A nyereményjáték már lezárult!");
       return;
     }
@@ -230,7 +242,39 @@ const Giveaway = () => {
             </div>
           )}
 
-          {ended ? (
+          {!statusLoading && !isEnabled ? (
+            <div className="bg-secondary border border-border p-8 text-center">
+              <Gift className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+              <p className="text-lg font-bold text-foreground mb-2">
+                A nyereményjáték jelenleg nem aktív
+              </p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Hamarosan újra indul — addig is nézd meg a kollekciót!
+              </p>
+              <Button
+                className="rounded-none uppercase tracking-[0.15em] text-xs bg-accent text-accent-foreground hover:bg-accent/90 font-bold"
+                onClick={() => window.location.href = "/shop"}
+              >
+                Vásárlás
+              </Button>
+            </div>
+          ) : notStarted ? (
+            <div className="bg-secondary border border-border p-8 text-center">
+              <Clock className="h-10 w-10 text-accent mx-auto mb-3" />
+              <p className="text-lg font-bold text-foreground mb-2">
+                A nyereményjáték hamarosan indul!
+              </p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Indulás: <span className="text-accent font-bold">{startDate?.toLocaleString("hu-HU")}</span>
+              </p>
+              <Button
+                className="rounded-none uppercase tracking-[0.15em] text-xs bg-accent text-accent-foreground hover:bg-accent/90 font-bold"
+                onClick={() => window.location.href = "/shop"}
+              >
+                Vásárlás
+              </Button>
+            </div>
+          ) : ended ? (
             <div className="bg-secondary border border-border p-8 text-center">
               <Trophy className="h-10 w-10 text-accent mx-auto mb-3" />
               <p className="text-lg font-bold text-foreground mb-2">

@@ -548,6 +548,30 @@ export type Database = {
           },
         ]
       }
+      giveaway_settings: {
+        Row: {
+          end_date: string | null
+          id: number
+          is_enabled: boolean
+          start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          end_date?: string | null
+          id?: number
+          is_enabled?: boolean
+          start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          end_date?: string | null
+          id?: number
+          is_enabled?: boolean
+          start_date?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       homepage_banners: {
         Row: {
           button_text: string | null
