@@ -1,0 +1,1 @@
+ALTER TABLE public.product_variants ADD COLUMN IF NOT EXISTS preorder_enabled boolean NOT NULL DEFAULT true;
