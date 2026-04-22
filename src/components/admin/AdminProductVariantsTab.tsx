@@ -552,7 +552,7 @@ const AdminProductVariantsTab = () => {
                     </tfoot>
                   </table>
                 </div>
-              )}
+              ) : null}
 
               <div className="flex items-center justify-between pt-3 border-t border-border">
                 <Button size="sm" variant="outline" onClick={() => addVariant()} className="gap-2">
