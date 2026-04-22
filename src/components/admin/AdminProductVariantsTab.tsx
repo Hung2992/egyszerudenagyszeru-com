@@ -41,6 +41,7 @@ const AdminProductVariantsTab = () => {
   const [bulkStock, setBulkStock] = useState<number>(10);
   const [newSize, setNewSize] = useState("");
   const [newColor, setNewColor] = useState("");
+  const [viewMode, setViewMode] = useState<"matrix" | "list">("matrix");
 
   const selectedProduct = useMemo(
     () => products.find((p) => p.id === selectedProductId) || null,
@@ -336,7 +337,120 @@ const AdminProductVariantsTab = () => {
                 </div>
               </div>
 
-              {/* Variants table */}
+              {/* View toggle */}
+              {variants.length > 0 && (
+                <div className="flex items-center gap-2 border-b border-border pb-2">
+                  <span className="text-[11px] text-muted-foreground font-semibold">Nézet:</span>
+                  <Button
+                    size="sm"
+                    variant={viewMode === "matrix" ? "default" : "outline"}
+                    onClick={() => setViewMode("matrix")}
+                    className="h-7 text-xs gap-1.5"
+                  >
+                    <Grid3x3 className="w-3.5 h-3.5" /> Mátrix (gyors db beírás)
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={viewMode === "list" ? "default" : "outline"}
+                    onClick={() => setViewMode("list")}
+                    className="h-7 text-xs gap-1.5"
+                  >
+                    <Layers className="w-3.5 h-3.5" /> Lista (részletes)
+                  </Button>
+                </div>
+              )}
+
+              {/* Matrix view: rows=colors, cols=sizes, each cell = stock input */}
+              {variants.length > 0 && viewMode === "matrix" && (() => {
+                const colorSet = Array.from(new Set(variants.map(v => v.color || "—")));
+                const sizeSet = Array.from(new Set(variants.map(v => v.size || "—")));
+                const findIdx = (color: string, size: string) =>
+                  variants.findIndex(v => (v.color || "—") === color && (v.size || "—") === size);
+                return (
+                  <div className="overflow-x-auto border border-border rounded-lg">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="bg-muted/50">
+                          <th className="p-2 text-left text-[11px] font-bold text-muted-foreground border-r border-border sticky left-0 bg-muted/50 min-w-[100px]">
+                            <Palette className="w-3 h-3 inline mr-1" /> Szín \ Méret
+                          </th>
+                          {sizeSet.map(s => (
+                            <th key={s} className="p-2 text-center text-[11px] font-bold text-foreground border-r border-border min-w-[80px]">
+                              <Ruler className="w-3 h-3 inline mr-1" />{s}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {colorSet.map(c => (
+                          <tr key={c} className="border-t border-border">
+                            <td className="p-2 font-bold text-xs text-foreground border-r border-border sticky left-0 bg-card">
+                              {c}
+                            </td>
+                            {sizeSet.map(s => {
+                              const idx = findIdx(c, s);
+                              if (idx === -1) {
+                                return (
+                                  <td key={s} className="p-1 text-center border-r border-border bg-muted/10">
+                                    <button
+                                      onClick={() => addVariant(s === "—" ? undefined : s, c === "—" ? undefined : c)}
+                                      className="text-[10px] text-muted-foreground hover:text-accent hover:bg-accent/10 px-2 py-1 rounded transition-colors"
+                                      title="Variáns létrehozása"
+                                    >
+                                      + új
+                                    </button>
+                                  </td>
+                                );
+                              }
+                              const v = variants[idx];
+                              const out = (v.stock || 0) === 0;
+                              const low = (v.stock || 0) > 0 && (v.stock || 0) < 5;
+                              return (
+                                <td key={s} className={`p-1 border-r border-border ${v._dirty ? "bg-yellow-500/5" : ""}`}>
+                                  <div className="flex flex-col items-center gap-1">
+                                    <Input
+                                      type="number"
+                                      min={0}
+                                      value={v.stock}
+                                      onChange={(e) => updateVariant(idx, { stock: Number(e.target.value) })}
+                                      className={`h-9 text-center text-sm font-bold ${
+                                        out ? "border-destructive text-destructive" : low ? "border-yellow-500" : "border-accent/40"
+                                      }`}
+                                    />
+                                    <div className="flex items-center gap-1">
+                                      <input
+                                        type="checkbox"
+                                        checked={v.is_active}
+                                        onChange={(e) => updateVariant(idx, { is_active: e.target.checked })}
+                                        className="w-3 h-3 accent-accent"
+                                        title="Aktív"
+                                      />
+                                      <button
+                                        onClick={() => removeVariant(idx)}
+                                        className="text-destructive/70 hover:text-destructive"
+                                        title="Törlés"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                    {out && <span className="text-[9px] text-destructive font-bold">ELFOGYOTT</span>}
+                                    {low && <span className="text-[9px] text-yellow-600 font-bold">KEVÉS</span>}
+                                  </div>
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <p className="text-[10px] text-muted-foreground p-2 bg-muted/20 border-t border-border">
+                      💡 Írd be egyszerűen a darabszámot minden szín-méret cellába. A "+ új" gombbal hozhatsz létre új kombinációt.
+                    </p>
+                  </div>
+                );
+              })()}
+
+              {/* Variants table (list view) */}
               {variants.length === 0 ? (
                 <div className="border border-dashed border-border rounded-lg p-8 text-center">
                   <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-muted-foreground opacity-50" />
@@ -345,7 +459,7 @@ const AdminProductVariantsTab = () => {
                     <Grid3x3 className="w-4 h-4" /> Mátrix generálása méretek/színek alapján
                   </Button>
                 </div>
-              ) : (
+              ) : viewMode === "list" ? (
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead className="bg-muted/40">
@@ -438,7 +552,7 @@ const AdminProductVariantsTab = () => {
                     </tfoot>
                   </table>
                 </div>
-              )}
+              ) : null}
 
               <div className="flex items-center justify-between pt-3 border-t border-border">
                 <Button size="sm" variant="outline" onClick={() => addVariant()} className="gap-2">
