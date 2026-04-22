@@ -755,11 +755,14 @@ const ProductDetail = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Jelenleg nem elérhető</p>
-                  {(product as any).preorder_count > 0 && (
-                    <span className="inline-flex items-center gap-1.5 px-2 py-1 border border-accent/40 bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-wider">
-                      📦 {(product as any).preorder_count} db előrendelve
-                    </span>
-                  )}
+                </div>
+                <div className="flex items-center justify-between gap-3 border border-border p-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Előrendelendő darabszám</p>
+                  <div className="flex items-center border border-border">
+                    <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="px-3 py-2 text-muted-foreground hover:text-foreground transition-colors text-sm">-</button>
+                    <span className="px-4 py-2 text-sm font-bold text-foreground min-w-[40px] text-center">{quantity}</span>
+                    <button onClick={() => setQuantity(q => q + 1)} className="px-3 py-2 text-muted-foreground hover:text-foreground transition-colors text-sm">+</button>
+                  </div>
                 </div>
                 <Button
                   variant="outline"
