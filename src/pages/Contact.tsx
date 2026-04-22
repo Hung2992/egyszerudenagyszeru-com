@@ -31,11 +31,23 @@ const Contact = () => {
     setSending(true);
     try {
       const id = crypto.randomUUID();
+      // Save to admin inbox
+      const { error: insertError } = await supabase.from("contact_messages").insert({
+        id,
+        name: name.trim(),
+        email: email.trim(),
+        subject: subject.trim() || null,
+        message: message.trim(),
+        user_agent: navigator.userAgent.slice(0, 500),
+      });
+      if (insertError) throw insertError;
+
+      // Send confirmation email to customer
       await sendAppEmail({
         templateName: "contact-confirmation",
-        recipientEmail: email,
+        recipientEmail: email.trim(),
         idempotencyKey: `contact-confirm-${id}`,
-        templateData: { name },
+        templateData: { name: name.trim() },
       });
       toast({ title: "Üzenet elküldve! ✉️", description: "Hamarosan válaszolunk." });
       setName("");
