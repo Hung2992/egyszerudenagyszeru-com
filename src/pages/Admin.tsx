@@ -39,6 +39,7 @@ import AdminSystemTab from "@/components/admin/AdminSystemTab";
 import AdminEmailAutomationTab from "@/components/admin/AdminEmailAutomationTab";
 import AdminEmailCenterTab from "@/components/admin/AdminEmailCenterTab";
 import AdminEmailMonitoringTab from "@/components/admin/AdminEmailMonitoringTab";
+import AdminInboxTab from "@/components/admin/AdminInboxTab";
 import AdminApiWebhookTab from "@/components/admin/AdminApiWebhookTab";
 import AdminFaqKnowledgeTab from "@/components/admin/AdminFaqKnowledgeTab";
 import AdminAdvancedAnalyticsTab from "@/components/admin/AdminAdvancedAnalyticsTab";
