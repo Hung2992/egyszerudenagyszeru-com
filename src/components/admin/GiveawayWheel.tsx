@@ -1,14 +1,25 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { RotateCcw, Trophy } from "lucide-react";
+import { RotateCcw, Trophy, Power, Calendar, Save } from "lucide-react";
 import { sendAppEmail } from "@/lib/app-email";
 
 const COLORS = [
   "#c9a84c", "#1a1a1a", "#333333", "#b8860b",
   "#2d2d2d", "#d4a84c", "#444444", "#8b7355",
 ];
+
+// Format ISO -> "YYYY-MM-DDTHH:MM" for datetime-local input
+const toLocalInput = (iso: string | null): string => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
 
 const GiveawayWheel = () => {
   const [emails, setEmails] = useState<string[]>([]);
@@ -17,9 +28,48 @@ const GiveawayWheel = () => {
   const [rotation, setRotation] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  // Settings state
+  const [isEnabled, setIsEnabled] = useState(true);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [savingSettings, setSavingSettings] = useState(false);
+
   useEffect(() => {
     fetchEmails();
+    fetchSettings();
   }, []);
+
+  const fetchSettings = async () => {
+    const { data } = await supabase
+      .from("giveaway_settings")
+      .select("is_enabled, start_date, end_date")
+      .eq("id", 1)
+      .maybeSingle();
+    if (data) {
+      setIsEnabled(!!data.is_enabled);
+      setStartDate(toLocalInput(data.start_date));
+      setEndDate(toLocalInput(data.end_date));
+    }
+  };
+
+  const saveSettings = async () => {
+    setSavingSettings(true);
+    const { error } = await supabase
+      .from("giveaway_settings")
+      .upsert({
+        id: 1,
+        is_enabled: isEnabled,
+        start_date: startDate ? new Date(startDate).toISOString() : null,
+        end_date: endDate ? new Date(endDate).toISOString() : null,
+        updated_at: new Date().toISOString(),
+      });
+    setSavingSettings(false);
+    if (error) {
+      toast.error("Hiba a mentéskor: " + error.message);
+    } else {
+      toast.success("Beállítások mentve!");
+    }
+  };
 
   const fetchEmails = async () => {
     const { data } = await supabase
@@ -56,7 +106,6 @@ const GiveawayWheel = () => {
       const startAngle = i * sliceAngle;
       const endAngle = startAngle + sliceAngle;
 
-      // Draw slice
       ctx.beginPath();
       ctx.moveTo(center, center);
       ctx.arc(center, center, radius, startAngle, endAngle);
@@ -67,7 +116,6 @@ const GiveawayWheel = () => {
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      // Draw text
       ctx.save();
       ctx.translate(center, center);
       ctx.rotate(startAngle + sliceAngle / 2);
@@ -81,7 +129,6 @@ const GiveawayWheel = () => {
 
     ctx.restore();
 
-    // Draw pointer (triangle at top)
     ctx.beginPath();
     ctx.moveTo(center - 15, 5);
     ctx.lineTo(center + 15, 5);
@@ -93,7 +140,6 @@ const GiveawayWheel = () => {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Center circle
     ctx.beginPath();
     ctx.arc(center, center, 20, 0, 2 * Math.PI);
     ctx.fillStyle = "#000";
@@ -115,11 +161,8 @@ const GiveawayWheel = () => {
 
     const winnerIndex = Math.floor(Math.random() * emails.length);
     const sliceAngle = 360 / emails.length;
-    // Calculate target: we want the winner slice to land at the top (pointer)
-    // The pointer is at 0° (top). Slices start from 3 o'clock (0°) going clockwise.
-    // Canvas 0° is at 3 o'clock, pointer is at 270° in canvas terms.
     const targetAngle = 360 - (winnerIndex * sliceAngle + sliceAngle / 2) + 270;
-    const totalRotation = 360 * 8 + targetAngle; // 8 full spins + target
+    const totalRotation = 360 * 8 + targetAngle;
 
     const startRotation = rotation % 360;
     const endRotation = startRotation + totalRotation;
@@ -129,7 +172,6 @@ const GiveawayWheel = () => {
     const animate = () => {
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       const currentRotation = startRotation + (endRotation - startRotation) * eased;
       setRotation(currentRotation);
@@ -154,7 +196,6 @@ const GiveawayWheel = () => {
       .update({ is_winner: true })
       .eq("email", winner);
 
-    // Send winner email
     try {
       await sendAppEmail({
         templateName: "giveaway-winner",
@@ -173,6 +214,78 @@ const GiveawayWheel = () => {
       <h2 className="text-2xl font-bold text-foreground tracking-tight">
         Nyereményjáték Sorsolókerék
       </h2>
+
+      {/* Settings panel */}
+      <div className="w-full max-w-2xl bg-secondary border border-border p-5 space-y-5">
+        <div className="flex items-center gap-2">
+          <Power className="h-4 w-4 text-accent" />
+          <p className="text-xs uppercase tracking-[0.2em] font-bold text-foreground">
+            Nyereményjáték beállítások
+          </p>
+        </div>
+
+        <div className="flex items-center justify-between border-b border-border pb-4">
+          <div>
+            <Label htmlFor="giveaway-enabled" className="text-sm font-bold text-foreground">
+              Nyereményjáték aktív
+            </Label>
+            <p className="text-xs text-muted-foreground mt-1">
+              Ha kikapcsolod, a vásárlók nem tudnak feliratkozni és a banner is eltűnik.
+            </p>
+          </div>
+          <Switch
+            id="giveaway-enabled"
+            checked={isEnabled}
+            onCheckedChange={setIsEnabled}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="start-date" className="text-xs uppercase tracking-wider font-bold text-foreground flex items-center gap-1.5">
+              <Calendar className="h-3 w-3" />
+              Kezdő dátum
+            </Label>
+            <Input
+              id="start-date"
+              type="datetime-local"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="mt-2 rounded-none bg-background"
+            />
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Üresen hagyva azonnal indul.
+            </p>
+          </div>
+
+          <div>
+            <Label htmlFor="end-date" className="text-xs uppercase tracking-wider font-bold text-foreground flex items-center gap-1.5">
+              <Calendar className="h-3 w-3" />
+              Befejező dátum
+            </Label>
+            <Input
+              id="end-date"
+              type="datetime-local"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="mt-2 rounded-none bg-background"
+            />
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Eddig tart a feliratkozás.
+            </p>
+          </div>
+        </div>
+
+        <Button
+          onClick={saveSettings}
+          disabled={savingSettings}
+          className="w-full rounded-none uppercase tracking-[0.15em] text-xs bg-accent text-accent-foreground hover:bg-accent/90 font-bold h-11"
+        >
+          <Save className="h-4 w-4 mr-2" />
+          {savingSettings ? "Mentés..." : "Beállítások mentése"}
+        </Button>
+      </div>
+
       <p className="text-sm text-muted-foreground">
         {emails.length} feliratkozott e-mail
       </p>
