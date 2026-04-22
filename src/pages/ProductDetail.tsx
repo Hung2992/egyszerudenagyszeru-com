@@ -753,7 +753,14 @@ const ProductDetail = () => {
               </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Jelenleg nem elérhető</p>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Jelenleg nem elérhető</p>
+                  {(product as any).preorder_count > 0 && (
+                    <span className="inline-flex items-center gap-1.5 px-2 py-1 border border-accent/40 bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-wider">
+                      📦 {(product as any).preorder_count} db előrendelve
+                    </span>
+                  )}
+                </div>
                 <Button
                   variant="outline"
                   className={`w-full rounded-none uppercase tracking-widest text-xs h-12 font-bold ${hasAlert ? "border-accent text-accent" : ""}`}
