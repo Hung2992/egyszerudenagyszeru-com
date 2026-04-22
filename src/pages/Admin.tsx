@@ -1938,7 +1938,21 @@ const Admin = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 ml-2">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditProduct({ ...p }); setShowProductForm(true); }}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={async () => {
+                      // Variánsok betöltése a mátrixhoz
+                      const matrix: Record<string, Record<string, number>> = {};
+                      try {
+                        const { data: vars } = await supabase.from("product_variants").select("color,size,stock").eq("product_id", p.id);
+                        (vars || []).forEach((v: any) => {
+                          const c = v.color || "—";
+                          const s = v.size || "—";
+                          if (!matrix[c]) matrix[c] = {};
+                          matrix[c][s] = Number(v.stock || 0);
+                        });
+                      } catch (err) { console.error("variant load failed", err); }
+                      setEditProduct({ ...p, _stockMatrix: matrix } as any);
+                      setShowProductForm(true);
+                    }}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteProduct(p.id)}>
