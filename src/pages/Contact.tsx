@@ -31,30 +31,48 @@ const Contact = () => {
     setSending(true);
     try {
       const id = crypto.randomUUID();
-      // Save to admin inbox
+      const trimmedName = name.trim();
+      const trimmedEmail = email.trim();
+      const trimmedSubject = subject.trim();
+      const trimmedMessage = message.trim();
+
       const { error: insertError } = await supabase.from("contact_messages").insert({
         id,
-        name: name.trim(),
-        email: email.trim(),
-        subject: subject.trim() || null,
-        message: message.trim(),
+        name: trimmedName,
+        email: trimmedEmail,
+        subject: trimmedSubject || null,
+        message: trimmedMessage,
         user_agent: navigator.userAgent.slice(0, 500),
       });
+
       if (insertError) throw insertError;
 
-      // Send confirmation email to customer
-      await sendAppEmail({
-        templateName: "contact-confirmation",
-        recipientEmail: email.trim(),
-        idempotencyKey: `contact-confirm-${id}`,
-        templateData: { name: name.trim() },
+      let emailConfirmationFailed = false;
+      try {
+        await sendAppEmail({
+          templateName: "contact-confirmation",
+          recipientEmail: trimmedEmail,
+          idempotencyKey: `contact-confirm-${id}`,
+          templateData: { name: trimmedName },
+        });
+      } catch (error) {
+        emailConfirmationFailed = true;
+        console.error("Contact confirmation email failed:", error);
+      }
+
+      toast({
+        title: "Üzenet elküldve! ✉️",
+        description: emailConfirmationFailed
+          ? "Az üzeneted megérkezett hozzánk. A visszaigazoló e-mail most nem ment ki, de hamarosan válaszolunk."
+          : "Hamarosan válaszolunk.",
       });
-      toast({ title: "Üzenet elküldve! ✉️", description: "Hamarosan válaszolunk." });
+
       setName("");
       setEmail("");
       setSubject("");
       setMessage("");
-    } catch {
+    } catch (error) {
+      console.error("Contact form submit failed:", error);
       toast({ title: "Hiba történt", description: "Próbáld meg később.", variant: "destructive" });
     } finally {
       setSending(false);
