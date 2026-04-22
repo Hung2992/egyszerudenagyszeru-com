@@ -41,6 +41,7 @@ const AdminProductVariantsTab = () => {
   const [bulkStock, setBulkStock] = useState<number>(10);
   const [newSize, setNewSize] = useState("");
   const [newColor, setNewColor] = useState("");
+  const [viewMode, setViewMode] = useState<"matrix" | "list">("matrix");
 
   const selectedProduct = useMemo(
     () => products.find((p) => p.id === selectedProductId) || null,
