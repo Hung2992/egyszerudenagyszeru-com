@@ -1712,6 +1712,98 @@ const Admin = () => {
                       placeholder="Egyedi színek vesszővel (opcionális)"
                     />
                   </div>
+
+                  {/* ─── Szín × Méret darabszám mátrix ─── */}
+                  {(editProduct.colors?.length || 0) > 0 && (editProduct.sizes?.length || 0) > 0 && (
+                    <div className="md:col-span-2 border-2 border-accent/40 bg-accent/5 p-3 rounded-md">
+                      <Label className="text-xs uppercase tracking-wider text-accent font-bold mb-1 block">
+                        🎯 Darabszám szín × méret szerint
+                      </Label>
+                      <p className="text-[10px] text-muted-foreground mb-3 uppercase tracking-wider">
+                        Írd be / léptetsd a darabszámot minden cellába. Az összesítés automatikusan frissíti a fenti Készlet mezőt.
+                      </p>
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse text-xs">
+                          <thead>
+                            <tr>
+                              <th className="border border-border bg-muted p-1.5 text-left uppercase tracking-wider text-[10px]">Szín \ Méret</th>
+                              {(editProduct.sizes || []).map((s: string) => (
+                                <th key={s} className="border border-border bg-muted p-1.5 text-center uppercase tracking-wider text-[10px] min-w-[80px]">{s}</th>
+                              ))}
+                              <th className="border border-border bg-accent/20 p-1.5 text-center uppercase tracking-wider text-[10px]">Σ</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(editProduct.colors || []).map((c: string) => {
+                              const matrix = editProduct._stockMatrix || {};
+                              const rowSum = (editProduct.sizes || []).reduce((acc: number, s: string) => acc + Number(matrix?.[c]?.[s] || 0), 0);
+                              return (
+                                <tr key={c}>
+                                  <td className="border border-border bg-muted/50 p-1.5 font-bold uppercase tracking-wider text-[10px]">{c}</td>
+                                  {(editProduct.sizes || []).map((s: string) => {
+                                    const val = Number(matrix?.[c]?.[s] || 0);
+                                    const setVal = (n: number) => {
+                                      const safe = Math.max(0, Math.floor(n));
+                                      const next = { ...(editProduct._stockMatrix || {}) };
+                                      next[c] = { ...(next[c] || {}), [s]: safe };
+                                      const total = Object.values(next).reduce((a: number, row: any) =>
+                                        a + Object.values(row || {}).reduce((b: number, v: any) => b + Number(v || 0), 0), 0);
+                                      setEditProduct({ ...editProduct, _stockMatrix: next, stock: total });
+                                    };
+                                    const out = val === 0;
+                                    const low = val > 0 && val < 5;
+                                    return (
+                                      <td key={s} className={`border border-border p-1 ${out ? "bg-destructive/10" : low ? "bg-yellow-500/10" : ""}`}>
+                                        <div className="flex flex-col gap-1">
+                                          <Input
+                                            type="number"
+                                            inputMode="numeric"
+                                            min={0}
+                                            value={val}
+                                            onFocus={(e) => e.currentTarget.select()}
+                                            onChange={(e) => setVal(Number(e.target.value) || 0)}
+                                            className={`h-9 text-center text-base font-bold ${out ? "text-destructive border-destructive" : low ? "border-yellow-500" : ""}`}
+                                          />
+                                          <div className="flex gap-0.5">
+                                            <button type="button" onClick={() => setVal(val - 1)} className="flex-1 px-1 py-0.5 text-[10px] font-bold border border-border hover:bg-muted">−</button>
+                                            <button type="button" onClick={() => setVal(val + 1)} className="flex-1 px-1 py-0.5 text-[10px] font-bold border border-border hover:bg-muted">+</button>
+                                          </div>
+                                          <div className="flex gap-0.5">
+                                            <button type="button" onClick={() => setVal(val + 5)} className="flex-1 px-1 py-0.5 text-[10px] font-bold border border-accent/50 text-accent hover:bg-accent/10">+5</button>
+                                            <button type="button" onClick={() => setVal(val + 10)} className="flex-1 px-1 py-0.5 text-[10px] font-bold border border-accent/50 text-accent hover:bg-accent/10">+10</button>
+                                            <button type="button" onClick={() => setVal(0)} className="flex-1 px-1 py-0.5 text-[10px] font-bold border border-destructive/50 text-destructive hover:bg-destructive/10">0</button>
+                                          </div>
+                                          {out && <div className="text-[9px] text-destructive font-bold text-center uppercase">Elfogyott</div>}
+                                          {low && <div className="text-[9px] text-yellow-600 font-bold text-center uppercase">Kevés</div>}
+                                        </div>
+                                      </td>
+                                    );
+                                  })}
+                                  <td className="border border-border bg-accent/10 p-1.5 text-center font-bold">{rowSum}</td>
+                                </tr>
+                              );
+                            })}
+                            <tr>
+                              <td className="border border-border bg-accent/20 p-1.5 font-bold uppercase tracking-wider text-[10px]">Σ Méret</td>
+                              {(editProduct.sizes || []).map((s: string) => {
+                                const matrix = editProduct._stockMatrix || {};
+                                const colSum = (editProduct.colors || []).reduce((acc: number, c: string) => acc + Number(matrix?.[c]?.[s] || 0), 0);
+                                return <td key={s} className="border border-border bg-accent/10 p-1.5 text-center font-bold">{colSum}</td>;
+                              })}
+                              <td className="border border-border bg-accent/30 p-1.5 text-center font-bold text-accent">
+                                {Object.values(editProduct._stockMatrix || {}).reduce((a: number, row: any) =>
+                                  a + Object.values(row || {}).reduce((b: number, v: any) => b + Number(v || 0), 0), 0)}
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-2">
+                        💡 A darabszámok mentéskor a variánsok közé kerülnek és külön-külön nyomon követhetők (méret + szín szerint).
+                      </p>
+                    </div>
+                  )}
+
                   <div className="md:col-span-2">
                     <Label className="text-xs uppercase tracking-wider text-muted-foreground">Leírás</Label>
                     <textarea
