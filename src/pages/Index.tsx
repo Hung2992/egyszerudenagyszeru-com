@@ -5,6 +5,7 @@ import { ArrowRight, Flame, Clock } from "lucide-react";
 import { useState, useEffect, lazy, Suspense } from "react";
 
 const GiveawayBanner = lazy(() => import("@/components/GiveawayBanner"));
+const PreorderShowcase = lazy(() => import("@/components/PreorderShowcase"));
 
 const LAUNCH_DATE = new Date("2026-06-05T10:00:00+02:00").getTime();
 
@@ -178,6 +179,11 @@ const Index = () => {
       {/* NYEREMÉNYJÁTÉK BANNER */}
       <Suspense fallback={null}>
         <GiveawayBanner />
+      </Suspense>
+
+      {/* ELŐRENDELHETŐ TERMÉKEK */}
+      <Suspense fallback={null}>
+        <PreorderShowcase />
       </Suspense>
 
       {/* HANGULAT szekció */}
