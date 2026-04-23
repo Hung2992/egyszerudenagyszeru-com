@@ -4,17 +4,34 @@ import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Save, Share2 } from "lucide-react";
 
+interface SocialMediaSettings {
+  id: string;
+  social_facebook: string | null;
+  social_instagram: string | null;
+  social_tiktok: string | null;
+  social_youtube: string | null;
+}
+
 const AdminSocialMediaTab = () => {
-  const [settings, setSettings] = useState<any>(null);
+  const [settings, setSettings] = useState<SocialMediaSettings | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const fetch = async () => {
-      const { data } = await supabase.from("store_settings").select("*").limit(1).maybeSingle();
-      if (data) setSettings(data);
+      const { data, error } = await supabase
+        .from("store_settings")
+        .select("id, social_facebook, social_instagram, social_tiktok, social_youtube")
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        toast({ title: "Hiba", description: error.message, variant: "destructive" });
+        return;
+      }
+
+      if (data) setSettings(data as SocialMediaSettings);
     };
     fetch();
   }, []);
@@ -23,12 +40,10 @@ const AdminSocialMediaTab = () => {
     if (!settings) return;
     setSaving(true);
     const { error } = await supabase.from("store_settings").update({
-      social_facebook_url: settings.social_facebook_url,
-      social_instagram_url: settings.social_instagram_url,
-      social_tiktok_url: settings.social_tiktok_url,
-      social_youtube_url: settings.social_youtube_url,
-      social_auto_post_enabled: settings.social_auto_post_enabled,
-      social_share_buttons_enabled: settings.social_share_buttons_enabled,
+      social_facebook: settings.social_facebook,
+      social_instagram: settings.social_instagram,
+      social_tiktok: settings.social_tiktok,
+      social_youtube: settings.social_youtube,
     }).eq("id", settings.id);
     setSaving(false);
     if (error) {
@@ -58,37 +73,20 @@ const AdminSocialMediaTab = () => {
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <Label className="text-xs uppercase tracking-wider">Facebook URL</Label>
-            <Input value={settings.social_facebook_url ?? ""} onChange={e => setSettings({ ...settings, social_facebook_url: e.target.value })} placeholder="https://facebook.com/..." className="rounded-none mt-1" />
+            <Input value={settings.social_facebook ?? ""} onChange={e => setSettings({ ...settings, social_facebook: e.target.value })} placeholder="https://facebook.com/..." className="rounded-none mt-1" />
           </div>
           <div>
             <Label className="text-xs uppercase tracking-wider">Instagram URL</Label>
-            <Input value={settings.social_instagram_url ?? ""} onChange={e => setSettings({ ...settings, social_instagram_url: e.target.value })} placeholder="https://instagram.com/..." className="rounded-none mt-1" />
+            <Input value={settings.social_instagram ?? ""} onChange={e => setSettings({ ...settings, social_instagram: e.target.value })} placeholder="https://instagram.com/..." className="rounded-none mt-1" />
           </div>
           <div>
             <Label className="text-xs uppercase tracking-wider">TikTok URL</Label>
-            <Input value={settings.social_tiktok_url ?? ""} onChange={e => setSettings({ ...settings, social_tiktok_url: e.target.value })} placeholder="https://tiktok.com/@..." className="rounded-none mt-1" />
+            <Input value={settings.social_tiktok ?? ""} onChange={e => setSettings({ ...settings, social_tiktok: e.target.value })} placeholder="https://tiktok.com/@..." className="rounded-none mt-1" />
           </div>
           <div>
             <Label className="text-xs uppercase tracking-wider">YouTube URL</Label>
-            <Input value={settings.social_youtube_url ?? ""} onChange={e => setSettings({ ...settings, social_youtube_url: e.target.value })} placeholder="https://youtube.com/..." className="rounded-none mt-1" />
+            <Input value={settings.social_youtube ?? ""} onChange={e => setSettings({ ...settings, social_youtube: e.target.value })} placeholder="https://youtube.com/..." className="rounded-none mt-1" />
           </div>
-        </div>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="border p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs uppercase tracking-wider">Automatikus posztolás</Label>
-            <Switch checked={settings.social_auto_post_enabled ?? false} onCheckedChange={v => setSettings({ ...settings, social_auto_post_enabled: v })} />
-          </div>
-          <p className="text-xs text-muted-foreground">Új termékek és akciók automatikus megosztása a közösségi fiókokban.</p>
-        </div>
-        <div className="border p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs uppercase tracking-wider">Megosztás gombok a termékoldalakon</Label>
-            <Switch checked={settings.social_share_buttons_enabled ?? true} onCheckedChange={v => setSettings({ ...settings, social_share_buttons_enabled: v })} />
-          </div>
-          <p className="text-xs text-muted-foreground">Megosztás gombok megjelenítése a termékoldalakon (Facebook, X, WhatsApp).</p>
         </div>
       </div>
     </div>
