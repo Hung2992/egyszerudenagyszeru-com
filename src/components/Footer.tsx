@@ -63,6 +63,7 @@ const Footer = () => {
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Segítség</p>
             <nav className="flex flex-col gap-2">
+              <button onClick={() => navigate("/help")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">Segítség központ</button>
               <button onClick={() => navigate("/shipping")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">Szállítás & Visszaküldés</button>
               <button onClick={() => navigate("/size-guide")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">Mérettáblázat</button>
               <button onClick={() => navigate("/contact")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">Kapcsolat</button>

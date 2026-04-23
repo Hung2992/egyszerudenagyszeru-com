@@ -176,6 +176,9 @@ const Navbar = () => {
                   {link.label}
                 </button>
               ))}
+              <button onClick={() => navigate("/help")} className="block w-full text-left py-3 text-sm uppercase tracking-[0.2em] text-accent">
+                Segítség központ
+              </button>
               <button onClick={() => navigate("/shipping")} className="block w-full text-left py-3 text-sm uppercase tracking-[0.2em] text-foreground">
                 Szállítás & Visszaküldés
               </button>
