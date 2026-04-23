@@ -688,6 +688,7 @@ export type Database = {
           tax_rate: number
           total_amount: number
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -714,6 +715,7 @@ export type Database = {
           tax_rate?: number
           total_amount?: number
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -740,6 +742,7 @@ export type Database = {
           tax_rate?: number
           total_amount?: number
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -2662,6 +2665,23 @@ export type Database = {
       }
     }
     Views: {
+      product_polls_public: {
+        Row: {
+          last_vote_at: string | null
+          product_id: string | null
+          total_votes: number | null
+          total_weight: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_polls_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "shop_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_settings_public: {
         Row: {
           appearance_announcement_bar_bg_color: string | null
@@ -3266,6 +3286,14 @@ export type Database = {
         Returns: undefined
       }
       register_waitlist_share: { Args: { _share_code: string }; Returns: Json }
+      validate_coupon: {
+        Args: { _code: string; _order_total: number }
+        Returns: Json
+      }
+      verify_maintenance_password: {
+        Args: { _password: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
