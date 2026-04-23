@@ -20,7 +20,7 @@ interface Props {
 const ProductPolls = ({ userId, onAuth }: Props) => {
   const [polls, setPolls] = useState<Poll[]>([]);
   const [votedPolls, setVotedPolls] = useState<Record<string, number>>({});
-  const [voteCounts, setVoteCounts] = useState<Record<string, Record<number, number>>>({});
+  const [voteCounts, setVoteCounts] = useState<Record<string, { total: number }>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
