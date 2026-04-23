@@ -128,9 +128,13 @@ export default function AdminOrderInsightsTab() {
     } finally { setRunning(null); }
   };
 
-  const downloadInvoice = async (path: string) => {
-    const { data } = await supabase.storage.from("invoices").createSignedUrl(path, 3600);
-    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+  const downloadInvoice = async (invoiceId: string) => {
+    const { data, error } = await supabase.functions.invoke("download-invoice", { body: { invoice_id: invoiceId } });
+    if (error || !data?.url) {
+      toast.error("Letöltési hiba");
+      return;
+    }
+    window.open(data.url, "_blank");
   };
 
   const reviewFraud = async (id: string, outcome: "legit" | "fraud") => {
@@ -319,7 +323,7 @@ export default function AdminOrderInsightsTab() {
                       <TableCell className="font-medium">{fmtMoney(Number(inv.total_amount))}</TableCell>
                       <TableCell className="text-xs">{new Date(inv.created_at).toLocaleDateString("hu-HU")}</TableCell>
                       <TableCell>
-                        <Button size="sm" variant="outline" onClick={() => downloadInvoice(inv.pdf_url)}>
+                        <Button size="sm" variant="outline" onClick={() => downloadInvoice(inv.id)}>
                           <Download className="w-3 h-3 mr-1" /> PDF
                         </Button>
                       </TableCell>
