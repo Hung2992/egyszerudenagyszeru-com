@@ -41,30 +41,41 @@ const About = () => {
         </div>
       </section>
 
-      {/* SZTORI */}
+      {/* SZTORI - AZ ALAPÍTÓ */}
       <section className="mx-auto max-w-4xl px-5 py-16 md:py-24">
         <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent mb-4 text-center">
-          A sztori
+          Az alapító
         </p>
         <h2 className="text-3xl md:text-5xl font-bold text-foreground leading-tight text-center">
-          Kezdődött egy gondolattal:
+          Egy ember.
           <br />
-          <span className="text-muted-foreground">"miért bonyolítjuk túl?"</span>
+          <span className="text-accent">Egy márka.</span>
+          <br />
+          <span className="text-muted-foreground">Horváth Zoltán.</span>
         </h2>
         <div className="mt-10 space-y-6 text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
           <p>
-            Elegünk lett a túlárazott, túldizájnolt, üres logókkal teleaggatott
-            ruhákból. Olyan dolgokat akartunk, amit reggel felveszünk és nem
-            kell rá gondolnunk — mégis jól nézünk ki benne.
+            <span className="text-foreground font-bold">Horváth Zoltán vagyok</span>, és ezt a márkát
+            egyedül hoztam létre — nem csapat, nem befektető, nem marketing ügynökség.
+            Csak én, és egy gondolat, amit nem hagyott nyugodni.
           </p>
           <p>
-            Ezért hoztuk létre az <span className="text-foreground font-bold">Egyszerű de Nagyszerű</span> márkát.
-            Tiszta vonalak, kemény anyagok, hordható szabások. Nem kísérletezünk
-            trendekkel — időtálló darabokat csinálunk, amiket éveken át fogsz hordani.
+            Elegem lett a túlárazott, túldizájnolt, üres logókkal teleaggatott
+            ruhákból. Olyan dolgokat akartam, amit reggel felveszek és nem
+            kell rá gondolnom — mégis jól nézek ki benne.
           </p>
           <p>
-            Magyar márka vagyunk, magyar gondolkodással. Nem akarunk megváltani
-            a divatvilágot. Csak jó ruhákat akarunk csinálni, jó áron, jó embereknek.
+            Ezért hoztam létre az <span className="text-foreground font-bold">Egyszerű de Nagyszerű</span> márkát.
+            Tiszta vonalak, kemény anyagok, hordható szabások. Nem kísérletezem
+            trendekkel — időtálló darabokat csinálok, amiket éveken át fogsz hordani.
+          </p>
+          <p>
+            Magyar márka, magyar gondolkodással. Nem akarom megváltani
+            a divatvilágot. Csak jó ruhákat akarok csinálni, jó áron, jó embereknek.
+            Egyedül kezdtem — de veled együtt csinálom tovább.
+          </p>
+          <p className="text-foreground font-bold pt-4 border-t border-border">
+            — Horváth Zoltán, alapító
           </p>
         </div>
       </section>
