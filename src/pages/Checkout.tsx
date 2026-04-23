@@ -164,31 +164,19 @@ const Checkout = () => {
     setCouponLoading(true);
     const code = couponCode.toUpperCase();
 
-    // Try legacy coupons table first
-    let { data } = await supabase
-      .from("coupons")
-      .select("*")
-      .eq("code", code)
-      .eq("is_active", true)
-      .maybeSingle();
+    // Server-side coupon validation (kód nem szivárog ki)
+    const { data: result, error } = await supabase.rpc("validate_coupon", {
+      _code: code,
+      _order_total: totalPrice,
+    });
 
-    if (data) {
-      if (data.valid_until && new Date(data.valid_until) < new Date()) {
-        toast({ title: "Ez a kupon lejárt", variant: "destructive" });
-        setCouponLoading(false);
-        return;
-      }
-      if (data.max_uses && (data.used_count || 0) >= data.max_uses) {
-        toast({ title: "Ez a kupon elfogyott", variant: "destructive" });
-        setCouponLoading(false);
-        return;
-      }
-      let discount = 0;
-      if (data.discount_percent) discount = Math.round(totalPrice * (data.discount_percent / 100));
-      else if (data.discount_amount) discount = data.discount_amount;
-      setCouponDiscount(Math.min(discount, totalPrice));
-      setAppliedCoupon(data.code);
-      toast({ title: `Kupon alkalmazva: -${Math.min(discount, totalPrice).toLocaleString()} Ft` });
+    const res = result as { valid: boolean; code?: string; discount_amount?: number; error?: string } | null;
+
+    if (!error && res?.valid) {
+      const discount = Math.min(res.discount_amount || 0, totalPrice);
+      setCouponDiscount(discount);
+      setAppliedCoupon(res.code || code);
+      toast({ title: `Kupon alkalmazva: -${discount.toLocaleString()} Ft` });
       setCouponLoading(false);
       return;
     }
