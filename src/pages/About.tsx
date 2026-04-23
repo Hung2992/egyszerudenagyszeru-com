@@ -49,33 +49,43 @@ const About = () => {
         <h2 className="text-3xl md:text-5xl font-bold text-foreground leading-tight text-center">
           Egy ember.
           <br />
-          <span className="text-accent">Egy márka.</span>
+          <span className="text-accent">Egy küldetés.</span>
           <br />
           <span className="text-muted-foreground">Horváth Zoltán.</span>
         </h2>
         <div className="mt-10 space-y-6 text-base md:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
           <p>
-            <span className="text-foreground font-bold">Horváth Zoltán vagyok</span>, és ezt a márkát
-            egyedül hoztam létre — nem csapat, nem befektető, nem marketing ügynökség.
-            Csak én, és egy gondolat, amit nem hagyott nyugodni.
+            <span className="text-foreground font-bold">Horváth Zoltán vagyok</span> — és ezt a márkát
+            egyedül építem. Nincs mögöttem befektető, nincs marketing ügynökség,
+            nincs PR csapat. Csak én, a gondolat, és a kemény munka.
           </p>
           <p>
-            Elegem lett a túlárazott, túldizájnolt, üres logókkal teleaggatott
-            ruhákból. Olyan dolgokat akartam, amit reggel felveszek és nem
-            kell rá gondolnom — mégis jól nézek ki benne.
+            <span className="text-foreground font-bold">Nem vagyok gyártó.</span> Nem ülök varrógép mögött,
+            és nem teszek úgy, mintha nálam készülnének a ruhák. Az lenne a hazugság.
+            Amit csinálok, az más: <span className="text-foreground font-bold">a világ legjobb partnereit keresem meg</span>,
+            akik már bizonyítottak — és az ő darabjaikat hozom el neked,
+            magyar áron, magyar kiszolgálással, magyar fejjel.
           </p>
           <p>
-            Ezért hoztam létre az <span className="text-foreground font-bold">Egyszerű de Nagyszerű</span> márkát.
-            Tiszta vonalak, kemény anyagok, hordható szabások. Nem kísérletezem
-            trendekkel — időtálló darabokat csinálok, amiket éveken át fogsz hordani.
+            Európától Ázsián át a tengerentúlig — <span className="text-foreground font-bold">földrészeken
+            átívelő partnerhálózatot</span> építek. Nem azért, hogy nagyobbnak tűnjek, mint
+            amekkora vagyok. Hanem azért, hogy <span className="text-accent font-bold">neked, magyar vásárlónak</span>
+            ne kelljen hetekig várnod, vámolnod, idegen oldalakon kínlódnod —
+            én elintézem helyetted.
           </p>
           <p>
-            Magyar márka, magyar gondolkodással. Nem akarom megváltani
-            a divatvilágot. Csak jó ruhákat akarok csinálni, jó áron, jó embereknek.
-            Egyedül kezdtem — de veled együtt csinálom tovább.
+            <span className="text-foreground font-bold">Ez itt egy magyar márka.</span> Magyar tulajdonban,
+            magyar szívvel, magyar agyban. A kollekciót én válogatom, az árakat én szabom,
+            a panaszt én kezelem. Ha valami nem stimmel, engem kérdezz — nem egy call centert
+            valahol a világ másik végén.
+          </p>
+          <p>
+            Erős márkát építünk. <span className="text-foreground font-bold">Lassan, tisztán, megalkuvás nélkül.</span>
+            Nem ígérek olcsó csodát. Megbízható darabokat ígérek, becsületes árazással,
+            és olyan kiszolgálást, amilyet magamnak is elvárnék.
           </p>
           <p className="text-foreground font-bold pt-4 border-t border-border">
-            — Horváth Zoltán, alapító
+            — Horváth Zoltán, alapító & tulajdonos
           </p>
         </div>
       </section>
