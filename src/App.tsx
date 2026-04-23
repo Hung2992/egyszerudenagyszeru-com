@@ -41,6 +41,7 @@ const CheckoutReturn = lazy(() => import("./pages/CheckoutReturn.tsx"));
 const Launch = lazy(() => import("./pages/Launch.tsx"));
 const LaunchProductDetail = lazy(() => import("./pages/LaunchProductDetail.tsx"));
 const Help = lazy(() => import("./pages/Help.tsx"));
+const About = lazy(() => import("./pages/About.tsx"));
 
 const queryClient = new QueryClient();
 
