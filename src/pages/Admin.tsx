@@ -4755,10 +4755,35 @@ const Admin = () => {
                     <Textarea value={settings.maintenance_message || ""} onChange={e => setSettings({ ...settings, maintenance_message: e.target.value } as any)} className="mt-1 rounded-none min-h-[100px] text-xs" placeholder="A webshop jelenleg karbantartás alatt áll..." />
                   </div>
 
-                  <div>
-                    <Label className="text-xs uppercase tracking-wider text-muted-foreground">Admin jelszó (opcionális)</Label>
-                    <Input type="password" value={settings.maintenance_password || ""} onChange={e => setSettings({ ...settings, maintenance_password: e.target.value } as any)} className="mt-1" placeholder="Ha megadod, ezzel a jelszóval elérhető a bolt" />
-                    <p className="text-[10px] text-muted-foreground mt-1">Ha kitöltöd, a jelszó megadásával a bolt elérhető karbantartás közben is.</p>
+                  <div className="space-y-2">
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground">Admin jelszó (titkosítva tárolt)</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="password"
+                        id="maintenance-pw-new"
+                        className="mt-1 flex-1"
+                        placeholder="Új jelszó megadása…"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="mt-1"
+                        onClick={async () => {
+                          const el = document.getElementById("maintenance-pw-new") as HTMLInputElement | null;
+                          const pw = el?.value || "";
+                          const { error } = await (supabase as any).rpc("set_maintenance_password", { _password: pw });
+                          if (error) {
+                            toast({ title: "Hiba", description: error.message, variant: "destructive" });
+                          } else {
+                            if (el) el.value = "";
+                            toast({ title: pw ? "Jelszó titkosítva mentve ✅" : "Jelszó törölve" });
+                          }
+                        }}
+                      >
+                        Mentés
+                      </Button>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">A jelszó bcrypt hash-ként kerül tárolásra. A plaintext mező nem használható többé.</p>
                   </div>
 
                   <div>
