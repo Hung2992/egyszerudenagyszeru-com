@@ -2668,22 +2668,6 @@ export type Database = {
       }
     }
     Views: {
-      product_polls_anonymous: {
-        Row: {
-          product_id: string | null
-          total_weight: number | null
-          vote_count: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "product_polls_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "shop_products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       product_polls_public: {
         Row: {
           last_vote_at: string | null
@@ -3132,6 +3116,13 @@ export type Database = {
         Returns: number
       }
       generate_invoice_number: { Args: never; Returns: string }
+      get_product_poll_counts: {
+        Args: { _product_id: string }
+        Returns: {
+          total_weight: number
+          vote_count: number
+        }[]
+      }
       get_public_store_settings: {
         Args: never
         Returns: {
