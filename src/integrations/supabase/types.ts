@@ -1976,6 +1976,7 @@ export type Database = {
           maintenance_ip_whitelist: string | null
           maintenance_message: string | null
           maintenance_password: string | null
+          maintenance_password_hash: string | null
           maintenance_return_date: string | null
           notif_order_status_sms: boolean | null
           notif_promo_push: boolean | null
@@ -2216,6 +2217,7 @@ export type Database = {
           maintenance_ip_whitelist?: string | null
           maintenance_message?: string | null
           maintenance_password?: string | null
+          maintenance_password_hash?: string | null
           maintenance_return_date?: string | null
           notif_order_status_sms?: boolean | null
           notif_promo_push?: boolean | null
@@ -2456,6 +2458,7 @@ export type Database = {
           maintenance_ip_whitelist?: string | null
           maintenance_message?: string | null
           maintenance_password?: string | null
+          maintenance_password_hash?: string | null
           maintenance_return_date?: string | null
           notif_order_status_sms?: boolean | null
           notif_promo_push?: boolean | null
@@ -3095,6 +3098,7 @@ export type Database = {
       }
     }
     Functions: {
+      admin_audit_coupon: { Args: { _code: string }; Returns: Json }
       authenticated_email: { Args: never; Returns: string }
       calc_reorder_quantity: {
         Args: { _product_id: string; _product_name: string }
@@ -3112,6 +3116,13 @@ export type Database = {
         Returns: number
       }
       generate_invoice_number: { Args: never; Returns: string }
+      get_product_poll_counts: {
+        Args: { _product_id: string }
+        Returns: {
+          total_weight: number
+          vote_count: number
+        }[]
+      }
       get_public_store_settings: {
         Args: never
         Returns: {
@@ -3286,6 +3297,10 @@ export type Database = {
         Returns: undefined
       }
       register_waitlist_share: { Args: { _share_code: string }; Returns: Json }
+      set_maintenance_password: {
+        Args: { _password: string }
+        Returns: boolean
+      }
       validate_coupon: {
         Args: { _code: string; _order_total: number }
         Returns: Json

@@ -30,3 +30,6 @@ project_id = "meyxhsgnryuupwpddxav"
 
   [functions.process-stripe-refund]
     verify_jwt = false
+
+  [functions.download-invoice]
+    verify_jwt = true

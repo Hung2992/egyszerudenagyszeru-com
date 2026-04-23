@@ -20,7 +20,7 @@ interface Props {
 const ProductPolls = ({ userId, onAuth }: Props) => {
   const [polls, setPolls] = useState<Poll[]>([]);
   const [votedPolls, setVotedPolls] = useState<Record<string, number>>({});
-  const [voteCounts, setVoteCounts] = useState<Record<string, Record<number, number>>>({});
+  const [voteCounts, setVoteCounts] = useState<Record<string, { total: number }>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,7 +37,7 @@ const ProductPolls = ({ userId, onAuth }: Props) => {
       })) as Poll[];
       setPolls(ps);
 
-      // Fetch user votes
+      // Fetch user's own votes (RLS engedi a sajátot)
       if (userId && ps.length > 0) {
         const { data: votes } = await (supabase.from("poll_votes" as any) as any)
           .select("poll_id, option_index")
@@ -47,8 +47,16 @@ const ProductPolls = ({ userId, onAuth }: Props) => {
         setVotedPolls(vMap);
       }
 
-      // Fetch all vote counts — we need a workaround since we can only see own votes
-      // We'll count from the polls themselves or use a simple approach
+      // Aggregált, anonim szavazat-számok a publikus függvényen át (csak count + weight, semmi PII)
+      const counts: Record<string, { total: number }> = {};
+      for (const p of ps) {
+        const { data: agg } = await (supabase as any).rpc("get_product_poll_counts", { _product_id: p.id });
+        const row = Array.isArray(agg) ? agg[0] : agg;
+        if (row) {
+          counts[p.id] = { total: row.vote_count ?? 0 };
+        }
+      }
+      setVoteCounts(counts);
       setLoading(false);
     };
     fetch();
