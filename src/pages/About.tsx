@@ -153,8 +153,8 @@ const About = () => {
           <span className="text-accent">a polcokon?</span>
         </h2>
         <p className="text-center text-sm md:text-base text-muted-foreground max-w-xl mx-auto mb-12">
-          Streetwear alapdarabok férfiaknak. Minden, amit egy hétköznapi
-          szettben hordhatsz — csak jobban kivitelezve.
+          Gondosan válogatott darabok a világ legjobb partnereitől —
+          magyar áron, magyar kiszolgálással. Nem mindent árulunk; csak azt, ami bevált.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
