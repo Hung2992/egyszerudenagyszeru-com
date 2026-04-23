@@ -106,23 +106,23 @@ const About = () => {
             {[
               {
                 Icon: Target,
-                title: "Egyszerűség",
-                text: "Nincs felesleges grafika, nincs üres marketing. Csak a ruha. Csak a viselet.",
+                title: "Válogatás",
+                text: "Nem mindent árulunk. A világ legjobb partnereitől csak azt hozzuk el, ami megüti a mércénket.",
               },
               {
                 Icon: Zap,
-                title: "Minőség",
-                text: "Nem rohanunk. Az anyagokat válogatjuk, a varrást ellenőrizzük. Hosszú életre tervezzük.",
+                title: "Magyar kiszolgálás",
+                text: "Magyar nyelvű ügyfélszolgálat, magyar számla, magyar futár. Nem kell idegen oldalakon küzdened.",
               },
               {
                 Icon: Heart,
                 title: "Becsület",
-                text: "Tisztességes árak, valós kommunikáció. Nincs hype, nincs átverés.",
+                text: "Tisztességes árak, valós kommunikáció. Nincs hype, nincs átverés, nincs rejtett költség.",
               },
               {
                 Icon: Users,
                 title: "Közösség",
-                text: "A vásárlóink nem ügyfelek — ők hozzák létre velünk a márkát. Visszajeleznek, mi reagálunk.",
+                text: "A vásárlóink nem ügyfelek — ők építik velem együtt a márkát. Visszajeleznek, én reagálok.",
               },
             ].map(({ Icon, title, text }) => (
               <div
