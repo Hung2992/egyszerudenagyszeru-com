@@ -41,6 +41,7 @@ const CheckoutReturn = lazy(() => import("./pages/CheckoutReturn.tsx"));
 const Launch = lazy(() => import("./pages/Launch.tsx"));
 const LaunchProductDetail = lazy(() => import("./pages/LaunchProductDetail.tsx"));
 const Help = lazy(() => import("./pages/Help.tsx"));
+const About = lazy(() => import("./pages/About.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,7 @@ const App = () => (
             <Route path="/launch" element={<Launch />} />
             <Route path="/launch/:id" element={<LaunchProductDetail />} />
             <Route path="/help" element={<Help />} />
+            <Route path="/about" element={<About />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
