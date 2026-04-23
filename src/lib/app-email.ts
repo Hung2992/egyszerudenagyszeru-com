@@ -1,5 +1,3 @@
-import { supabase } from "@/integrations/supabase/untyped-client";
-
 interface SendAppEmailParams {
   templateName: string;
   recipientEmail?: string | null;
@@ -14,26 +12,40 @@ interface SendAppEmailResponse {
   error?: string;
 }
 
+const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+const PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
 export async function sendAppEmail({
   templateName,
   recipientEmail,
   idempotencyKey,
   templateData,
 }: SendAppEmailParams): Promise<SendAppEmailResponse> {
-  const { data, error } = await supabase.functions.invoke<SendAppEmailResponse>(
-    "send-transactional-email",
-    {
-      body: {
-        templateName,
-        recipientEmail: recipientEmail ?? undefined,
-        idempotencyKey,
-        templateData,
-      },
-    }
-  );
+  const response = await fetch(`${FUNCTIONS_URL}/send-transactional-email`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: PUBLISHABLE_KEY,
+      Authorization: `Bearer ${PUBLISHABLE_KEY}`,
+    },
+    body: JSON.stringify({
+      templateName,
+      recipientEmail: recipientEmail ?? undefined,
+      idempotencyKey,
+      templateData,
+    }),
+  });
 
-  if (error) {
-    throw new Error(error.message || "Az e-mail küldése nem sikerült.");
+  let data: SendAppEmailResponse | null = null;
+
+  try {
+    data = (await response.json()) as SendAppEmailResponse;
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.error || `Az e-mail küldése nem sikerült (${response.status}).`);
   }
 
   if (data?.error) {
