@@ -48,7 +48,7 @@ const ProductPolls = ({ userId, onAuth }: Props) => {
       }
 
       // Aggregált, anonim szavazat-számok a publikus függvényen át (csak count + weight, semmi PII)
-      const counts: Record<string, Record<number, number>> = {};
+      const counts: Record<string, { total: number }> = {};
       for (const p of ps) {
         const { data: agg } = await (supabase as any).rpc("get_product_poll_counts", { _product_id: p.id });
         const row = Array.isArray(agg) ? agg[0] : agg;
