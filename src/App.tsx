@@ -15,6 +15,7 @@ const PageTracker = () => { usePageTracking(); return null; };
 const CartDrawer = lazy(() => import("@/components/CartDrawer"));
 const AbandonedCartReminder = lazy(() => import("@/components/AbandonedCartReminder"));
 const GiveawayPopup = lazy(() => import("./components/GiveawayPopup.tsx"));
+const CookieConsentBanner = lazy(() => import("./components/CookieConsentBanner.tsx"));
 const Auth = lazy(() => import("./pages/Auth.tsx"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
