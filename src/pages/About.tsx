@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
 import { ArrowRight, Flame, Shirt, Sparkles, Heart, Zap, Target, Users } from "lucide-react";
+import founderPortrait from "@/assets/founder-zoltan.jpeg";
 
 const About = () => {
   const navigate = useNavigate();
@@ -88,6 +89,30 @@ const About = () => {
             <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent">
               Személyesen
             </p>
+
+            {/* Founder portrait */}
+            <figure className="flex flex-col sm:flex-row items-center gap-5 sm:gap-6 py-2">
+              <div className="relative shrink-0">
+                <div className="absolute -inset-1 bg-accent/20 blur-sm" aria-hidden />
+                <img
+                  src={founderPortrait}
+                  alt="Horváth Zoltán, az Egyszerű de Nagyszerű alapítója"
+                  className="relative w-36 h-36 sm:w-44 sm:h-44 object-cover border border-accent/60 grayscale-[15%]"
+                  loading="lazy"
+                />
+              </div>
+              <figcaption className="text-center sm:text-left">
+                <p className="text-base md:text-lg font-bold text-foreground">Horváth Zoltán</p>
+                <p className="text-[11px] uppercase tracking-[0.25em] text-accent mt-1">
+                  Alapító &amp; tulajdonos
+                </p>
+                <p className="text-xs text-muted-foreground mt-3 max-w-xs">
+                  Ez vagyok én. Nincs filter, nincs stáb — csak egy magyar srác,
+                  aki épít valamit a semmiből.
+                </p>
+              </figcaption>
+            </figure>
+
             <p>
               <span className="text-foreground font-bold">24 éves vagyok, és beszédhibás.</span>
               Sokan ezért nem hisznek bennem. Inkább azt gondolják, hogy <span className="text-foreground font-bold">fogyatékos vagyok</span>,
