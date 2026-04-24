@@ -85,7 +85,7 @@ async function handleCheckPayment(body: any, supabase: any) {
     limit: 100,
   });
 
-  const refundsList = existingRefunds.data.map(r => ({
+  const refundsList = existingRefunds.data.map((r: any) => ({
     id: r.id,
     amount: (r.amount || 0) / 100,
     status: r.status,
@@ -94,8 +94,8 @@ async function handleCheckPayment(body: any, supabase: any) {
   }));
 
   const totalRefundedCents = existingRefunds.data
-    .filter(r => r.status === "succeeded" || r.status === "pending")
-    .reduce((sum, r) => sum + (r.amount || 0), 0);
+    .filter((r: any) => r.status === "succeeded" || r.status === "pending")
+    .reduce((sum: number, r: any) => sum + (r.amount || 0), 0);
 
   return jsonResponse({
     found: true,
@@ -160,8 +160,8 @@ async function handleBatchRefund(body: any, supabase: any, adminUserId: string) 
         limit: 100,
       });
       const alreadyRefundedCents = existingRefunds.data
-        .filter(r => r.status === "succeeded" || r.status === "pending")
-        .reduce((sum, r) => sum + (r.amount || 0), 0);
+        .filter((r: any) => r.status === "succeeded" || r.status === "pending")
+        .reduce((sum: number, r: any) => sum + (r.amount || 0), 0);
 
       if (alreadyRefundedCents + refundAmountCents > result.totalPaidCents) {
         results.push({
@@ -240,8 +240,8 @@ async function handleSingleRefund(body: any, supabase: any, adminUserId: string)
     limit: 100,
   });
   const alreadyRefundedCents = existingRefunds.data
-    .filter(r => r.status === "succeeded" || r.status === "pending")
-    .reduce((sum, r) => sum + (r.amount || 0), 0);
+    .filter((r: any) => r.status === "succeeded" || r.status === "pending")
+    .reduce((sum: number, r: any) => sum + (r.amount || 0), 0);
 
   if (alreadyRefundedCents + refundAmountCents > result.totalPaidCents) {
     return jsonResponse({
