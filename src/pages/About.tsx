@@ -84,9 +84,35 @@ const About = () => {
             Nem ígérek olcsó csodát. Megbízható darabokat ígérek, becsületes árazással,
             és olyan kiszolgálást, amilyet magamnak is elvárnék.
           </p>
-          <p className="text-foreground font-bold pt-4 border-t border-border">
-            — Horváth Zoltán, alapító & tulajdonos
-          </p>
+          <div className="pt-8 mt-4 border-t border-border space-y-6">
+            <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent">
+              Személyesen
+            </p>
+            <p>
+              <span className="text-foreground font-bold">24 éves vagyok, és beszédhibás.</span>
+              Sokan ezért nem hisznek bennem. Inkább azt gondolják, hogy <span className="text-foreground font-bold">fogyatékos vagyok</span>,
+              mert máshogy beszélek — pedig a fejem tisztán működik, és a kezem is.
+            </p>
+            <p>
+              Pontosan ezért építem ezt a márkát. <span className="text-accent font-bold">Be akarom bizonyítani</span>
+              — magamnak, a családomnak, és mindenkinek, aki valaha lenézett —, hogy
+              egy beszédhibás magyar fiatal is fel tud húzni egy komoly céget a nulláról.
+            </p>
+            <p>
+              <span className="text-foreground font-bold">A TikTokon is megmutatom az utat.</span>
+              Nem szűröm ki, nem játszom meg magam. Ahogy beszélek, úgy beszélek.
+              Aki ezért nem vesz komolyan, az nem az én vásárlóm. Aki viszont látja a munkát
+              a szavak mögött — az itt van velem.
+            </p>
+            <p>
+              <span className="text-foreground font-bold">A célomat el fogom érni.</span>
+              Nem mert könnyű, hanem mert nincs más opció. Ez a márka az én válaszom
+              mindenkinek, aki azt mondta: „te ezt úgyse tudod megcsinálni".
+            </p>
+            <p className="text-foreground font-bold pt-4 border-t border-border">
+              — Horváth Zoltán, alapító & tulajdonos
+            </p>
+          </div>
         </div>
       </section>
 
