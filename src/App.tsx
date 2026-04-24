@@ -99,6 +99,15 @@ const App = () => (
             <Route path="/launch/:id" element={<LaunchProductDetail />} />
             <Route path="/help" element={<Help />} />
             <Route path="/about" element={<About />} />
+            <Route path="/legal" element={<LegalHub />} />
+            <Route path="/legal/aszf" element={<Aszf />} />
+            <Route path="/legal/adatvedelem" element={<Adatvedelem />} />
+            <Route path="/legal/cookie" element={<CookiePolicy />} />
+            <Route path="/legal/elallas" element={<Elallas />} />
+            <Route path="/legal/szallitas" element={<Szallitas />} />
+            <Route path="/legal/garancia" element={<Garancia />} />
+            <Route path="/legal/impresszum" element={<Impresszum />} />
+            <Route path="/legal/jogi-nyilatkozat" element={<JogiNyilatkozat />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
