@@ -109,6 +109,34 @@ const About = () => {
               Nem mert könnyű, hanem mert nincs más opció. Ez a márka az én válaszom
               mindenkinek, aki azt mondta: „te ezt úgyse tudod megcsinálni".
             </p>
+
+            <div className="pt-8 mt-4 border-t border-border space-y-6">
+              <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent">
+                A csapatról
+              </p>
+              <p>
+                <span className="text-foreground font-bold">Egy márkát könnyű alapítani — működtetni a nehéz.</span>
+                Amíg kicsi, egy ember elbírja. De ahogy nő, ahogy egyre több vásárló jön,
+                már egynek sok. Ezt tudom, és készülök rá.
+              </p>
+              <p>
+                <span className="text-foreground font-bold">Embereket fogok keresni magam mellé.</span>
+                Nem akárkit — olyanokat, akikkel <span className="text-accent font-bold">csapatban tudok dolgozni</span>,
+                akik lassan, rendesen belejönnek a munkába, és idővel <span className="text-foreground font-bold">önállóan
+                is megállják a helyüket</span>.
+              </p>
+              <p>
+                Mivel <span className="text-foreground font-bold">én magam építettem fel az alapokat</span>,
+                pontosan tudom, mit hogyan kell csinálni — és ezt át is tudom adni.
+                Időt szánok a betanításra, és <span className="text-foreground font-bold">megadok minden eszközt</span>,
+                ami ahhoz kell, hogy könnyebben, gyorsabban, jobban lehessen dolgozni.
+              </p>
+              <p>
+                Ha jön majd az idő, és kell az ember — itt lesz a hely.
+                <span className="text-accent font-bold"> Lassan, normálisan, együtt nőjünk.</span>
+              </p>
+            </div>
+
             <p className="text-foreground font-bold pt-4 border-t border-border">
               — Horváth Zoltán, alapító & tulajdonos
             </p>
