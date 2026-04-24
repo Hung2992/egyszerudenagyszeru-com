@@ -27,7 +27,8 @@ function generateToken(): string {
 }
 
 async function getOrCreateUnsubscribeToken(
-  supabase: ReturnType<typeof createClient>,
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
   email: string,
 ): Promise<string> {
   const { data: existingToken, error: tokenLookupError } = await supabase
@@ -104,7 +105,8 @@ export async function sendOrderConfirmationEmail({
     throw new Error('Missing backend configuration for order confirmation email')
   }
 
-  const supabase = createClient(supabaseUrl, normalizedServiceRoleKey)
+  // deno-lint-ignore no-explicit-any
+  const supabase: any = createClient(supabaseUrl, normalizedServiceRoleKey)
   const normalizedLowercaseEmail = normalizedEmail.toLowerCase()
 
   const { data: suppressedEmail, error: suppressionError } = await supabase
@@ -139,10 +141,11 @@ export async function sendOrderConfirmationEmail({
     React.createElement(orderConfirmationTemplate.component, templateData),
     { plainText: true },
   )
+  const subjectField = (orderConfirmationTemplate as any).subject
   const subject =
-    typeof orderConfirmationTemplate.subject === 'function'
-      ? orderConfirmationTemplate.subject(templateData)
-      : orderConfirmationTemplate.subject
+    typeof subjectField === 'function'
+      ? subjectField(templateData)
+      : subjectField
   const messageId = crypto.randomUUID()
 
   const { error: pendingLogError } = await supabase.from('email_send_log').insert({
