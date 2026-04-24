@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Facebook, Instagram, Youtube } from "lucide-react";
+import { Facebook, Instagram, Youtube, Cookie } from "lucide-react";
 import { supabase } from "@/integrations/supabase/untyped-client";
+import { openCookieSettings } from "@/components/CookieConsentBanner";
 
 // TikTok ikon (nincs lucide-ben)
 const TikTokIcon = ({ className }: { className?: string }) => (
@@ -43,8 +44,8 @@ const Footer = () => {
   return (
     <footer className="border-t border-border mt-auto">
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-          <div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+          <div className="col-span-2 md:col-span-1">
             <span className="text-sm font-bold uppercase tracking-wider text-foreground">
               Egyszerű<span className="text-accent"> de </span>Nagyszerű
             </span>
@@ -55,19 +56,33 @@ const Footer = () => {
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Navigáció</p>
             <nav className="flex flex-col gap-2">
-              <button onClick={() => navigate("/about")} className="text-xs text-accent hover:text-foreground text-left transition-colors font-bold">Rólunk / A márka</button>
+              <button onClick={() => navigate("/about")} className="text-xs text-accent hover:text-foreground text-left transition-colors font-bold">Rólunk</button>
               <button onClick={() => navigate("/shop")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">Kollekció</button>
-              <button onClick={() => navigate("/shop")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">Újdonságok</button>
-              <button onClick={() => navigate("/shop")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">Akciók</button>
+              <button onClick={() => navigate("/contact")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">Kapcsolat</button>
+              <button onClick={() => navigate("/help")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">Segítség</button>
             </nav>
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Segítség</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Vásárlás</p>
             <nav className="flex flex-col gap-2">
-              <button onClick={() => navigate("/help")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">Segítség központ</button>
-              <button onClick={() => navigate("/shipping")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">Szállítás & Visszaküldés</button>
+              <button onClick={() => navigate("/legal/szallitas")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">Szállítás & fizetés</button>
+              <button onClick={() => navigate("/legal/elallas")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">Elállási jog (14 nap)</button>
+              <button onClick={() => navigate("/legal/garancia")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">Garancia & panasz</button>
               <button onClick={() => navigate("/size-guide")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">Mérettáblázat</button>
-              <button onClick={() => navigate("/contact")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">Kapcsolat</button>
+            </nav>
+          </div>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Jogi</p>
+            <nav className="flex flex-col gap-2">
+              <button onClick={() => navigate("/legal")} className="text-xs text-accent hover:text-foreground text-left transition-colors font-bold">Jogi központ</button>
+              <button onClick={() => navigate("/legal/aszf")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">ÁSZF</button>
+              <button onClick={() => navigate("/legal/adatvedelem")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">Adatvédelem</button>
+              <button onClick={() => navigate("/legal/cookie")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">Cookie szabályzat</button>
+              <button onClick={() => navigate("/legal/impresszum")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">Impresszum</button>
+              <button onClick={openCookieSettings} className="text-xs text-muted-foreground hover:text-accent text-left transition-colors inline-flex items-center gap-1.5">
+                <Cookie className="h-3 w-3" />
+                Cookie beállítások
+              </button>
             </nav>
           </div>
         </div>

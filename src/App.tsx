@@ -15,6 +15,7 @@ const PageTracker = () => { usePageTracking(); return null; };
 const CartDrawer = lazy(() => import("@/components/CartDrawer"));
 const AbandonedCartReminder = lazy(() => import("@/components/AbandonedCartReminder"));
 const GiveawayPopup = lazy(() => import("./components/GiveawayPopup.tsx"));
+const CookieConsentBanner = lazy(() => import("./components/CookieConsentBanner.tsx"));
 const Auth = lazy(() => import("./pages/Auth.tsx"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
@@ -42,6 +43,15 @@ const Launch = lazy(() => import("./pages/Launch.tsx"));
 const LaunchProductDetail = lazy(() => import("./pages/LaunchProductDetail.tsx"));
 const Help = lazy(() => import("./pages/Help.tsx"));
 const About = lazy(() => import("./pages/About.tsx"));
+const LegalHub = lazy(() => import("./pages/legal/LegalHub.tsx"));
+const Aszf = lazy(() => import("./pages/legal/Aszf.tsx"));
+const Adatvedelem = lazy(() => import("./pages/legal/Adatvedelem.tsx"));
+const CookiePolicy = lazy(() => import("./pages/legal/Cookie.tsx"));
+const Elallas = lazy(() => import("./pages/legal/Elallas.tsx"));
+const Szallitas = lazy(() => import("./pages/legal/Szallitas.tsx"));
+const Garancia = lazy(() => import("./pages/legal/Garancia.tsx"));
+const Impresszum = lazy(() => import("./pages/legal/Impresszum.tsx"));
+const JogiNyilatkozat = lazy(() => import("./pages/legal/JogiNyilatkozat.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -60,6 +70,7 @@ const App = () => (
             <CartDrawer />
             <AbandonedCartReminder />
             <GiveawayPopup />
+            <CookieConsentBanner />
           </Suspense>
           <Suspense fallback={null}>
           <Routes>
@@ -88,6 +99,15 @@ const App = () => (
             <Route path="/launch/:id" element={<LaunchProductDetail />} />
             <Route path="/help" element={<Help />} />
             <Route path="/about" element={<About />} />
+            <Route path="/legal" element={<LegalHub />} />
+            <Route path="/legal/aszf" element={<Aszf />} />
+            <Route path="/legal/adatvedelem" element={<Adatvedelem />} />
+            <Route path="/legal/cookie" element={<CookiePolicy />} />
+            <Route path="/legal/elallas" element={<Elallas />} />
+            <Route path="/legal/szallitas" element={<Szallitas />} />
+            <Route path="/legal/garancia" element={<Garancia />} />
+            <Route path="/legal/impresszum" element={<Impresszum />} />
+            <Route path="/legal/jogi-nyilatkozat" element={<JogiNyilatkozat />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
