@@ -258,9 +258,9 @@ const Aszf = () => (
       </ul>
     </Box>
 
-    <P className="text-xs text-muted-foreground mt-10 pt-6 border-t border-border">
+    <p className="text-xs text-muted-foreground mt-10 pt-6 border-t border-border">
       Verzió: {L.version} — Hatályos: {L.effectiveDate} — Utolsó módosítás: {L.lastUpdated}
-    </P>
+    </p>
   </LegalLayout>
 );
 
