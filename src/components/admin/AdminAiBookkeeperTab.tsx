@@ -297,6 +297,16 @@ KÉRDÉS: ${text}`;
     setMessages(next);
     setInput("");
     setLoading(true);
+
+    // Placeholder assistant message we will stream into
+    const aiTs = Date.now() + 1;
+    setMessages((m) => [...m, { role: "assistant", content: "", ts: aiTs }]);
+    let accumulated = "";
+    const appendDelta = (delta: string) => {
+      accumulated += delta;
+      setMessages((m) => m.map((msg) => (msg.ts === aiTs ? { ...msg, content: accumulated } : msg)));
+    };
+
     try {
       const payload = {
         mode: "bookkeeper",
@@ -305,13 +315,83 @@ KÉRDÉS: ${text}`;
           ...next.map((m) => ({ role: m.role, content: m.content })),
         ],
       };
-      const { data, error } = await supabase.functions.invoke("admin-ai-assistant", { body: payload });
-      if (error) throw error;
-      const reply = data?.reply || data?.message || data?.choices?.[0]?.message?.content || "Nincs válasz az AI-tól.";
-      setMessages((m) => [...m, { role: "assistant", content: reply, ts: Date.now() }]);
+
+      // Get current user's auth token (admin endpoint requires it)
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error("Nincs bejelentkezve – jelentkezz be admin fiókkal.");
+
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-ai-assistant`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!resp.ok) {
+        if (resp.status === 429) throw new Error("Túl sok kérés, várj egy kicsit és próbáld újra.");
+        if (resp.status === 402) throw new Error("AI kredit elfogyott. Tölts fel a Workspace beállításokban.");
+        const errData = await resp.json().catch(() => ({ error: `Hiba: ${resp.status}` }));
+        throw new Error(errData.error || `Hiba: ${resp.status}`);
+      }
+      if (!resp.body) throw new Error("Nincs válasz stream.");
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let textBuffer = "";
+      let streamDone = false;
+
+      while (!streamDone) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        textBuffer += decoder.decode(value, { stream: true });
+        let nlIdx: number;
+        while ((nlIdx = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, nlIdx);
+          textBuffer = textBuffer.slice(nlIdx + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") { streamDone = true; break; }
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const delta = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (delta) appendDelta(delta);
+          } catch {
+            textBuffer = line + "\n" + textBuffer;
+            break;
+          }
+        }
+      }
+
+      if (textBuffer.trim()) {
+        for (let raw of textBuffer.split("\n")) {
+          if (!raw) continue;
+          if (raw.endsWith("\r")) raw = raw.slice(0, -1);
+          if (!raw.startsWith("data: ")) continue;
+          const jsonStr = raw.slice(6).trim();
+          if (jsonStr === "[DONE]") continue;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const delta = parsed.choices?.[0]?.delta?.content as string | undefined;
+            if (delta) appendDelta(delta);
+          } catch { /* ignore */ }
+        }
+      }
+
+      if (!accumulated) {
+        setMessages((m) => m.map((msg) => (msg.ts === aiTs ? { ...msg, content: "Nincs válasz az AI-tól." } : msg)));
+      }
     } catch (err: any) {
       toast({ title: "AI hiba", description: err?.message || "Nem sikerült elérni az AI-t.", variant: "destructive" });
-      setMessages((m) => [...m, { role: "assistant", content: "⚠️ Hiba történt. Próbáld újra.", ts: Date.now() }]);
+      setMessages((m) => m.map((msg) => (msg.ts === aiTs ? { ...msg, content: `⚠️ ${err?.message || "Hiba történt."}` } : msg)));
     } finally {
       setLoading(false);
     }
