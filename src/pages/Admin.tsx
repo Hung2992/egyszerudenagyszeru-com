@@ -1465,7 +1465,17 @@ const Admin = () => {
     { key: "settings", label: "Beállítások", icon: Settings },
   ];
 
-  const primaryTabs = tabs.filter((item) => ["products", "orders", "dashboard", "settings"].includes(item.key));
+  // Mobil gyorselérés: a legfontosabb 6 fül – Jogi + Adó kiemelten
+  const primaryTabKeys: Tab[] = ["products", "orders", "tax_invoice", "accounting", "invoice_automation", "settings"];
+  const primaryTabs = primaryTabKeys
+    .map((k) => tabs.find((t) => t.key === k))
+    .filter((t): t is { key: Tab; label: string; icon: any } => Boolean(t));
+
+  const jumpToLegal = () => {
+    setTab("settings");
+    setSettingsSection("legal");
+    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
+  };
 
   // ─── Analytics calculations ───
   const ordersByStatus = orders.reduce((acc, o) => {
@@ -1518,21 +1528,32 @@ const Admin = () => {
       {/* Tabs */}
       <div className="border-b">
         <div className="mx-auto max-w-6xl space-y-3 px-4 py-3">
-          <div className="grid grid-cols-2 gap-2 sm:hidden">
+          <div className="grid grid-cols-3 gap-2 sm:hidden">
             {primaryTabs.map(t => (
               <button
                 key={`primary-${t.key}`}
                 onClick={() => setTab(t.key)}
-                className={`flex min-h-12 items-center justify-center gap-2 border px-3 py-2 text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                className={`flex min-h-14 flex-col items-center justify-center gap-1 border px-2 py-2 text-[10px] font-bold uppercase tracking-wider leading-tight text-center transition-colors ${
                   tab === t.key
                     ? "border-accent bg-accent text-accent-foreground"
                     : "border-border bg-card text-foreground"
                 }`}
               >
                 <t.icon className="h-4 w-4 shrink-0" />
-                {t.label}
+                <span className="line-clamp-2">{t.label}</span>
               </button>
             ))}
+            <button
+              onClick={jumpToLegal}
+              className={`col-span-3 flex min-h-12 items-center justify-center gap-2 border px-3 py-2 text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                tab === "settings" && settingsSection === "legal"
+                  ? "border-accent bg-accent text-accent-foreground"
+                  : "border-foreground bg-foreground text-background"
+              }`}
+            >
+              <Shield className="h-4 w-4 shrink-0" />
+              Jogi / ÁSZF / GDPR
+            </button>
           </div>
           <select
             value={tab}
