@@ -118,6 +118,7 @@ import AdminMarginManagementTab from "@/components/admin/AdminMarginManagementTa
 import AdminSatisfactionAutomationTab from "@/components/admin/AdminSatisfactionAutomationTab";
 import AdminRemarketingAutomationTab from "@/components/admin/AdminRemarketingAutomationTab";
 import AdminInstallmentPaymentTab from "@/components/admin/AdminInstallmentPaymentTab";
+import AdminLegalCenterTab from "@/components/admin/AdminLegalCenterTab";
 import AdminProductRankingTab from "@/components/admin/AdminProductRankingTab";
 import AdminAiProductTaggingTab from "@/components/admin/AdminAiProductTaggingTab";
 import AdminShippingCostRulesTab from "@/components/admin/AdminShippingCostRulesTab";
@@ -548,7 +549,7 @@ interface EmailTemplate {
   body: string;
 }
 
-type Tab = "messages" | "launch_center" | "order_insights" | "email_monitoring" | "dashboard" | "products" | "giveaway_wheel" | "orders" | "coupons" | "users" | "reviews" | "categories" | "banners" | "promotions" | "payment_methods" | "analytics" | "email_templates" | "roles" | "shipping_mgmt" | "inventory" | "seo_marketing" | "translations" | "returns" | "dynamic_pricing" | "marketing" | "gdpr" | "support" | "permissions" | "import_export" | "payment_integrations" | "notifications" | "crm" | "review_settings" | "tax_invoice" | "affiliate" | "conversion" | "currency" | "system" | "email_automation" | "api_webhooks" | "faq_knowledge" | "advanced_analytics" | "fulfillment" | "sales_rules" | "product_attributes" | "wishlist" | "procurement" | "auto_procurement" | "customer_segmentation" | "product_bundles" | "social_media" | "delivery_slots" | "ab_testing" | "flash_sale" | "review_rewards" | "ticketing" | "loyalty_tiers" | "product_scheduling" | "advanced_discounts" | "accounting" | "multilang" | "email_templates_custom" | "attribution" | "popup_banners" | "price_rules" | "supplier_mgmt" | "loyalty_gamification" | "product_feed" | "customer_group_pricing" | "advanced_seo" | "erp_sync" | "auto_reorder" | "multichannel" | "quality_assurance" | "loyalty_analytics" | "preorder_mgmt" | "packaging_custom" | "invoice_automation" | "nps" | "checkout_custom" | "recommendation_engine" | "gdpr_center" | "webhook_events" | "inventory_forecast" | "order_automation" | "media_manager" | "retention" | "review_moderation" | "multi_warehouse" | "product_seo" | "csat" | "email_sequences" | "shipping_zones_mgmt" | "giftcard_system" | "product_recall" | "loyalty_points_rules" | "product_compare" | "coupon_rules" | "stock_alert_auto" | "crosssell_upsell" | "customer_surveys" | "order_workflow" | "product_badges" | "product_variants" | "loyalty_rewards" | "order_consolidation" | "loyalty_automation" | "margin_management" | "satisfaction_automation" | "remarketing_automation" | "installment_payment" | "product_ranking" | "ai_product_tagging" | "shipping_cost_rules" | "inventory_movement_log" | "loyalty_dashboard" | "dynamic_price_automation" | "feedback_campaigns" | "bundle_deals_mgmt" | "invoice_generator" | "personalized_recommendations" | "subscribers" | "financial_center" | "settings";
+type Tab = "legal_center" | "messages" | "launch_center" | "order_insights" | "email_monitoring" | "dashboard" | "products" | "giveaway_wheel" | "orders" | "coupons" | "users" | "reviews" | "categories" | "banners" | "promotions" | "payment_methods" | "analytics" | "email_templates" | "roles" | "shipping_mgmt" | "inventory" | "seo_marketing" | "translations" | "returns" | "dynamic_pricing" | "marketing" | "gdpr" | "support" | "permissions" | "import_export" | "payment_integrations" | "notifications" | "crm" | "review_settings" | "tax_invoice" | "affiliate" | "conversion" | "currency" | "system" | "email_automation" | "api_webhooks" | "faq_knowledge" | "advanced_analytics" | "fulfillment" | "sales_rules" | "product_attributes" | "wishlist" | "procurement" | "auto_procurement" | "customer_segmentation" | "product_bundles" | "social_media" | "delivery_slots" | "ab_testing" | "flash_sale" | "review_rewards" | "ticketing" | "loyalty_tiers" | "product_scheduling" | "advanced_discounts" | "accounting" | "multilang" | "email_templates_custom" | "attribution" | "popup_banners" | "price_rules" | "supplier_mgmt" | "loyalty_gamification" | "product_feed" | "customer_group_pricing" | "advanced_seo" | "erp_sync" | "auto_reorder" | "multichannel" | "quality_assurance" | "loyalty_analytics" | "preorder_mgmt" | "packaging_custom" | "invoice_automation" | "nps" | "checkout_custom" | "recommendation_engine" | "gdpr_center" | "webhook_events" | "inventory_forecast" | "order_automation" | "media_manager" | "retention" | "review_moderation" | "multi_warehouse" | "product_seo" | "csat" | "email_sequences" | "shipping_zones_mgmt" | "giftcard_system" | "product_recall" | "loyalty_points_rules" | "product_compare" | "coupon_rules" | "stock_alert_auto" | "crosssell_upsell" | "customer_surveys" | "order_workflow" | "product_badges" | "product_variants" | "loyalty_rewards" | "order_consolidation" | "loyalty_automation" | "margin_management" | "satisfaction_automation" | "remarketing_automation" | "installment_payment" | "product_ranking" | "ai_product_tagging" | "shipping_cost_rules" | "inventory_movement_log" | "loyalty_dashboard" | "dynamic_price_automation" | "feedback_campaigns" | "bundle_deals_mgmt" | "invoice_generator" | "personalized_recommendations" | "subscribers" | "financial_center" | "settings";
 type SettingsSection = "store" | "payment" | "email" | "seo" | "appearance" | "hours" | "legal" | "statuses" | "templates" | "loyalty" | "reviews_config" | "shipping" | "inventory" | "notifications" | "invoicing" | "checkout" | "cookie" | "maintenance" | "popups" | "language" | "discounts" | "product_display" | "registration" | "analytics" | "payment_config" | "shipping_zones" | "stock_alerts" | "appearance_custom" | "coupon_settings" | "product_tags" | "user_notifications" | "order_workflow" | "compare_settings" | "return_rules" | "giftcard_settings" | "i18n_settings";
 
 const CATEGORIES = ["Pólók", "Pulóverek", "Nadrágok", "Dzsekik", "Kiegészítők", "Cipők", "Egyéb"];
@@ -1462,11 +1463,12 @@ const Admin = () => {
     { key: "invoice_generator", label: "Számla gen.", icon: FileText },
     { key: "personalized_recommendations", label: "Ajánlások", icon: Heart },
     { key: "subscribers", label: "Feliratkozók", icon: Bell },
+    { key: "legal_center", label: "Jogi központ", icon: Shield },
     { key: "settings", label: "Beállítások", icon: Settings },
   ];
 
-  // Mobil gyorselérés: a legfontosabb 6 fül – Jogi + Adó kiemelten
-  const primaryTabKeys: Tab[] = ["products", "orders", "tax_invoice", "accounting", "invoice_automation", "settings"];
+  // Mobil gyorselérés: a legfontosabb fülek – Jogi + Adó kiemelten
+  const primaryTabKeys: Tab[] = ["products", "orders", "legal_center", "tax_invoice", "accounting", "settings"];
   const primaryTabs = primaryTabKeys
     .map((k) => tabs.find((t) => t.key === k))
     .filter((t): t is { key: Tab; label: string; icon: any } => Boolean(t));
@@ -1528,6 +1530,61 @@ const Admin = () => {
       {/* Tabs */}
       <div className="border-b">
         <div className="mx-auto max-w-6xl space-y-3 px-4 py-3">
+          {/* ⚖️ JOGI + ÁFA MEGA KIEMELT SÁV — minden képernyőn látható */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button
+              onClick={() => setTab("legal_center")}
+              className={`group relative flex items-center justify-between gap-3 border-2 px-4 py-3 text-left transition-all ${
+                tab === "legal_center"
+                  ? "border-accent bg-accent text-accent-foreground"
+                  : "border-foreground bg-foreground text-background hover:bg-accent hover:border-accent hover:text-accent-foreground"
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-10 w-10 shrink-0 flex items-center justify-center border border-current">
+                  <Shield className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.25em] opacity-70">
+                    GDPR · EU · MAGYAR
+                  </div>
+                  <div className="text-sm font-black uppercase tracking-wider truncate">
+                    Jogi Központ
+                  </div>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-widest opacity-80 shrink-0 hidden sm:inline">
+                ÁSZF · GDPR · Cookie · Elállás
+              </span>
+            </button>
+            <button
+              onClick={() => setTab("tax_invoice")}
+              className={`group relative flex items-center justify-between gap-3 border-2 px-4 py-3 text-left transition-all ${
+                tab === "tax_invoice"
+                  ? "border-accent bg-accent text-accent-foreground"
+                  : "border-accent bg-accent/10 text-foreground hover:bg-accent hover:text-accent-foreground"
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-10 w-10 shrink-0 flex items-center justify-center border border-current">
+                  <Receipt className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.25em] opacity-70">
+                    ÁFA · NAV · SZÁMLÁZÁS
+                  </div>
+                  <div className="text-sm font-black uppercase tracking-wider truncate">
+                    Adó &amp; Számla
+                  </div>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-widest opacity-80 shrink-0 hidden sm:inline">
+                27% · AAM · Fordított adózás
+              </span>
+            </button>
+          </div>
+
+
           <div className="grid grid-cols-3 gap-2 sm:hidden">
             {primaryTabs.map(t => (
               <button
@@ -3221,6 +3278,7 @@ const Admin = () => {
         {tab === "crm" && <AdminCrmTab />}
         {tab === "review_settings" && <AdminReviewSettingsTab />}
         {tab === "tax_invoice" && <AdminTaxInvoiceTab />}
+        {tab === "legal_center" && <AdminLegalCenterTab />}
         {tab === "affiliate" && <AdminAffiliateTab />}
         {tab === "conversion" && <AdminConversionTab />}
         {tab === "currency" && <AdminCurrencyTab />}

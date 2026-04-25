@@ -1955,6 +1955,7 @@ export type Database = {
           cookie_expiry_days: number | null
           cookie_functional_enabled: boolean | null
           cookie_marketing_enabled: boolean | null
+          cookie_policy: string | null
           cookie_privacy_url: string | null
           coupon_auto_apply_enabled: boolean | null
           coupon_first_order_discount: boolean | null
@@ -1994,6 +1995,7 @@ export type Database = {
           i18n_show_switcher: boolean | null
           i18n_supported_languages: string[] | null
           id: string
+          imprint: string | null
           invoice_address: string | null
           invoice_auto_generate: boolean | null
           invoice_bank_account: string | null
@@ -2008,6 +2010,12 @@ export type Database = {
           lang_auto_detect: boolean | null
           lang_available: string[] | null
           lang_default: string | null
+          legal_disclaimer: string | null
+          legal_effective_date: string | null
+          legal_require_consent_checkout: boolean
+          legal_require_consent_register: boolean
+          legal_show_in_footer: boolean
+          legal_version: string | null
           logo_url: string | null
           low_stock_threshold: number | null
           loyalty_discount_per_points: number | null
@@ -2118,6 +2126,7 @@ export type Database = {
           shipping_fee: number
           shipping_free_limit: number | null
           shipping_methods: Json | null
+          shipping_policy: string | null
           shipping_zones: Json | null
           size_chart_template: string | null
           social_facebook: string | null
@@ -2153,6 +2162,8 @@ export type Database = {
           vat_mode: string
           vat_rate: number
           warranty_info: string | null
+          warranty_policy: string | null
+          withdrawal_policy: string | null
         }
         Insert: {
           accounting_auto_invoice?: boolean | null
@@ -2207,6 +2218,7 @@ export type Database = {
           cookie_expiry_days?: number | null
           cookie_functional_enabled?: boolean | null
           cookie_marketing_enabled?: boolean | null
+          cookie_policy?: string | null
           cookie_privacy_url?: string | null
           coupon_auto_apply_enabled?: boolean | null
           coupon_first_order_discount?: boolean | null
@@ -2246,6 +2258,7 @@ export type Database = {
           i18n_show_switcher?: boolean | null
           i18n_supported_languages?: string[] | null
           id?: string
+          imprint?: string | null
           invoice_address?: string | null
           invoice_auto_generate?: boolean | null
           invoice_bank_account?: string | null
@@ -2260,6 +2273,12 @@ export type Database = {
           lang_auto_detect?: boolean | null
           lang_available?: string[] | null
           lang_default?: string | null
+          legal_disclaimer?: string | null
+          legal_effective_date?: string | null
+          legal_require_consent_checkout?: boolean
+          legal_require_consent_register?: boolean
+          legal_show_in_footer?: boolean
+          legal_version?: string | null
           logo_url?: string | null
           low_stock_threshold?: number | null
           loyalty_discount_per_points?: number | null
@@ -2370,6 +2389,7 @@ export type Database = {
           shipping_fee?: number
           shipping_free_limit?: number | null
           shipping_methods?: Json | null
+          shipping_policy?: string | null
           shipping_zones?: Json | null
           size_chart_template?: string | null
           social_facebook?: string | null
@@ -2405,6 +2425,8 @@ export type Database = {
           vat_mode?: string
           vat_rate?: number
           warranty_info?: string | null
+          warranty_policy?: string | null
+          withdrawal_policy?: string | null
         }
         Update: {
           accounting_auto_invoice?: boolean | null
@@ -2459,6 +2481,7 @@ export type Database = {
           cookie_expiry_days?: number | null
           cookie_functional_enabled?: boolean | null
           cookie_marketing_enabled?: boolean | null
+          cookie_policy?: string | null
           cookie_privacy_url?: string | null
           coupon_auto_apply_enabled?: boolean | null
           coupon_first_order_discount?: boolean | null
@@ -2498,6 +2521,7 @@ export type Database = {
           i18n_show_switcher?: boolean | null
           i18n_supported_languages?: string[] | null
           id?: string
+          imprint?: string | null
           invoice_address?: string | null
           invoice_auto_generate?: boolean | null
           invoice_bank_account?: string | null
@@ -2512,6 +2536,12 @@ export type Database = {
           lang_auto_detect?: boolean | null
           lang_available?: string[] | null
           lang_default?: string | null
+          legal_disclaimer?: string | null
+          legal_effective_date?: string | null
+          legal_require_consent_checkout?: boolean
+          legal_require_consent_register?: boolean
+          legal_show_in_footer?: boolean
+          legal_version?: string | null
           logo_url?: string | null
           low_stock_threshold?: number | null
           loyalty_discount_per_points?: number | null
@@ -2622,6 +2652,7 @@ export type Database = {
           shipping_fee?: number
           shipping_free_limit?: number | null
           shipping_methods?: Json | null
+          shipping_policy?: string | null
           shipping_zones?: Json | null
           size_chart_template?: string | null
           social_facebook?: string | null
@@ -2657,6 +2688,8 @@ export type Database = {
           vat_mode?: string
           vat_rate?: number
           warranty_info?: string | null
+          warranty_policy?: string | null
+          withdrawal_policy?: string | null
         }
         Relationships: []
       }
