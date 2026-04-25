@@ -10,6 +10,9 @@ import {
   Banknote, Brain, Loader2, Trash2, Copy, Bot, User as UserIcon, ShieldCheck, Percent,
   FileDown, Calendar, ArrowRightLeft, Hash, BookOpen, Wallet, PiggyBank, Building2,
   ScrollText, Activity, Target, Briefcase, ClipboardList, FileCheck2, Coins,
+  TrendingDown, Zap, Globe, CheckCircle2, XCircle, Timer, BarChart3, Boxes,
+  CalendarClock, FileText, Landmark, Scale, Flame, Award, Gauge, LineChart,
+  Printer, Search, Database,
 } from "lucide-react";
 
 type Msg = { role: "user" | "assistant"; content: string; ts: number };
@@ -56,6 +59,38 @@ const PROMPT_GROUPS: { title: string; icon: any; items: { icon: any; label: stri
       { icon: Coins, label: "Beszállító elemzés", prompt: "Beszállítónkénti összesítés: rendelt mennyiség, átlag költség, megbízhatóság, javaslat váltásra ha van olcsóbb." },
     ],
   },
+  {
+    title: "Likviditás & Pénzügy", icon: Wallet, items: [
+      { icon: Gauge, label: "Working capital", prompt: "Számold ki a forgótőkét: vevőállomány + készlet - szállítóállomány. Adj javaslatot az optimalizálásra." },
+      { icon: Timer, label: "Vevő futamidő (DSO)", prompt: "Számold ki az átlagos vevői futamidőt (Days Sales Outstanding). Mely vevők késnek? Mit tegyek?" },
+      { icon: LineChart, label: "Burn rate / runway", prompt: "Mennyi a havi égés (burn rate)? Hány hónapra elég a likviditás (runway)? Vészforgatókönyv ha 30%-kal esik a bevétel." },
+      { icon: Scale, label: "Mérleg becslés", prompt: "Készíts becsült mérleget: eszközök (forgó+befektetett), források (saját tőke + kötelezettségek). Magyar számviteli sémában." },
+    ],
+  },
+  {
+    title: "Készlet & Logisztika", icon: Boxes, items: [
+      { icon: Boxes, label: "Készletérték", prompt: "Számold ki a teljes készletértéket beszerzési áron és eladási áron. Mely termékek kötnek le legtöbb tőkét?" },
+      { icon: TrendingDown, label: "Lassú forgók", prompt: "Mely termékek nem fogytak az utolsó 60 napban? Javaslat akcióra/leértékelésre/kivonásra." },
+      { icon: Flame, label: "Kifutó/hiány figyelő", prompt: "Mely termékek 7 napon belül kifogynak az aktuális forgási sebesség alapján? Sürgősségi rendelési lista." },
+      { icon: Printer, label: "Szállítás-arányos profit", prompt: "Mennyi a tényleges profit szállítási költséggel együtt? Mely régiók/súlyok veszteségesek?" },
+    ],
+  },
+  {
+    title: "Vevő & Marketing ROI", icon: Award, items: [
+      { icon: Award, label: "Top 10 vevő", prompt: "Top 10 vevő bevétel szerint. Mennyit költöttek, hányszor rendeltek, mikor utoljára? VIP javaslat." },
+      { icon: AlertTriangle, label: "Lemorzsolódás", prompt: "Kik nem rendeltek 60+ napja, pedig korábban gyakori vásárlók voltak? Visszahívási kampány terv." },
+      { icon: BarChart3, label: "Kupon ROI", prompt: "Számold ki az aktív kuponok megtérülését: kedvezmény mértéke vs. plusz bevétel. Mely kuponok rontják a marzsot?" },
+      { icon: Zap, label: "Kosárelhagyás veszteség", prompt: "Becsüld meg a kosárelhagyásból származó elmaradt bevételt és adj 5 azonnali optimalizálási javaslatot." },
+    ],
+  },
+  {
+    title: "Megfelelőség & Audit", icon: ShieldCheck, items: [
+      { icon: Landmark, label: "NAV határidők", prompt: "Listázd a következő 60 nap NAV határidőit (ÁFA, TBJ, SZJA, társasági adó, KIVA, KATA) magyarázattal." },
+      { icon: FileText, label: "Számla-audit", prompt: "Audit: minden teljesített rendeléshez van-e számla? Listázd a hiányzókat. Hol vannak ÁFA-eltérések?" },
+      { icon: ScrollText, label: "GDPR pénzügyi szempont", prompt: "Mely pénzügyi adatok tárolása esik GDPR alá? Mennyi ideig kell megőrizni (8 év szabály)? Audit lista." },
+      { icon: Search, label: "Bizonylat-csekklista", prompt: "Magyar számvitel: mely bizonylatok kötelezőek (számla, nyugta, szállítólevél, készletmozgás bizonylat)? Audit kész állapot?" },
+    ],
+  },
 ];
 
 function rangeFor(p: Period): { from: Date | null; to: Date } {
@@ -85,6 +120,13 @@ const AdminAiBookkeeperTab = () => {
   const [grossInput, setGrossInput] = useState("");
   const [netInput, setNetInput] = useState("");
   const [invoicePreview, setInvoicePreview] = useState<string>("");
+  // Extra tools state
+  const [depAmount, setDepAmount] = useState(""); const [depYears, setDepYears] = useState("5");
+  const [lateAmount, setLateAmount] = useState(""); const [lateDays, setLateDays] = useState("30"); const [lateRate, setLateRate] = useState("13");
+  const [bepFixed, setBepFixed] = useState(""); const [bepPrice, setBepPrice] = useState(""); const [bepCost, setBepCost] = useState("");
+  const [fxAmount, setFxAmount] = useState(""); const [fxRate, setFxRate] = useState("400"); const [fxFrom, setFxFrom] = useState("EUR");
+  const [validateInput, setValidateInput] = useState("");
+  const [validateType, setValidateType] = useState<"iban" | "tax">("iban");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Load history
@@ -410,7 +452,158 @@ KÉRDÉS: ${text}`;
         </div>
       </div>
 
-      {/* Categorized prompt palette */}
+      {/* Extra Pro Tools - Row 2 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {/* Depreciation calculator */}
+        <div className="border-2 border-border bg-background p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingDown className="h-4 w-4 text-accent" />
+            <span className="text-[11px] uppercase tracking-widest font-bold">Értékcsökkenés (lineáris)</span>
+          </div>
+          <div className="space-y-2">
+            <Input value={depAmount} onChange={(e) => setDepAmount(e.target.value)} placeholder="Bruttó érték (Ft)" className="rounded-none" />
+            <Input value={depYears} onChange={(e) => setDepYears(e.target.value)} placeholder="Évek" className="rounded-none" />
+            {depAmount && depYears && (
+              <div className="text-[10px] border-t border-border pt-2 space-y-0.5">
+                <div>Éves écs: <span className="font-bold text-accent">{fmt((parseFloat(depAmount) || 0) / (parseFloat(depYears) || 1))} Ft</span></div>
+                <div>Havi écs: <span className="font-bold">{fmt((parseFloat(depAmount) || 0) / ((parseFloat(depYears) || 1) * 12))} Ft</span></div>
+                <div className="text-muted-foreground">Kulcs: {(100 / (parseFloat(depYears) || 1)).toFixed(1)}%/év</div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Late payment interest */}
+        <div className="border-2 border-border bg-background p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Timer className="h-4 w-4 text-accent" />
+            <span className="text-[11px] uppercase tracking-widest font-bold">Késedelmi kamat (Ptk.)</span>
+          </div>
+          <div className="space-y-2">
+            <Input value={lateAmount} onChange={(e) => setLateAmount(e.target.value)} placeholder="Összeg (Ft)" className="rounded-none" />
+            <div className="grid grid-cols-2 gap-2">
+              <Input value={lateDays} onChange={(e) => setLateDays(e.target.value)} placeholder="Napok" className="rounded-none" />
+              <Input value={lateRate} onChange={(e) => setLateRate(e.target.value)} placeholder="%/év" className="rounded-none" />
+            </div>
+            {lateAmount && (
+              <div className="text-[10px] border-t border-border pt-2 space-y-0.5">
+                <div>Kamat: <span className="font-bold text-accent">{fmt(((parseFloat(lateAmount) || 0) * (parseFloat(lateRate) || 0) / 100) * ((parseFloat(lateDays) || 0) / 365))} Ft</span></div>
+                <div>Összesen: <span className="font-bold">{fmt((parseFloat(lateAmount) || 0) + ((parseFloat(lateAmount) || 0) * (parseFloat(lateRate) || 0) / 100) * ((parseFloat(lateDays) || 0) / 365))} Ft</span></div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Break-even point */}
+        <div className="border-2 border-border bg-background p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Target className="h-4 w-4 text-accent" />
+            <span className="text-[11px] uppercase tracking-widest font-bold">Fedezeti pont (BEP)</span>
+          </div>
+          <div className="space-y-2">
+            <Input value={bepFixed} onChange={(e) => setBepFixed(e.target.value)} placeholder="Fix költség (Ft)" className="rounded-none" />
+            <div className="grid grid-cols-2 gap-2">
+              <Input value={bepPrice} onChange={(e) => setBepPrice(e.target.value)} placeholder="Eladási ár" className="rounded-none" />
+              <Input value={bepCost} onChange={(e) => setBepCost(e.target.value)} placeholder="Önköltség" className="rounded-none" />
+            </div>
+            {bepFixed && bepPrice && bepCost && (parseFloat(bepPrice) - parseFloat(bepCost)) > 0 && (
+              <div className="text-[10px] border-t border-border pt-2 space-y-0.5">
+                <div>Eladandó db: <span className="font-bold text-accent">{fmt((parseFloat(bepFixed) || 0) / ((parseFloat(bepPrice) || 0) - (parseFloat(bepCost) || 0)))} db</span></div>
+                <div>BEP forgalom: <span className="font-bold">{fmt(((parseFloat(bepFixed) || 0) / ((parseFloat(bepPrice) || 0) - (parseFloat(bepCost) || 0))) * (parseFloat(bepPrice) || 0))} Ft</span></div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Currency converter */}
+        <div className="border-2 border-border bg-background p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Globe className="h-4 w-4 text-accent" />
+            <span className="text-[11px] uppercase tracking-widest font-bold">Valutaváltó (kézi)</span>
+          </div>
+          <div className="space-y-2">
+            <div className="flex gap-1">
+              {["EUR", "USD", "GBP", "CHF"].map((c) => (
+                <button key={c} onClick={() => setFxFrom(c)} className={`text-[10px] px-2 py-1 border ${fxFrom === c ? "bg-foreground text-background border-foreground" : "border-border"}`}>{c}</button>
+              ))}
+            </div>
+            <Input value={fxAmount} onChange={(e) => setFxAmount(e.target.value)} placeholder={`Összeg (${fxFrom})`} className="rounded-none" />
+            <Input value={fxRate} onChange={(e) => setFxRate(e.target.value)} placeholder="Árfolyam (Ft)" className="rounded-none" />
+            {fxAmount && fxRate && (
+              <div className="text-[10px] border-t border-border pt-2">
+                = <span className="font-bold text-accent text-base">{fmt((parseFloat(fxAmount) || 0) * (parseFloat(fxRate) || 0))} Ft</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Validator IBAN/Tax */}
+        <div className="border-2 border-border bg-background p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <ShieldCheck className="h-4 w-4 text-accent" />
+            <span className="text-[11px] uppercase tracking-widest font-bold">IBAN / Adószám validátor</span>
+          </div>
+          <div className="space-y-2">
+            <div className="flex gap-1">
+              <button onClick={() => setValidateType("iban")} className={`text-[10px] px-2 py-1 border flex-1 ${validateType === "iban" ? "bg-foreground text-background border-foreground" : "border-border"}`}>IBAN</button>
+              <button onClick={() => setValidateType("tax")} className={`text-[10px] px-2 py-1 border flex-1 ${validateType === "tax" ? "bg-foreground text-background border-foreground" : "border-border"}`}>Adószám</button>
+            </div>
+            <Input value={validateInput} onChange={(e) => setValidateInput(e.target.value)} placeholder={validateType === "iban" ? "HU42 1177 3016..." : "12345678-1-23"} className="rounded-none font-mono text-xs" />
+            {validateInput && (() => {
+              const v = validateInput.replace(/\s/g, "").toUpperCase();
+              let ok = false; let info = "";
+              if (validateType === "iban") {
+                ok = /^HU\d{26}$/.test(v);
+                info = ok ? `Magyar IBAN (28 karakter) ✓ Bank: ${v.slice(4, 7)}` : "Hibás formátum (HU + 26 számjegy)";
+              } else {
+                const m = v.replace(/-/g, "").match(/^(\d{8})(\d)(\d{2})$/);
+                if (m) {
+                  const w = [9, 7, 3, 1, 9, 7, 3];
+                  const sum = m[1].slice(0, 7).split("").reduce((s, d, i) => s + parseInt(d) * w[i], 0);
+                  const check = (10 - (sum % 10)) % 10;
+                  ok = check === parseInt(m[1][7]);
+                  info = ok ? `Érvényes adószám ✓ ÁFA-kód: ${m[2]} (${m[2] === "1" ? "AAM" : m[2] === "2" ? "ÁFA-alany" : "EVA"})` : "Hibás ellenőrző számjegy";
+                } else { info = "Formátum: 12345678-1-23"; }
+              }
+              return (
+                <div className={`text-[10px] border-t border-border pt-2 flex items-start gap-1 ${ok ? "text-green-600" : "text-red-600"}`}>
+                  {ok ? <CheckCircle2 className="h-3 w-3 shrink-0 mt-0.5" /> : <XCircle className="h-3 w-3 shrink-0 mt-0.5" />}
+                  <span>{info}</span>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+
+        {/* NAV Calendar */}
+        <div className="border-2 border-border bg-background p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <CalendarClock className="h-4 w-4 text-accent" />
+            <span className="text-[11px] uppercase tracking-widest font-bold">NAV határidők</span>
+          </div>
+          <div className="space-y-1.5 text-[10px]">
+            {[
+              { d: 12, l: "ÁFA bevallás (havi)" },
+              { d: 12, l: "TBJ járulék" },
+              { d: 12, l: "SZJA előleg" },
+              { d: 20, l: "ÁFA bevallás (negyedéves)" },
+              { d: 31, l: "KIVA előleg (negyedév vége)" },
+              { d: "5.31", l: "Társasági adó éves" },
+            ].map((it, i) => {
+              const today = new Date().getDate();
+              const due = typeof it.d === "number" ? it.d : 99;
+              const close = typeof it.d === "number" && due >= today && due - today <= 5;
+              return (
+                <div key={i} className={`flex justify-between border-b border-border/50 pb-1 ${close ? "text-orange-600 font-bold" : ""}`}>
+                  <span>{it.l}</span>
+                  <span className="font-mono">{typeof it.d === "number" ? `${it.d}.` : it.d}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
       <div className="space-y-3">
         <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold flex items-center gap-2">
           <Calculator className="h-3.5 w-3.5" /> Profi munkafolyamatok (kattints — élő adatokkal küldi)
