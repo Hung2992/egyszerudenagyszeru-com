@@ -90,6 +90,7 @@ const PROMPT_GROUPS: { title: string; icon: any; items: { icon: any; label: stri
       { icon: ScrollText, label: "GDPR pénzügyi szempont", prompt: "Mely pénzügyi adatok tárolása esik GDPR alá? Mennyi ideig kell megőrizni (8 év szabály)? Audit lista." },
       { icon: Search, label: "Bizonylat-csekklista", prompt: "Magyar számvitel: mely bizonylatok kötelezőek (számla, nyugta, szállítólevél, készletmozgás bizonylat)? Audit kész állapot?" },
     ],
+  },
   {
     title: "Bér & TB", icon: Briefcase, items: [
       { icon: Briefcase, label: "Bérköltség kalkulátor", prompt: "Részletes bérköltség: bruttó bér, levonások (SZJA 15%, TB 18,5%), nettó bér, munkáltatói járulék (SZOCHO 13%), TELJES bérköltség. Adj táblázatot." },
