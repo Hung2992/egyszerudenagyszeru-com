@@ -1465,7 +1465,17 @@ const Admin = () => {
     { key: "settings", label: "Beállítások", icon: Settings },
   ];
 
-  const primaryTabs = tabs.filter((item) => ["products", "orders", "dashboard", "settings"].includes(item.key));
+  // Mobil gyorselérés: a legfontosabb 6 fül – Jogi + Adó kiemelten
+  const primaryTabKeys: Tab[] = ["products", "orders", "tax_invoice", "accounting", "invoice_automation", "settings"];
+  const primaryTabs = primaryTabKeys
+    .map((k) => tabs.find((t) => t.key === k))
+    .filter((t): t is { key: Tab; label: string; icon: any } => Boolean(t));
+
+  const jumpToLegal = () => {
+    setTab("settings");
+    setSettingsSection("legal");
+    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
+  };
 
   // ─── Analytics calculations ───
   const ordersByStatus = orders.reduce((acc, o) => {
