@@ -1530,6 +1530,61 @@ const Admin = () => {
       {/* Tabs */}
       <div className="border-b">
         <div className="mx-auto max-w-6xl space-y-3 px-4 py-3">
+          {/* ⚖️ JOGI + ÁFA MEGA KIEMELT SÁV — minden képernyőn látható */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button
+              onClick={() => setTab("legal_center")}
+              className={`group relative flex items-center justify-between gap-3 border-2 px-4 py-3 text-left transition-all ${
+                tab === "legal_center"
+                  ? "border-accent bg-accent text-accent-foreground"
+                  : "border-foreground bg-foreground text-background hover:bg-accent hover:border-accent hover:text-accent-foreground"
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-10 w-10 shrink-0 flex items-center justify-center border border-current">
+                  <Shield className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.25em] opacity-70">
+                    GDPR · EU · MAGYAR
+                  </div>
+                  <div className="text-sm font-black uppercase tracking-wider truncate">
+                    Jogi Központ
+                  </div>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-widest opacity-80 shrink-0 hidden sm:inline">
+                ÁSZF · GDPR · Cookie · Elállás
+              </span>
+            </button>
+            <button
+              onClick={() => setTab("tax_invoice")}
+              className={`group relative flex items-center justify-between gap-3 border-2 px-4 py-3 text-left transition-all ${
+                tab === "tax_invoice"
+                  ? "border-accent bg-accent text-accent-foreground"
+                  : "border-accent bg-accent/10 text-foreground hover:bg-accent hover:text-accent-foreground"
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-10 w-10 shrink-0 flex items-center justify-center border border-current">
+                  <Receipt className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.25em] opacity-70">
+                    ÁFA · NAV · SZÁMLÁZÁS
+                  </div>
+                  <div className="text-sm font-black uppercase tracking-wider truncate">
+                    Adó &amp; Számla
+                  </div>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-widest opacity-80 shrink-0 hidden sm:inline">
+                27% · AAM · Fordított adózás
+              </span>
+            </button>
+          </div>
+
+
           <div className="grid grid-cols-3 gap-2 sm:hidden">
             {primaryTabs.map(t => (
               <button
