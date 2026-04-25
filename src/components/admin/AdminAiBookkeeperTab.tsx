@@ -72,7 +72,7 @@ const PROMPT_GROUPS: { title: string; icon: any; items: { icon: any; label: stri
       { icon: Boxes, label: "Készletérték", prompt: "Számold ki a teljes készletértéket beszerzési áron és eladási áron. Mely termékek kötnek le legtöbb tőkét?" },
       { icon: TrendingDown, label: "Lassú forgók", prompt: "Mely termékek nem fogytak az utolsó 60 napban? Javaslat akcióra/leértékelésre/kivonásra." },
       { icon: Flame, label: "Kifutó/hiány figyelő", prompt: "Mely termékek 7 napon belül kifogynak az aktuális forgási sebesség alapján? Sürgősségi rendelési lista." },
-      { icon: Truck_Icon as any, label: "Szállítás-arányos profit", prompt: "Mennyi a tényleges profit szállítási költséggel együtt? Mely régiók/súlyok veszteségesek?" },
+      { icon: Printer, label: "Szállítás-arányos profit", prompt: "Mennyi a tényleges profit szállítási költséggel együtt? Mely régiók/súlyok veszteségesek?" },
     ],
   },
   {
