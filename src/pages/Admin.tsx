@@ -1465,6 +1465,8 @@ const Admin = () => {
     { key: "settings", label: "Beállítások", icon: Settings },
   ];
 
+  const primaryTabs = tabs.filter((item) => ["products", "orders", "dashboard", "settings"].includes(item.key));
+
   // ─── Analytics calculations ───
   const ordersByStatus = orders.reduce((acc, o) => {
     acc[o.status] = (acc[o.status] || 0) + 1;
@@ -1515,7 +1517,33 @@ const Admin = () => {
 
       {/* Tabs */}
       <div className="border-b">
-        <div className="mx-auto max-w-6xl px-4">
+        <div className="mx-auto max-w-6xl space-y-3 px-4 py-3">
+          <div className="grid grid-cols-2 gap-2 sm:hidden">
+            {primaryTabs.map(t => (
+              <button
+                key={`primary-${t.key}`}
+                onClick={() => setTab(t.key)}
+                className={`flex min-h-12 items-center justify-center gap-2 border px-3 py-2 text-[11px] font-bold uppercase tracking-wider transition-colors ${
+                  tab === t.key
+                    ? "border-accent bg-accent text-accent-foreground"
+                    : "border-border bg-card text-foreground"
+                }`}
+              >
+                <t.icon className="h-4 w-4 shrink-0" />
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <select
+            value={tab}
+            onChange={(event) => setTab(event.target.value as Tab)}
+            className="flex h-11 w-full border border-input bg-card px-3 text-xs font-bold uppercase tracking-wider text-foreground sm:hidden"
+            aria-label="Admin menü"
+          >
+            {tabs.map(t => (
+              <option key={t.key} value={t.key}>{t.label}</option>
+            ))}
+          </select>
           <div className="flex gap-0 overflow-x-auto">
             {tabs.map(t => (
               <button
