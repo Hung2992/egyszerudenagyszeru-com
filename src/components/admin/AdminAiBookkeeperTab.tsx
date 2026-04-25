@@ -10,6 +10,9 @@ import {
   Banknote, Brain, Loader2, Trash2, Copy, Bot, User as UserIcon, ShieldCheck, Percent,
   FileDown, Calendar, ArrowRightLeft, Hash, BookOpen, Wallet, PiggyBank, Building2,
   ScrollText, Activity, Target, Briefcase, ClipboardList, FileCheck2, Coins,
+  TrendingDown, Zap, Globe, CheckCircle2, XCircle, Timer, BarChart3, Boxes,
+  CalendarClock, FileText, Landmark, Scale, Flame, Award, Gauge, LineChart,
+  Printer, Search, Database,
 } from "lucide-react";
 
 type Msg = { role: "user" | "assistant"; content: string; ts: number };
