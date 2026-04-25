@@ -3311,6 +3311,7 @@ const Admin = () => {
         {tab === "product_scheduling" && <AdminProductSchedulingTab />}
         {tab === "advanced_discounts" && <AdminAdvancedDiscountsTab />}
         {tab === "accounting" && <AdminAccountingTab />}
+        {tab === "ai_bookkeeper" && <AdminAiBookkeeperTab />}
         {tab === "multilang" && <AdminMultilangTab />}
         {tab === "email_templates_custom" && <AdminEmailCenterTab />}
         {tab === "attribution" && <AdminAttributionTab />}
