@@ -127,6 +127,13 @@ const AdminAiBookkeeperTab = () => {
   const [fxAmount, setFxAmount] = useState(""); const [fxRate, setFxRate] = useState("400"); const [fxFrom, setFxFrom] = useState("EUR");
   const [validateInput, setValidateInput] = useState("");
   const [validateType, setValidateType] = useState<"iban" | "tax">("iban");
+  // New tools
+  const [mkCost, setMkCost] = useState(""); const [mkMarginPct, setMkMarginPct] = useState("40");
+  const [wageGross, setWageGross] = useState(""); // bér bruttó
+  const [roiInvest, setRoiInvest] = useState(""); const [roiReturn, setRoiReturn] = useState(""); const [roiMonths, setRoiMonths] = useState("12");
+  const [ossNet, setOssNet] = useState(""); const [ossRate, setOssRate] = useState("21");
+  const [cashBank, setCashBank] = useState(""); const [cashBook, setCashBook] = useState("");
+  const [taxBase, setTaxBase] = useState(""); const [taxRegime, setTaxRegime] = useState<"tao" | "kiva" | "kata">("tao");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Load history
