@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Bot, Send, Loader2, Sparkles, Trash2, ChevronDown, ChevronUp, Copy, Check, Zap, TrendingUp, DollarSign, Package, Truck, BarChart3, Calculator, AlertTriangle, Download, Search, MapPin, Target, ShoppingBag } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
+import { supabase } from "@/integrations/supabase/untyped-client";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -206,11 +207,16 @@ const ProcurementAiChat = () => {
     let assistantSoFar = "";
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error("Nincs bejelentkezve – jelentkezz be admin fiókkal.");
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${accessToken}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
         body: JSON.stringify({ messages: allMessages, mode: "procurement" }),
       });
