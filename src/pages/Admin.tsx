@@ -13,7 +13,7 @@ import {
   Palette, Clock, FileText, SearchIcon, Star, MessageSquare, Gift, ListChecks, Ruler,
   Truck, Bell, AlertTriangle, Receipt, RotateCcw, Zap, Megaphone, Shield, Headphones, Lock, FileDown, CreditCard as CreditCardIcon,
   Link2, MousePointerClick, Globe as GlobeIcon, Wrench, Key, HelpCircle, BarChart3 as BarChart3Icon, Heart, SlidersHorizontal,
-  MonitorSmartphone, Factory, Trophy, Rss, Database, RefreshCw, Globe as Globe2, ShieldCheck, Sparkles, Layers, Wallet, Rocket
+  MonitorSmartphone, Factory, Trophy, Rss, Database, RefreshCw, Globe as Globe2, ShieldCheck, Sparkles, Layers, Wallet, Rocket, Brain
 } from "lucide-react";
 import AdminShippingTab from "@/components/admin/AdminShippingTab";
 import AdminInventoryTab from "@/components/admin/AdminInventoryTab";
