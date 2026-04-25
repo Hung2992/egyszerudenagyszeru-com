@@ -90,6 +90,29 @@ const PROMPT_GROUPS: { title: string; icon: any; items: { icon: any; label: stri
       { icon: ScrollText, label: "GDPR pénzügyi szempont", prompt: "Mely pénzügyi adatok tárolása esik GDPR alá? Mennyi ideig kell megőrizni (8 év szabály)? Audit lista." },
       { icon: Search, label: "Bizonylat-csekklista", prompt: "Magyar számvitel: mely bizonylatok kötelezőek (számla, nyugta, szállítólevél, készletmozgás bizonylat)? Audit kész állapot?" },
     ],
+  {
+    title: "Bér & TB", icon: Briefcase, items: [
+      { icon: Briefcase, label: "Bérköltség kalkulátor", prompt: "Részletes bérköltség: bruttó bér, levonások (SZJA 15%, TB 18,5%), nettó bér, munkáltatói járulék (SZOCHO 13%), TELJES bérköltség. Adj táblázatot." },
+      { icon: Wallet, label: "KATA vs Munkavállaló", prompt: "Hasonlítsd össze a KATA (50.000 Ft/hó), átalányadó és normál munkavállaló jövedelemadó terhelését 500.000 Ft havi jövedelmen." },
+      { icon: ScrollText, label: "Bérpapír sablon", prompt: "Készíts magyar bérpapír sablont: alapbér, pótlékok, levonások (SZJA, TB), nettó kifizetés, kifizetési időpont." },
+      { icon: Award, label: "Cafeteria/SZÉP", prompt: "Mely juttatások adómentesek 2026-ban? SZÉP kártya keretek, sportbérlet, óvodai támogatás, csekkszerű juttatások." },
+    ],
+  },
+  {
+    title: "EU OSS & Nemzetközi", icon: Globe, items: [
+      { icon: Globe, label: "OSS bevallás", prompt: "Készíts EU OSS (One Stop Shop) bevallás összesítőt országonként: nettó forgalom, helyi ÁFA-kulcs, fizetendő ÁFA összege." },
+      { icon: Receipt, label: "EU értékesítési küszöb", prompt: "Mikor lépem át a 10.000 EUR-os EU távértékesítési küszöböt? Mit kell tennem? OSS regisztráció lépései." },
+      { icon: FileText, label: "Intrastat", prompt: "Mikor kell Intrastat jelentést adni? Küszöbértékek 2026-ban (kiszállítás/beérkezés). Mely tételek szerepelnek?" },
+      { icon: Database, label: "VIES ellenőrzés", prompt: "Hogyan ellenőrizzem egy EU partner adószámát VIES rendszerben? Miért fontos a fordított ÁFA miatt?" },
+    ],
+  },
+  {
+    title: "Stratégia & Növekedés", icon: Flame, items: [
+      { icon: TrendingUp, label: "Növekedési terv 12hó", prompt: "Készíts 12 hónapos növekedési pénzügyi tervet: konzervatív/realista/optimista forgatókönyv. Bevétel, profit, cash igény." },
+      { icon: PiggyBank, label: "Tartalékképzés", prompt: "Mennyi tartalékot képezzek? Vésztartalék (3-6 havi költség), adótartalék, beruházási tartalék — pontos összegek." },
+      { icon: Coins, label: "Osztalékpolitika", prompt: "Mennyi osztalékot vehetek ki adóhatékonyan? KIVA/TAO mellett. Számold ki a teljes adóterhet (TAO+osztalékadó+SZOCHO)." },
+      { icon: Activity, label: "Pénzügyi egészség", prompt: "Adj 1-100 közti pénzügyi egészség pontszámot a cégnek. Indokold: likviditás, jövedelmezőség, eladósodás, növekedés. Konkrét lépések." },
+    ],
   },
 ];
 
