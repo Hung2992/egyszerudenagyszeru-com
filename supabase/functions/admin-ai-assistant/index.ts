@@ -53,8 +53,11 @@ Deno.serve(async (req) => {
     const body = await req.json()
     const prompt = typeof body?.prompt === 'string' ? body.prompt.trim() : ''
     const customSystem = typeof body?.system === 'string' ? body.system.trim() : ''
+    const clientSystemMessages = Array.isArray(body?.messages)
+      ? body.messages.filter((m: any) => m?.role === 'system' && typeof m.content === 'string').map((m: any) => m.content.trim()).filter(Boolean)
+      : []
     const messages = Array.isArray(body?.messages)
-      ? body.messages.filter((m: any) => m && typeof m.role === 'string' && typeof m.content === 'string')
+      ? body.messages.filter((m: any) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
       : prompt
         ? [{ role: 'user', content: prompt }]
         : []
@@ -752,7 +755,8 @@ FONTOS: **Konkrét számokkal, táblázatokkal** válaszolj. Adj **3 szintű jav
 
 Mindig magyarul válaszolj. Légy profi, tömör, és adj akcióképes tanácsokat.`
 
-    const finalSystemPrompt = customSystem ? `${systemPrompt}\n\n## SPECIÁLIS UTASÍTÁS\n${customSystem}` : systemPrompt
+    const extraSystem = [customSystem, ...clientSystemMessages].filter(Boolean).join('\n\n')
+    const finalSystemPrompt = extraSystem ? `${systemPrompt}\n\n## SPECIÁLIS UTASÍTÁS\n${extraSystem}` : systemPrompt
 
     const response = await fetch(AI_GATEWAY_URL, {
       method: 'POST',
