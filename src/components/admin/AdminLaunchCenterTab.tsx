@@ -97,11 +97,16 @@ const AdminLaunchCenterTab = () => {
     if (!editing) return;
     setAiLoading(true);
     try {
-      const res = await fetch(`https://meyxhsgnryuupwpddxav.supabase.co/functions/v1/admin-ai-assistant`, {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error("Nincs bejelentkezve – jelentkezz be admin fiókkal.");
+
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-ai-assistant`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          "Authorization": `Bearer ${accessToken}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
         body: JSON.stringify({
           prompt: `Írj 2-3 mondatos, izgalmas, féligazság teaser szöveget egy közelgő termékhez. Termék: "${editing.name}", kategória: "${editing.category}". Kelts kíváncsiságot, ne áruld el a teljes részleteket. Magyarul, közvetlen hangnemben.`,
