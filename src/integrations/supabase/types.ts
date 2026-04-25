@@ -1861,6 +1861,10 @@ export type Database = {
       }
       store_settings: {
         Row: {
+          accounting_auto_invoice: boolean | null
+          accounting_export_format: string | null
+          accounting_invoice_prefix: string | null
+          accounting_vat_rate: number | null
           analytics_custom_body_code: string | null
           analytics_custom_head_code: string | null
           analytics_enabled: boolean | null
@@ -2019,6 +2023,7 @@ export type Database = {
           popup_promo_image_url: string | null
           popup_promo_text: string | null
           popup_promo_title: string | null
+          price_display_mode: string
           privacy_policy: string | null
           procurement_address_city: string | null
           procurement_address_country: string | null
@@ -2050,6 +2055,7 @@ export type Database = {
           return_policy: string | null
           return_reasons: string[] | null
           return_refund_method: string | null
+          reverse_charge_enabled: boolean
           reviews_enabled: boolean | null
           reviews_require_approval: boolean | null
           sender_name: string | null
@@ -2099,9 +2105,18 @@ export type Database = {
           theme_header_height: string | null
           theme_logo_position: string | null
           theme_primary_color: string | null
+          vat_enabled: boolean
+          vat_exempt: boolean
+          vat_exempt_reason: string | null
+          vat_mode: string
+          vat_rate: number
           warranty_info: string | null
         }
         Insert: {
+          accounting_auto_invoice?: boolean | null
+          accounting_export_format?: string | null
+          accounting_invoice_prefix?: string | null
+          accounting_vat_rate?: number | null
           analytics_custom_body_code?: string | null
           analytics_custom_head_code?: string | null
           analytics_enabled?: boolean | null
@@ -2260,6 +2275,7 @@ export type Database = {
           popup_promo_image_url?: string | null
           popup_promo_text?: string | null
           popup_promo_title?: string | null
+          price_display_mode?: string
           privacy_policy?: string | null
           procurement_address_city?: string | null
           procurement_address_country?: string | null
@@ -2291,6 +2307,7 @@ export type Database = {
           return_policy?: string | null
           return_reasons?: string[] | null
           return_refund_method?: string | null
+          reverse_charge_enabled?: boolean
           reviews_enabled?: boolean | null
           reviews_require_approval?: boolean | null
           sender_name?: string | null
@@ -2340,9 +2357,18 @@ export type Database = {
           theme_header_height?: string | null
           theme_logo_position?: string | null
           theme_primary_color?: string | null
+          vat_enabled?: boolean
+          vat_exempt?: boolean
+          vat_exempt_reason?: string | null
+          vat_mode?: string
+          vat_rate?: number
           warranty_info?: string | null
         }
         Update: {
+          accounting_auto_invoice?: boolean | null
+          accounting_export_format?: string | null
+          accounting_invoice_prefix?: string | null
+          accounting_vat_rate?: number | null
           analytics_custom_body_code?: string | null
           analytics_custom_head_code?: string | null
           analytics_enabled?: boolean | null
@@ -2501,6 +2527,7 @@ export type Database = {
           popup_promo_image_url?: string | null
           popup_promo_text?: string | null
           popup_promo_title?: string | null
+          price_display_mode?: string
           privacy_policy?: string | null
           procurement_address_city?: string | null
           procurement_address_country?: string | null
@@ -2532,6 +2559,7 @@ export type Database = {
           return_policy?: string | null
           return_reasons?: string[] | null
           return_refund_method?: string | null
+          reverse_charge_enabled?: boolean
           reviews_enabled?: boolean | null
           reviews_require_approval?: boolean | null
           sender_name?: string | null
@@ -2581,6 +2609,11 @@ export type Database = {
           theme_header_height?: string | null
           theme_logo_position?: string | null
           theme_primary_color?: string | null
+          vat_enabled?: boolean
+          vat_exempt?: boolean
+          vat_exempt_reason?: string | null
+          vat_mode?: string
+          vat_rate?: number
           warranty_info?: string | null
         }
         Relationships: []
