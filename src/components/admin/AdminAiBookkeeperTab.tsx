@@ -635,6 +635,160 @@ KÉRDÉS: ${text}`;
         </div>
       </div>
 
+      {/* Extra Pro Tools - Row 3 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="border-2 border-border bg-background p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Percent className="h-4 w-4 text-accent" />
+            <span className="text-[11px] uppercase tracking-widest font-bold">Árazás (cél árrés)</span>
+          </div>
+          <div className="space-y-2">
+            <Input value={mkCost} onChange={(e) => setMkCost(e.target.value)} placeholder="Önköltség (Ft)" className="rounded-none" />
+            <Input value={mkMarginPct} onChange={(e) => setMkMarginPct(e.target.value)} placeholder="Cél árrés %" className="rounded-none" />
+            {mkCost && mkMarginPct && parseFloat(mkMarginPct) < 100 && (() => {
+              const c = parseFloat(mkCost) || 0;
+              const m = parseFloat(mkMarginPct) || 0;
+              const net = c / (1 - m / 100);
+              const gross = net * (1 + vatRate / 100);
+              return (
+                <div className="text-[10px] border-t border-border pt-2 space-y-0.5">
+                  <div>Nettó eladási ár: <span className="font-bold text-accent">{fmt(net)} Ft</span></div>
+                  <div>Bruttó ({vatRate}%): <span className="font-bold">{fmt(gross)} Ft</span></div>
+                  <div className="text-muted-foreground">Profit/db: {fmt(net - c)} Ft | Markup: {((net / c - 1) * 100).toFixed(1)}%</div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+
+        <div className="border-2 border-border bg-background p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Briefcase className="h-4 w-4 text-accent" />
+            <span className="text-[11px] uppercase tracking-widest font-bold">Bérköltség (HU 2026)</span>
+          </div>
+          <div className="space-y-2">
+            <Input value={wageGross} onChange={(e) => setWageGross(e.target.value)} placeholder="Bruttó bér (Ft)" className="rounded-none" />
+            {wageGross && (() => {
+              const g = parseFloat(wageGross) || 0;
+              const szja = g * 0.15; const tb = g * 0.185;
+              const net = g - szja - tb;
+              const szocho = g * 0.13;
+              const total = g + szocho;
+              return (
+                <div className="text-[10px] border-t border-border pt-2 space-y-0.5">
+                  <div className="text-green-600">Nettó: <span className="font-bold">{fmt(net)} Ft</span></div>
+                  <div className="text-muted-foreground">SZJA 15%: {fmt(szja)} | TB 18,5%: {fmt(tb)}</div>
+                  <div className="text-muted-foreground">SZOCHO 13%: {fmt(szocho)} Ft</div>
+                  <div className="text-orange-600">Teljes munkáltatói: <span className="font-bold">{fmt(total)} Ft</span></div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+
+        <div className="border-2 border-border bg-background p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp className="h-4 w-4 text-accent" />
+            <span className="text-[11px] uppercase tracking-widest font-bold">ROI & megtérülés</span>
+          </div>
+          <div className="space-y-2">
+            <Input value={roiInvest} onChange={(e) => setRoiInvest(e.target.value)} placeholder="Beruházás (Ft)" className="rounded-none" />
+            <div className="grid grid-cols-2 gap-2">
+              <Input value={roiReturn} onChange={(e) => setRoiReturn(e.target.value)} placeholder="Havi haszon" className="rounded-none" />
+              <Input value={roiMonths} onChange={(e) => setRoiMonths(e.target.value)} placeholder="Hónap" className="rounded-none" />
+            </div>
+            {roiInvest && roiReturn && (() => {
+              const i = parseFloat(roiInvest) || 0;
+              const r = parseFloat(roiReturn) || 0;
+              const m = parseFloat(roiMonths) || 12;
+              const totalReturn = r * m;
+              const roi = i > 0 ? ((totalReturn - i) / i) * 100 : 0;
+              const payback = r > 0 ? i / r : 0;
+              return (
+                <div className="text-[10px] border-t border-border pt-2 space-y-0.5">
+                  <div>ROI ({m} hó): <span className={`font-bold ${roi >= 0 ? "text-green-600" : "text-red-600"}`}>{roi.toFixed(1)}%</span></div>
+                  <div>Megtérülés: <span className="font-bold text-accent">{payback.toFixed(1)} hó</span></div>
+                  <div className="text-muted-foreground">Tiszta nyereség: {fmt(totalReturn - i)} Ft</div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+
+        <div className="border-2 border-border bg-background p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Globe className="h-4 w-4 text-accent" />
+            <span className="text-[11px] uppercase tracking-widest font-bold">EU OSS ÁFA</span>
+          </div>
+          <div className="space-y-2">
+            <Input value={ossNet} onChange={(e) => setOssNet(e.target.value)} placeholder="Nettó forgalom (Ft)" className="rounded-none" />
+            <div className="flex gap-1 flex-wrap">
+              {[{c:"DE",r:"19"},{c:"AT",r:"20"},{c:"SK",r:"20"},{c:"RO",r:"19"},{c:"HR",r:"25"},{c:"NL",r:"21"}].map(o => (
+                <button key={o.c} onClick={() => setOssRate(o.r)} className={`text-[10px] px-2 py-1 border ${ossRate === o.r ? "bg-foreground text-background border-foreground" : "border-border"}`}>{o.c} {o.r}%</button>
+              ))}
+            </div>
+            <Input value={ossRate} onChange={(e) => setOssRate(e.target.value)} placeholder="ÁFA %" className="rounded-none" />
+            {ossNet && ossRate && (() => {
+              const n = parseFloat(ossNet) || 0; const r = parseFloat(ossRate) || 0;
+              return (
+                <div className="text-[10px] border-t border-border pt-2 space-y-0.5">
+                  <div>Fizetendő ÁFA: <span className="font-bold text-orange-600">{fmt(n * r / 100)} Ft</span></div>
+                  <div>Bruttó: <span className="font-bold">{fmt(n * (1 + r / 100))} Ft</span></div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+
+        <div className="border-2 border-border bg-background p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Scale className="h-4 w-4 text-accent" />
+            <span className="text-[11px] uppercase tracking-widest font-bold">Pénztár-egyeztetés</span>
+          </div>
+          <div className="space-y-2">
+            <Input value={cashBank} onChange={(e) => setCashBank(e.target.value)} placeholder="Banki egyenleg (Ft)" className="rounded-none" />
+            <Input value={cashBook} onChange={(e) => setCashBook(e.target.value)} placeholder="Könyv szerinti (Ft)" className="rounded-none" />
+            {cashBank && cashBook && (() => {
+              const diff = (parseFloat(cashBank) || 0) - (parseFloat(cashBook) || 0);
+              return (
+                <div className={`text-[10px] border-t border-border pt-2 ${Math.abs(diff) < 1 ? "text-green-600" : "text-red-600"}`}>
+                  {Math.abs(diff) < 1 ? <>✓ EGYEZIK</> : <>Eltérés: <span className="font-bold">{fmt(diff)} Ft</span> {diff > 0 ? "(többlet)" : "(hiány)"}</>}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+
+        <div className="border-2 border-border bg-background p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Landmark className="h-4 w-4 text-accent" />
+            <span className="text-[11px] uppercase tracking-widest font-bold">Társasági adó</span>
+          </div>
+          <div className="space-y-2">
+            <div className="flex gap-1">
+              {(["tao","kiva","kata"] as const).map(t => (
+                <button key={t} onClick={() => setTaxRegime(t)} className={`text-[10px] px-2 py-1 border flex-1 uppercase ${taxRegime === t ? "bg-foreground text-background border-foreground" : "border-border"}`}>{t}</button>
+              ))}
+            </div>
+            <Input value={taxBase} onChange={(e) => setTaxBase(e.target.value)} placeholder={taxRegime === "kata" ? "Hónapok száma" : "Adóalap (Ft)"} className="rounded-none" />
+            {taxBase && (() => {
+              const b = parseFloat(taxBase) || 0;
+              let tax = 0; let label = "";
+              if (taxRegime === "tao") { tax = b * 0.09; label = "TAO 9%"; }
+              else if (taxRegime === "kiva") { tax = b * 0.10; label = "KIVA 10%"; }
+              else { tax = b * 50000; label = "KATA 50.000 Ft/hó"; }
+              return (
+                <div className="text-[10px] border-t border-border pt-2 space-y-0.5">
+                  <div>{label}</div>
+                  <div>Fizetendő adó: <span className="font-bold text-orange-600">{fmt(tax)} Ft</span></div>
+                  {taxRegime !== "kata" && <div className="text-muted-foreground">Marad: {fmt(b - tax)} Ft</div>}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      </div>
+
       <div className="space-y-3">
         <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold flex items-center gap-2">
           <Calculator className="h-3.5 w-3.5" /> Profi munkafolyamatok (kattints — élő adatokkal küldi)
