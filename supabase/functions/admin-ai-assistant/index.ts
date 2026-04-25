@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.104.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     }
 
     const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
+    if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -36,14 +36,16 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     )
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
+    const token = authHeader.replace('Bearer ', '')
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token)
+    const userId = claimsData?.claims?.sub
+    if (claimsError || !userId) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' })
+    const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: userId, _role: 'admin' })
     if (!isAdmin) {
       return new Response(JSON.stringify({ error: 'Admin access required' }), {
         status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
