@@ -120,6 +120,13 @@ const AdminAiBookkeeperTab = () => {
   const [grossInput, setGrossInput] = useState("");
   const [netInput, setNetInput] = useState("");
   const [invoicePreview, setInvoicePreview] = useState<string>("");
+  // Extra tools state
+  const [depAmount, setDepAmount] = useState(""); const [depYears, setDepYears] = useState("5");
+  const [lateAmount, setLateAmount] = useState(""); const [lateDays, setLateDays] = useState("30"); const [lateRate, setLateRate] = useState("13");
+  const [bepFixed, setBepFixed] = useState(""); const [bepPrice, setBepPrice] = useState(""); const [bepCost, setBepCost] = useState("");
+  const [fxAmount, setFxAmount] = useState(""); const [fxRate, setFxRate] = useState("400"); const [fxFrom, setFxFrom] = useState("EUR");
+  const [validateInput, setValidateInput] = useState("");
+  const [validateType, setValidateType] = useState<"iban" | "tax">("iban");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Load history
