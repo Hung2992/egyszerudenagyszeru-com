@@ -662,6 +662,48 @@ export type Database = {
         }
         Relationships: []
       }
+      invoice_settings: {
+        Row: {
+          auto_generate: boolean
+          company_address: string | null
+          company_bank_account: string | null
+          company_name: string | null
+          company_tax_number: string | null
+          created_at: string
+          footer_note: string | null
+          id: string
+          next_number: number
+          prefix: string
+          updated_at: string
+        }
+        Insert: {
+          auto_generate?: boolean
+          company_address?: string | null
+          company_bank_account?: string | null
+          company_name?: string | null
+          company_tax_number?: string | null
+          created_at?: string
+          footer_note?: string | null
+          id?: string
+          next_number?: number
+          prefix?: string
+          updated_at?: string
+        }
+        Update: {
+          auto_generate?: boolean
+          company_address?: string | null
+          company_bank_account?: string | null
+          company_name?: string | null
+          company_tax_number?: string | null
+          created_at?: string
+          footer_note?: string | null
+          id?: string
+          next_number?: number
+          prefix?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           created_at: string
@@ -2678,6 +2720,42 @@ export type Database = {
           id?: string
           metadata?: Json | null
           reason?: string
+        }
+        Relationships: []
+      }
+      tax_rates: {
+        Row: {
+          applies_to: string
+          country: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_default: boolean
+          name: string
+          rate: number
+          updated_at: string
+        }
+        Insert: {
+          applies_to?: string
+          country?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name: string
+          rate?: number
+          updated_at?: string
+        }
+        Update: {
+          applies_to?: string
+          country?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name?: string
+          rate?: number
+          updated_at?: string
         }
         Relationships: []
       }
