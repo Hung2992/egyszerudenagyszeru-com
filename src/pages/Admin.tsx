@@ -1400,6 +1400,7 @@ const Admin = () => {
     { key: "product_scheduling", label: "Ütemezés", icon: Clock },
     { key: "advanced_discounts", label: "Kedvezmények+", icon: Zap },
     { key: "accounting", label: "Könyvelés", icon: Receipt },
+    { key: "ai_bookkeeper", label: "AI Könyvelő", icon: Brain },
     { key: "multilang", label: "Nyelvek", icon: Globe },
     { key: "email_templates_custom", label: "E-mail sablonok", icon: Mail },
     { key: "attribution", label: "Csatornák", icon: MousePointerClick },
