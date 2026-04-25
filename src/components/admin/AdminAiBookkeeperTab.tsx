@@ -59,6 +59,38 @@ const PROMPT_GROUPS: { title: string; icon: any; items: { icon: any; label: stri
       { icon: Coins, label: "Beszállító elemzés", prompt: "Beszállítónkénti összesítés: rendelt mennyiség, átlag költség, megbízhatóság, javaslat váltásra ha van olcsóbb." },
     ],
   },
+  {
+    title: "Likviditás & Pénzügy", icon: Wallet, items: [
+      { icon: Gauge, label: "Working capital", prompt: "Számold ki a forgótőkét: vevőállomány + készlet - szállítóállomány. Adj javaslatot az optimalizálásra." },
+      { icon: Timer, label: "Vevő futamidő (DSO)", prompt: "Számold ki az átlagos vevői futamidőt (Days Sales Outstanding). Mely vevők késnek? Mit tegyek?" },
+      { icon: LineChart, label: "Burn rate / runway", prompt: "Mennyi a havi égés (burn rate)? Hány hónapra elég a likviditás (runway)? Vészforgatókönyv ha 30%-kal esik a bevétel." },
+      { icon: Scale, label: "Mérleg becslés", prompt: "Készíts becsült mérleget: eszközök (forgó+befektetett), források (saját tőke + kötelezettségek). Magyar számviteli sémában." },
+    ],
+  },
+  {
+    title: "Készlet & Logisztika", icon: Boxes, items: [
+      { icon: Boxes, label: "Készletérték", prompt: "Számold ki a teljes készletértéket beszerzési áron és eladási áron. Mely termékek kötnek le legtöbb tőkét?" },
+      { icon: TrendingDown, label: "Lassú forgók", prompt: "Mely termékek nem fogytak az utolsó 60 napban? Javaslat akcióra/leértékelésre/kivonásra." },
+      { icon: Flame, label: "Kifutó/hiány figyelő", prompt: "Mely termékek 7 napon belül kifogynak az aktuális forgási sebesség alapján? Sürgősségi rendelési lista." },
+      { icon: Truck_Icon as any, label: "Szállítás-arányos profit", prompt: "Mennyi a tényleges profit szállítási költséggel együtt? Mely régiók/súlyok veszteségesek?" },
+    ],
+  },
+  {
+    title: "Vevő & Marketing ROI", icon: Award, items: [
+      { icon: Award, label: "Top 10 vevő", prompt: "Top 10 vevő bevétel szerint. Mennyit költöttek, hányszor rendeltek, mikor utoljára? VIP javaslat." },
+      { icon: AlertTriangle, label: "Lemorzsolódás", prompt: "Kik nem rendeltek 60+ napja, pedig korábban gyakori vásárlók voltak? Visszahívási kampány terv." },
+      { icon: BarChart3, label: "Kupon ROI", prompt: "Számold ki az aktív kuponok megtérülését: kedvezmény mértéke vs. plusz bevétel. Mely kuponok rontják a marzsot?" },
+      { icon: Zap, label: "Kosárelhagyás veszteség", prompt: "Becsüld meg a kosárelhagyásból származó elmaradt bevételt és adj 5 azonnali optimalizálási javaslatot." },
+    ],
+  },
+  {
+    title: "Megfelelőség & Audit", icon: ShieldCheck, items: [
+      { icon: Landmark, label: "NAV határidők", prompt: "Listázd a következő 60 nap NAV határidőit (ÁFA, TBJ, SZJA, társasági adó, KIVA, KATA) magyarázattal." },
+      { icon: FileText, label: "Számla-audit", prompt: "Audit: minden teljesített rendeléshez van-e számla? Listázd a hiányzókat. Hol vannak ÁFA-eltérések?" },
+      { icon: ScrollText, label: "GDPR pénzügyi szempont", prompt: "Mely pénzügyi adatok tárolása esik GDPR alá? Mennyi ideig kell megőrizni (8 év szabály)? Audit lista." },
+      { icon: Search, label: "Bizonylat-csekklista", prompt: "Magyar számvitel: mely bizonylatok kötelezőek (számla, nyugta, szállítólevél, készletmozgás bizonylat)? Audit kész állapot?" },
+    ],
+  },
 ];
 
 function rangeFor(p: Period): { from: Date | null; to: Date } {
