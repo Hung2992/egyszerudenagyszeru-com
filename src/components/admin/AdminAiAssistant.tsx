@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Bot, Send, X, Loader2, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
+import { supabase } from "@/integrations/supabase/untyped-client";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -61,11 +62,16 @@ const AdminAiAssistant = () => {
     };
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error("Nincs bejelentkezve – jelentkezz be admin fiókkal.");
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${accessToken}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
         body: JSON.stringify({ messages: allMessages }),
       });
