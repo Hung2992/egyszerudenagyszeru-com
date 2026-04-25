@@ -50,7 +50,22 @@ Deno.serve(async (req) => {
       })
     }
 
-    const { messages, mode } = await req.json()
+    const body = await req.json()
+    const prompt = typeof body?.prompt === 'string' ? body.prompt.trim() : ''
+    const customSystem = typeof body?.system === 'string' ? body.system.trim() : ''
+    const messages = Array.isArray(body?.messages)
+      ? body.messages.filter((m: any) => m && typeof m.role === 'string' && typeof m.content === 'string')
+      : prompt
+        ? [{ role: 'user', content: prompt }]
+        : []
+    const mode = typeof body?.mode === 'string' ? body.mode : undefined
+    const wantsJsonText = Boolean(prompt) && !Array.isArray(body?.messages)
+
+    if (messages.length === 0) {
+      return new Response(JSON.stringify({ error: 'Hiányzó AI üzenet.' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     // Fetch live data
     const [ordersRes, productsRes, procurementRes, settingsRes] = await Promise.all([
@@ -737,6 +752,8 @@ FONTOS: **Konkrét számokkal, táblázatokkal** válaszolj. Adj **3 szintű jav
 
 Mindig magyarul válaszolj. Légy profi, tömör, és adj akcióképes tanácsokat.`
 
+    const finalSystemPrompt = customSystem ? `${systemPrompt}\n\n## SPECIÁLIS UTASÍTÁS\n${customSystem}` : systemPrompt
+
     const response = await fetch(AI_GATEWAY_URL, {
       method: 'POST',
       headers: {
@@ -746,10 +763,10 @@ Mindig magyarul válaszolj. Légy profi, tömör, és adj akcióképes tanácsok
       body: JSON.stringify({
         model: 'google/gemini-3-flash-preview',
         messages: [
-          { role: 'system', content: systemPrompt },
+          { role: 'system', content: finalSystemPrompt },
           ...messages,
         ],
-        stream: true,
+        stream: !wantsJsonText,
       }),
     })
 
@@ -768,6 +785,14 @@ Mindig magyarul válaszolj. Légy profi, tömör, és adj akcióképes tanácsok
       console.error('AI gateway error:', response.status, t)
       return new Response(JSON.stringify({ error: 'AI hiba' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (wantsJsonText) {
+      const data = await response.json()
+      const text = data?.choices?.[0]?.message?.content || ''
+      return new Response(JSON.stringify({ text }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
