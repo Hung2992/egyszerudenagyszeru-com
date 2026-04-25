@@ -118,6 +118,7 @@ import AdminMarginManagementTab from "@/components/admin/AdminMarginManagementTa
 import AdminSatisfactionAutomationTab from "@/components/admin/AdminSatisfactionAutomationTab";
 import AdminRemarketingAutomationTab from "@/components/admin/AdminRemarketingAutomationTab";
 import AdminInstallmentPaymentTab from "@/components/admin/AdminInstallmentPaymentTab";
+import AdminLegalCenterTab from "@/components/admin/AdminLegalCenterTab";
 import AdminProductRankingTab from "@/components/admin/AdminProductRankingTab";
 import AdminAiProductTaggingTab from "@/components/admin/AdminAiProductTaggingTab";
 import AdminShippingCostRulesTab from "@/components/admin/AdminShippingCostRulesTab";
