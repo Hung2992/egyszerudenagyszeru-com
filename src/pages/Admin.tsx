@@ -1470,7 +1470,7 @@ const Admin = () => {
   ];
 
   // Mobil gyorselérés: a legfontosabb fülek – Jogi + Adó kiemelten
-  const primaryTabKeys: Tab[] = ["products", "orders", "legal_center", "tax_invoice", "accounting", "settings"];
+  const primaryTabKeys: Tab[] = ["products", "orders", "ai_bookkeeper", "legal_center", "tax_invoice", "accounting", "settings"];
   const primaryTabs = primaryTabKeys
     .map((k) => tabs.find((t) => t.key === k))
     .filter((t): t is { key: Tab; label: string; icon: any } => Boolean(t));
