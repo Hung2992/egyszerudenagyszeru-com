@@ -16,7 +16,9 @@ import {
   GitBranch, User, Flame as TrendIcon, Languages, MessageCircle,
   Newspaper, BarChart3, Palette,
   Camera, Recycle, Mic, MessagesSquare, Tag, BookOpen, Radio, ShieldCheck,
+  Film,
 } from "lucide-react";
+import AdminVideoEditor from "./AdminVideoEditor";
 
 // ============================================================
 // PLATFORM CONFIG (egy platformra szabva)
