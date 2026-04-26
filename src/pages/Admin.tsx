@@ -1726,22 +1726,6 @@ const Admin = () => {
               <option key={t.key} value={t.key}>{t.label}</option>
             ))}
           </select>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-9">
-            {marketingStudioTabs.map(t => (
-              <button
-                key={`marketing-${t.key}`}
-                onClick={() => { setMarketingStudioTab(t.key); setTab("ai_marketing_studio"); }}
-                className={`flex min-h-12 flex-col items-center justify-center gap-1 border px-2 py-2 text-[10px] font-black uppercase tracking-wider leading-tight text-center transition-colors ${
-                  (tab === "ai_marketing_studio" && marketingStudioTab === t.key) || tab === t.key
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-primary/40 bg-card text-foreground hover:bg-primary hover:text-primary-foreground"
-                }`}
-              >
-                <t.icon className="h-4 w-4 shrink-0" />
-                <span className="line-clamp-2">{t.label.replace(" Stúdió", "")}</span>
-              </button>
-            ))}
-          </div>
           <div className="flex gap-0 overflow-x-auto">
             {visibleTabs.map(t => (
               <button
