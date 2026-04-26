@@ -99,6 +99,17 @@ const AdminPlatformStudio = ({ platform }: Props) => {
   const [crisisOutput, setCrisisOutput] = useState<string>("");
   const [abTestOutput, setAbTestOutput] = useState<string>("");
   const [landingOutput, setLandingOutput] = useState<string>("");
+  const [funnelOutput, setFunnelOutput] = useState<string>("");
+  const [bioOutput, setBioOutput] = useState<string>("");
+  const [trendOutput, setTrendOutput] = useState<string>("");
+  const [translateInput, setTranslateInput] = useState<string>("");
+  const [translateLang, setTranslateLang] = useState<string>("angol");
+  const [translateOutput, setTranslateOutput] = useState<string>("");
+  const [chatbotOutput, setChatbotOutput] = useState<string>("");
+  const [pressOutput, setPressOutput] = useState<string>("");
+  const [analyticsInput, setAnalyticsInput] = useState<string>("");
+  const [analyticsOutput, setAnalyticsOutput] = useState<string>("");
+  const [moodboardOutput, setMoodboardOutput] = useState<string>("");
 
   // States
   const [loadingPost, setLoadingPost] = useState(false);
@@ -117,6 +128,14 @@ const AdminPlatformStudio = ({ platform }: Props) => {
   const [loadingCrisis, setLoadingCrisis] = useState(false);
   const [loadingAbTest, setLoadingAbTest] = useState(false);
   const [loadingLanding, setLoadingLanding] = useState(false);
+  const [loadingFunnel, setLoadingFunnel] = useState(false);
+  const [loadingBio, setLoadingBio] = useState(false);
+  const [loadingTrend, setLoadingTrend] = useState(false);
+  const [loadingTranslate, setLoadingTranslate] = useState(false);
+  const [loadingChatbot, setLoadingChatbot] = useState(false);
+  const [loadingPress, setLoadingPress] = useState(false);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  const [loadingMoodboard, setLoadingMoodboard] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
