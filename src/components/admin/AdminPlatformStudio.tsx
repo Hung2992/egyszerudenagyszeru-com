@@ -1893,6 +1893,11 @@ KÖTELEZŐ KIMENET:
           <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={complianceOutput} onChange={(e) => setComplianceOutput(e.target.value)} placeholder="Kockázat szint, részletes vizsgálat, javított copy, hivatkozások, max bírság, checklist..." />
           {complianceOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(complianceOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
         </TabsContent>
+
+        {/* VIDEO EDITOR */}
+        <TabsContent value="videoeditor" className="space-y-3">
+          <AdminVideoEditor platformLabel={platform.label} defaultAspect={platform.imageAspect} />
+        </TabsContent>
       </Tabs>
 
       {/* HISTORY */}
