@@ -127,6 +127,18 @@ const AdminPlatformStudio = ({ platform }: Props) => {
   const [liveOutput, setLiveOutput] = useState<string>("");
   const [complianceInput, setComplianceInput] = useState<string>("");
   const [complianceOutput, setComplianceOutput] = useState<string>("");
+  // ===== AD-FOCUSED OUTPUTS =====
+  const [adVaultOutput, setAdVaultOutput] = useState<string>("");
+  const [creativeBriefOutput, setCreativeBriefOutput] = useState<string>("");
+  const [audienceOutput, setAudienceOutput] = useState<string>("");
+  const [retargetOutput, setRetargetOutput] = useState<string>("");
+  const [pixelOutput, setPixelOutput] = useState<string>("");
+  const [budgetInput, setBudgetInput] = useState<string>("");
+  const [budgetOutput, setBudgetOutput] = useState<string>("");
+  const [adComplianceInput, setAdComplianceInput] = useState<string>("");
+  const [adComplianceOutput, setAdComplianceOutput] = useState<string>("");
+  const [adSpyInput, setAdSpyInput] = useState<string>("");
+  const [adSpyOutput, setAdSpyOutput] = useState<string>("");
 
   // States
   const [loadingPost, setLoadingPost] = useState(false);
