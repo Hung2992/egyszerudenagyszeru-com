@@ -12,6 +12,7 @@ import {
   Image as ImageIcon, Video, FileText, Megaphone, Download,
   Send, RefreshCw, Save, Flame, Users, Trash2, Hash, Mail,
   Calendar, Eye, Layers, Zap, Upload, Scissors, TrendingUp,
+  DollarSign, Search, UserCheck, AlertTriangle, FlaskConical, LayoutTemplate,
 } from "lucide-react";
 
 // ============================================================
@@ -91,6 +92,13 @@ const AdminPlatformStudio = ({ platform }: Props) => {
   const [editPrompt, setEditPrompt] = useState<string>("");
   const [editSourceB64, setEditSourceB64] = useState<string>("");
   const [editedB64, setEditedB64] = useState<string>("");
+  const [adsOutput, setAdsOutput] = useState<string>("");
+  const [seoOutput, setSeoOutput] = useState<string>("");
+  const [influencerOutput, setInfluencerOutput] = useState<string>("");
+  const [crisisInput, setCrisisInput] = useState<string>("");
+  const [crisisOutput, setCrisisOutput] = useState<string>("");
+  const [abTestOutput, setAbTestOutput] = useState<string>("");
+  const [landingOutput, setLandingOutput] = useState<string>("");
 
   // States
   const [loadingPost, setLoadingPost] = useState(false);
@@ -103,6 +111,12 @@ const AdminPlatformStudio = ({ platform }: Props) => {
   const [loadingCalendar, setLoadingCalendar] = useState(false);
   const [loadingCompetitor, setLoadingCompetitor] = useState(false);
   const [loadingEdit, setLoadingEdit] = useState(false);
+  const [loadingAds, setLoadingAds] = useState(false);
+  const [loadingSeo, setLoadingSeo] = useState(false);
+  const [loadingInfluencer, setLoadingInfluencer] = useState(false);
+  const [loadingCrisis, setLoadingCrisis] = useState(false);
+  const [loadingAbTest, setLoadingAbTest] = useState(false);
+  const [loadingLanding, setLoadingLanding] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -647,6 +661,179 @@ KÖTELEZŐ KIMENET:
     finally { setLoadingEdit(false); }
   };
 
+  // ============== ADS – TELJES HIRDETÉSI KAMPÁNY ==============
+  const generateAds = () => runTool(setLoadingAds, setAdsOutput,
+    `Te a világ legjobb ${platform.label} performance marketing szakértője vagy. Magyar piacra dolgozol, ROAS-ra optimalizálsz.
+KÖTELEZŐ KIMENET – TELJES HIRDETÉSI KAMPÁNY:
+
+🎯 KAMPÁNY STRUKTÚRA (3 ad set):
+- COLD audience (nincs interakció) – targeting + budget %
+- WARM audience (engagement, video view) – retargeting
+- HOT audience (cart abandoner, vásárló) – LTV növelés
+
+💰 BUDGET JAVASLAT (napi/havi, magyar piac CPM-mel)
+📊 BIDDING STRATÉGIA (manual/auto, cap ajánlás)
+🎨 5 DB AD CREATIVE VARIÁNS (headline + primary text + description + CTA gomb)
+🖼️ KÉPI/VIDEO BRIEF mindegyikhez (mit mutasson)
+🎯 INTEREST + LOOKALIKE TARGETING (konkrét magyar érdeklődések)
+📈 ELVÁRT KPI-k (CTR, CPC, CPA, ROAS magyar benchmark)
+🚦 KILL CRITERIA (mikor állítsd le – konkrét számokkal)
+🔄 SKÁLÁZÁS LÉPÉSEI (mikor és mennyivel emeld a budget-et)
+⚠️ POLICY VESZÉLYEK (mit ne írj, hogy ne tiltsák le)`,
+    `Generálj teljes ${platform.label} hirdetési kampánytervet.\n\n${buildContext()}`);
+
+  // ============== SEO / KULCSSZÓ ==============
+  const generateSeo = () => runTool(setLoadingSeo, setSeoOutput,
+    `Te a világ legjobb magyar SEO + ${platform.label} discovery optimalizációs szakértője vagy.
+KÖTELEZŐ KIMENET:
+
+🔍 KULCSSZÓ KUTATÁS (magyar piac):
+- 10 db PRIMARY kulcsszó (high volume, magas szándék)
+- 15 db LONG-TAIL kulcsszó (alacsonyabb verseny, konkrét szándék)
+- 10 db KÉRDÉS-alapú kulcsszó ("hogyan", "mi a", "melyik")
+- 5 db LOKÁLIS kulcsszó ("budapest", "magyar")
+
+📊 SEARCH VOLUME BECSLÉS magyar piacra (havi keresések)
+🎯 NEHÉZSÉG (KD 1-100)
+
+📝 SEO-OPTIMALIZÁLT META:
+- Title (max 60 kar) – 3 variáns
+- Description (max 160 kar) – 3 variáns
+- URL slug javaslat
+- H1, H2-k (struktúra)
+
+🏷️ ${platform.label} DISCOVERY OPTIMALIZÁCIÓ:
+- Bio/about kulcsszavak
+- Caption SEO trükkök
+- Alt text javaslat képhez
+- Schema markup ha releváns
+
+🔗 BELSŐ LINK + BACKLINK stratégia ötletek`,
+    `Generálj SEO + discovery stratégiát.\n\n${buildContext()}`);
+
+  // ============== INFLUENCER STRATÉGIA ==============
+  const generateInfluencer = () => runTool(setLoadingInfluencer, setInfluencerOutput,
+    `Te a világ legjobb magyar influencer marketing stratégája vagy. ${platform.label}-ra fókuszálsz.
+KÖTELEZŐ KIMENET:
+
+👥 IDEÁLIS INFLUENCER PROFIL:
+- Méret kategória (nano 1-10k / micro 10-100k / mid 100k-500k / makro 500k+)
+- Niche / témakör (3-5 javaslat)
+- Demográfia egyezés a célközönséggel
+- Engagement rate elvárás (% magyar piacon)
+
+🎯 5 KONKRÉT MAGYAR INFLUENCER TÍPUS akit keress (név javaslatok ha tudsz)
+💰 ÁRAZÁS BENCHMARK (HUF, post / story / reel / hosszú videó)
+
+📧 OUTREACH EMAIL TEMPLATE (3 verzió: cold, warm, barter)
+📋 BRIEF DOKUMENTUM mit küldj az influencernek:
+- Cél, üzenet, do's & don'ts
+- Hashtag, mention követelmények
+- Kötelező disclosure (#hirdetés #pr)
+- Deliverable lista
+- Engedélyek (whitelist, repost jog)
+
+📊 KPI MÉRÉS (UTM, kód, link, attribúció)
+⚖️ SZERZŐDÉS KULCSPONTOK (magyar jog szerint)
+🚀 SKÁLÁZÁS – hogyan építs influencer hadsereget`,
+    `Generálj influencer marketing stratégiát.\n\n${buildContext()}`);
+
+  // ============== A/B TESZT GENERÁTOR ==============
+  const generateAbTest = () => runTool(setLoadingAbTest, setAbTestOutput,
+    `Te a világ legjobb conversion rate optimization (CRO) szakértője vagy. ${platform.label}-ra A/B teszt terveket gyártasz.
+KÖTELEZŐ KIMENET:
+
+🧪 5 KONKRÉT A/B TESZT JAVASLAT (priorizálva ICE score-ral: Impact, Confidence, Ease 1-10):
+
+Mindegyikhez:
+- 🎯 Hipotézis ("Ha [X], akkor [Y], mert [Z]")
+- 🅰️ A variáns (kontroll – mai)
+- 🅱️ B variáns (új – mit változtatunk PONTOSAN)
+- 📊 Mit mérünk (primary metric + guard rail)
+- 📐 Minta méret (kb. hány konverzió kell hogy szignifikáns legyen)
+- ⏱️ Tesztelési idő (nap)
+- 🎲 Várt lift (%)
+
+🔝 PRIORITÁS SORREND (ICE score alapján)
+📋 IMPLEMENTÁCIÓ check-lista
+⚠️ STATISZTIKAI HIBÁK amiket kerülj (peeking, p-hacking)
+🏆 NYERTES VARIÁNS publikálási checklist`,
+    `Generálj A/B teszt terveket.\n\n${buildContext()}`);
+
+  // ============== LANDING PAGE COPY ==============
+  const generateLanding = () => runTool(setLoadingLanding, setLandingOutput,
+    `Te a világ legjobb magyar landing page / sales page copywriter vagy (Eugene Schwartz + Joanna Wiebe szint).
+KÖTELEZŐ KIMENET – TELJES LANDING PAGE COPY:
+
+1️⃣ HERO SECTION
+- Headline (BIG promise, max 10 szó)
+- Sub-headline (mit, kinek, miért)
+- CTA gomb szöveg (3 variáns)
+- Hero kép/video brief
+
+2️⃣ PROBLEM / AGITATION (3-4 bullet, fájdalompontok)
+
+3️⃣ SOLUTION REVEAL (a termék mint hős)
+
+4️⃣ FEATURES → BENEFITS táblázat
+- Feature | Benefit | Érzelmi haszon
+
+5️⃣ SOCIAL PROOF
+- 3 db testimonial sablon (név, kép leírás, idézet)
+- Számok ("1247 boldog vásárló")
+- Logók/médiumok
+
+6️⃣ HOW IT WORKS (3 lépés)
+
+7️⃣ PRICING & GARANCIA
+- Ár anchor (áthúzott eredeti ár)
+- Csomagok (3 tier ha van)
+- Pénzvisszafizetési garancia szöveg
+
+8️⃣ FAQ (8 kérdés-válasz, valós kifogásokra)
+
+9️⃣ FINAL CTA + URGENCY (limitált / fogyóban)
+
+🔟 P.S. (mint az emailben – emlékeztetés)
+
+➕ MOBIL OPTIMALIZÁLÁSI TIPPEK
+➕ KONVERZIÓS ELEMEK (sticky CTA, exit intent popup szöveg)`,
+    `Generálj teljes landing page copy-t.\n\n${buildContext()}`);
+
+  // ============== KRÍZIS / NEGATÍV KOMMENT KEZELÉS ==============
+  const generateCrisisResponse = async () => {
+    if (!crisisInput.trim()) {
+      toast({ title: "Add meg a problémát/negatív kommentet", variant: "destructive" });
+      return;
+    }
+    setLoadingCrisis(true); setCrisisOutput("");
+    try {
+      await streamAi(
+        `Te egy keményvonalas magyar PR és crisis management szakértő vagy. ${platform.label}-ra optimalizálsz.
+KÖTELEZŐ KIMENET:
+
+🚨 KOMMENT/HELYZET ELEMZÉS (1 mondat – mi történt valójában)
+🌡️ SÚLYOSSÁG (1-10) + indoklás
+⏰ REAKCIÓIDŐ (mikor kell válaszolni – óra)
+
+💬 3 VÁLASZ VARIÁNS:
+- 😌 EMPATIKUS verzió (érzelmek elismerése)
+- 💼 PROFESSZIONÁLIS verzió (tényszerű, megoldás-fókuszú)
+- 🤝 AKCIÓ verzió (konkrét lépés + privát üzenet)
+
+🚫 MIT NE CSINÁLJ (3 hiba amit mindenki elkövet)
+🔒 PRIVÁT/PUBLIKUS döntés (publikus válasz vs DM)
+📞 ESZKALÁCIÓ – mikor küldd tovább (jogász, ügyfélszolgálat)
+📊 UTÓKÖVETÉS – mit mérj 24/72 órán belül
+🛡️ MEGELŐZÉS – hogyan kerüld el legközelebb`,
+        `Negatív komment / krízis: ${crisisInput}\n\nKontextus:\n${buildContext()}`,
+        setCrisisOutput,
+        "post",
+      );
+    } catch (e: any) { toast({ title: "Hiba", description: e.message, variant: "destructive" }); }
+    finally { setLoadingCrisis(false); }
+  };
+
   const copy = (txt: string) => {
     navigator.clipboard.writeText(txt);
     toast({ title: "Vágólapra másolva" });
@@ -763,7 +950,7 @@ KÖTELEZŐ KIMENET:
 
       {/* TOOLS */}
       <Tabs defaultValue="post" className="space-y-4">
-        <TabsList className="rounded-none w-full grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 h-auto">
+        <TabsList className="rounded-none w-full grid grid-cols-3 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-16 h-auto">
           <TabsTrigger value="post" className="rounded-none uppercase text-[10px] py-2"><FileText className="h-3 w-3 mr-1" />Poszt</TabsTrigger>
           <TabsTrigger value="image" className="rounded-none uppercase text-[10px] py-2"><ImageIcon className="h-3 w-3 mr-1" />AI kép</TabsTrigger>
           <TabsTrigger value="edit" className="rounded-none uppercase text-[10px] py-2"><Scissors className="h-3 w-3 mr-1" />Kép-szerk.</TabsTrigger>
@@ -774,6 +961,12 @@ KÖTELEZŐ KIMENET:
           <TabsTrigger value="email" className="rounded-none uppercase text-[10px] py-2"><Mail className="h-3 w-3 mr-1" />Email/DM</TabsTrigger>
           <TabsTrigger value="calendar" className="rounded-none uppercase text-[10px] py-2"><Calendar className="h-3 w-3 mr-1" />30 nap</TabsTrigger>
           <TabsTrigger value="competitor" className="rounded-none uppercase text-[10px] py-2"><Eye className="h-3 w-3 mr-1" />Spy</TabsTrigger>
+          <TabsTrigger value="ads" className="rounded-none uppercase text-[10px] py-2"><DollarSign className="h-3 w-3 mr-1" />Ads</TabsTrigger>
+          <TabsTrigger value="seo" className="rounded-none uppercase text-[10px] py-2"><Search className="h-3 w-3 mr-1" />SEO</TabsTrigger>
+          <TabsTrigger value="influencer" className="rounded-none uppercase text-[10px] py-2"><UserCheck className="h-3 w-3 mr-1" />Influencer</TabsTrigger>
+          <TabsTrigger value="abtest" className="rounded-none uppercase text-[10px] py-2"><FlaskConical className="h-3 w-3 mr-1" />A/B</TabsTrigger>
+          <TabsTrigger value="landing" className="rounded-none uppercase text-[10px] py-2"><LayoutTemplate className="h-3 w-3 mr-1" />Landing</TabsTrigger>
+          <TabsTrigger value="crisis" className="rounded-none uppercase text-[10px] py-2"><AlertTriangle className="h-3 w-3 mr-1" />Krízis</TabsTrigger>
         </TabsList>
 
         {/* POST */}
@@ -965,6 +1158,88 @@ KÖTELEZŐ KIMENET:
             value={competitorOutput} onChange={(e) => setCompetitorOutput(e.target.value)}
             placeholder="Pozícionálás, erősségek, gyengeségek, támadási vektorok..." />
           {competitorOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(competitorOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* ADS */}
+        <TabsContent value="ads" className="space-y-3">
+          <Button onClick={generateAds} disabled={loadingAds}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingAds ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <DollarSign className="h-4 w-4 mr-2" />}
+            {loadingAds ? "Kampány..." : `Teljes ${platform.label} hirdetési kampányterv`}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs"
+            value={adsOutput} onChange={(e) => setAdsOutput(e.target.value)}
+            placeholder="Cold/Warm/Hot ad set, budget, bidding, 5 creative, KPI, kill criteria..." />
+          {adsOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(adsOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* SEO */}
+        <TabsContent value="seo" className="space-y-3">
+          <Button onClick={generateSeo} disabled={loadingSeo}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingSeo ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
+            {loadingSeo ? "SEO kutatás..." : "SEO + kulcsszó + meta + discovery"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs"
+            value={seoOutput} onChange={(e) => setSeoOutput(e.target.value)}
+            placeholder="Primary/long-tail/kérdés/lokális kulcsszavak, meta title/description, slug..." />
+          {seoOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(seoOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* INFLUENCER */}
+        <TabsContent value="influencer" className="space-y-3">
+          <Button onClick={generateInfluencer} disabled={loadingInfluencer}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingInfluencer ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <UserCheck className="h-4 w-4 mr-2" />}
+            {loadingInfluencer ? "Influencer terv..." : "Influencer stratégia + outreach"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs"
+            value={influencerOutput} onChange={(e) => setInfluencerOutput(e.target.value)}
+            placeholder="Influencer profil, árazás, outreach email, brief, KPI..." />
+          {influencerOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(influencerOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* A/B TEST */}
+        <TabsContent value="abtest" className="space-y-3">
+          <Button onClick={generateAbTest} disabled={loadingAbTest}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingAbTest ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FlaskConical className="h-4 w-4 mr-2" />}
+            {loadingAbTest ? "A/B tervek..." : "5 A/B teszt javaslat ICE score-ral"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs"
+            value={abTestOutput} onChange={(e) => setAbTestOutput(e.target.value)}
+            placeholder="Hipotézis, A/B variánsok, minta méret, várt lift..." />
+          {abTestOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(abTestOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* LANDING PAGE */}
+        <TabsContent value="landing" className="space-y-3">
+          <Button onClick={generateLanding} disabled={loadingLanding}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingLanding ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <LayoutTemplate className="h-4 w-4 mr-2" />}
+            {loadingLanding ? "Landing copy..." : "Teljes landing page sales copy"}
+          </Button>
+          <Textarea className="rounded-none min-h-[600px] font-mono text-xs"
+            value={landingOutput} onChange={(e) => setLandingOutput(e.target.value)}
+            placeholder="Hero, problem, solution, features→benefits, social proof, FAQ, CTA..." />
+          {landingOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(landingOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* CRISIS */}
+        <TabsContent value="crisis" className="space-y-3">
+          <Label className="text-xs uppercase">Negatív komment / krízis helyzet leírása</Label>
+          <Textarea className="rounded-none min-h-[100px]"
+            value={crisisInput} onChange={(e) => setCrisisInput(e.target.value)}
+            placeholder="pl. 'Egy vásárló a komment szekcióban azt írja, hogy 3 hete vár a csomagra és átverésnek érzi...'" />
+          <Button onClick={generateCrisisResponse} disabled={loadingCrisis}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingCrisis ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <AlertTriangle className="h-4 w-4 mr-2" />}
+            {loadingCrisis ? "Krízis válasz..." : "PR krízis kezelés – 3 válasz variáns"}
+          </Button>
+          <Textarea className="rounded-none min-h-[400px] font-mono text-xs"
+            value={crisisOutput} onChange={(e) => setCrisisOutput(e.target.value)}
+            placeholder="Súlyosság, reakcióidő, 3 válasz variáns, eszkaláció..." />
+          {crisisOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(crisisOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
         </TabsContent>
       </Tabs>
 
