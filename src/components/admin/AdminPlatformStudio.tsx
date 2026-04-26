@@ -762,17 +762,17 @@ KÖTELEZŐ KIMENET:
       </div>
 
       {/* TOOLS */}
-      <Tabs defaultValue="post" className="space-y-4">
-        <TabsList className="rounded-none w-full grid grid-cols-3 h-auto">
-          <TabsTrigger value="post" className="rounded-none uppercase text-xs py-3">
-            <FileText className="h-3.5 w-3.5 mr-1" /> Poszt szöveg
-          </TabsTrigger>
-          <TabsTrigger value="image" className="rounded-none uppercase text-xs py-3">
-            <ImageIcon className="h-3.5 w-3.5 mr-1" /> AI kép
-          </TabsTrigger>
-          <TabsTrigger value="video" className="rounded-none uppercase text-xs py-3">
-            <Video className="h-3.5 w-3.5 mr-1" /> Videó script
-          </TabsTrigger>
+        <TabsList className="rounded-none w-full grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 h-auto">
+          <TabsTrigger value="post" className="rounded-none uppercase text-[10px] py-2"><FileText className="h-3 w-3 mr-1" />Poszt</TabsTrigger>
+          <TabsTrigger value="image" className="rounded-none uppercase text-[10px] py-2"><ImageIcon className="h-3 w-3 mr-1" />AI kép</TabsTrigger>
+          <TabsTrigger value="edit" className="rounded-none uppercase text-[10px] py-2"><Scissors className="h-3 w-3 mr-1" />Kép-szerk.</TabsTrigger>
+          <TabsTrigger value="video" className="rounded-none uppercase text-[10px] py-2"><Video className="h-3 w-3 mr-1" />Videó</TabsTrigger>
+          <TabsTrigger value="hooks" className="rounded-none uppercase text-[10px] py-2"><Zap className="h-3 w-3 mr-1" />Hook×10</TabsTrigger>
+          <TabsTrigger value="carousel" className="rounded-none uppercase text-[10px] py-2"><Layers className="h-3 w-3 mr-1" />Carousel</TabsTrigger>
+          <TabsTrigger value="hashtags" className="rounded-none uppercase text-[10px] py-2"><Hash className="h-3 w-3 mr-1" />Hashtag</TabsTrigger>
+          <TabsTrigger value="email" className="rounded-none uppercase text-[10px] py-2"><Mail className="h-3 w-3 mr-1" />Email/DM</TabsTrigger>
+          <TabsTrigger value="calendar" className="rounded-none uppercase text-[10px] py-2"><Calendar className="h-3 w-3 mr-1" />30 nap</TabsTrigger>
+          <TabsTrigger value="competitor" className="rounded-none uppercase text-[10px] py-2"><Eye className="h-3 w-3 mr-1" />Spy</TabsTrigger>
         </TabsList>
 
         {/* POST */}
