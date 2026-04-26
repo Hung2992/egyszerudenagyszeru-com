@@ -12,6 +12,7 @@ import {
   Image as ImageIcon, Video, FileText, Megaphone, Download,
   Send, RefreshCw, Save, Flame, Users, Trash2, Hash, Mail,
   Calendar, Eye, Layers, Zap, Upload, Scissors, TrendingUp,
+  DollarSign, Search, UserCheck, AlertTriangle, FlaskConical, LayoutTemplate,
 } from "lucide-react";
 
 // ============================================================
