@@ -1538,6 +1538,22 @@ const Admin = () => {
     (u.city || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const renderMarketingStudio = () => {
+    switch (marketingStudioTab) {
+      case "ig_studio": return <AdminInstagramStudioTab />;
+      case "tt_studio": return <AdminTiktokStudioTab />;
+      case "yt_studio": return <AdminYoutubeStudioTab />;
+      case "yts_studio": return <AdminYoutubeShortsStudioTab />;
+      case "gads_studio": return <AdminGoogleAdsStudioTab />;
+      case "pin_studio": return <AdminPinterestStudioTab />;
+      case "li_studio": return <AdminLinkedinStudioTab />;
+      case "x_studio": return <AdminTwitterStudioTab />;
+      case "fb_studio":
+      default:
+        return <AdminFacebookStudioTab />;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
