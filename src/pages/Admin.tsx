@@ -1561,6 +1561,31 @@ const Admin = () => {
           {/* ⚖️ JOGI + ÁFA MEGA KIEMELT SÁV — minden képernyőn látható */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <button
+              onClick={() => setTab("fb_studio")}
+              className={`group relative flex items-center justify-between gap-3 border-2 px-4 py-3 text-left transition-all sm:col-span-2 ${
+                tab === "ai_marketing_studio" || marketingStudioKeys.includes(tab)
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-primary bg-primary/10 text-foreground hover:bg-primary hover:text-primary-foreground"
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-10 w-10 shrink-0 flex items-center justify-center border border-current">
+                  <Brain className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.25em] opacity-70">
+                    AI · REKLÁM · VIDEÓ EDITOR
+                  </div>
+                  <div className="text-sm font-black uppercase tracking-wider truncate">
+                    AI Marketing Stúdió — 40 eszköz/platform
+                  </div>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-widest opacity-80 shrink-0 hidden sm:inline">
+                Facebook · Instagram · TikTok · Google Ads
+              </span>
+            </button>
+            <button
               onClick={() => setTab("legal_center")}
               className={`group relative flex items-center justify-between gap-3 border-2 px-4 py-3 text-left transition-all ${
                 tab === "legal_center"
