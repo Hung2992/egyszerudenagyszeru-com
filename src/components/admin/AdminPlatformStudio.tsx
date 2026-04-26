@@ -17,6 +17,7 @@ import {
   Newspaper, BarChart3, Palette,
   Camera, Recycle, Mic, MessagesSquare, Tag, BookOpen, Radio, ShieldCheck,
   Film,
+  Vault, ClipboardList, Crosshair, Repeat, Activity, Wallet, ScanLine, Telescope,
 } from "lucide-react";
 import AdminVideoEditor from "./AdminVideoEditor";
 
