@@ -3337,7 +3337,7 @@ const Admin = () => {
         {tab === "returns" && <AdminReturnsTab />}
         {tab === "dynamic_pricing" && <AdminDynamicPricingTab />}
         {tab === "marketing" && <AdminMarketingTab />}
-        {tab === "ai_marketing_studio" && <AdminAiMarketingStudioTab />}
+        {tab === "ai_marketing_studio" && <AdminFacebookStudioTab />}
         {tab === "fb_studio" && <AdminFacebookStudioTab />}
         {tab === "ig_studio" && <AdminInstagramStudioTab />}
         {tab === "tt_studio" && <AdminTiktokStudioTab />}
