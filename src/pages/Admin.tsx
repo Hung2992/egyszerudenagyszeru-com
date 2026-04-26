@@ -1538,19 +1538,53 @@ const Admin = () => {
   );
 
   const renderMarketingStudio = () => {
-    switch (marketingStudioTab) {
-      case "ig_studio": return <AdminInstagramStudioTab />;
-      case "tt_studio": return <AdminTiktokStudioTab />;
-      case "yt_studio": return <AdminYoutubeStudioTab />;
-      case "yts_studio": return <AdminYoutubeShortsStudioTab />;
-      case "gads_studio": return <AdminGoogleAdsStudioTab />;
-      case "pin_studio": return <AdminPinterestStudioTab />;
-      case "li_studio": return <AdminLinkedinStudioTab />;
-      case "x_studio": return <AdminTwitterStudioTab />;
-      case "fb_studio":
-      default:
-        return <AdminFacebookStudioTab />;
-    }
+    const current = marketingStudioTabs.find((t) => t.key === marketingStudioTab) || marketingStudioTabs[0];
+    const renderCurrent = () => {
+      switch (marketingStudioTab) {
+        case "ig_studio": return <AdminInstagramStudioTab />;
+        case "tt_studio": return <AdminTiktokStudioTab />;
+        case "yt_studio": return <AdminYoutubeStudioTab />;
+        case "yts_studio": return <AdminYoutubeShortsStudioTab />;
+        case "gads_studio": return <AdminGoogleAdsStudioTab />;
+        case "pin_studio": return <AdminPinterestStudioTab />;
+        case "li_studio": return <AdminLinkedinStudioTab />;
+        case "x_studio": return <AdminTwitterStudioTab />;
+        case "fb_studio":
+        default:
+          return <AdminFacebookStudioTab />;
+      }
+    };
+
+    return (
+      <div className="space-y-4">
+        <div className="border-2 border-primary bg-primary/10 p-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0">
+              <div className="text-[10px] font-black uppercase tracking-[0.25em] text-primary">AI Marketing Stúdió központ</div>
+              <h2 className="mt-1 text-lg font-black uppercase tracking-wider text-foreground">{current?.label || "Facebook Stúdió"}</h2>
+              <p className="mt-1 text-xs text-muted-foreground">Válassz platformot: minden platform saját reklám-, tartalom- és videó eszközkészletet nyit meg.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-9 md:min-w-[60%]">
+              {marketingStudioTabs.map(t => (
+                <button
+                  key={`inside-marketing-${t.key}`}
+                  onClick={() => setMarketingStudioTab(t.key)}
+                  className={`flex min-h-12 flex-col items-center justify-center gap-1 border px-2 py-2 text-[10px] font-black uppercase tracking-wider leading-tight text-center transition-colors ${
+                    marketingStudioTab === t.key
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-primary/40 bg-card text-foreground hover:bg-primary hover:text-primary-foreground"
+                  }`}
+                >
+                  <t.icon className="h-4 w-4 shrink-0" />
+                  <span className="line-clamp-2">{t.label.replace(" Stúdió", "")}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        {renderCurrent()}
+      </div>
+    );
   };
 
   return (
