@@ -23,6 +23,16 @@ import AdminReturnsTab from "@/components/admin/AdminReturnsTab";
 import AdminDynamicPricingTab from "@/components/admin/AdminDynamicPricingTab";
 import AdminMarketingTab from "@/components/admin/AdminMarketingTab";
 import AdminAiMarketingStudioTab from "@/components/admin/AdminAiMarketingStudioTab";
+import AdminFacebookStudioTab from "@/components/admin/AdminFacebookStudioTab";
+import AdminInstagramStudioTab from "@/components/admin/AdminInstagramStudioTab";
+import AdminTiktokStudioTab from "@/components/admin/AdminTiktokStudioTab";
+import AdminYoutubeStudioTab from "@/components/admin/AdminYoutubeStudioTab";
+import AdminYoutubeShortsStudioTab from "@/components/admin/AdminYoutubeShortsStudioTab";
+import AdminGoogleAdsStudioTab from "@/components/admin/AdminGoogleAdsStudioTab";
+import AdminPinterestStudioTab from "@/components/admin/AdminPinterestStudioTab";
+import AdminLinkedinStudioTab from "@/components/admin/AdminLinkedinStudioTab";
+import AdminTwitterStudioTab from "@/components/admin/AdminTwitterStudioTab";
+import { Facebook as FacebookIcon, Instagram as InstagramIcon, Youtube as YoutubeIcon, Music2, Linkedin as LinkedinIcon, Twitter as TwitterIcon } from "lucide-react";
 import AdminGdprTab from "@/components/admin/AdminGdprTab";
 import AdminSupportTab from "@/components/admin/AdminSupportTab";
 import AdminPermissionsTab from "@/components/admin/AdminPermissionsTab";
@@ -551,7 +561,7 @@ interface EmailTemplate {
   body: string;
 }
 
-type Tab = "ai_marketing_studio" | "ai_bookkeeper" | "legal_center" | "messages" | "launch_center" | "order_insights" | "email_monitoring" | "dashboard" | "products" | "giveaway_wheel" | "orders" | "coupons" | "users" | "reviews" | "categories" | "banners" | "promotions" | "payment_methods" | "analytics" | "email_templates" | "roles" | "shipping_mgmt" | "inventory" | "seo_marketing" | "translations" | "returns" | "dynamic_pricing" | "marketing" | "gdpr" | "support" | "permissions" | "import_export" | "payment_integrations" | "notifications" | "crm" | "review_settings" | "tax_invoice" | "affiliate" | "conversion" | "currency" | "system" | "email_automation" | "api_webhooks" | "faq_knowledge" | "advanced_analytics" | "fulfillment" | "sales_rules" | "product_attributes" | "wishlist" | "procurement" | "auto_procurement" | "customer_segmentation" | "product_bundles" | "social_media" | "delivery_slots" | "ab_testing" | "flash_sale" | "review_rewards" | "ticketing" | "loyalty_tiers" | "product_scheduling" | "advanced_discounts" | "accounting" | "multilang" | "email_templates_custom" | "attribution" | "popup_banners" | "price_rules" | "supplier_mgmt" | "loyalty_gamification" | "product_feed" | "customer_group_pricing" | "advanced_seo" | "erp_sync" | "auto_reorder" | "multichannel" | "quality_assurance" | "loyalty_analytics" | "preorder_mgmt" | "packaging_custom" | "invoice_automation" | "nps" | "checkout_custom" | "recommendation_engine" | "gdpr_center" | "webhook_events" | "inventory_forecast" | "order_automation" | "media_manager" | "retention" | "review_moderation" | "multi_warehouse" | "product_seo" | "csat" | "email_sequences" | "shipping_zones_mgmt" | "giftcard_system" | "product_recall" | "loyalty_points_rules" | "product_compare" | "coupon_rules" | "stock_alert_auto" | "crosssell_upsell" | "customer_surveys" | "order_workflow" | "product_badges" | "product_variants" | "loyalty_rewards" | "order_consolidation" | "loyalty_automation" | "margin_management" | "satisfaction_automation" | "remarketing_automation" | "installment_payment" | "product_ranking" | "ai_product_tagging" | "shipping_cost_rules" | "inventory_movement_log" | "loyalty_dashboard" | "dynamic_price_automation" | "feedback_campaigns" | "bundle_deals_mgmt" | "invoice_generator" | "personalized_recommendations" | "subscribers" | "financial_center" | "settings";
+type Tab = "ai_marketing_studio" | "fb_studio" | "ig_studio" | "tt_studio" | "yt_studio" | "yts_studio" | "gads_studio" | "pin_studio" | "li_studio" | "x_studio" | "ai_bookkeeper" | "legal_center" | "messages" | "launch_center" | "order_insights" | "email_monitoring" | "dashboard" | "products" | "giveaway_wheel" | "orders" | "coupons" | "users" | "reviews" | "categories" | "banners" | "promotions" | "payment_methods" | "analytics" | "email_templates" | "roles" | "shipping_mgmt" | "inventory" | "seo_marketing" | "translations" | "returns" | "dynamic_pricing" | "marketing" | "gdpr" | "support" | "permissions" | "import_export" | "payment_integrations" | "notifications" | "crm" | "review_settings" | "tax_invoice" | "affiliate" | "conversion" | "currency" | "system" | "email_automation" | "api_webhooks" | "faq_knowledge" | "advanced_analytics" | "fulfillment" | "sales_rules" | "product_attributes" | "wishlist" | "procurement" | "auto_procurement" | "customer_segmentation" | "product_bundles" | "social_media" | "delivery_slots" | "ab_testing" | "flash_sale" | "review_rewards" | "ticketing" | "loyalty_tiers" | "product_scheduling" | "advanced_discounts" | "accounting" | "multilang" | "email_templates_custom" | "attribution" | "popup_banners" | "price_rules" | "supplier_mgmt" | "loyalty_gamification" | "product_feed" | "customer_group_pricing" | "advanced_seo" | "erp_sync" | "auto_reorder" | "multichannel" | "quality_assurance" | "loyalty_analytics" | "preorder_mgmt" | "packaging_custom" | "invoice_automation" | "nps" | "checkout_custom" | "recommendation_engine" | "gdpr_center" | "webhook_events" | "inventory_forecast" | "order_automation" | "media_manager" | "retention" | "review_moderation" | "multi_warehouse" | "product_seo" | "csat" | "email_sequences" | "shipping_zones_mgmt" | "giftcard_system" | "product_recall" | "loyalty_points_rules" | "product_compare" | "coupon_rules" | "stock_alert_auto" | "crosssell_upsell" | "customer_surveys" | "order_workflow" | "product_badges" | "product_variants" | "loyalty_rewards" | "order_consolidation" | "loyalty_automation" | "margin_management" | "satisfaction_automation" | "remarketing_automation" | "installment_payment" | "product_ranking" | "ai_product_tagging" | "shipping_cost_rules" | "inventory_movement_log" | "loyalty_dashboard" | "dynamic_price_automation" | "feedback_campaigns" | "bundle_deals_mgmt" | "invoice_generator" | "personalized_recommendations" | "subscribers" | "financial_center" | "settings";
 type SettingsSection = "store" | "payment" | "email" | "seo" | "appearance" | "hours" | "legal" | "statuses" | "templates" | "loyalty" | "reviews_config" | "shipping" | "inventory" | "notifications" | "invoicing" | "checkout" | "cookie" | "maintenance" | "popups" | "language" | "discounts" | "product_display" | "registration" | "analytics" | "payment_config" | "shipping_zones" | "stock_alerts" | "appearance_custom" | "coupon_settings" | "product_tags" | "user_notifications" | "order_workflow" | "compare_settings" | "return_rules" | "giftcard_settings" | "i18n_settings";
 
 const CATEGORIES = ["Pólók", "Pulóverek", "Nadrágok", "Dzsekik", "Kiegészítők", "Cipők", "Egyéb"];
@@ -1365,6 +1375,15 @@ const Admin = () => {
     { key: "dynamic_pricing", label: "Árazás", icon: Zap },
     { key: "marketing", label: "Kampányok", icon: Megaphone },
     { key: "ai_marketing_studio", label: "AI Marketing Stúdió", icon: Brain },
+    { key: "fb_studio", label: "Facebook Stúdió", icon: FacebookIcon },
+    { key: "ig_studio", label: "Instagram Stúdió", icon: InstagramIcon },
+    { key: "tt_studio", label: "TikTok Stúdió", icon: Music2 },
+    { key: "yt_studio", label: "YouTube Stúdió", icon: YoutubeIcon },
+    { key: "yts_studio", label: "YouTube Shorts Stúdió", icon: YoutubeIcon },
+    { key: "gads_studio", label: "Google Ads Stúdió", icon: SearchIcon },
+    { key: "pin_studio", label: "Pinterest Stúdió", icon: Image },
+    { key: "li_studio", label: "LinkedIn Stúdió", icon: LinkedinIcon },
+    { key: "x_studio", label: "X (Twitter) Stúdió", icon: TwitterIcon },
     { key: "gdpr", label: "GDPR", icon: Shield },
     { key: "support", label: "Ügyfélszolg.", icon: Headphones },
     { key: "permissions", label: "Jogosultságok", icon: Lock },
@@ -3273,6 +3292,15 @@ const Admin = () => {
         {tab === "dynamic_pricing" && <AdminDynamicPricingTab />}
         {tab === "marketing" && <AdminMarketingTab />}
         {tab === "ai_marketing_studio" && <AdminAiMarketingStudioTab />}
+        {tab === "fb_studio" && <AdminFacebookStudioTab />}
+        {tab === "ig_studio" && <AdminInstagramStudioTab />}
+        {tab === "tt_studio" && <AdminTiktokStudioTab />}
+        {tab === "yt_studio" && <AdminYoutubeStudioTab />}
+        {tab === "yts_studio" && <AdminYoutubeShortsStudioTab />}
+        {tab === "gads_studio" && <AdminGoogleAdsStudioTab />}
+        {tab === "pin_studio" && <AdminPinterestStudioTab />}
+        {tab === "li_studio" && <AdminLinkedinStudioTab />}
+        {tab === "x_studio" && <AdminTwitterStudioTab />}
         {tab === "gdpr" && <AdminGdprTab />}
         {tab === "support" && <AdminSupportTab />}
         {tab === "permissions" && <AdminPermissionsTab />}
