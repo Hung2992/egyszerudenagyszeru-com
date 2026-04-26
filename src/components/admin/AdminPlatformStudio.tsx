@@ -1804,6 +1804,92 @@ KÖTELEZŐ KIMENET:
           <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={moodboardOutput} onChange={(e) => setMoodboardOutput(e.target.value)} placeholder="Színek HEX-ben, fontok, fotó stílus, videó style, layout szabályok..." />
           {moodboardOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(moodboardOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
         </TabsContent>
+
+        {/* UGC */}
+        <TabsContent value="ugc" className="space-y-3">
+          <Button onClick={generateUgc} disabled={loadingUgc} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingUgc ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Camera className="h-4 w-4 mr-2" />}
+            {loadingUgc ? "UGC brief..." : "UGC creator brief + shot list + díjazás"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={ugcOutput} onChange={(e) => setUgcOutput(e.target.value)} placeholder="Hook variánsok, shot list, script, díjazás HUF, szerződés sarokpontok..." />
+          {ugcOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(ugcOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* REPURPOSE */}
+        <TabsContent value="repurpose" className="space-y-3">
+          <Label className="text-xs uppercase">Eredeti tartalom (cikk, videó leirat, poszt, ötlet)</Label>
+          <Textarea className="rounded-none min-h-[150px]" value={repurposeInput} onChange={(e) => setRepurposeInput(e.target.value)} placeholder="Másold ide a forrás tartalmat..." />
+          <Button onClick={generateRepurpose} disabled={loadingRepurpose} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingRepurpose ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Recycle className="h-4 w-4 mr-2" />}
+            {loadingRepurpose ? "Átalakítás..." : "1 tartalom → 12 formátum (minden platformra)"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={repurposeOutput} onChange={(e) => setRepurposeOutput(e.target.value)} placeholder="Feed, Story, Reel, Thread, LinkedIn, Email, Blog, YouTube, TikTok, Pinterest, SMS, Push..." />
+          {repurposeOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(repurposeOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* BRAND VOICE */}
+        <TabsContent value="voice" className="space-y-3">
+          <Button onClick={generateVoice} disabled={loadingVoice} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingVoice ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mic className="h-4 w-4 mr-2" />}
+            {loadingVoice ? "Voice..." : "Brand voice + persona + 30 példa mondat"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={voiceOutput} onChange={(e) => setVoiceOutput(e.target.value)} placeholder="Archetípus, hangmagasság, kedvenc/tiltott szavak, példa mondatok, DO/DON'T..." />
+          {voiceOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(voiceOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* COMMUNITY REPLY */}
+        <TabsContent value="community" className="space-y-3">
+          <Label className="text-xs uppercase">Másold ide a kommenteket / DM-eket (egy/sor vagy szabadon)</Label>
+          <Textarea className="rounded-none min-h-[150px]" value={communityInput} onChange={(e) => setCommunityInput(e.target.value)} placeholder="Pl. 1) Mennyibe kerül? 2) Nem jött meg a csomag... 3) Imádom a terméket!" />
+          <Button onClick={generateCommunity} disabled={loadingCommunity} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingCommunity ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <MessagesSquare className="h-4 w-4 mr-2" />}
+            {loadingCommunity ? "Válaszok..." : "3 válasz / komment + sentiment + prioritás"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={communityOutput} onChange={(e) => setCommunityOutput(e.target.value)} placeholder="Kategória, sentiment, prioritás, 3 válasz variáns, follow-up..." />
+          {communityOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(communityOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* OFFER LAB */}
+        <TabsContent value="offer" className="space-y-3">
+          <Button onClick={generateOffer} disabled={loadingOffer} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingOffer ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Tag className="h-4 w-4 mr-2" />}
+            {loadingOffer ? "Offers..." : "5 ajánlat variáns (Alap/Prémium/Flash/Tripwire/VIP)"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={offerOutput} onChange={(e) => setOfferOutput(e.target.value)} placeholder="Bundle-ök, garancia, scarcity, headline, CTA, FAQ, pszichológiai triggers..." />
+          {offerOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(offerOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* STORYTELLING */}
+        <TabsContent value="story" className="space-y-3">
+          <Button onClick={generateStory} disabled={loadingStory} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingStory ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <BookOpen className="h-4 w-4 mr-2" />}
+            {loadingStory ? "Story..." : "5 storytelling variáns + storyboard"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={storyOutput} onChange={(e) => setStoryOutput(e.target.value)} placeholder="Hero's Journey, Before/After, Founder, Relatability, Future pacing..." />
+          {storyOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(storyOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* LIVE / WEBINAR */}
+        <TabsContent value="live" className="space-y-3">
+          <Button onClick={generateLive} disabled={loadingLive} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingLive ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Radio className="h-4 w-4 mr-2" />}
+            {loadingLive ? "Forgatókönyv..." : "60 perces live/webinar script + replay drip"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={liveOutput} onChange={(e) => setLiveOutput(e.target.value)} placeholder="Percre lebontott forgatókönyv, pre/in/post promó, replay email sorozat, highlight clipek..." />
+          {liveOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(liveOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* COMPLIANCE */}
+        <TabsContent value="compliance" className="space-y-3">
+          <Label className="text-xs uppercase">Ellenőrizendő copy / hirdetés / poszt szövege</Label>
+          <Textarea className="rounded-none min-h-[150px]" value={complianceInput} onChange={(e) => setComplianceInput(e.target.value)} placeholder="Másold ide a szöveget jogi átvilágításra (Fttv, GVH, GDPR, platform policy)..." />
+          <Button onClick={generateCompliance} disabled={loadingCompliance} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingCompliance ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
+            {loadingCompliance ? "Ellenőrzés..." : "Jogi/compliance check + javított verzió"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={complianceOutput} onChange={(e) => setComplianceOutput(e.target.value)} placeholder="Kockázat szint, részletes vizsgálat, javított copy, hivatkozások, max bírság, checklist..." />
+          {complianceOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(complianceOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
       </Tabs>
 
       {/* HISTORY */}
