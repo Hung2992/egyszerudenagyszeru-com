@@ -81,11 +81,28 @@ const AdminPlatformStudio = ({ platform }: Props) => {
   const [videoOutput, setVideoOutput] = useState<string>("");
   const [imageBase64, setImageBase64] = useState<string>("");
   const [imagePrompt, setImagePrompt] = useState<string>("");
+  const [hashtagOutput, setHashtagOutput] = useState<string>("");
+  const [carouselOutput, setCarouselOutput] = useState<string>("");
+  const [emailOutput, setEmailOutput] = useState<string>("");
+  const [hookOutput, setHookOutput] = useState<string>("");
+  const [calendarOutput, setCalendarOutput] = useState<string>("");
+  const [competitorUrl, setCompetitorUrl] = useState<string>("");
+  const [competitorOutput, setCompetitorOutput] = useState<string>("");
+  const [editPrompt, setEditPrompt] = useState<string>("");
+  const [editSourceB64, setEditSourceB64] = useState<string>("");
+  const [editedB64, setEditedB64] = useState<string>("");
 
   // States
   const [loadingPost, setLoadingPost] = useState(false);
   const [loadingVideo, setLoadingVideo] = useState(false);
   const [loadingImage, setLoadingImage] = useState(false);
+  const [loadingHashtag, setLoadingHashtag] = useState(false);
+  const [loadingCarousel, setLoadingCarousel] = useState(false);
+  const [loadingEmail, setLoadingEmail] = useState(false);
+  const [loadingHook, setLoadingHook] = useState(false);
+  const [loadingCalendar, setLoadingCalendar] = useState(false);
+  const [loadingCompetitor, setLoadingCompetitor] = useState(false);
+  const [loadingEdit, setLoadingEdit] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
