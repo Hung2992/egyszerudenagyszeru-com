@@ -12,8 +12,10 @@ import { toast } from "@/hooks/use-toast";
 import {
   Upload, Scissors, Download, Loader2, Film, Type as TypeIcon,
   Volume2, VolumeX, Crop, Sparkles, Wand2, Image as ImageIcon,
-  Music, Gauge, Layers as LayersIcon, RefreshCw, Play,
+  Music, Gauge, Layers as LayersIcon, RefreshCw, Play, Brain, Zap,
+  Wand, Camera, Rocket,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 // ===================================================================
 // AI MARKETING VIDEÓ SZERKESZTŐ
