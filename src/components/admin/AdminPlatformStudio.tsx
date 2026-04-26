@@ -2138,6 +2138,92 @@ Mindegyik hirdetéshez:
           {complianceOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(complianceOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
         </TabsContent>
 
+        {/* AD VAULT */}
+        <TabsContent value="adVault" className="space-y-3">
+          <Button onClick={generateAdVault} disabled={loadingAdVault} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingAdVault ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Vault className="h-4 w-4 mr-2" />}
+            {loadingAdVault ? "Generálás..." : `50 kész ${platform.label} hirdetésszöveg (10 framework × 5)`}
+          </Button>
+          <Textarea className="rounded-none min-h-[600px] font-mono text-xs" value={adVaultOutput} onChange={(e) => setAdVaultOutput(e.target.value)} placeholder="50 hirdetés: PAS, AIDA, BAB, 4U, FAB, QUEST, STAR, listicle, kérdés, social proof — mindegyik 3 hosszban + CTA + várható CTR..." />
+          {adVaultOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(adVaultOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* CREATIVE BRIEF */}
+        <TabsContent value="creativeBrief" className="space-y-3">
+          <Button onClick={generateCreativeBrief} disabled={loadingCreativeBrief} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingCreativeBrief ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ClipboardList className="h-4 w-4 mr-2" />}
+            {loadingCreativeBrief ? "Brief..." : "5 kreatív koncepció + storyboard + shot list"}
+          </Button>
+          <Textarea className="rounded-none min-h-[600px] font-mono text-xs" value={creativeBriefOutput} onChange={(e) => setCreativeBriefOutput(e.target.value)} placeholder="5 koncepció, storyboard 6 jelenetre, prop/talent/zene/grade/CTA + spec + shot list CSV..." />
+          {creativeBriefOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(creativeBriefOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* AUDIENCE */}
+        <TabsContent value="audience" className="space-y-3">
+          <Button onClick={generateAudience} disabled={loadingAudience} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingAudience ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Crosshair className="h-4 w-4 mr-2" />}
+            {loadingAudience ? "Audience..." : "10 kész célközönség (cold/warm/hot) – Ads Manager szintig"}
+          </Button>
+          <Textarea className="rounded-none min-h-[600px] font-mono text-xs" value={audienceOutput} onChange={(e) => setAudienceOutput(e.target.value)} placeholder="10 audience pontos érdeklődéssel, mérettel, CPM/CPC/CTR sávval, exclude-okkal, daily budget-tel..." />
+          {audienceOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(audienceOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* RETARGETING */}
+        <TabsContent value="retarget" className="space-y-3">
+          <Button onClick={generateRetarget} disabled={loadingRetarget} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingRetarget ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Repeat className="h-4 w-4 mr-2" />}
+            {loadingRetarget ? "Funnel..." : "7-touch retargeting szekvencia (T+1 → T+14)"}
+          </Button>
+          <Textarea className="rounded-none min-h-[600px] font-mono text-xs" value={retargetOutput} onChange={(e) => setRetargetOutput(e.target.value)} placeholder="7 lépcsős sorozat: reminder → social proof → objection → bonus → scarcity → discount → win-back, mindegyikhez kész copy + budget..." />
+          {retargetOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(retargetOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* PIXEL */}
+        <TabsContent value="pixel" className="space-y-3">
+          <Button onClick={generatePixel} disabled={loadingPixel} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingPixel ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Activity className="h-4 w-4 mr-2" />}
+            {loadingPixel ? "Setup..." : "Teljes Pixel + Conversions API + GA4 + GDPR setup"}
+          </Button>
+          <Textarea className="rounded-none min-h-[600px] font-mono text-xs" value={pixelOutput} onChange={(e) => setPixelOutput(e.target.value)} placeholder="Standard + custom események, CAPI server-side kód, Consent Mode v2, tesztelés, attribúció..." />
+          {pixelOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(pixelOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* BUDGET / ROAS */}
+        <TabsContent value="budget" className="space-y-3">
+          <Label className="text-xs uppercase">Havi keret + cél ROAS (opcionális)</Label>
+          <Input className="rounded-none" value={budgetInput} onChange={(e) => setBudgetInput(e.target.value)} placeholder="pl. 500.000 HUF/hó, cél ROAS 3.5, AOV 18.000 Ft" />
+          <Button onClick={generateBudget} disabled={loadingBudget} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingBudget ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Wallet className="h-4 w-4 mr-2" />}
+            {loadingBudget ? "Optimalizálás..." : "Budget allokáció + KPI célok + 30 napos scaling roadmap"}
+          </Button>
+          <Textarea className="rounded-none min-h-[600px] font-mono text-xs" value={budgetOutput} onChange={(e) => setBudgetOutput(e.target.value)} placeholder="TOFU/MOFU/BOFU split, CBO vs ABO, KPI benchmark, scaling roadmap, kill criteria, 30 napos terv..." />
+          {budgetOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(budgetOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* AD POLICY SCAN */}
+        <TabsContent value="adCompliance" className="space-y-3">
+          <Label className="text-xs uppercase">Hirdetés szövege (scan-elésre)</Label>
+          <Textarea className="rounded-none min-h-[150px]" value={adComplianceInput} onChange={(e) => setAdComplianceInput(e.target.value)} placeholder="Másold ide a teljes hirdetést (headline + primary text + CTA)..." />
+          <Button onClick={generateAdCompliance} disabled={loadingAdCompliance} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingAdCompliance ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ScanLine className="h-4 w-4 mr-2" />}
+            {loadingAdCompliance ? "Scan..." : `${platform.label} Ads policy scan + javított verzió + appeal`}
+          </Button>
+          <Textarea className="rounded-none min-h-[600px] font-mono text-xs" value={adComplianceOutput} onChange={(e) => setAdComplianceOutput(e.target.value)} placeholder="Risk score, policy violations, javított hirdetés, alternatív hookok, account rizikó, appeal template, checklist..." />
+          {adComplianceOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(adComplianceOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* AD SPY */}
+        <TabsContent value="adSpy" className="space-y-3">
+          <Label className="text-xs uppercase">Versenytárs nevek / Ad Library URL-ek (opcionális)</Label>
+          <Input className="rounded-none" value={adSpyInput} onChange={(e) => setAdSpyInput(e.target.value)} placeholder="pl. Answear, About You, Aboutyou.hu, Mango..." />
+          <Button onClick={generateAdSpy} disabled={loadingAdSpy} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingAdSpy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Telescope className="h-4 w-4 mr-2" />}
+            {loadingAdSpy ? "Spy..." : "Versenytárs hirdetés dekódolás + támadási terv + swipe file"}
+          </Button>
+          <Textarea className="rounded-none min-h-[600px] font-mono text-xs" value={adSpyOutput} onChange={(e) => setAdSpyOutput(e.target.value)} placeholder="3-5 versenytárs × 5 hirdetés elemzés, közös minták, 5 angle a réseikbe, swipe file..." />
+          {adSpyOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(adSpyOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
         {/* VIDEO EDITOR */}
         <TabsContent value="videoeditor" className="space-y-3">
           <AdminVideoEditor platformLabel={platform.label} defaultAspect={platform.imageAspect} />
