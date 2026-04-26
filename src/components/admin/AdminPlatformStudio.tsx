@@ -408,12 +408,243 @@ KÖTELEZŐ KIMENET:
     }
   };
 
-  const downloadImage = () => {
-    if (!imageBase64) return;
+  const downloadImage = (b64?: string, suffix = "") => {
+    const src = b64 || imageBase64;
+    if (!src) return;
     const a = document.createElement("a");
-    a.href = imageBase64;
-    a.download = `${platform.key}-${Date.now()}.png`;
+    a.href = src;
+    a.download = `${platform.key}${suffix}-${Date.now()}.png`;
     a.click();
+  };
+
+  // ======================================================
+  // GENERIC STREAMING AI HELPER
+  // ======================================================
+  const streamAi = async (
+    system: string,
+    user: string,
+    onDelta: (acc: string) => void,
+    historyKind: HistoryItem["kind"] = "post",
+  ) => {
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-ai-assistant`;
+    const { data: { session } } = await supabase.auth.getSession();
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      },
+      body: JSON.stringify({
+        messages: [{ role: "system", content: system }, { role: "user", content: user }],
+      }),
+    });
+    if (!resp.ok || !resp.body) {
+      if (resp.status === 429) throw new Error("Túl sok kérés – várj egy kicsit.");
+      if (resp.status === 402) throw new Error("Lovable AI kredit elfogyott.");
+      throw new Error(`Hiba: ${resp.status}`);
+    }
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+    let acc = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let idx: number;
+      while ((idx = buf.indexOf("\n")) !== -1) {
+        let line = buf.slice(0, idx);
+        buf = buf.slice(idx + 1);
+        if (line.endsWith("\r")) line = line.slice(0, -1);
+        if (!line.startsWith("data: ")) continue;
+        const json = line.slice(6).trim();
+        if (json === "[DONE]") continue;
+        try {
+          const p = JSON.parse(json);
+          const c = p.choices?.[0]?.delta?.content;
+          if (c) { acc += c; onDelta(acc); }
+        } catch { buf = line + "\n" + buf; break; }
+      }
+    }
+    setHistory((h) => [{ kind: historyKind, text: acc, createdAt: Date.now() }, ...h]);
+    return acc;
+  };
+
+  const runTool = async (
+    setLoading: (b: boolean) => void,
+    setOutput: (s: string) => void,
+    system: string,
+    user: string,
+  ) => {
+    if (!selectedProduct && !customTopic.trim()) {
+      toast({ title: "Adj meg terméket vagy témát", variant: "destructive" });
+      return;
+    }
+    setLoading(true); setOutput("");
+    try { await streamAi(system, user, setOutput); }
+    catch (e: any) { toast({ title: "Hiba", description: e.message, variant: "destructive" }); }
+    finally { setLoading(false); }
+  };
+
+  // ============== HASHTAG STRATÉGIA ==============
+  const generateHashtags = () => runTool(setLoadingHashtag, setHashtagOutput,
+    `Te a világ legjobb ${platform.label} hashtag stratégia szakértője vagy. Magyar piacra dolgozol.
+KÖTELEZŐ KIMENET:
+🔥 TIER 1 – NAGY (1M+ poszt) – 5 db, brand awareness
+⚡ TIER 2 – KÖZÉP (100k–1M) – 10 db, edzett konverzió
+🎯 TIER 3 – NICHE (10k–100k) – 10 db, célzott közönség
+🇭🇺 MAGYAR HASHTAGEK – 5 db (pl. #magyardivat #budapest)
+🚫 TILTOTT/SHADOWBAN-VESZÉLYES listája
+📊 HASHTAG MIX javaslat (hány-hány tier-ből egy poszthoz)
+💡 TREND HASHTAGEK most aktuálisan ${platform.label}-on`,
+    `Generálj hashtag stratégiát.\n\n${buildContext()}`);
+
+  // ============== CAROUSEL / THREAD ==============
+  const generateCarousel = () => runTool(setLoadingCarousel, setCarouselOutput,
+    `Te a világ legjobb ${platform.label} carousel/thread copywriter vagy. Magyarul írsz, hook-driven.
+KÖTELEZŐ KIMENET (8–10 slide / tweet):
+SLIDE 1: 🎯 HOOK (cliffhanger, NAGY szöveg javaslat)
+SLIDE 2-3: 😱 PROBLÉMA / FÁJDALOMPONT (storytelling)
+SLIDE 4-6: 💡 MEGOLDÁS LÉPÉSEK (értékadó, számozott)
+SLIDE 7-8: 🔥 TERMÉK BEMUTATÁS (USP-k)
+SLIDE 9: 📈 SOCIAL PROOF (számok, vélemény)
+SLIDE 10: 🚀 CTA (mit csináljon MOST)
+
+Minden slide-hoz: cím, body szöveg, vizuál ötlet, ${platform.label}-specifikus tipp.`,
+    `Generálj carousel/thread tartalmat ${platform.label}-ra.\n\n${buildContext()}`);
+
+  // ============== EMAIL / DM ==============
+  const generateEmail = () => runTool(setLoadingEmail, setEmailOutput,
+    `Te a világ legjobb magyar direct response copywriter vagy (Gary Halbert + Dan Kennedy szint).
+KÖTELEZŐ KIMENET 3 verzióban:
+
+📧 EMAIL VERZIÓ:
+- TÁRGY (3 A/B variáns, max 50 kar)
+- PREVIEW TEXT
+- ÜDVÖZLÉS (személyes)
+- HOOK (1. mondat – kíváncsiság/sokk/szám)
+- TÖRZS (PAS: Problem-Agitate-Solution)
+- CTA gomb szöveg + link helye
+- P.S. (urgency/scarcity)
+
+💬 DM VERZIÓ (Instagram/Messenger):
+- 3 mondatos cold opener
+- Follow-up 24h múlva
+- Follow-up 3 nap múlva
+
+📱 SMS VERZIÓ:
+- Max 160 karakter, link rövidítve
+- A/B 2 verzió`,
+    `Generálj email + DM + SMS sequence-t.\n\n${buildContext()}`);
+
+  // ============== HOOK GENERÁTOR ==============
+  const generateHooks = () => runTool(setLoadingHook, setHookOutput,
+    `Te a világ legjobb scroll-stopper hook copywriter vagy ${platform.label}-ra. Magyarul.
+Generálj 10 PRO HOOK-OT, mindegyik más kategóriából:
+1. SZÁM/STATISZTIKA hook ("87% nem tudja, hogy...")
+2. KÉRDÉS hook ("Te is unod, hogy...?")
+3. SOKK/CONTROVERSY hook
+4. PERSZONÁLIS STORY hook ("Tegnap egy vásárlóm...")
+5. BEFORE/AFTER hook
+6. TILTOTT/TITKOS hook ("Amit a SHEIN nem mond el...")
+7. HIBA/FIGYELEM hook ("3 hiba amit MINDENKI elkövet...")
+8. LISTÁS hook ("5 dolog amit ma...")
+9. URGENCY hook ("Csak ma...")
+10. CONTRARIAN hook ("Mindenki azt mondja X, de...")
+
+Mindegyikhez: a hook + miért működik (1 mondat) + ${platform.label}-specifikus megjelenítés tipp.`,
+    `Generálj 10 hook variánst.\n\n${buildContext()}`);
+
+  // ============== 30 NAPOS NAPTÁR ==============
+  const generateCalendar = () => runTool(setLoadingCalendar, setCalendarOutput,
+    `Te a világ legjobb ${platform.label} content calendar stratégája vagy. Magyar webshop számára dolgozol.
+KÉSZÍTS 30 NAPOS POSZT NAPTÁRT táblázat formában:
+
+| Nap | Dátum | Típus | Téma | Hook | CTA | Időpont | Hashtag |
+
+Szabályok:
+- 4-6 poszt/hét (nem mindennap, hogy fenntartható legyen)
+- 60% érték / 30% termék / 10% community/UGC szabály
+- ${platform.bestDays} legyen erős nap
+- ${platform.bestTime} legyenek az időpontok
+- Magyar ünnepek/szezon figyelembevétele
+- Tematikus hetek (pl. Hét 1: launch, Hét 2: social proof...)
+
+Végén: 📊 KPI célkitűzés a hónapra + heti review checklist.`,
+    `Készíts 30 napos naptárt.\n\n${buildContext()}`);
+
+  // ============== VERSENYTÁRS ANALÍZIS ==============
+  const generateCompetitorAnalysis = async () => {
+    if (!competitorUrl.trim() && !customTopic.trim()) {
+      toast({ title: "Adj meg versenytárs URL-t vagy nevet", variant: "destructive" });
+      return;
+    }
+    setLoadingCompetitor(true); setCompetitorOutput("");
+    try {
+      await streamAi(
+        `Te egy keményvonalas marketing intelligence elemző vagy. ${platform.label}-ra fókuszálsz.
+KÖTELEZŐ KIMENET:
+🎯 VERSENYTÁRS POZÍCIONÁLÁS (1 mondat összegzés)
+💪 ERŐSSÉGEIK (5 pont – mit csinálnak jól)
+🔻 GYENGESÉGEIK (5 pont – hol lehet támadni)
+📊 BECSÜLT KÖZÖNSÉG & KPI (kor, nem, engagement rate)
+🔥 TOP 3 POSZT TÍPUS amit használnak
+🎨 VIZUÁLIS STÍLUS (szín, font, hangulat)
+💬 HANGNEM elemzés
+🚀 STRATÉGIAI JAVASLAT NEKED – hogy megverjük őket (5 konkrét lépés)
+⚔️ DIFFERENCIÁLÁSI PONTOK (hol vagy te jobb)`,
+        `Versenytárs: ${competitorUrl || customTopic}\nMi a mi termékünk/cégünk: ${selectedProduct?.name || customTopic}\nPlatform: ${platform.label}`,
+        setCompetitorOutput,
+        "post",
+      );
+    } catch (e: any) { toast({ title: "Hiba", description: e.message, variant: "destructive" }); }
+    finally { setLoadingCompetitor(false); }
+  };
+
+  // ============== KÉPSZERKESZTŐ (AI image edit) ==============
+  const handleEditUpload = async (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => setEditSourceB64(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const generateEditedImage = async () => {
+    if (!editSourceB64) { toast({ title: "Tölts fel egy képet", variant: "destructive" }); return; }
+    if (!editPrompt.trim()) { toast({ title: "Add meg, mit változtassunk", variant: "destructive" }); return; }
+    setLoadingEdit(true); setEditedB64("");
+    try {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-ai-assistant`;
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-image",
+          modalities: ["image", "text"],
+          messages: [{
+            role: "user",
+            content: [
+              { type: "text", text: `${editPrompt}. ${platform.label} ${postFormat} optimized, aspect ${platform.imageAspect}, premium, no text overlay.` },
+              { type: "image_url", image_url: { url: editSourceB64 } },
+            ],
+          }],
+        }),
+      });
+      if (!resp.ok) {
+        if (resp.status === 429) throw new Error("Túl sok kérés.");
+        if (resp.status === 402) throw new Error("Kredit elfogyott.");
+        throw new Error(`Hiba: ${resp.status}`);
+      }
+      const j = await resp.json();
+      const b64 = j?.choices?.[0]?.message?.images?.[0]?.image_url?.url || "";
+      if (!b64) throw new Error("Nem érkezett szerkesztett kép.");
+      setEditedB64(b64);
+      setHistory((h) => [{ kind: "image", text: `EDIT: ${editPrompt}`, imageBase64: b64, createdAt: Date.now() }, ...h]);
+    } catch (e: any) { toast({ title: "Kép hiba", description: e.message, variant: "destructive" }); }
+    finally { setLoadingEdit(false); }
   };
 
   const copy = (txt: string) => {
