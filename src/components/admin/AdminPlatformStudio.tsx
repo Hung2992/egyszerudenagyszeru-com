@@ -1442,6 +1442,7 @@ KÖTELEZŐ KIMENET:
           <TabsTrigger value="story" className="rounded-none uppercase text-[10px] py-2"><BookOpen className="h-3 w-3 mr-1" />Story</TabsTrigger>
           <TabsTrigger value="live" className="rounded-none uppercase text-[10px] py-2"><Radio className="h-3 w-3 mr-1" />Live</TabsTrigger>
           <TabsTrigger value="compliance" className="rounded-none uppercase text-[10px] py-2"><ShieldCheck className="h-3 w-3 mr-1" />Jogi</TabsTrigger>
+          <TabsTrigger value="videoeditor" className="rounded-none uppercase text-[10px] py-2 col-span-2 md:col-span-1 bg-foreground text-background data-[state=active]:bg-accent"><Film className="h-3 w-3 mr-1" />Videó editor</TabsTrigger>
         </TabsList>
 
         {/* POST */}
