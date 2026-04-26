@@ -1846,6 +1846,21 @@ Mindegyik hirdetéshez:
 
         {/* IMAGE */}
         <TabsContent value="image" className="space-y-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Label className="text-xs uppercase">Minőség:</Label>
+            <button
+              onClick={() => setImageQuality("pro")}
+              className={`text-[10px] uppercase px-3 py-1.5 border ${imageQuality === "pro" ? "bg-primary text-primary-foreground border-primary" : "border-border"}`}
+            >
+              🚀 ULTRA (Gemini 3 Pro)
+            </button>
+            <button
+              onClick={() => setImageQuality("fast")}
+              className={`text-[10px] uppercase px-3 py-1.5 border ${imageQuality === "fast" ? "bg-primary text-primary-foreground border-primary" : "border-border"}`}
+            >
+              ⚡ Gyors
+            </button>
+          </div>
           <Label className="text-xs uppercase">Kép prompt (opcionális – ha üres, a termékből generál)</Label>
           <Textarea
             className="rounded-none min-h-[80px]"
@@ -1856,7 +1871,7 @@ Mindegyik hirdetéshez:
           <Button onClick={generateImage} disabled={loadingImage}
             className="w-full rounded-none uppercase tracking-wider font-bold">
             {loadingImage ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Wand2 className="h-4 w-4 mr-2" />}
-            {loadingImage ? "Kép generálás..." : `AI kép generálása (${platform.imageAspect})`}
+            {loadingImage ? "Kép generálás..." : `AI kép generálása (${platform.imageAspect}) – ${imageQuality === "pro" ? "ULTRA" : "Gyors"}`}
           </Button>
           {imageBase64 && (
             <div className="border p-3 space-y-2">
@@ -1870,6 +1885,79 @@ Mindegyik hirdetéshez:
                 </Button>
               </div>
             </div>
+          )}
+        </TabsContent>
+
+        {/* STORYBOARD – több jelenet AI képpel = videó alapanyag */}
+        <TabsContent value="storyboard" className="space-y-3">
+          <div className="border-2 border-primary/40 bg-primary/5 p-3 space-y-2">
+            <p className="text-xs uppercase font-bold tracking-wider">🎬 AI Videó Storyboard</p>
+            <p className="text-[11px] text-muted-foreground">
+              Az AI megtervez {storyboardScenes} jelenetet a termékedhez/témádhoz, és mindegyikhez profi képet generál.
+              Ezeket {platform.label} videószerkesztőben (CapCut, Reels, TikTok) 1 perc alatt összevágod – kész is a videó.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <Label className="text-xs uppercase">Jelenetek száma:</Label>
+            {[3, 4, 5, 6, 8].map(n => (
+              <button
+                key={n}
+                onClick={() => setStoryboardScenes(n)}
+                className={`text-xs px-3 py-1.5 border ${storyboardScenes === n ? "bg-primary text-primary-foreground border-primary" : "border-border"}`}
+              >
+                {n}
+              </button>
+            ))}
+            <Label className="text-xs uppercase ml-3">Minőség:</Label>
+            <button
+              onClick={() => setImageQuality("pro")}
+              className={`text-[10px] uppercase px-3 py-1.5 border ${imageQuality === "pro" ? "bg-primary text-primary-foreground border-primary" : "border-border"}`}
+            >
+              🚀 ULTRA
+            </button>
+            <button
+              onClick={() => setImageQuality("fast")}
+              className={`text-[10px] uppercase px-3 py-1.5 border ${imageQuality === "fast" ? "bg-primary text-primary-foreground border-primary" : "border-border"}`}
+            >
+              ⚡ Gyors
+            </button>
+          </div>
+
+          <Button onClick={generateStoryboard} disabled={loadingStoryboard}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingStoryboard ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Film className="h-4 w-4 mr-2" />}
+            {loadingStoryboard ? (storyboardProgress || "Generálás...") : `Storyboard generálása (${storyboardScenes} jelenet)`}
+          </Button>
+
+          {storyboardImages.length > 0 && (
+            <>
+              <div className="flex justify-between items-center">
+                <p className="text-xs uppercase font-bold">{storyboardImages.length} jelenet kész</p>
+                <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={downloadStoryboardAll}>
+                  <Download className="h-3 w-3 mr-1" /> Összes letöltése
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {storyboardImages.map((img, i) => (
+                  <div key={i} className="border p-2 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="text-[10px] rounded-none">Jelenet {i + 1}</Badge>
+                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => {
+                        const a = document.createElement("a");
+                        a.href = img.b64;
+                        a.download = `${platform.key}-scene-${i + 1}.png`;
+                        a.click();
+                      }}>
+                        <Download className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <img src={img.b64} alt={`Scene ${i + 1}`} className="w-full object-contain border" />
+                    <p className="text-[10px] text-muted-foreground line-clamp-2">{img.prompt}</p>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </TabsContent>
 
