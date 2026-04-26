@@ -1680,6 +1680,14 @@ Mindegyik hirdetéshez:
           <TabsTrigger value="story" className="rounded-none uppercase text-[10px] py-2"><BookOpen className="h-3 w-3 mr-1" />Story</TabsTrigger>
           <TabsTrigger value="live" className="rounded-none uppercase text-[10px] py-2"><Radio className="h-3 w-3 mr-1" />Live</TabsTrigger>
           <TabsTrigger value="compliance" className="rounded-none uppercase text-[10px] py-2"><ShieldCheck className="h-3 w-3 mr-1" />Jogi</TabsTrigger>
+          <TabsTrigger value="adVault" className="rounded-none uppercase text-[10px] py-2 bg-accent/20"><Vault className="h-3 w-3 mr-1" />Ad Vault×50</TabsTrigger>
+          <TabsTrigger value="creativeBrief" className="rounded-none uppercase text-[10px] py-2 bg-accent/20"><ClipboardList className="h-3 w-3 mr-1" />Creative Brief</TabsTrigger>
+          <TabsTrigger value="audience" className="rounded-none uppercase text-[10px] py-2 bg-accent/20"><Crosshair className="h-3 w-3 mr-1" />Audience×10</TabsTrigger>
+          <TabsTrigger value="retarget" className="rounded-none uppercase text-[10px] py-2 bg-accent/20"><Repeat className="h-3 w-3 mr-1" />Retarget 7×</TabsTrigger>
+          <TabsTrigger value="pixel" className="rounded-none uppercase text-[10px] py-2 bg-accent/20"><Activity className="h-3 w-3 mr-1" />Pixel/CAPI</TabsTrigger>
+          <TabsTrigger value="budget" className="rounded-none uppercase text-[10px] py-2 bg-accent/20"><Wallet className="h-3 w-3 mr-1" />Budget/ROAS</TabsTrigger>
+          <TabsTrigger value="adCompliance" className="rounded-none uppercase text-[10px] py-2 bg-accent/20"><ScanLine className="h-3 w-3 mr-1" />Ad Policy</TabsTrigger>
+          <TabsTrigger value="adSpy" className="rounded-none uppercase text-[10px] py-2 bg-accent/20"><Telescope className="h-3 w-3 mr-1" />Ad Spy</TabsTrigger>
           <TabsTrigger value="videoeditor" className="rounded-none uppercase text-[10px] py-2 col-span-2 md:col-span-1 bg-foreground text-background data-[state=active]:bg-accent"><Film className="h-3 w-3 mr-1" />Videó editor</TabsTrigger>
         </TabsList>
 
