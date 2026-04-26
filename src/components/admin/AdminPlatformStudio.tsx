@@ -660,6 +660,179 @@ KÖTELEZŐ KIMENET:
     finally { setLoadingEdit(false); }
   };
 
+  // ============== ADS – TELJES HIRDETÉSI KAMPÁNY ==============
+  const generateAds = () => runTool(setLoadingAds, setAdsOutput,
+    `Te a világ legjobb ${platform.label} performance marketing szakértője vagy. Magyar piacra dolgozol, ROAS-ra optimalizálsz.
+KÖTELEZŐ KIMENET – TELJES HIRDETÉSI KAMPÁNY:
+
+🎯 KAMPÁNY STRUKTÚRA (3 ad set):
+- COLD audience (nincs interakció) – targeting + budget %
+- WARM audience (engagement, video view) – retargeting
+- HOT audience (cart abandoner, vásárló) – LTV növelés
+
+💰 BUDGET JAVASLAT (napi/havi, magyar piac CPM-mel)
+📊 BIDDING STRATÉGIA (manual/auto, cap ajánlás)
+🎨 5 DB AD CREATIVE VARIÁNS (headline + primary text + description + CTA gomb)
+🖼️ KÉPI/VIDEO BRIEF mindegyikhez (mit mutasson)
+🎯 INTEREST + LOOKALIKE TARGETING (konkrét magyar érdeklődések)
+📈 ELVÁRT KPI-k (CTR, CPC, CPA, ROAS magyar benchmark)
+🚦 KILL CRITERIA (mikor állítsd le – konkrét számokkal)
+🔄 SKÁLÁZÁS LÉPÉSEI (mikor és mennyivel emeld a budget-et)
+⚠️ POLICY VESZÉLYEK (mit ne írj, hogy ne tiltsák le)`,
+    `Generálj teljes ${platform.label} hirdetési kampánytervet.\n\n${buildContext()}`);
+
+  // ============== SEO / KULCSSZÓ ==============
+  const generateSeo = () => runTool(setLoadingSeo, setSeoOutput,
+    `Te a világ legjobb magyar SEO + ${platform.label} discovery optimalizációs szakértője vagy.
+KÖTELEZŐ KIMENET:
+
+🔍 KULCSSZÓ KUTATÁS (magyar piac):
+- 10 db PRIMARY kulcsszó (high volume, magas szándék)
+- 15 db LONG-TAIL kulcsszó (alacsonyabb verseny, konkrét szándék)
+- 10 db KÉRDÉS-alapú kulcsszó ("hogyan", "mi a", "melyik")
+- 5 db LOKÁLIS kulcsszó ("budapest", "magyar")
+
+📊 SEARCH VOLUME BECSLÉS magyar piacra (havi keresések)
+🎯 NEHÉZSÉG (KD 1-100)
+
+📝 SEO-OPTIMALIZÁLT META:
+- Title (max 60 kar) – 3 variáns
+- Description (max 160 kar) – 3 variáns
+- URL slug javaslat
+- H1, H2-k (struktúra)
+
+🏷️ ${platform.label} DISCOVERY OPTIMALIZÁCIÓ:
+- Bio/about kulcsszavak
+- Caption SEO trükkök
+- Alt text javaslat képhez
+- Schema markup ha releváns
+
+🔗 BELSŐ LINK + BACKLINK stratégia ötletek`,
+    `Generálj SEO + discovery stratégiát.\n\n${buildContext()}`);
+
+  // ============== INFLUENCER STRATÉGIA ==============
+  const generateInfluencer = () => runTool(setLoadingInfluencer, setInfluencerOutput,
+    `Te a világ legjobb magyar influencer marketing stratégája vagy. ${platform.label}-ra fókuszálsz.
+KÖTELEZŐ KIMENET:
+
+👥 IDEÁLIS INFLUENCER PROFIL:
+- Méret kategória (nano 1-10k / micro 10-100k / mid 100k-500k / makro 500k+)
+- Niche / témakör (3-5 javaslat)
+- Demográfia egyezés a célközönséggel
+- Engagement rate elvárás (% magyar piacon)
+
+🎯 5 KONKRÉT MAGYAR INFLUENCER TÍPUS akit keress (név javaslatok ha tudsz)
+💰 ÁRAZÁS BENCHMARK (HUF, post / story / reel / hosszú videó)
+
+📧 OUTREACH EMAIL TEMPLATE (3 verzió: cold, warm, barter)
+📋 BRIEF DOKUMENTUM mit küldj az influencernek:
+- Cél, üzenet, do's & don'ts
+- Hashtag, mention követelmények
+- Kötelező disclosure (#hirdetés #pr)
+- Deliverable lista
+- Engedélyek (whitelist, repost jog)
+
+📊 KPI MÉRÉS (UTM, kód, link, attribúció)
+⚖️ SZERZŐDÉS KULCSPONTOK (magyar jog szerint)
+🚀 SKÁLÁZÁS – hogyan építs influencer hadsereget`,
+    `Generálj influencer marketing stratégiát.\n\n${buildContext()}`);
+
+  // ============== A/B TESZT GENERÁTOR ==============
+  const generateAbTest = () => runTool(setLoadingAbTest, setAbTestOutput,
+    `Te a világ legjobb conversion rate optimization (CRO) szakértője vagy. ${platform.label}-ra A/B teszt terveket gyártasz.
+KÖTELEZŐ KIMENET:
+
+🧪 5 KONKRÉT A/B TESZT JAVASLAT (priorizálva ICE score-ral: Impact, Confidence, Ease 1-10):
+
+Mindegyikhez:
+- 🎯 Hipotézis ("Ha [X], akkor [Y], mert [Z]")
+- 🅰️ A variáns (kontroll – mai)
+- 🅱️ B variáns (új – mit változtatunk PONTOSAN)
+- 📊 Mit mérünk (primary metric + guard rail)
+- 📐 Minta méret (kb. hány konverzió kell hogy szignifikáns legyen)
+- ⏱️ Tesztelési idő (nap)
+- 🎲 Várt lift (%)
+
+🔝 PRIORITÁS SORREND (ICE score alapján)
+📋 IMPLEMENTÁCIÓ check-lista
+⚠️ STATISZTIKAI HIBÁK amiket kerülj (peeking, p-hacking)
+🏆 NYERTES VARIÁNS publikálási checklist`,
+    `Generálj A/B teszt terveket.\n\n${buildContext()}`);
+
+  // ============== LANDING PAGE COPY ==============
+  const generateLanding = () => runTool(setLoadingLanding, setLandingOutput,
+    `Te a világ legjobb magyar landing page / sales page copywriter vagy (Eugene Schwartz + Joanna Wiebe szint).
+KÖTELEZŐ KIMENET – TELJES LANDING PAGE COPY:
+
+1️⃣ HERO SECTION
+- Headline (BIG promise, max 10 szó)
+- Sub-headline (mit, kinek, miért)
+- CTA gomb szöveg (3 variáns)
+- Hero kép/video brief
+
+2️⃣ PROBLEM / AGITATION (3-4 bullet, fájdalompontok)
+
+3️⃣ SOLUTION REVEAL (a termék mint hős)
+
+4️⃣ FEATURES → BENEFITS táblázat
+- Feature | Benefit | Érzelmi haszon
+
+5️⃣ SOCIAL PROOF
+- 3 db testimonial sablon (név, kép leírás, idézet)
+- Számok ("1247 boldog vásárló")
+- Logók/médiumok
+
+6️⃣ HOW IT WORKS (3 lépés)
+
+7️⃣ PRICING & GARANCIA
+- Ár anchor (áthúzott eredeti ár)
+- Csomagok (3 tier ha van)
+- Pénzvisszafizetési garancia szöveg
+
+8️⃣ FAQ (8 kérdés-válasz, valós kifogásokra)
+
+9️⃣ FINAL CTA + URGENCY (limitált / fogyóban)
+
+🔟 P.S. (mint az emailben – emlékeztetés)
+
+➕ MOBIL OPTIMALIZÁLÁSI TIPPEK
+➕ KONVERZIÓS ELEMEK (sticky CTA, exit intent popup szöveg)`,
+    `Generálj teljes landing page copy-t.\n\n${buildContext()}`);
+
+  // ============== KRÍZIS / NEGATÍV KOMMENT KEZELÉS ==============
+  const generateCrisisResponse = async () => {
+    if (!crisisInput.trim()) {
+      toast({ title: "Add meg a problémát/negatív kommentet", variant: "destructive" });
+      return;
+    }
+    setLoadingCrisis(true); setCrisisOutput("");
+    try {
+      await streamAi(
+        `Te egy keményvonalas magyar PR és crisis management szakértő vagy. ${platform.label}-ra optimalizálsz.
+KÖTELEZŐ KIMENET:
+
+🚨 KOMMENT/HELYZET ELEMZÉS (1 mondat – mi történt valójában)
+🌡️ SÚLYOSSÁG (1-10) + indoklás
+⏰ REAKCIÓIDŐ (mikor kell válaszolni – óra)
+
+💬 3 VÁLASZ VARIÁNS:
+- 😌 EMPATIKUS verzió (érzelmek elismerése)
+- 💼 PROFESSZIONÁLIS verzió (tényszerű, megoldás-fókuszú)
+- 🤝 AKCIÓ verzió (konkrét lépés + privát üzenet)
+
+🚫 MIT NE CSINÁLJ (3 hiba amit mindenki elkövet)
+🔒 PRIVÁT/PUBLIKUS döntés (publikus válasz vs DM)
+📞 ESZKALÁCIÓ – mikor küldd tovább (jogász, ügyfélszolgálat)
+📊 UTÓKÖVETÉS – mit mérj 24/72 órán belül
+🛡️ MEGELŐZÉS – hogyan kerüld el legközelebb`,
+        `Negatív komment / krízis: ${crisisInput}\n\nKontextus:\n${buildContext()}`,
+        setCrisisOutput,
+        "post",
+      );
+    } catch (e: any) { toast({ title: "Hiba", description: e.message, variant: "destructive" }); }
+    finally { setLoadingCrisis(false); }
+  };
+
   const copy = (txt: string) => {
     navigator.clipboard.writeText(txt);
     toast({ title: "Vágólapra másolva" });
