@@ -22,7 +22,6 @@ import AdminTranslationsTab from "@/components/admin/AdminTranslationsTab";
 import AdminReturnsTab from "@/components/admin/AdminReturnsTab";
 import AdminDynamicPricingTab from "@/components/admin/AdminDynamicPricingTab";
 import AdminMarketingTab from "@/components/admin/AdminMarketingTab";
-import AdminAiMarketingStudioTab from "@/components/admin/AdminAiMarketingStudioTab";
 import AdminFacebookStudioTab from "@/components/admin/AdminFacebookStudioTab";
 import AdminInstagramStudioTab from "@/components/admin/AdminInstagramStudioTab";
 import AdminTiktokStudioTab from "@/components/admin/AdminTiktokStudioTab";
@@ -570,6 +569,7 @@ const Admin = () => {
   const navigate = useNavigate();
   const { isAdmin, loading } = useAdminCheck();
   const [tab, setTab] = useState<Tab>("dashboard");
+  const [marketingStudioTab, setMarketingStudioTab] = useState<Tab>("fb_studio");
   const [settingsSection, setSettingsSection] = useState<SettingsSection>("store");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -1500,6 +1500,7 @@ const Admin = () => {
   const marketingStudioTabs = marketingStudioKeys
     .map((k) => tabs.find((t) => t.key === k))
     .filter((t): t is { key: Tab; label: string; icon: any } => Boolean(t));
+  const visibleTabs = tabs.filter((t) => !marketingStudioKeys.includes(t.key));
 
   const jumpToLegal = () => {
     setTab("settings");
@@ -1536,6 +1537,22 @@ const Admin = () => {
     (u.city || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const renderMarketingStudio = () => {
+    switch (marketingStudioTab) {
+      case "ig_studio": return <AdminInstagramStudioTab />;
+      case "tt_studio": return <AdminTiktokStudioTab />;
+      case "yt_studio": return <AdminYoutubeStudioTab />;
+      case "yts_studio": return <AdminYoutubeShortsStudioTab />;
+      case "gads_studio": return <AdminGoogleAdsStudioTab />;
+      case "pin_studio": return <AdminPinterestStudioTab />;
+      case "li_studio": return <AdminLinkedinStudioTab />;
+      case "x_studio": return <AdminTwitterStudioTab />;
+      case "fb_studio":
+      default:
+        return <AdminFacebookStudioTab />;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -1561,7 +1578,7 @@ const Admin = () => {
           {/* ⚖️ JOGI + ÁFA MEGA KIEMELT SÁV — minden képernyőn látható */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <button
-              onClick={() => setTab("fb_studio")}
+              onClick={() => setTab("ai_marketing_studio")}
               className={`group relative flex items-center justify-between gap-3 border-2 px-4 py-3 text-left transition-all sm:col-span-2 ${
                 tab === "ai_marketing_studio" || marketingStudioKeys.includes(tab)
                   ? "border-primary bg-primary text-primary-foreground"
@@ -1671,7 +1688,7 @@ const Admin = () => {
             className="flex h-11 w-full border border-input bg-card px-3 text-xs font-bold uppercase tracking-wider text-foreground sm:hidden"
             aria-label="Admin menü"
           >
-            {tabs.map(t => (
+            {visibleTabs.map(t => (
               <option key={t.key} value={t.key}>{t.label}</option>
             ))}
           </select>
@@ -1679,9 +1696,9 @@ const Admin = () => {
             {marketingStudioTabs.map(t => (
               <button
                 key={`marketing-${t.key}`}
-                onClick={() => setTab(t.key)}
+                onClick={() => { setMarketingStudioTab(t.key); setTab("ai_marketing_studio"); }}
                 className={`flex min-h-12 flex-col items-center justify-center gap-1 border px-2 py-2 text-[10px] font-black uppercase tracking-wider leading-tight text-center transition-colors ${
-                  tab === t.key
+                  (tab === "ai_marketing_studio" && marketingStudioTab === t.key) || tab === t.key
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-primary/40 bg-card text-foreground hover:bg-primary hover:text-primary-foreground"
                 }`}
@@ -1692,7 +1709,7 @@ const Admin = () => {
             ))}
           </div>
           <div className="flex gap-0 overflow-x-auto">
-            {tabs.map(t => (
+            {visibleTabs.map(t => (
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
@@ -3337,16 +3354,7 @@ const Admin = () => {
         {tab === "returns" && <AdminReturnsTab />}
         {tab === "dynamic_pricing" && <AdminDynamicPricingTab />}
         {tab === "marketing" && <AdminMarketingTab />}
-        {tab === "ai_marketing_studio" && <AdminFacebookStudioTab />}
-        {tab === "fb_studio" && <AdminFacebookStudioTab />}
-        {tab === "ig_studio" && <AdminInstagramStudioTab />}
-        {tab === "tt_studio" && <AdminTiktokStudioTab />}
-        {tab === "yt_studio" && <AdminYoutubeStudioTab />}
-        {tab === "yts_studio" && <AdminYoutubeShortsStudioTab />}
-        {tab === "gads_studio" && <AdminGoogleAdsStudioTab />}
-        {tab === "pin_studio" && <AdminPinterestStudioTab />}
-        {tab === "li_studio" && <AdminLinkedinStudioTab />}
-        {tab === "x_studio" && <AdminTwitterStudioTab />}
+        {tab === "ai_marketing_studio" && renderMarketingStudio()}
         {tab === "gdpr" && <AdminGdprTab />}
         {tab === "support" && <AdminSupportTab />}
         {tab === "permissions" && <AdminPermissionsTab />}
