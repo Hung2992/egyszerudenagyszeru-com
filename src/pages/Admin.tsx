@@ -1609,6 +1609,13 @@ const Admin = () => {
           <span className="text-[10px] font-medium uppercase tracking-widest text-accent">
             Szuper Admin
           </span>
+          <Button
+            size="sm"
+            onClick={() => openMarketingStudio()}
+            className="h-9 rounded-none px-3 text-[10px] font-black uppercase tracking-wider"
+          >
+            <Brain className="mr-1 h-3.5 w-3.5" /> AI Marketing
+          </Button>
         </div>
       </header>
 
@@ -1618,7 +1625,7 @@ const Admin = () => {
           {/* ⚖️ JOGI + ÁFA MEGA KIEMELT SÁV — minden képernyőn látható */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <button
-              onClick={() => setTab("ai_marketing_studio")}
+              onClick={() => openMarketingStudio()}
               className={`group relative flex items-center justify-between gap-3 border-2 px-4 py-3 text-left transition-all sm:col-span-2 ${
                 tab === "ai_marketing_studio" || marketingStudioKeys.includes(tab)
                   ? "border-primary bg-primary text-primary-foreground"
