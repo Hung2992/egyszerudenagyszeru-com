@@ -1680,9 +1680,9 @@ const Admin = () => {
             {marketingStudioTabs.map(t => (
               <button
                 key={`marketing-${t.key}`}
-                onClick={() => setTab(t.key)}
+                onClick={() => { setMarketingStudioTab(t.key); setTab("ai_marketing_studio"); }}
                 className={`flex min-h-12 flex-col items-center justify-center gap-1 border px-2 py-2 text-[10px] font-black uppercase tracking-wider leading-tight text-center transition-colors ${
-                  tab === t.key
+                  (tab === "ai_marketing_studio" && marketingStudioTab === t.key) || tab === t.key
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-primary/40 bg-card text-foreground hover:bg-primary hover:text-primary-foreground"
                 }`}
