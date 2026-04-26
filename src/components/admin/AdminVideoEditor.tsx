@@ -363,6 +363,175 @@ KÖTELEZŐ KIMENET:
     }
   };
 
+
+  // ============================================================
+  // 🚀 AI VIDEÓ GENERÁTOR — generál képkockákat + összerakja MP4-é
+  // ============================================================
+  const callAiImage = async (prompt: string): Promise<string> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-ai-assistant`;
+    const model =
+      aiQuality === "ultra" ? "google/gemini-3-pro-image-preview" :
+      aiQuality === "pro"   ? "google/gemini-3.1-flash-image-preview" :
+                              "google/gemini-2.5-flash-image";
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
+      body: JSON.stringify({
+        model,
+        modalities: ["image", "text"],
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+    if (!resp.ok) throw new Error(`AI image ${resp.status}`);
+    const data = await resp.json();
+    const imgUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    if (!imgUrl) throw new Error("Nincs kép a válaszban");
+    return imgUrl; // data:image/png;base64,...
+  };
+
+  const planScenes = async (): Promise<string[]> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-ai-assistant`;
+    const ar = ASPECT_PRESETS[aspect];
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
+      body: JSON.stringify({
+        messages: [
+          {
+            role: "system",
+            content: `Te egy díjnyertes ${platformLabel} reklámrendező vagy. Készíts ${aiSceneCount} jelenetet egy reklámvideóhoz. Stílus: ${aiStyle}. Aspect: ${aspect} (${ar.w}x${ar.h}). Csak JSON tömbbel válaszolj, semmi más szöveg, formátum: ["jelenet 1 vizuális prompt angolul", "jelenet 2 ...", ...]. Minden prompt legyen részletes, fotorealisztikus, kamera-szögekkel, megvilágítással, hangulattal.`,
+          },
+          { role: "user", content: `Termék/téma: ${aiPrompt}` },
+        ],
+      }),
+    });
+    if (!resp.ok) throw new Error("Scene plan hiba");
+    // streaming SSE -> összegyűjtjük
+    const reader = resp.body!.getReader();
+    const dec = new TextDecoder();
+    let buf = "", acc = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let idx;
+      while ((idx = buf.indexOf("\n")) !== -1) {
+        let line = buf.slice(0, idx); buf = buf.slice(idx + 1);
+        if (line.endsWith("\r")) line = line.slice(0, -1);
+        if (!line.startsWith("data: ")) continue;
+        const j = line.slice(6).trim();
+        if (j === "[DONE]") continue;
+        try { const p = JSON.parse(j); const c = p.choices?.[0]?.delta?.content; if (c) acc += c; } catch {}
+      }
+    }
+    const m = acc.match(/\[[\s\S]*\]/);
+    if (!m) throw new Error("Nem találtam JSON tömböt a tervben");
+    const arr = JSON.parse(m[0]);
+    if (!Array.isArray(arr) || arr.length === 0) throw new Error("Üres jelenetlista");
+    return arr.slice(0, aiSceneCount).map(String);
+  };
+
+  const generateAiVideo = async () => {
+    if (!aiPrompt.trim()) { toast({ title: "Adj meg témát/terméket", variant: "destructive" }); return; }
+    if (!ffmpegRef.current || !ready) { toast({ title: "FFmpeg még tölt", variant: "destructive" }); return; }
+    setAiGenerating(true); setAiScenes([]); setOutputUrl(""); setProgress(0);
+    try {
+      const ffmpeg = ffmpegRef.current;
+      const ar = ASPECT_PRESETS[aspect];
+
+      // 1) Forgatókönyv
+      setAiGenStep("🎬 Forgatókönyv tervezése AI-val...");
+      const scenes = await planScenes();
+      setAiScenes(scenes.map((p) => ({ prompt: p })));
+
+      // 2) Képek generálása
+      const imgs: { prompt: string; b64: string }[] = [];
+      for (let i = 0; i < scenes.length; i++) {
+        setAiGenStep(`🎨 Kép ${i + 1}/${scenes.length} generálása (${aiQuality.toUpperCase()})...`);
+        const fullPrompt = `${scenes[i]}, ${aiStyle}, aspect ratio ${aspect}, ${ar.w}x${ar.h}, ultra detailed, professional advertising photography`;
+        const b64 = await callAiImage(fullPrompt);
+        imgs.push({ prompt: scenes[i], b64 });
+        setAiScenes([...imgs, ...scenes.slice(i + 1).map((p) => ({ prompt: p }))]);
+        setProgress(Math.round(((i + 1) / scenes.length) * 60));
+      }
+
+      // 3) Képek -> ffmpeg fájlok
+      setAiGenStep("📦 Képek előkészítése...");
+      for (let i = 0; i < imgs.length; i++) {
+        const resp = await fetch(imgs[i].b64);
+        const buf = new Uint8Array(await resp.arrayBuffer());
+        await ffmpeg.writeFile(`scene_${String(i).padStart(3, "0")}.png`, buf);
+      }
+
+      // 4) Minden képből rövid videó Ken Burns / zoom / pan effekttel
+      setAiGenStep("🎞️ Mozgó képkockák készítése (Ken Burns)...");
+      const fps = 30;
+      const dur = aiSecPerScene;
+      const frames = Math.round(dur * fps);
+      const motions = ["kenburns", "zoomin", "zoomout", "panlr", "panrl"] as const;
+      for (let i = 0; i < imgs.length; i++) {
+        const motion = aiMotion === "mix" ? motions[i % motions.length] : aiMotion;
+        let zoompan = "";
+        // zoompan effect — z, x, y változtatása
+        if (motion === "kenburns" || motion === "zoomin") {
+          zoompan = `zoompan=z='min(zoom+0.0015,1.5)':d=${frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=${ar.w}x${ar.h}:fps=${fps}`;
+        } else if (motion === "zoomout") {
+          zoompan = `zoompan=z='if(eq(on,0),1.5,max(zoom-0.0015,1.0))':d=${frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=${ar.w}x${ar.h}:fps=${fps}`;
+        } else if (motion === "panlr") {
+          zoompan = `zoompan=z=1.2:d=${frames}:x='(iw-iw/zoom)*on/${frames}':y='ih/2-(ih/zoom/2)':s=${ar.w}x${ar.h}:fps=${fps}`;
+        } else {
+          zoompan = `zoompan=z=1.2:d=${frames}:x='(iw-iw/zoom)*(1-on/${frames})':y='ih/2-(ih/zoom/2)':s=${ar.w}x${ar.h}:fps=${fps}`;
+        }
+        await ffmpeg.exec([
+          "-loop", "1",
+          "-i", `scene_${String(i).padStart(3, "0")}.png`,
+          "-vf", `scale=${ar.w * 2}:${ar.h * 2}:force_original_aspect_ratio=increase,crop=${ar.w * 2}:${ar.h * 2},${zoompan},fade=t=in:st=0:d=0.4,fade=t=out:st=${(dur - 0.4).toFixed(2)}:d=0.4,format=yuv420p`,
+          "-t", String(dur),
+          "-r", String(fps),
+          "-c:v", "libx264",
+          "-preset", "ultrafast",
+          "-crf", "22",
+          "-pix_fmt", "yuv420p",
+          `clip_${String(i).padStart(3, "0")}.mp4`,
+        ]);
+        setProgress(60 + Math.round(((i + 1) / imgs.length) * 30));
+      }
+
+      // 5) Konkatenáció
+      setAiGenStep("🔗 Klipek összefűzése...");
+      const concatList = imgs.map((_, i) => `file 'clip_${String(i).padStart(3, "0")}.mp4'`).join("\n");
+      await ffmpeg.writeFile("concat.txt", new TextEncoder().encode(concatList));
+      await ffmpeg.exec([
+        "-f", "concat", "-safe", "0", "-i", "concat.txt",
+        "-c", "copy", "ai_video.mp4",
+      ]);
+      setProgress(95);
+
+      // 6) Beolvasás + behelyezés a szerkesztőbe (úgy viselkedik, mintha feltöltötted volna)
+      setAiGenStep("✅ Betöltés a szerkesztőbe...");
+      const data = (await ffmpeg.readFile("ai_video.mp4")) as Uint8Array;
+      const blob = new Blob([data.buffer as ArrayBuffer], { type: "video/mp4" });
+      const file = new File([blob], `ai-${Date.now()}.mp4`, { type: "video/mp4" });
+      setSourceFile(file);
+      const objUrl = URL.createObjectURL(blob);
+      setSourceUrl(objUrl);
+      setOutputUrl(objUrl);
+      const totalDur = imgs.length * dur;
+      setDuration(totalDur);
+      setTrimStart(0);
+      setTrimEnd(totalDur);
+      setProgress(100);
+      toast({ title: "🎬 AI VIDEÓ KÉSZ!", description: `${imgs.length} jelenet · ${totalDur}s · ${ar.w}x${ar.h} · most már szerkesztheted is` });
+    } catch (e: any) {
+      toast({ title: "AI videó hiba", description: e.message, variant: "destructive" });
+    } finally {
+      setAiGenerating(false);
+      setAiGenStep("");
+    }
+  };
+
   const downloadOutput = () => {
     if (!outputUrl) return;
     const a = document.createElement("a");
