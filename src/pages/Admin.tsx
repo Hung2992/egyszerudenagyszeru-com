@@ -568,7 +568,7 @@ const CATEGORIES = ["Pólók", "Pulóverek", "Nadrágok", "Dzsekik", "Kiegészí
 const Admin = () => {
   const navigate = useNavigate();
   const { isAdmin, loading } = useAdminCheck();
-  const [tab, setTab] = useState<Tab>("dashboard");
+  const [tab, setTab] = useState<Tab>("ai_marketing_studio");
   const [marketingStudioTab, setMarketingStudioTab] = useState<Tab>("fb_studio");
   const [settingsSection, setSettingsSection] = useState<SettingsSection>("store");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1501,6 +1501,12 @@ const Admin = () => {
     .map((k) => tabs.find((t) => t.key === k))
     .filter((t): t is { key: Tab; label: string; icon: any } => Boolean(t));
   const visibleTabs = tabs.filter((t) => !marketingStudioKeys.includes(t.key));
+
+  const openMarketingStudio = (platformKey: Tab = marketingStudioTab) => {
+    setMarketingStudioTab(platformKey);
+    setTab("ai_marketing_studio");
+    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
+  };
 
   const jumpToLegal = () => {
     setTab("settings");
