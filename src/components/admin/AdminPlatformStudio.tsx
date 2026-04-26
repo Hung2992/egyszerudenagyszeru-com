@@ -950,7 +950,7 @@ KÖTELEZŐ KIMENET:
 
       {/* TOOLS */}
       <Tabs defaultValue="post" className="space-y-4">
-        <TabsList className="rounded-none w-full grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 h-auto">
+        <TabsList className="rounded-none w-full grid grid-cols-3 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-16 h-auto">
           <TabsTrigger value="post" className="rounded-none uppercase text-[10px] py-2"><FileText className="h-3 w-3 mr-1" />Poszt</TabsTrigger>
           <TabsTrigger value="image" className="rounded-none uppercase text-[10px] py-2"><ImageIcon className="h-3 w-3 mr-1" />AI kép</TabsTrigger>
           <TabsTrigger value="edit" className="rounded-none uppercase text-[10px] py-2"><Scissors className="h-3 w-3 mr-1" />Kép-szerk.</TabsTrigger>
@@ -961,6 +961,12 @@ KÖTELEZŐ KIMENET:
           <TabsTrigger value="email" className="rounded-none uppercase text-[10px] py-2"><Mail className="h-3 w-3 mr-1" />Email/DM</TabsTrigger>
           <TabsTrigger value="calendar" className="rounded-none uppercase text-[10px] py-2"><Calendar className="h-3 w-3 mr-1" />30 nap</TabsTrigger>
           <TabsTrigger value="competitor" className="rounded-none uppercase text-[10px] py-2"><Eye className="h-3 w-3 mr-1" />Spy</TabsTrigger>
+          <TabsTrigger value="ads" className="rounded-none uppercase text-[10px] py-2"><DollarSign className="h-3 w-3 mr-1" />Ads</TabsTrigger>
+          <TabsTrigger value="seo" className="rounded-none uppercase text-[10px] py-2"><Search className="h-3 w-3 mr-1" />SEO</TabsTrigger>
+          <TabsTrigger value="influencer" className="rounded-none uppercase text-[10px] py-2"><UserCheck className="h-3 w-3 mr-1" />Influencer</TabsTrigger>
+          <TabsTrigger value="abtest" className="rounded-none uppercase text-[10px] py-2"><FlaskConical className="h-3 w-3 mr-1" />A/B</TabsTrigger>
+          <TabsTrigger value="landing" className="rounded-none uppercase text-[10px] py-2"><LayoutTemplate className="h-3 w-3 mr-1" />Landing</TabsTrigger>
+          <TabsTrigger value="crisis" className="rounded-none uppercase text-[10px] py-2"><AlertTriangle className="h-3 w-3 mr-1" />Krízis</TabsTrigger>
         </TabsList>
 
         {/* POST */}
