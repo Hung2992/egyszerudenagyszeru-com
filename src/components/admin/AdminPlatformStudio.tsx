@@ -854,6 +854,118 @@ KÖTELEZŐ KIMENET:
             </div>
           )}
         </TabsContent>
+
+        {/* IMAGE EDIT */}
+        <TabsContent value="edit" className="space-y-3">
+          <Label className="text-xs uppercase">Tölts fel egy képet (saját termékfotó, screenshot stb.)</Label>
+          <Input type="file" accept="image/*" className="rounded-none"
+            onChange={(e) => e.target.files?.[0] && handleEditUpload(e.target.files[0])} />
+          {editSourceB64 && <img src={editSourceB64} alt="source" className="w-full max-h-[300px] object-contain border" />}
+          <Label className="text-xs uppercase">Mit változtassunk rajta?</Label>
+          <Textarea className="rounded-none min-h-[80px]"
+            value={editPrompt} onChange={(e) => setEditPrompt(e.target.value)}
+            placeholder="pl. tedd a hátteret budapesti utcára, adj hozzá természetes fényt, ${platform.label} reels stílus" />
+          <Button onClick={generateEditedImage} disabled={loadingEdit}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingEdit ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Scissors className="h-4 w-4 mr-2" />}
+            {loadingEdit ? "Szerkesztés..." : "AI képszerkesztés indítása"}
+          </Button>
+          {editedB64 && (
+            <div className="border p-3 space-y-2">
+              <img src={editedB64} alt="Edited" className="w-full max-h-[600px] object-contain border" />
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => downloadImage(editedB64, "-edit")}>
+                  <Download className="h-3 w-3 mr-1" /> Letöltés
+                </Button>
+                <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={generateEditedImage}>
+                  <RefreshCw className="h-3 w-3 mr-1" /> Új variáns
+                </Button>
+              </div>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* HOOKS */}
+        <TabsContent value="hooks" className="space-y-3">
+          <Button onClick={generateHooks} disabled={loadingHook}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingHook ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Zap className="h-4 w-4 mr-2" />}
+            {loadingHook ? "10 hook generálása..." : "10 PRO HOOK variáns"}
+          </Button>
+          <Textarea className="rounded-none min-h-[400px] font-mono text-xs"
+            value={hookOutput} onChange={(e) => setHookOutput(e.target.value)}
+            placeholder="10 különböző stílusú scroll-stopper hook..." />
+          {hookOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(hookOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* CAROUSEL */}
+        <TabsContent value="carousel" className="space-y-3">
+          <Button onClick={generateCarousel} disabled={loadingCarousel}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingCarousel ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Layers className="h-4 w-4 mr-2" />}
+            {loadingCarousel ? "Carousel..." : `${platform.label} Carousel/Thread (8-10 slide)`}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs"
+            value={carouselOutput} onChange={(e) => setCarouselOutput(e.target.value)}
+            placeholder="Slide-by-slide carousel/thread tartalom..." />
+          {carouselOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(carouselOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* HASHTAGS */}
+        <TabsContent value="hashtags" className="space-y-3">
+          <Button onClick={generateHashtags} disabled={loadingHashtag}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingHashtag ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Hash className="h-4 w-4 mr-2" />}
+            {loadingHashtag ? "Hashtag stratégia..." : "PRO Hashtag Stratégia (Tier 1/2/3 + magyar)"}
+          </Button>
+          <Textarea className="rounded-none min-h-[400px] font-mono text-xs"
+            value={hashtagOutput} onChange={(e) => setHashtagOutput(e.target.value)}
+            placeholder="3-tier hashtag stratégia + shadowban check + magyar tagek..." />
+          {hashtagOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(hashtagOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* EMAIL/DM/SMS */}
+        <TabsContent value="email" className="space-y-3">
+          <Button onClick={generateEmail} disabled={loadingEmail}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingEmail ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
+            {loadingEmail ? "Sequence..." : "Email + DM + SMS sequence (PAS framework)"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs"
+            value={emailOutput} onChange={(e) => setEmailOutput(e.target.value)}
+            placeholder="Email tárgy A/B + body + DM cold opener + SMS..." />
+          {emailOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(emailOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* CALENDAR 30 DAYS */}
+        <TabsContent value="calendar" className="space-y-3">
+          <Button onClick={generateCalendar} disabled={loadingCalendar}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingCalendar ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Calendar className="h-4 w-4 mr-2" />}
+            {loadingCalendar ? "30 napos naptár..." : "30 napos content calendar"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs"
+            value={calendarOutput} onChange={(e) => setCalendarOutput(e.target.value)}
+            placeholder="Nap | Dátum | Típus | Téma | Hook | CTA | Időpont | Hashtag..." />
+          {calendarOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(calendarOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* COMPETITOR */}
+        <TabsContent value="competitor" className="space-y-3">
+          <Label className="text-xs uppercase">Versenytárs URL vagy név</Label>
+          <Input className="rounded-none"
+            value={competitorUrl} onChange={(e) => setCompetitorUrl(e.target.value)}
+            placeholder="pl. shein.com / @aboutyou_hu / zalando.hu" />
+          <Button onClick={generateCompetitorAnalysis} disabled={loadingCompetitor}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingCompetitor ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <TrendingUp className="h-4 w-4 mr-2" />}
+            {loadingCompetitor ? "Spy mode..." : "Versenytárs analízis + támadási terv"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs"
+            value={competitorOutput} onChange={(e) => setCompetitorOutput(e.target.value)}
+            placeholder="Pozícionálás, erősségek, gyengeségek, támadási vektorok..." />
+          {competitorOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(competitorOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
       </Tabs>
 
       {/* HISTORY */}
