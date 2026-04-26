@@ -15,6 +15,7 @@ import {
   DollarSign, Search, UserCheck, AlertTriangle, FlaskConical, LayoutTemplate,
   GitBranch, User, Flame as TrendIcon, Languages, MessageCircle,
   Newspaper, BarChart3, Palette,
+  Camera, Recycle, Mic, MessagesSquare, Tag, BookOpen, Radio, ShieldCheck,
 } from "lucide-react";
 
 // ============================================================
