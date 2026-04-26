@@ -1490,9 +1490,14 @@ const Admin = () => {
     { key: "settings", label: "Beállítások", icon: Settings },
   ];
 
-  // Mobil gyorselérés: a legfontosabb fülek – Jogi + Adó kiemelten
-  const primaryTabKeys: Tab[] = ["products", "orders", "ai_bookkeeper", "legal_center", "tax_invoice", "accounting", "settings"];
+  // Mobil gyorselérés: a legfontosabb fülek – AI Marketing + Jogi + Adó kiemelten
+  const primaryTabKeys: Tab[] = ["ai_marketing_studio", "products", "orders", "ai_bookkeeper", "legal_center", "tax_invoice", "accounting", "settings"];
   const primaryTabs = primaryTabKeys
+    .map((k) => tabs.find((t) => t.key === k))
+    .filter((t): t is { key: Tab; label: string; icon: any } => Boolean(t));
+
+  const marketingStudioKeys: Tab[] = ["fb_studio", "ig_studio", "tt_studio", "yt_studio", "yts_studio", "gads_studio", "pin_studio", "li_studio", "x_studio"];
+  const marketingStudioTabs = marketingStudioKeys
     .map((k) => tabs.find((t) => t.key === k))
     .filter((t): t is { key: Tab; label: string; icon: any } => Boolean(t));
 
@@ -1555,6 +1560,31 @@ const Admin = () => {
         <div className="mx-auto max-w-6xl space-y-3 px-4 py-3">
           {/* ⚖️ JOGI + ÁFA MEGA KIEMELT SÁV — minden képernyőn látható */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button
+              onClick={() => setTab("fb_studio")}
+              className={`group relative flex items-center justify-between gap-3 border-2 px-4 py-3 text-left transition-all sm:col-span-2 ${
+                tab === "ai_marketing_studio" || marketingStudioKeys.includes(tab)
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-primary bg-primary/10 text-foreground hover:bg-primary hover:text-primary-foreground"
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-10 w-10 shrink-0 flex items-center justify-center border border-current">
+                  <Brain className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.25em] opacity-70">
+                    AI · REKLÁM · VIDEÓ EDITOR
+                  </div>
+                  <div className="text-sm font-black uppercase tracking-wider truncate">
+                    AI Marketing Stúdió — 40 eszköz/platform
+                  </div>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-widest opacity-80 shrink-0 hidden sm:inline">
+                Facebook · Instagram · TikTok · Google Ads
+              </span>
+            </button>
             <button
               onClick={() => setTab("legal_center")}
               className={`group relative flex items-center justify-between gap-3 border-2 px-4 py-3 text-left transition-all ${
@@ -1645,6 +1675,22 @@ const Admin = () => {
               <option key={t.key} value={t.key}>{t.label}</option>
             ))}
           </select>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-9">
+            {marketingStudioTabs.map(t => (
+              <button
+                key={`marketing-${t.key}`}
+                onClick={() => setTab(t.key)}
+                className={`flex min-h-12 flex-col items-center justify-center gap-1 border px-2 py-2 text-[10px] font-black uppercase tracking-wider leading-tight text-center transition-colors ${
+                  tab === t.key
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-primary/40 bg-card text-foreground hover:bg-primary hover:text-primary-foreground"
+                }`}
+              >
+                <t.icon className="h-4 w-4 shrink-0" />
+                <span className="line-clamp-2">{t.label.replace(" Stúdió", "")}</span>
+              </button>
+            ))}
+          </div>
           <div className="flex gap-0 overflow-x-auto">
             {tabs.map(t => (
               <button
@@ -3291,7 +3337,7 @@ const Admin = () => {
         {tab === "returns" && <AdminReturnsTab />}
         {tab === "dynamic_pricing" && <AdminDynamicPricingTab />}
         {tab === "marketing" && <AdminMarketingTab />}
-        {tab === "ai_marketing_studio" && <AdminAiMarketingStudioTab />}
+        {tab === "ai_marketing_studio" && <AdminFacebookStudioTab />}
         {tab === "fb_studio" && <AdminFacebookStudioTab />}
         {tab === "ig_studio" && <AdminInstagramStudioTab />}
         {tab === "tt_studio" && <AdminTiktokStudioTab />}
