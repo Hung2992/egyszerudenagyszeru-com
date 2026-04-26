@@ -1501,6 +1501,7 @@ const Admin = () => {
   const marketingStudioTabs = marketingStudioKeys
     .map((k) => tabs.find((t) => t.key === k))
     .filter((t): t is { key: Tab; label: string; icon: any } => Boolean(t));
+  const visibleTabs = tabs.filter((t) => !marketingStudioKeys.includes(t.key));
 
   const jumpToLegal = () => {
     setTab("settings");
@@ -1562,7 +1563,7 @@ const Admin = () => {
           {/* ⚖️ JOGI + ÁFA MEGA KIEMELT SÁV — minden képernyőn látható */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <button
-              onClick={() => setTab("fb_studio")}
+              onClick={() => setTab("ai_marketing_studio")}
               className={`group relative flex items-center justify-between gap-3 border-2 px-4 py-3 text-left transition-all sm:col-span-2 ${
                 tab === "ai_marketing_studio" || marketingStudioKeys.includes(tab)
                   ? "border-primary bg-primary text-primary-foreground"
