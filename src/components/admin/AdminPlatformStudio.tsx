@@ -1532,7 +1532,8 @@ Mindegyik hirdetéshez:
       `Versenytárs nevek/URL-ek: ${adSpyInput || "magyar e-commerce versenytársak az adott kategóriában"}.\n\n${buildContext()}`);
   };
 
-
+  const copy = (txt: string) => {
+    navigator.clipboard.writeText(txt);
     toast({ title: "Vágólapra másolva" });
   };
 
