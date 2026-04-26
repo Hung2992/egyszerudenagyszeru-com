@@ -13,6 +13,8 @@ import {
   Send, RefreshCw, Save, Flame, Users, Trash2, Hash, Mail,
   Calendar, Eye, Layers, Zap, Upload, Scissors, TrendingUp,
   DollarSign, Search, UserCheck, AlertTriangle, FlaskConical, LayoutTemplate,
+  GitBranch, User, Flame as TrendIcon, Languages, MessageCircle,
+  Newspaper, BarChart3, Palette,
 } from "lucide-react";
 
 // ============================================================
@@ -99,6 +101,17 @@ const AdminPlatformStudio = ({ platform }: Props) => {
   const [crisisOutput, setCrisisOutput] = useState<string>("");
   const [abTestOutput, setAbTestOutput] = useState<string>("");
   const [landingOutput, setLandingOutput] = useState<string>("");
+  const [funnelOutput, setFunnelOutput] = useState<string>("");
+  const [bioOutput, setBioOutput] = useState<string>("");
+  const [trendOutput, setTrendOutput] = useState<string>("");
+  const [translateInput, setTranslateInput] = useState<string>("");
+  const [translateLang, setTranslateLang] = useState<string>("angol");
+  const [translateOutput, setTranslateOutput] = useState<string>("");
+  const [chatbotOutput, setChatbotOutput] = useState<string>("");
+  const [pressOutput, setPressOutput] = useState<string>("");
+  const [analyticsInput, setAnalyticsInput] = useState<string>("");
+  const [analyticsOutput, setAnalyticsOutput] = useState<string>("");
+  const [moodboardOutput, setMoodboardOutput] = useState<string>("");
 
   // States
   const [loadingPost, setLoadingPost] = useState(false);
@@ -117,6 +130,14 @@ const AdminPlatformStudio = ({ platform }: Props) => {
   const [loadingCrisis, setLoadingCrisis] = useState(false);
   const [loadingAbTest, setLoadingAbTest] = useState(false);
   const [loadingLanding, setLoadingLanding] = useState(false);
+  const [loadingFunnel, setLoadingFunnel] = useState(false);
+  const [loadingBio, setLoadingBio] = useState(false);
+  const [loadingTrend, setLoadingTrend] = useState(false);
+  const [loadingTranslate, setLoadingTranslate] = useState(false);
+  const [loadingChatbot, setLoadingChatbot] = useState(false);
+  const [loadingPress, setLoadingPress] = useState(false);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  const [loadingMoodboard, setLoadingMoodboard] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -834,6 +855,242 @@ KÖTELEZŐ KIMENET:
     finally { setLoadingCrisis(false); }
   };
 
+  // ============== FUNNEL TÉRKÉP (TOFU/MOFU/BOFU) ==============
+  const generateFunnel = () => runTool(setLoadingFunnel, setFunnelOutput,
+    `Te a világ legjobb magyar marketing funnel architektúra szakértője vagy. ${platform.label}-ra dolgozol.
+KÖTELEZŐ KIMENET – TELJES FUNNEL TÉRKÉP:
+
+🔝 TOFU – AWARENESS (top of funnel)
+- 5 konkrét tartalom ötlet (hook, formátum, cél)
+- Targeting: cold audience
+- KPI: reach, video view, CTR
+- Budget %: 60-70%
+
+🟡 MOFU – CONSIDERATION (middle)
+- 5 konkrét tartalom (ár, garanciák, USP, FAQ, demo)
+- Targeting: 25%+ video view, profile visit, link click
+- KPI: lead, add to cart, save
+- Budget %: 20-25%
+
+🔴 BOFU – CONVERSION (bottom)
+- 5 konkrét tartalom (testimonial, urgency, kedvezmény, abandoned cart)
+- Targeting: cart abandoner, last 30 day visitor
+- KPI: purchase, ROAS
+- Budget %: 10-15%
+
+🔁 RETENTION & LTV növelés (5 ötlet)
+🎯 TELJES USER JOURNEY (1. érintés → vásárlás → ismétlés)
+📊 ATTRIBUCIÓS MODELL javaslat
+🚦 BUDGET ELOSZTÁS pontos % + HUF példával 100k/200k/500k havi költésre`,
+    `Generálj teljes marketing funnel térképet ${platform.label}-ra.\n\n${buildContext()}`);
+
+  // ============== BIO / PROFIL OPTIMALIZÁLÁS ==============
+  const generateBio = () => runTool(setLoadingBio, setBioOutput,
+    `Te a világ legjobb ${platform.label} profil/bio optimalizációs szakértője vagy.
+KÖTELEZŐ KIMENET:
+
+📛 NÉV / DISPLAY NAME (3 variáns – kulcsszóval)
+🆔 USERNAME / HANDLE (3 ötlet ha még nincs)
+📝 BIO SZÖVEG (3 verzió, ${platform.label} max karakterszámon belül):
+   - V1: Érzelmi (story alapú)
+   - V2: Funkcionális (mit csinálok, kinek)
+   - V3: USP-fókuszú (számok, eredmények)
+
+🔗 LINK STRATÉGIA (link in bio – Linktree alternatíva, prioritás)
+📍 LOKÁCIÓ + KATEGÓRIA javaslat
+🎨 PROFIL KÉP brief (mit ábrázoljon, milyen stílus)
+🖼️ COVER / BANNER brief
+📌 KIEMELT POSZTOK (3-5 highlight cover + cím)
+☁️ STORY HIGHLIGHT struktúra (ha van: IG/FB)
+🎯 CTA gomb szöveg (Üzenet / Hívás / Foglalás)
+✅ VERIFIKÁCIÓS CHECKLIST (mit kell még a verified-hez)`,
+    `Optimalizáld a ${platform.label} profilt/bio-t.\n\n${buildContext()}`);
+
+  // ============== TREND RADAR / VIRÁLIS ÖTLETEK ==============
+  const generateTrend = () => runTool(setLoadingTrend, setTrendOutput,
+    `Te a világ legjobb ${platform.label} trend forecaster + virális content strategist vagy. Magyar piacra dolgozol.
+KÖTELEZŐ KIMENET:
+
+🔥 10 AKTUÁLIS / FELFUTÓBAN LÉVŐ TREND ${platform.label}-on most:
+Mindegyikhez:
+- 📈 Trend neve / leírás (1 mondat)
+- 🌡️ Hot score (1-10)
+- ⏰ Becsült életciklus (még meddig viral – nap/hét)
+- 🇭🇺 Magyar adaptáció (hogyan ültesd át magyar piacra)
+- 🎯 Hogyan csatold a TERMÉKEDHEZ konkrétan
+- 🎵 Ha hang/zene: track javaslat
+- 📝 Konkrét poszt ötlet (script vázlat)
+- ⚠️ Kockázat (cringe / cancel veszély)
+
+🚀 3 EVERGREEN VIRAL FORMÁTUM (mindig működik)
+📊 TREND BENCHMARK (mit jelent magyar piacon a "viral" – nézettség/engagement)
+🎯 EXECUTION SPEED – hány órán belül kell kiraknod, hogy ne késsél le róla`,
+    `Generálj trend radart + virális ötleteket.\n\n${buildContext()}`);
+
+  // ============== FORDÍTÓ / LOKALIZÁCIÓ ==============
+  const generateTranslate = async () => {
+    if (!translateInput.trim()) {
+      toast({ title: "Adj meg fordítandó szöveget", variant: "destructive" });
+      return;
+    }
+    setLoadingTranslate(true); setTranslateOutput("");
+    try {
+      await streamAi(
+        `Te egy profi marketing fordító + lokalizációs szakértő vagy. Nem szóról-szóra fordítasz, hanem KULTURÁLISAN ADAPTÁLSZ.
+KÖTELEZŐ KIMENET:
+
+🌍 NYERS FORDÍTÁS (${translateLang}) – pontos, de szó szerint
+🎯 KULTURÁLISAN ADAPTÁLT VERZIÓ – ahogy egy anyanyelvi marketinges írná
+💡 LOKALIZÁCIÓS MEGJEGYZÉSEK (mit változtattam, miért)
+🚫 KULTURÁLIS BUKTATÓK (mit kerüljünk az adott piacon)
+#️⃣ HASHTAG ADAPTÁCIÓ (lokális hashtagek)
+💰 PÉNZNEM / MÉRTÉKEGYSÉG átváltás
+⏰ IDŐPONT ADAPTÁCIÓ (másik időzóna posztolási csúcsa)
+🎨 VIZUÁLIS ADAPTÁCIÓ JAVASLAT (szín, modell, helyszín)`,
+        `Eredeti magyar szöveg:\n${translateInput}\n\nCélnyelv/piac: ${translateLang}\nPlatform: ${platform.label}`,
+        setTranslateOutput,
+        "post",
+      );
+    } catch (e: any) { toast({ title: "Hiba", description: e.message, variant: "destructive" }); }
+    finally { setLoadingTranslate(false); }
+  };
+
+  // ============== CHATBOT / DM AUTOMATA SCRIPT ==============
+  const generateChatbot = () => runTool(setLoadingChatbot, setChatbotOutput,
+    `Te a világ legjobb conversational commerce + DM automation szakértője vagy. ${platform.label}-ra építesz chatbotot/DM flow-t.
+KÖTELEZŐ KIMENET – TELJES CHATBOT FORGATÓKÖNYV:
+
+🤖 ÜDVÖZLŐ ÜZENET (welcome message – 3 verzió)
+🧩 MAIN MENU (4-6 gomb / quick reply opcióval):
+- Termékek
+- Méret tanácsadás
+- Rendelés státusz
+- Visszáru / csere
+- Élő ügyfélszolgálat
+- Kedvezmény / kupon
+
+🌳 PÁRBESZÉD-FA mindegyik gombhoz:
+- Bot kérdés
+- Várt user válaszok (3-4 opció)
+- Bot következő reakció
+
+🎯 FALLBACK ("nem értem" – 3 fokozat, mielőtt élő agent)
+👤 ÉLŐ AGENT ÁTADÁS – mikor és hogyan
+💬 KICSI BESZÉLGETÉS (small talk válaszok – brand hang)
+🛒 KOSÁR-MENTÉS automatizmus (24h, 48h, 72h)
+🎁 LEAD MAGNET (mit ajánljunk az opt-in-ért)
+📊 KPI – mit mérj (válaszidő, escalation rate, conversion)
+⚖️ GDPR + adatvédelem disclaimer szövegek`,
+    `Generálj DM/chatbot teljes flow-t.\n\n${buildContext()}`);
+
+  // ============== SAJTÓKÖZLEMÉNY / PR ==============
+  const generatePress = () => runTool(setLoadingPress, setPressOutput,
+    `Te a világ legjobb magyar PR / sajtó kapcsolattartó vagy. Profi sajtóközleményeket írsz, amit a HVG, 24.hu, Index átvesz.
+KÖTELEZŐ KIMENET – TELJES SAJTÓCSOMAG:
+
+📰 SAJTÓKÖZLEMÉNY (klasszikus szerkezet):
+- TÁRGY (max 80 kar – újságíró-mágnes)
+- DÁTUM + HELYSZÍN (Budapest, 2025...)
+- LEAD bekezdés (5W: ki, mit, mikor, hol, miért – 1 mondatban)
+- TÖRZS (3-4 bekezdés, idézőjelben CEO/founder mondat)
+- BACKGROUND (cégadatok, számok, mission)
+- KAPCSOLAT (név, email, telefon)
+- KÉPEK / VIDEO link sablon
+
+📧 PITCH EMAIL újságíróknak (rövid, 5 mondat)
+📋 MÉDIA LISTA javaslat (10 magyar releváns kiadvány)
+🎯 NEWS HOOK – miért hír ez most (timing, szezon, tárgy)
+📸 KÉPI ANYAG brief (mit küldj sajtóhoz)
+🎙️ INTERJÚ-KÉSZSÉGI BULLET POINTS (válasz template-ek várt kérdésekre)
+🚫 EMBARGO szöveg ha kell
+📊 MÉRÉS – PR ROI hogyan számold`,
+    `Generálj teljes sajtócsomagot.\n\n${buildContext()}`);
+
+  // ============== ANALYTICS ÉRTELMEZŐ ==============
+  const generateAnalytics = async () => {
+    if (!analyticsInput.trim()) {
+      toast({ title: "Illeszd be az analytics adatokat", variant: "destructive" });
+      return;
+    }
+    setLoadingAnalytics(true); setAnalyticsOutput("");
+    try {
+      await streamAi(
+        `Te a világ legjobb magyar marketing analytics elemző vagy. ${platform.label}-ra fókuszálsz.
+KÖTELEZŐ KIMENET:
+
+📊 ADATOK ÖSSZEGZÉSE (1 mondat – mit látunk)
+🌡️ EGÉSZSÉG STÁTUSZ (zöld/sárga/piros + indoklás)
+
+🟢 MI MEGY JÓL (3 pont – konkrét számokkal)
+🔴 MI NEM MEGY (3 pont – konkrét számokkal)
+⚠️ ANOMÁLIÁK (gyanús ugrások / esések)
+
+🎯 ROOT CAUSE elemzés (miért történt – 3 hipotézis)
+🔬 MELYIKET TESZTELD ELŐSZÖR (priorizálva)
+
+🚀 KONKRÉT AKCIÓK (5 lépés holnap reggelre):
+1. ...
+2. ...
+
+📈 HOSSZÚ TÁVÚ AJÁNLÁSOK (3 stratégiai)
+📊 KÖVETKEZŐ MÉRÉSI PERIÓDUS (mit nézz, mikor)
+💰 BUDGET ÚJRAOSZTÁS javaslat (% szerint)
+🎯 ${platform.label} BENCHMARK – hogy állsz a magyar átlaghoz képest`,
+        `Analytics adatok:\n${analyticsInput}\n\nKontextus:\n${buildContext()}`,
+        setAnalyticsOutput,
+        "post",
+      );
+    } catch (e: any) { toast({ title: "Hiba", description: e.message, variant: "destructive" }); }
+    finally { setLoadingAnalytics(false); }
+  };
+
+  // ============== BRAND MOODBOARD / VIZUÁLIS GUIDE ==============
+  const generateMoodboard = () => runTool(setLoadingMoodboard, setMoodboardOutput,
+    `Te a világ legjobb brand identity + art director vagy. ${platform.label}-ra szabsz vizuális stílust magyar piacra.
+KÖTELEZŐ KIMENET – TELJES VIZUÁLIS GUIDE:
+
+🎨 SZÍNPALETTA (5 szín):
+- Primary (HEX + HSL + amikor használd)
+- Secondary
+- Accent
+- Neutral
+- Dark/Light variánsok
+
+🔤 TIPOGRÁFIA:
+- Headline font (Google Font javaslat)
+- Body font
+- Hangsúly font (CTA-hoz)
+- Hierarchia (H1/H2/H3 méret arány)
+
+📸 FOTÓ STÍLUS:
+- Kompozíció (rule of thirds, központosított, asymmetric)
+- Megvilágítás (természetes, stúdió, drámai)
+- Színhőmérséklet (meleg/hideg)
+- Modell típus (kor, etnikum, stílus)
+- Helyszín (urban, otthonos, természet)
+
+✨ GRAFIKAI ELEMEK:
+- Ikonok stílusa (line/filled, sarok)
+- Textúrák
+- Mintázatok
+- Sticker / emoji használat
+
+🎬 VIDEÓ STÍLUS:
+- Vágás ritmus (lassú/gyors)
+- Átmenetek
+- Color grading (LUT javaslat)
+- Felirat stílus (font, animáció)
+
+📐 LAYOUT SZABÁLYOK:
+- Margók, padding ${platform.label}-ra
+- Safe zone (vágási területek)
+- Branding helye (logo, watermark)
+
+🚫 TILTOTT ELEMEK (mit NE használj sose – brand védelem)
+✅ DO's lista
+📋 EXPORT BEÁLLÍTÁSOK ${platform.label}-ra (DPI, format, méret)`,
+    `Generálj teljes brand vizuális guide-ot.\n\n${buildContext()}`);
+
   const copy = (txt: string) => {
     navigator.clipboard.writeText(txt);
     toast({ title: "Vágólapra másolva" });
@@ -950,7 +1207,7 @@ KÖTELEZŐ KIMENET:
 
       {/* TOOLS */}
       <Tabs defaultValue="post" className="space-y-4">
-        <TabsList className="rounded-none w-full grid grid-cols-3 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-16 h-auto">
+        <TabsList className="rounded-none w-full grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 h-auto">
           <TabsTrigger value="post" className="rounded-none uppercase text-[10px] py-2"><FileText className="h-3 w-3 mr-1" />Poszt</TabsTrigger>
           <TabsTrigger value="image" className="rounded-none uppercase text-[10px] py-2"><ImageIcon className="h-3 w-3 mr-1" />AI kép</TabsTrigger>
           <TabsTrigger value="edit" className="rounded-none uppercase text-[10px] py-2"><Scissors className="h-3 w-3 mr-1" />Kép-szerk.</TabsTrigger>
@@ -967,6 +1224,14 @@ KÖTELEZŐ KIMENET:
           <TabsTrigger value="abtest" className="rounded-none uppercase text-[10px] py-2"><FlaskConical className="h-3 w-3 mr-1" />A/B</TabsTrigger>
           <TabsTrigger value="landing" className="rounded-none uppercase text-[10px] py-2"><LayoutTemplate className="h-3 w-3 mr-1" />Landing</TabsTrigger>
           <TabsTrigger value="crisis" className="rounded-none uppercase text-[10px] py-2"><AlertTriangle className="h-3 w-3 mr-1" />Krízis</TabsTrigger>
+          <TabsTrigger value="funnel" className="rounded-none uppercase text-[10px] py-2"><GitBranch className="h-3 w-3 mr-1" />Funnel</TabsTrigger>
+          <TabsTrigger value="bio" className="rounded-none uppercase text-[10px] py-2"><User className="h-3 w-3 mr-1" />Bio</TabsTrigger>
+          <TabsTrigger value="trend" className="rounded-none uppercase text-[10px] py-2"><TrendIcon className="h-3 w-3 mr-1" />Trend</TabsTrigger>
+          <TabsTrigger value="translate" className="rounded-none uppercase text-[10px] py-2"><Languages className="h-3 w-3 mr-1" />Fordító</TabsTrigger>
+          <TabsTrigger value="chatbot" className="rounded-none uppercase text-[10px] py-2"><MessageCircle className="h-3 w-3 mr-1" />Chatbot</TabsTrigger>
+          <TabsTrigger value="press" className="rounded-none uppercase text-[10px] py-2"><Newspaper className="h-3 w-3 mr-1" />PR</TabsTrigger>
+          <TabsTrigger value="analytics" className="rounded-none uppercase text-[10px] py-2"><BarChart3 className="h-3 w-3 mr-1" />Analytics</TabsTrigger>
+          <TabsTrigger value="moodboard" className="rounded-none uppercase text-[10px] py-2"><Palette className="h-3 w-3 mr-1" />Moodboard</TabsTrigger>
         </TabsList>
 
         {/* POST */}
@@ -1240,6 +1505,94 @@ KÖTELEZŐ KIMENET:
             value={crisisOutput} onChange={(e) => setCrisisOutput(e.target.value)}
             placeholder="Súlyosság, reakcióidő, 3 válasz variáns, eszkaláció..." />
           {crisisOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(crisisOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* FUNNEL */}
+        <TabsContent value="funnel" className="space-y-3">
+          <Button onClick={generateFunnel} disabled={loadingFunnel} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingFunnel ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <GitBranch className="h-4 w-4 mr-2" />}
+            {loadingFunnel ? "Funnel..." : "TOFU/MOFU/BOFU funnel térkép + budget"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={funnelOutput} onChange={(e) => setFunnelOutput(e.target.value)} placeholder="Awareness → Consideration → Conversion → Retention..." />
+          {funnelOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(funnelOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* BIO */}
+        <TabsContent value="bio" className="space-y-3">
+          <Button onClick={generateBio} disabled={loadingBio} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingBio ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <User className="h-4 w-4 mr-2" />}
+            {loadingBio ? "Bio..." : `${platform.label} profil/bio optimalizálás (3 variáns)`}
+          </Button>
+          <Textarea className="rounded-none min-h-[400px] font-mono text-xs" value={bioOutput} onChange={(e) => setBioOutput(e.target.value)} placeholder="Display name, bio 3 verzió, link stratégia, profil kép brief, highlights..." />
+          {bioOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(bioOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* TREND */}
+        <TabsContent value="trend" className="space-y-3">
+          <Button onClick={generateTrend} disabled={loadingTrend} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingTrend ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <TrendIcon className="h-4 w-4 mr-2" />}
+            {loadingTrend ? "Trend radar..." : "10 aktuális trend + magyar adaptáció"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={trendOutput} onChange={(e) => setTrendOutput(e.target.value)} placeholder="Hot trendek, hot score, életciklus, adaptáció a termékre..." />
+          {trendOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(trendOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* TRANSLATE */}
+        <TabsContent value="translate" className="space-y-3">
+          <Label className="text-xs uppercase">Magyar szöveg fordításra</Label>
+          <Textarea className="rounded-none min-h-[100px]" value={translateInput} onChange={(e) => setTranslateInput(e.target.value)} placeholder="Másold be a magyar marketing szöveget..." />
+          <Label className="text-xs uppercase">Célnyelv / piac</Label>
+          <select className="w-full border rounded-none p-2 text-sm bg-background" value={translateLang} onChange={(e) => setTranslateLang(e.target.value)}>
+            {["angol","német","román","szlovák","cseh","lengyel","olasz","francia","spanyol","portugál","holland","török","arab","kínai","japán"].map(l => <option key={l}>{l}</option>)}
+          </select>
+          <Button onClick={generateTranslate} disabled={loadingTranslate} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingTranslate ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Languages className="h-4 w-4 mr-2" />}
+            {loadingTranslate ? "Fordítás..." : "Kulturális adaptáció + lokalizáció"}
+          </Button>
+          <Textarea className="rounded-none min-h-[400px] font-mono text-xs" value={translateOutput} onChange={(e) => setTranslateOutput(e.target.value)} placeholder="Nyers fordítás + kulturálisan adaptált verzió + buktatók..." />
+          {translateOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(translateOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* CHATBOT */}
+        <TabsContent value="chatbot" className="space-y-3">
+          <Button onClick={generateChatbot} disabled={loadingChatbot} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingChatbot ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <MessageCircle className="h-4 w-4 mr-2" />}
+            {loadingChatbot ? "Chatbot flow..." : "Teljes DM/chatbot forgatókönyv"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={chatbotOutput} onChange={(e) => setChatbotOutput(e.target.value)} placeholder="Welcome, menu, párbeszéd-fa, fallback, agent átadás, kosár-mentés..." />
+          {chatbotOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(chatbotOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* PRESS / PR */}
+        <TabsContent value="press" className="space-y-3">
+          <Button onClick={generatePress} disabled={loadingPress} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingPress ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Newspaper className="h-4 w-4 mr-2" />}
+            {loadingPress ? "PR csomag..." : "Sajtóközlemény + pitch email + médialista"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={pressOutput} onChange={(e) => setPressOutput(e.target.value)} placeholder="Sajtóközlemény, pitch email, médialista, news hook..." />
+          {pressOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(pressOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* ANALYTICS */}
+        <TabsContent value="analytics" className="space-y-3">
+          <Label className="text-xs uppercase">Illeszd be az analytics adatokat (insights, GA4 export, ad manager screenshot szöveg)</Label>
+          <Textarea className="rounded-none min-h-[150px]" value={analyticsInput} onChange={(e) => setAnalyticsInput(e.target.value)} placeholder="pl. Reach: 12500, CTR: 1.2%, CPC: 65 Ft, ROAS: 1.8, Conversion rate: 0.8%..." />
+          <Button onClick={generateAnalytics} disabled={loadingAnalytics} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingAnalytics ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <BarChart3 className="h-4 w-4 mr-2" />}
+            {loadingAnalytics ? "Elemzés..." : "Analytics értelmezés + akcióterv"}
+          </Button>
+          <Textarea className="rounded-none min-h-[400px] font-mono text-xs" value={analyticsOutput} onChange={(e) => setAnalyticsOutput(e.target.value)} placeholder="Mi megy jól / rosszul, root cause, 5 akció holnapra, magyar benchmark..." />
+          {analyticsOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(analyticsOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* MOODBOARD */}
+        <TabsContent value="moodboard" className="space-y-3">
+          <Button onClick={generateMoodboard} disabled={loadingMoodboard} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingMoodboard ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Palette className="h-4 w-4 mr-2" />}
+            {loadingMoodboard ? "Moodboard..." : "Brand vizuális guide + színpaletta + tipográfia"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={moodboardOutput} onChange={(e) => setMoodboardOutput(e.target.value)} placeholder="Színek HEX-ben, fontok, fotó stílus, videó style, layout szabályok..." />
+          {moodboardOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(moodboardOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
         </TabsContent>
       </Tabs>
 
