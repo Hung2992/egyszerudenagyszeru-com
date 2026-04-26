@@ -568,7 +568,7 @@ const CATEGORIES = ["Pólók", "Pulóverek", "Nadrágok", "Dzsekik", "Kiegészí
 const Admin = () => {
   const navigate = useNavigate();
   const { isAdmin, loading } = useAdminCheck();
-  const [tab, setTab] = useState<Tab>("dashboard");
+  const [tab, setTab] = useState<Tab>("ai_marketing_studio");
   const [marketingStudioTab, setMarketingStudioTab] = useState<Tab>("fb_studio");
   const [settingsSection, setSettingsSection] = useState<SettingsSection>("store");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1502,6 +1502,12 @@ const Admin = () => {
     .filter((t): t is { key: Tab; label: string; icon: any } => Boolean(t));
   const visibleTabs = tabs.filter((t) => !marketingStudioKeys.includes(t.key));
 
+  const openMarketingStudio = (platformKey: Tab = marketingStudioTab) => {
+    setMarketingStudioTab(platformKey);
+    setTab("ai_marketing_studio");
+    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
+  };
+
   const jumpToLegal = () => {
     setTab("settings");
     setSettingsSection("legal");
@@ -1568,7 +1574,7 @@ const Admin = () => {
               {marketingStudioTabs.map(t => (
                 <button
                   key={`inside-marketing-${t.key}`}
-                  onClick={() => setMarketingStudioTab(t.key)}
+                  onClick={() => openMarketingStudio(t.key)}
                   className={`flex min-h-12 flex-col items-center justify-center gap-1 border px-2 py-2 text-[10px] font-black uppercase tracking-wider leading-tight text-center transition-colors ${
                     marketingStudioTab === t.key
                       ? "border-primary bg-primary text-primary-foreground"
@@ -1603,6 +1609,13 @@ const Admin = () => {
           <span className="text-[10px] font-medium uppercase tracking-widest text-accent">
             Szuper Admin
           </span>
+          <Button
+            size="sm"
+            onClick={() => openMarketingStudio()}
+            className="h-9 rounded-none px-3 text-[10px] font-black uppercase tracking-wider"
+          >
+            <Brain className="mr-1 h-3.5 w-3.5" /> AI Marketing
+          </Button>
         </div>
       </header>
 
@@ -1612,7 +1625,7 @@ const Admin = () => {
           {/* ⚖️ JOGI + ÁFA MEGA KIEMELT SÁV — minden képernyőn látható */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <button
-              onClick={() => setTab("ai_marketing_studio")}
+              onClick={() => openMarketingStudio()}
               className={`group relative flex items-center justify-between gap-3 border-2 px-4 py-3 text-left transition-all sm:col-span-2 ${
                 tab === "ai_marketing_studio" || marketingStudioKeys.includes(tab)
                   ? "border-primary bg-primary text-primary-foreground"
