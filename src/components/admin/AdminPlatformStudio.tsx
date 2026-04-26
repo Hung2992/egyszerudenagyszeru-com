@@ -1159,6 +1159,88 @@ KÖTELEZŐ KIMENET:
             placeholder="Pozícionálás, erősségek, gyengeségek, támadási vektorok..." />
           {competitorOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(competitorOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
         </TabsContent>
+
+        {/* ADS */}
+        <TabsContent value="ads" className="space-y-3">
+          <Button onClick={generateAds} disabled={loadingAds}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingAds ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <DollarSign className="h-4 w-4 mr-2" />}
+            {loadingAds ? "Kampány..." : `Teljes ${platform.label} hirdetési kampányterv`}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs"
+            value={adsOutput} onChange={(e) => setAdsOutput(e.target.value)}
+            placeholder="Cold/Warm/Hot ad set, budget, bidding, 5 creative, KPI, kill criteria..." />
+          {adsOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(adsOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* SEO */}
+        <TabsContent value="seo" className="space-y-3">
+          <Button onClick={generateSeo} disabled={loadingSeo}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingSeo ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
+            {loadingSeo ? "SEO kutatás..." : "SEO + kulcsszó + meta + discovery"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs"
+            value={seoOutput} onChange={(e) => setSeoOutput(e.target.value)}
+            placeholder="Primary/long-tail/kérdés/lokális kulcsszavak, meta title/description, slug..." />
+          {seoOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(seoOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* INFLUENCER */}
+        <TabsContent value="influencer" className="space-y-3">
+          <Button onClick={generateInfluencer} disabled={loadingInfluencer}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingInfluencer ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <UserCheck className="h-4 w-4 mr-2" />}
+            {loadingInfluencer ? "Influencer terv..." : "Influencer stratégia + outreach"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs"
+            value={influencerOutput} onChange={(e) => setInfluencerOutput(e.target.value)}
+            placeholder="Influencer profil, árazás, outreach email, brief, KPI..." />
+          {influencerOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(influencerOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* A/B TEST */}
+        <TabsContent value="abtest" className="space-y-3">
+          <Button onClick={generateAbTest} disabled={loadingAbTest}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingAbTest ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FlaskConical className="h-4 w-4 mr-2" />}
+            {loadingAbTest ? "A/B tervek..." : "5 A/B teszt javaslat ICE score-ral"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs"
+            value={abTestOutput} onChange={(e) => setAbTestOutput(e.target.value)}
+            placeholder="Hipotézis, A/B variánsok, minta méret, várt lift..." />
+          {abTestOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(abTestOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* LANDING PAGE */}
+        <TabsContent value="landing" className="space-y-3">
+          <Button onClick={generateLanding} disabled={loadingLanding}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingLanding ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <LayoutTemplate className="h-4 w-4 mr-2" />}
+            {loadingLanding ? "Landing copy..." : "Teljes landing page sales copy"}
+          </Button>
+          <Textarea className="rounded-none min-h-[600px] font-mono text-xs"
+            value={landingOutput} onChange={(e) => setLandingOutput(e.target.value)}
+            placeholder="Hero, problem, solution, features→benefits, social proof, FAQ, CTA..." />
+          {landingOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(landingOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* CRISIS */}
+        <TabsContent value="crisis" className="space-y-3">
+          <Label className="text-xs uppercase">Negatív komment / krízis helyzet leírása</Label>
+          <Textarea className="rounded-none min-h-[100px]"
+            value={crisisInput} onChange={(e) => setCrisisInput(e.target.value)}
+            placeholder="pl. 'Egy vásárló a komment szekcióban azt írja, hogy 3 hete vár a csomagra és átverésnek érzi...'" />
+          <Button onClick={generateCrisisResponse} disabled={loadingCrisis}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingCrisis ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <AlertTriangle className="h-4 w-4 mr-2" />}
+            {loadingCrisis ? "Krízis válasz..." : "PR krízis kezelés – 3 válasz variáns"}
+          </Button>
+          <Textarea className="rounded-none min-h-[400px] font-mono text-xs"
+            value={crisisOutput} onChange={(e) => setCrisisOutput(e.target.value)}
+            placeholder="Súlyosság, reakcióidő, 3 válasz variáns, eszkaláció..." />
+          {crisisOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(crisisOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
       </Tabs>
 
       {/* HISTORY */}
