@@ -1574,7 +1574,7 @@ const Admin = () => {
               {marketingStudioTabs.map(t => (
                 <button
                   key={`inside-marketing-${t.key}`}
-                  onClick={() => setMarketingStudioTab(t.key)}
+                  onClick={() => openMarketingStudio(t.key)}
                   className={`flex min-h-12 flex-col items-center justify-center gap-1 border px-2 py-2 text-[10px] font-black uppercase tracking-wider leading-tight text-center transition-colors ${
                     marketingStudioTab === t.key
                       ? "border-primary bg-primary text-primary-foreground"
