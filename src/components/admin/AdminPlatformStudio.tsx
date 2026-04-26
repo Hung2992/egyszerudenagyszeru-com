@@ -1434,6 +1434,14 @@ KÖTELEZŐ KIMENET:
           <TabsTrigger value="press" className="rounded-none uppercase text-[10px] py-2"><Newspaper className="h-3 w-3 mr-1" />PR</TabsTrigger>
           <TabsTrigger value="analytics" className="rounded-none uppercase text-[10px] py-2"><BarChart3 className="h-3 w-3 mr-1" />Analytics</TabsTrigger>
           <TabsTrigger value="moodboard" className="rounded-none uppercase text-[10px] py-2"><Palette className="h-3 w-3 mr-1" />Moodboard</TabsTrigger>
+          <TabsTrigger value="ugc" className="rounded-none uppercase text-[10px] py-2"><Camera className="h-3 w-3 mr-1" />UGC brief</TabsTrigger>
+          <TabsTrigger value="repurpose" className="rounded-none uppercase text-[10px] py-2"><Recycle className="h-3 w-3 mr-1" />Repurpose</TabsTrigger>
+          <TabsTrigger value="voice" className="rounded-none uppercase text-[10px] py-2"><Mic className="h-3 w-3 mr-1" />Brand voice</TabsTrigger>
+          <TabsTrigger value="community" className="rounded-none uppercase text-[10px] py-2"><MessagesSquare className="h-3 w-3 mr-1" />Reply</TabsTrigger>
+          <TabsTrigger value="offer" className="rounded-none uppercase text-[10px] py-2"><Tag className="h-3 w-3 mr-1" />Offer lab</TabsTrigger>
+          <TabsTrigger value="story" className="rounded-none uppercase text-[10px] py-2"><BookOpen className="h-3 w-3 mr-1" />Story</TabsTrigger>
+          <TabsTrigger value="live" className="rounded-none uppercase text-[10px] py-2"><Radio className="h-3 w-3 mr-1" />Live</TabsTrigger>
+          <TabsTrigger value="compliance" className="rounded-none uppercase text-[10px] py-2"><ShieldCheck className="h-3 w-3 mr-1" />Jogi</TabsTrigger>
         </TabsList>
 
         {/* POST */}
