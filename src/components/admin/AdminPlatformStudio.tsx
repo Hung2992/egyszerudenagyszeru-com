@@ -762,6 +762,7 @@ KÖTELEZŐ KIMENET:
       </div>
 
       {/* TOOLS */}
+      <Tabs defaultValue="post" className="space-y-4">
         <TabsList className="rounded-none w-full grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 h-auto">
           <TabsTrigger value="post" className="rounded-none uppercase text-[10px] py-2"><FileText className="h-3 w-3 mr-1" />Poszt</TabsTrigger>
           <TabsTrigger value="image" className="rounded-none uppercase text-[10px] py-2"><ImageIcon className="h-3 w-3 mr-1" />AI kép</TabsTrigger>
