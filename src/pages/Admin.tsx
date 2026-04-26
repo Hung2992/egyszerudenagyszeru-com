@@ -22,6 +22,7 @@ import AdminTranslationsTab from "@/components/admin/AdminTranslationsTab";
 import AdminReturnsTab from "@/components/admin/AdminReturnsTab";
 import AdminDynamicPricingTab from "@/components/admin/AdminDynamicPricingTab";
 import AdminMarketingTab from "@/components/admin/AdminMarketingTab";
+import AdminAiMarketingStudioTab from "@/components/admin/AdminAiMarketingStudioTab";
 import AdminGdprTab from "@/components/admin/AdminGdprTab";
 import AdminSupportTab from "@/components/admin/AdminSupportTab";
 import AdminPermissionsTab from "@/components/admin/AdminPermissionsTab";
