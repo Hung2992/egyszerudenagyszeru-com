@@ -3355,16 +3355,7 @@ const Admin = () => {
         {tab === "returns" && <AdminReturnsTab />}
         {tab === "dynamic_pricing" && <AdminDynamicPricingTab />}
         {tab === "marketing" && <AdminMarketingTab />}
-        {tab === "ai_marketing_studio" && <AdminFacebookStudioTab />}
-        {tab === "fb_studio" && <AdminFacebookStudioTab />}
-        {tab === "ig_studio" && <AdminInstagramStudioTab />}
-        {tab === "tt_studio" && <AdminTiktokStudioTab />}
-        {tab === "yt_studio" && <AdminYoutubeStudioTab />}
-        {tab === "yts_studio" && <AdminYoutubeShortsStudioTab />}
-        {tab === "gads_studio" && <AdminGoogleAdsStudioTab />}
-        {tab === "pin_studio" && <AdminPinterestStudioTab />}
-        {tab === "li_studio" && <AdminLinkedinStudioTab />}
-        {tab === "x_studio" && <AdminTwitterStudioTab />}
+        {tab === "ai_marketing_studio" && renderMarketingStudio()}
         {tab === "gdpr" && <AdminGdprTab />}
         {tab === "support" && <AdminSupportTab />}
         {tab === "permissions" && <AdminPermissionsTab />}
