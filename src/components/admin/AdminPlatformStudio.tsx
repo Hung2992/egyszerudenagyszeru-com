@@ -113,6 +113,17 @@ const AdminPlatformStudio = ({ platform }: Props) => {
   const [analyticsInput, setAnalyticsInput] = useState<string>("");
   const [analyticsOutput, setAnalyticsOutput] = useState<string>("");
   const [moodboardOutput, setMoodboardOutput] = useState<string>("");
+  const [ugcOutput, setUgcOutput] = useState<string>("");
+  const [repurposeInput, setRepurposeInput] = useState<string>("");
+  const [repurposeOutput, setRepurposeOutput] = useState<string>("");
+  const [voiceOutput, setVoiceOutput] = useState<string>("");
+  const [communityInput, setCommunityInput] = useState<string>("");
+  const [communityOutput, setCommunityOutput] = useState<string>("");
+  const [offerOutput, setOfferOutput] = useState<string>("");
+  const [storyOutput, setStoryOutput] = useState<string>("");
+  const [liveOutput, setLiveOutput] = useState<string>("");
+  const [complianceInput, setComplianceInput] = useState<string>("");
+  const [complianceOutput, setComplianceOutput] = useState<string>("");
 
   // States
   const [loadingPost, setLoadingPost] = useState(false);
