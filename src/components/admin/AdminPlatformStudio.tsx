@@ -503,6 +503,125 @@ KÖTELEZŐ KIMENET:
   };
 
   // ======================================================
+  // STORYBOARD (több jelenetkép = videó alapanyag)
+  // ======================================================
+  const generateStoryboard = async () => {
+    if (!selectedProduct && !customTopic.trim() && !imagePrompt.trim()) {
+      toast({ title: "Adj meg terméket, témát vagy promptot", variant: "destructive" });
+      return;
+    }
+    setLoadingStoryboard(true);
+    setStoryboardImages([]);
+    setStoryboardProgress("Jelenetek tervezése...");
+
+    try {
+      // 1) Kérünk az AI-tól N jelenet leírást JSON-ban
+      const baseTopic = selectedProduct
+        ? `${selectedProduct.name} (${selectedProduct.category ?? "termék"}) – ${selectedProduct.description ?? ""}`
+        : (customTopic || imagePrompt);
+
+      const planSystem = `Te egy ${platform.label} videó kreatív rendező vagy. Készíts pontosan ${storyboardScenes} jelenet vizuál-leírást egy ${platform.videoLength} hosszú ${postFormat} videóhoz. CSAK egy JSON tömböt adj vissza, semmi mást, ilyen formában: [{"scene":1,"prompt":"angol részletes vizuál prompt képgeneráláshoz, fotórealisztikus, ${platform.imageAspect} arány, no text overlay"}]. Mindegyik prompt ANGOLUL legyen, mert image modelnek megy. Magyar piacra (magyar arcok, budapesti vagy otthonos környezet ahol illik). Cinematic, scroll-stopping. Tone: ${tone}, audience: ${audienceAge}. NE adj vissza markdown code fence-et, csak a tiszta JSON-t.`;
+
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-ai-assistant`;
+      const { data: { session } } = await supabase.auth.getSession();
+      const planResp = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          messages: [
+            { role: "system", content: planSystem },
+            { role: "user", content: `Téma: ${baseTopic}\nKampány cél: ${campaignGoal}\nJelenetek száma: ${storyboardScenes}` },
+          ],
+        }),
+      });
+      if (!planResp.ok || !planResp.body) throw new Error(`Tervezés hiba: ${planResp.status}`);
+
+      // Stream-ből összerakjuk a teljes szöveget
+      const reader = planResp.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "", acc = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let idx: number;
+        while ((idx = buf.indexOf("\n")) !== -1) {
+          let line = buf.slice(0, idx);
+          buf = buf.slice(idx + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (!line.startsWith("data: ")) continue;
+          const json = line.slice(6).trim();
+          if (json === "[DONE]") continue;
+          try {
+            const p = JSON.parse(json);
+            const c = p.choices?.[0]?.delta?.content;
+            if (c) acc += c;
+          } catch { buf = line + "\n" + buf; break; }
+        }
+      }
+
+      // JSON tisztítás
+      const cleaned = acc.replace(/```json|```/g, "").trim();
+      const start = cleaned.indexOf("[");
+      const end = cleaned.lastIndexOf("]");
+      if (start === -1 || end === -1) throw new Error("Nem sikerült értelmezni a jelenetterveket.");
+      const scenes: { scene: number; prompt: string }[] = JSON.parse(cleaned.slice(start, end + 1));
+
+      // 2) Sorban generáljuk a képeket
+      const results: { prompt: string; b64: string }[] = [];
+      for (let i = 0; i < scenes.length; i++) {
+        const s = scenes[i];
+        setStoryboardProgress(`Jelenet ${i + 1}/${scenes.length} generálása...`);
+        const imgResp = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            model: imageQuality === "pro" ? "google/gemini-3-pro-image-preview" : "google/gemini-2.5-flash-image",
+            modalities: ["image", "text"],
+            messages: [{ role: "user", content: s.prompt }],
+          }),
+        });
+        if (!imgResp.ok) {
+          if (imgResp.status === 429) throw new Error("Túl sok kérés – várj egy kicsit.");
+          if (imgResp.status === 402) throw new Error("Kredit elfogyott.");
+          throw new Error(`Kép ${i + 1} hiba: ${imgResp.status}`);
+        }
+        const j = await imgResp.json();
+        const b64 = j?.choices?.[0]?.message?.images?.[0]?.image_url?.url
+                 || j?.choices?.[0]?.message?.images?.[0]?.url || "";
+        if (b64) {
+          results.push({ prompt: s.prompt, b64 });
+          setStoryboardImages([...results]);
+        }
+      }
+      setStoryboardProgress("");
+      toast({ title: "Storyboard kész!", description: `${results.length} jelenet generálva.` });
+    } catch (e: any) {
+      toast({ title: "Storyboard hiba", description: e.message, variant: "destructive" });
+      setStoryboardProgress("");
+    } finally {
+      setLoadingStoryboard(false);
+    }
+  };
+
+  const downloadStoryboardAll = () => {
+    storyboardImages.forEach((img, i) => {
+      setTimeout(() => {
+        const a = document.createElement("a");
+        a.href = img.b64;
+        a.download = `${platform.key}-storyboard-${i + 1}-${Date.now()}.png`;
+        a.click();
+      }, i * 300);
+    });
+  };
+
+  // ======================================================
   // GENERIC STREAMING AI HELPER
   // ======================================================
   const streamAi = async (
