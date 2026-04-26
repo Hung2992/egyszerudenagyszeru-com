@@ -1506,6 +1506,94 @@ KÖTELEZŐ KIMENET – TELJES VIZUÁLIS GUIDE:
             placeholder="Súlyosság, reakcióidő, 3 válasz variáns, eszkaláció..." />
           {crisisOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(crisisOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
         </TabsContent>
+
+        {/* FUNNEL */}
+        <TabsContent value="funnel" className="space-y-3">
+          <Button onClick={generateFunnel} disabled={loadingFunnel} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingFunnel ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <GitBranch className="h-4 w-4 mr-2" />}
+            {loadingFunnel ? "Funnel..." : "TOFU/MOFU/BOFU funnel térkép + budget"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={funnelOutput} onChange={(e) => setFunnelOutput(e.target.value)} placeholder="Awareness → Consideration → Conversion → Retention..." />
+          {funnelOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(funnelOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* BIO */}
+        <TabsContent value="bio" className="space-y-3">
+          <Button onClick={generateBio} disabled={loadingBio} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingBio ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <User className="h-4 w-4 mr-2" />}
+            {loadingBio ? "Bio..." : `${platform.label} profil/bio optimalizálás (3 variáns)`}
+          </Button>
+          <Textarea className="rounded-none min-h-[400px] font-mono text-xs" value={bioOutput} onChange={(e) => setBioOutput(e.target.value)} placeholder="Display name, bio 3 verzió, link stratégia, profil kép brief, highlights..." />
+          {bioOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(bioOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* TREND */}
+        <TabsContent value="trend" className="space-y-3">
+          <Button onClick={generateTrend} disabled={loadingTrend} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingTrend ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <TrendIcon className="h-4 w-4 mr-2" />}
+            {loadingTrend ? "Trend radar..." : "10 aktuális trend + magyar adaptáció"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={trendOutput} onChange={(e) => setTrendOutput(e.target.value)} placeholder="Hot trendek, hot score, életciklus, adaptáció a termékre..." />
+          {trendOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(trendOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* TRANSLATE */}
+        <TabsContent value="translate" className="space-y-3">
+          <Label className="text-xs uppercase">Magyar szöveg fordításra</Label>
+          <Textarea className="rounded-none min-h-[100px]" value={translateInput} onChange={(e) => setTranslateInput(e.target.value)} placeholder="Másold be a magyar marketing szöveget..." />
+          <Label className="text-xs uppercase">Célnyelv / piac</Label>
+          <select className="w-full border rounded-none p-2 text-sm bg-background" value={translateLang} onChange={(e) => setTranslateLang(e.target.value)}>
+            {["angol","német","román","szlovák","cseh","lengyel","olasz","francia","spanyol","portugál","holland","török","arab","kínai","japán"].map(l => <option key={l}>{l}</option>)}
+          </select>
+          <Button onClick={generateTranslate} disabled={loadingTranslate} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingTranslate ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Languages className="h-4 w-4 mr-2" />}
+            {loadingTranslate ? "Fordítás..." : "Kulturális adaptáció + lokalizáció"}
+          </Button>
+          <Textarea className="rounded-none min-h-[400px] font-mono text-xs" value={translateOutput} onChange={(e) => setTranslateOutput(e.target.value)} placeholder="Nyers fordítás + kulturálisan adaptált verzió + buktatók..." />
+          {translateOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(translateOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* CHATBOT */}
+        <TabsContent value="chatbot" className="space-y-3">
+          <Button onClick={generateChatbot} disabled={loadingChatbot} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingChatbot ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <MessageCircle className="h-4 w-4 mr-2" />}
+            {loadingChatbot ? "Chatbot flow..." : "Teljes DM/chatbot forgatókönyv"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={chatbotOutput} onChange={(e) => setChatbotOutput(e.target.value)} placeholder="Welcome, menu, párbeszéd-fa, fallback, agent átadás, kosár-mentés..." />
+          {chatbotOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(chatbotOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* PRESS / PR */}
+        <TabsContent value="press" className="space-y-3">
+          <Button onClick={generatePress} disabled={loadingPress} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingPress ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Newspaper className="h-4 w-4 mr-2" />}
+            {loadingPress ? "PR csomag..." : "Sajtóközlemény + pitch email + médialista"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={pressOutput} onChange={(e) => setPressOutput(e.target.value)} placeholder="Sajtóközlemény, pitch email, médialista, news hook..." />
+          {pressOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(pressOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* ANALYTICS */}
+        <TabsContent value="analytics" className="space-y-3">
+          <Label className="text-xs uppercase">Illeszd be az analytics adatokat (insights, GA4 export, ad manager screenshot szöveg)</Label>
+          <Textarea className="rounded-none min-h-[150px]" value={analyticsInput} onChange={(e) => setAnalyticsInput(e.target.value)} placeholder="pl. Reach: 12500, CTR: 1.2%, CPC: 65 Ft, ROAS: 1.8, Conversion rate: 0.8%..." />
+          <Button onClick={generateAnalytics} disabled={loadingAnalytics} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingAnalytics ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <BarChart3 className="h-4 w-4 mr-2" />}
+            {loadingAnalytics ? "Elemzés..." : "Analytics értelmezés + akcióterv"}
+          </Button>
+          <Textarea className="rounded-none min-h-[400px] font-mono text-xs" value={analyticsOutput} onChange={(e) => setAnalyticsOutput(e.target.value)} placeholder="Mi megy jól / rosszul, root cause, 5 akció holnapra, magyar benchmark..." />
+          {analyticsOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(analyticsOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* MOODBOARD */}
+        <TabsContent value="moodboard" className="space-y-3">
+          <Button onClick={generateMoodboard} disabled={loadingMoodboard} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingMoodboard ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Palette className="h-4 w-4 mr-2" />}
+            {loadingMoodboard ? "Moodboard..." : "Brand vizuális guide + színpaletta + tipográfia"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={moodboardOutput} onChange={(e) => setMoodboardOutput(e.target.value)} placeholder="Színek HEX-ben, fontok, fotó stílus, videó style, layout szabályok..." />
+          {moodboardOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(moodboardOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
       </Tabs>
 
       {/* HISTORY */}
