@@ -72,6 +72,37 @@ Deno.serve(async (req) => {
       })
     }
 
+    // ============================================================
+    // 🖼️  IMAGE GENERATION BRANCH (multimodal)
+    // Ha a kliens explicit modellt és modalities=['image','text']-et küld,
+    // egyszerűen továbbítjuk az AI Gateway-nek és visszaadjuk a JSON választ.
+    // ============================================================
+    const reqModel = typeof body?.model === 'string' ? body.model : ''
+    const reqModalities = Array.isArray(body?.modalities) ? body.modalities : null
+    const isImageRequest = reqModalities && reqModalities.includes('image') && reqModel.includes('image')
+    if (isImageRequest) {
+      const imgResp = await fetch(AI_GATEWAY_URL, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + LOVABLE_API_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: reqModel,
+          messages: body.messages,
+          modalities: reqModalities,
+        }),
+      })
+      if (!imgResp.ok) {
+        const t = await imgResp.text()
+        console.error('AI image error:', imgResp.status, t)
+        return new Response(JSON.stringify({ error: imgResp.status === 429 ? 'Túl sok kérés.' : imgResp.status === 402 ? 'AI kredit elfogyott.' : 'AI képgenerálás hiba' }), {
+          status: imgResp.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      const data = await imgResp.json()
+      return new Response(JSON.stringify(data), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // Fetch live data
     const [ordersRes, productsRes, procurementRes, settingsRes] = await Promise.all([
       supabase.from('orders').select('id, status, total_amount, shipping_name, shipping_city, payment_method, created_at, procurement_status, items').order('created_at', { ascending: false }).limit(500),
