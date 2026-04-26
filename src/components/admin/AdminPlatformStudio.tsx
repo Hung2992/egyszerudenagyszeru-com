@@ -819,7 +819,7 @@ KÖTELEZŐ KIMENET:
             <div className="border p-3 space-y-2">
               <img src={imageBase64} alt="Generated" className="w-full max-h-[600px] object-contain border" />
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={downloadImage}>
+                <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => downloadImage()}>
                   <Download className="h-3 w-3 mr-1" /> Letöltés
                 </Button>
                 <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={generateImage}>
