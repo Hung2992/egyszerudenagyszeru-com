@@ -173,6 +173,14 @@ const AdminPlatformStudio = ({ platform }: Props) => {
   const [loadingStory, setLoadingStory] = useState(false);
   const [loadingLive, setLoadingLive] = useState(false);
   const [loadingCompliance, setLoadingCompliance] = useState(false);
+  const [loadingAdVault, setLoadingAdVault] = useState(false);
+  const [loadingCreativeBrief, setLoadingCreativeBrief] = useState(false);
+  const [loadingAudience, setLoadingAudience] = useState(false);
+  const [loadingRetarget, setLoadingRetarget] = useState(false);
+  const [loadingPixel, setLoadingPixel] = useState(false);
+  const [loadingBudget, setLoadingBudget] = useState(false);
+  const [loadingAdCompliance, setLoadingAdCompliance] = useState(false);
+  const [loadingAdSpy, setLoadingAdSpy] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
