@@ -1364,6 +1364,7 @@ const Admin = () => {
     { key: "returns", label: "Visszáru", icon: RotateCcw },
     { key: "dynamic_pricing", label: "Árazás", icon: Zap },
     { key: "marketing", label: "Kampányok", icon: Megaphone },
+    { key: "ai_marketing_studio", label: "AI Marketing Stúdió", icon: Brain },
     { key: "gdpr", label: "GDPR", icon: Shield },
     { key: "support", label: "Ügyfélszolg.", icon: Headphones },
     { key: "permissions", label: "Jogosultságok", icon: Lock },
