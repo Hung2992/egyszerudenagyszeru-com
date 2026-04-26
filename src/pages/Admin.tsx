@@ -22,7 +22,6 @@ import AdminTranslationsTab from "@/components/admin/AdminTranslationsTab";
 import AdminReturnsTab from "@/components/admin/AdminReturnsTab";
 import AdminDynamicPricingTab from "@/components/admin/AdminDynamicPricingTab";
 import AdminMarketingTab from "@/components/admin/AdminMarketingTab";
-import AdminAiMarketingStudioTab from "@/components/admin/AdminAiMarketingStudioTab";
 import AdminFacebookStudioTab from "@/components/admin/AdminFacebookStudioTab";
 import AdminInstagramStudioTab from "@/components/admin/AdminInstagramStudioTab";
 import AdminTiktokStudioTab from "@/components/admin/AdminTiktokStudioTab";
