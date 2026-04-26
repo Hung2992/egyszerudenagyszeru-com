@@ -1673,7 +1673,7 @@ const Admin = () => {
             className="flex h-11 w-full border border-input bg-card px-3 text-xs font-bold uppercase tracking-wider text-foreground sm:hidden"
             aria-label="Admin menü"
           >
-            {tabs.map(t => (
+            {visibleTabs.map(t => (
               <option key={t.key} value={t.key}>{t.label}</option>
             ))}
           </select>
@@ -1694,7 +1694,7 @@ const Admin = () => {
             ))}
           </div>
           <div className="flex gap-0 overflow-x-auto">
-            {tabs.map(t => (
+            {visibleTabs.map(t => (
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
