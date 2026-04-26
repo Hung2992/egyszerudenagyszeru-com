@@ -184,6 +184,13 @@ const AdminPlatformStudio = ({ platform }: Props) => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
+  // ===== ULTRA IMAGE + STORYBOARD =====
+  const [imageQuality, setImageQuality] = useState<"fast" | "pro">("pro");
+  const [storyboardScenes, setStoryboardScenes] = useState<number>(4);
+  const [storyboardImages, setStoryboardImages] = useState<{ prompt: string; b64: string }[]>([]);
+  const [loadingStoryboard, setLoadingStoryboard] = useState(false);
+  const [storyboardProgress, setStoryboardProgress] = useState<string>("");
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem(storageKey);
@@ -429,7 +436,7 @@ KÖTELEZŐ KIMENET:
           Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image",
+          model: imageQuality === "pro" ? "google/gemini-3-pro-image-preview" : "google/gemini-2.5-flash-image",
           modalities: ["image", "text"],
           messages: [{ role: "user", content: prompt }],
         }),
@@ -493,6 +500,125 @@ KÖTELEZŐ KIMENET:
     a.href = src;
     a.download = `${platform.key}${suffix}-${Date.now()}.png`;
     a.click();
+  };
+
+  // ======================================================
+  // STORYBOARD (több jelenetkép = videó alapanyag)
+  // ======================================================
+  const generateStoryboard = async () => {
+    if (!selectedProduct && !customTopic.trim() && !imagePrompt.trim()) {
+      toast({ title: "Adj meg terméket, témát vagy promptot", variant: "destructive" });
+      return;
+    }
+    setLoadingStoryboard(true);
+    setStoryboardImages([]);
+    setStoryboardProgress("Jelenetek tervezése...");
+
+    try {
+      // 1) Kérünk az AI-tól N jelenet leírást JSON-ban
+      const baseTopic = selectedProduct
+        ? `${selectedProduct.name} (${selectedProduct.category ?? "termék"}) – ${selectedProduct.description ?? ""}`
+        : (customTopic || imagePrompt);
+
+      const planSystem = `Te egy ${platform.label} videó kreatív rendező vagy. Készíts pontosan ${storyboardScenes} jelenet vizuál-leírást egy ${platform.videoLength} hosszú ${postFormat} videóhoz. CSAK egy JSON tömböt adj vissza, semmi mást, ilyen formában: [{"scene":1,"prompt":"angol részletes vizuál prompt képgeneráláshoz, fotórealisztikus, ${platform.imageAspect} arány, no text overlay"}]. Mindegyik prompt ANGOLUL legyen, mert image modelnek megy. Magyar piacra (magyar arcok, budapesti vagy otthonos környezet ahol illik). Cinematic, scroll-stopping. Tone: ${tone}, audience: ${audienceAge}. NE adj vissza markdown code fence-et, csak a tiszta JSON-t.`;
+
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-ai-assistant`;
+      const { data: { session } } = await supabase.auth.getSession();
+      const planResp = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          messages: [
+            { role: "system", content: planSystem },
+            { role: "user", content: `Téma: ${baseTopic}\nKampány cél: ${campaignGoal}\nJelenetek száma: ${storyboardScenes}` },
+          ],
+        }),
+      });
+      if (!planResp.ok || !planResp.body) throw new Error(`Tervezés hiba: ${planResp.status}`);
+
+      // Stream-ből összerakjuk a teljes szöveget
+      const reader = planResp.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "", acc = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let idx: number;
+        while ((idx = buf.indexOf("\n")) !== -1) {
+          let line = buf.slice(0, idx);
+          buf = buf.slice(idx + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (!line.startsWith("data: ")) continue;
+          const json = line.slice(6).trim();
+          if (json === "[DONE]") continue;
+          try {
+            const p = JSON.parse(json);
+            const c = p.choices?.[0]?.delta?.content;
+            if (c) acc += c;
+          } catch { buf = line + "\n" + buf; break; }
+        }
+      }
+
+      // JSON tisztítás
+      const cleaned = acc.replace(/```json|```/g, "").trim();
+      const start = cleaned.indexOf("[");
+      const end = cleaned.lastIndexOf("]");
+      if (start === -1 || end === -1) throw new Error("Nem sikerült értelmezni a jelenetterveket.");
+      const scenes: { scene: number; prompt: string }[] = JSON.parse(cleaned.slice(start, end + 1));
+
+      // 2) Sorban generáljuk a képeket
+      const results: { prompt: string; b64: string }[] = [];
+      for (let i = 0; i < scenes.length; i++) {
+        const s = scenes[i];
+        setStoryboardProgress(`Jelenet ${i + 1}/${scenes.length} generálása...`);
+        const imgResp = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            model: imageQuality === "pro" ? "google/gemini-3-pro-image-preview" : "google/gemini-2.5-flash-image",
+            modalities: ["image", "text"],
+            messages: [{ role: "user", content: s.prompt }],
+          }),
+        });
+        if (!imgResp.ok) {
+          if (imgResp.status === 429) throw new Error("Túl sok kérés – várj egy kicsit.");
+          if (imgResp.status === 402) throw new Error("Kredit elfogyott.");
+          throw new Error(`Kép ${i + 1} hiba: ${imgResp.status}`);
+        }
+        const j = await imgResp.json();
+        const b64 = j?.choices?.[0]?.message?.images?.[0]?.image_url?.url
+                 || j?.choices?.[0]?.message?.images?.[0]?.url || "";
+        if (b64) {
+          results.push({ prompt: s.prompt, b64 });
+          setStoryboardImages([...results]);
+        }
+      }
+      setStoryboardProgress("");
+      toast({ title: "Storyboard kész!", description: `${results.length} jelenet generálva.` });
+    } catch (e: any) {
+      toast({ title: "Storyboard hiba", description: e.message, variant: "destructive" });
+      setStoryboardProgress("");
+    } finally {
+      setLoadingStoryboard(false);
+    }
+  };
+
+  const downloadStoryboardAll = () => {
+    storyboardImages.forEach((img, i) => {
+      setTimeout(() => {
+        const a = document.createElement("a");
+        a.href = img.b64;
+        a.download = `${platform.key}-storyboard-${i + 1}-${Date.now()}.png`;
+        a.click();
+      }, i * 300);
+    });
   };
 
   // ======================================================
@@ -1651,6 +1777,7 @@ Mindegyik hirdetéshez:
         <TabsList className="rounded-none w-full grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 h-auto">
           <TabsTrigger value="post" className="rounded-none uppercase text-[10px] py-2"><FileText className="h-3 w-3 mr-1" />Poszt</TabsTrigger>
           <TabsTrigger value="image" className="rounded-none uppercase text-[10px] py-2"><ImageIcon className="h-3 w-3 mr-1" />AI kép</TabsTrigger>
+          <TabsTrigger value="storyboard" className="rounded-none uppercase text-[10px] py-2"><Film className="h-3 w-3 mr-1" />Storyboard</TabsTrigger>
           <TabsTrigger value="edit" className="rounded-none uppercase text-[10px] py-2"><Scissors className="h-3 w-3 mr-1" />Kép-szerk.</TabsTrigger>
           <TabsTrigger value="video" className="rounded-none uppercase text-[10px] py-2"><Video className="h-3 w-3 mr-1" />Videó</TabsTrigger>
           <TabsTrigger value="hooks" className="rounded-none uppercase text-[10px] py-2"><Zap className="h-3 w-3 mr-1" />Hook×10</TabsTrigger>
@@ -1719,6 +1846,21 @@ Mindegyik hirdetéshez:
 
         {/* IMAGE */}
         <TabsContent value="image" className="space-y-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Label className="text-xs uppercase">Minőség:</Label>
+            <button
+              onClick={() => setImageQuality("pro")}
+              className={`text-[10px] uppercase px-3 py-1.5 border ${imageQuality === "pro" ? "bg-primary text-primary-foreground border-primary" : "border-border"}`}
+            >
+              🚀 ULTRA (Gemini 3 Pro)
+            </button>
+            <button
+              onClick={() => setImageQuality("fast")}
+              className={`text-[10px] uppercase px-3 py-1.5 border ${imageQuality === "fast" ? "bg-primary text-primary-foreground border-primary" : "border-border"}`}
+            >
+              ⚡ Gyors
+            </button>
+          </div>
           <Label className="text-xs uppercase">Kép prompt (opcionális – ha üres, a termékből generál)</Label>
           <Textarea
             className="rounded-none min-h-[80px]"
@@ -1729,7 +1871,7 @@ Mindegyik hirdetéshez:
           <Button onClick={generateImage} disabled={loadingImage}
             className="w-full rounded-none uppercase tracking-wider font-bold">
             {loadingImage ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Wand2 className="h-4 w-4 mr-2" />}
-            {loadingImage ? "Kép generálás..." : `AI kép generálása (${platform.imageAspect})`}
+            {loadingImage ? "Kép generálás..." : `AI kép generálása (${platform.imageAspect}) – ${imageQuality === "pro" ? "ULTRA" : "Gyors"}`}
           </Button>
           {imageBase64 && (
             <div className="border p-3 space-y-2">
@@ -1743,6 +1885,79 @@ Mindegyik hirdetéshez:
                 </Button>
               </div>
             </div>
+          )}
+        </TabsContent>
+
+        {/* STORYBOARD – több jelenet AI képpel = videó alapanyag */}
+        <TabsContent value="storyboard" className="space-y-3">
+          <div className="border-2 border-primary/40 bg-primary/5 p-3 space-y-2">
+            <p className="text-xs uppercase font-bold tracking-wider">🎬 AI Videó Storyboard</p>
+            <p className="text-[11px] text-muted-foreground">
+              Az AI megtervez {storyboardScenes} jelenetet a termékedhez/témádhoz, és mindegyikhez profi képet generál.
+              Ezeket {platform.label} videószerkesztőben (CapCut, Reels, TikTok) 1 perc alatt összevágod – kész is a videó.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <Label className="text-xs uppercase">Jelenetek száma:</Label>
+            {[3, 4, 5, 6, 8].map(n => (
+              <button
+                key={n}
+                onClick={() => setStoryboardScenes(n)}
+                className={`text-xs px-3 py-1.5 border ${storyboardScenes === n ? "bg-primary text-primary-foreground border-primary" : "border-border"}`}
+              >
+                {n}
+              </button>
+            ))}
+            <Label className="text-xs uppercase ml-3">Minőség:</Label>
+            <button
+              onClick={() => setImageQuality("pro")}
+              className={`text-[10px] uppercase px-3 py-1.5 border ${imageQuality === "pro" ? "bg-primary text-primary-foreground border-primary" : "border-border"}`}
+            >
+              🚀 ULTRA
+            </button>
+            <button
+              onClick={() => setImageQuality("fast")}
+              className={`text-[10px] uppercase px-3 py-1.5 border ${imageQuality === "fast" ? "bg-primary text-primary-foreground border-primary" : "border-border"}`}
+            >
+              ⚡ Gyors
+            </button>
+          </div>
+
+          <Button onClick={generateStoryboard} disabled={loadingStoryboard}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingStoryboard ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Film className="h-4 w-4 mr-2" />}
+            {loadingStoryboard ? (storyboardProgress || "Generálás...") : `Storyboard generálása (${storyboardScenes} jelenet)`}
+          </Button>
+
+          {storyboardImages.length > 0 && (
+            <>
+              <div className="flex justify-between items-center">
+                <p className="text-xs uppercase font-bold">{storyboardImages.length} jelenet kész</p>
+                <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={downloadStoryboardAll}>
+                  <Download className="h-3 w-3 mr-1" /> Összes letöltése
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {storyboardImages.map((img, i) => (
+                  <div key={i} className="border p-2 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="text-[10px] rounded-none">Jelenet {i + 1}</Badge>
+                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => {
+                        const a = document.createElement("a");
+                        a.href = img.b64;
+                        a.download = `${platform.key}-scene-${i + 1}.png`;
+                        a.click();
+                      }}>
+                        <Download className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <img src={img.b64} alt={`Scene ${i + 1}`} className="w-full object-contain border" />
+                    <p className="text-[10px] text-muted-foreground line-clamp-2">{img.prompt}</p>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </TabsContent>
 
