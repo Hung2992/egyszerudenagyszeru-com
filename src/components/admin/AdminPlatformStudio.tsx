@@ -1111,6 +1111,188 @@ KÖTELEZŐ KIMENET – TELJES VIZUÁLIS GUIDE:
 📋 EXPORT BEÁLLÍTÁSOK ${platform.label}-ra (DPI, format, méret)`,
     `Generálj teljes brand vizuális guide-ot.\n\n${buildContext()}`);
 
+  // ============== UGC CREATOR BRIEF ==============
+  const generateUgc = () => runTool(setLoadingUgc, setUgcOutput,
+    `Te a világ legjobb UGC (User Generated Content) creator director vagy ${platform.label}-ra, magyar piacra.
+KÖTELEZŐ KIMENET:
+🎬 CREATOR BRIEF (1 oldalas, küldhető):
+- Kampány cél + KPI
+- 3 hook variáns (első 2 mp)
+- Shot list (jelenetek időkóddal mp-ben)
+- Beszéd-script natúr magyar nyelven (NEM reklámos)
+- Kötelező mondatok (USP, CTA)
+- Tiltott szavak / claim-ek (jogi)
+- Ruházat / helyszín ajánlás
+- B-roll lista
+- Hang/zene típus
+💰 DÍJAZÁSI JAVASLAT (HUF, magyar piaci benchmark)
+📦 TERMÉKKÜLDÉS folyamat
+✅ ELFOGADÁSI checklist (mit kell visszanéznem mielőtt fizetek)
+📄 SZERZŐDÉS sarokpontok (usage rights, exkluzivitás, időtartam)`,
+    `Készíts teljes UGC creator briefet ${platform.label}-ra.\n\n${buildContext()}`);
+
+  // ============== TARTALOM ÚJRAHASZNOSÍTÓ (REPURPOSE) ==============
+  const generateRepurpose = () => {
+    if (!repurposeInput.trim()) {
+      toast({ title: "Illeszd be az eredeti tartalmat", variant: "destructive" });
+      return;
+    }
+    runTool(setLoadingRepurpose, setRepurposeOutput,
+      `Te a világ legjobb content repurposing stratégája vagy. 1 darab forrás-tartalmat 12 különböző formátumra fordítasz át, mindet ${platform.label} stílusban + más platformokra is.
+KÖTELEZŐ KIMENET (mind 12 db, készre megírva):
+1. ${platform.label} Feed poszt
+2. ${platform.label} Story (3 frame szöveg)
+3. ${platform.label} Reel/Short script (15 mp, hook+body+CTA)
+4. Twitter/X thread (5-7 tweet)
+5. LinkedIn carousel (5 slide cím + body)
+6. Email newsletter (subject + preview + body)
+7. Blog cikk vázlat (H1, H2-k, kulcsszavak)
+8. YouTube videó cím + leírás + 5 chapter
+9. TikTok hook variáns (3 db)
+10. Pinterest pin szöveg + alt text
+11. WhatsApp/SMS rövidített üzenet
+12. Push notification (40 karakter)`,
+      `Eredeti tartalom:\n${repurposeInput}\n\nKontextus:\n${buildContext()}`);
+  };
+
+  // ============== BRAND VOICE / PERSONA ==============
+  const generateVoice = () => runTool(setLoadingVoice, setVoiceOutput,
+    `Te a világ legjobb brand voice + tone of voice szakértője vagy. ${platform.label}-ra szabott brand persona-t építesz magyar piacra.
+KÖTELEZŐ KIMENET:
+👤 BRAND PERSONA:
+- Archetípus (Hero/Outlaw/Sage/Lover/Jester... + miért)
+- Életkor / nem ha ember lenne
+- Hangmagasság skála (1-10): formal↔casual, vicces↔komoly, tekintély↔barát
+- Kedvenc szavak (10 db, magyarul)
+- Tiltott szavak (10 db, sose használd)
+- Írásjel preferencia (… ! ? — emoji)
+- Mondat hossz (rövid/hosszú)
+📝 30 PÉLDA MONDAT a hangnem demonstrálására
+🎭 3 SCENARIO (örömhír / panasz / launch) – mindhez 2-3 mondat
+✅ DO / 🚫 DON'T táblázat (15-15 sor)
+📋 ONBOARDING DOC új copywriternek`,
+    `Definiálj teljes brand voice guide-ot.\n\n${buildContext()}`);
+
+  // ============== KÖZÖSSÉGI VÁLASZ GENERÁTOR (commentek/DM) ==============
+  const generateCommunity = () => {
+    if (!communityInput.trim()) {
+      toast({ title: "Illeszd be a kommenteket / DM-eket", variant: "destructive" });
+      return;
+    }
+    runTool(setLoadingCommunity, setCommunityOutput,
+      `Te a világ legjobb community manager vagy ${platform.label}-ra, magyar piacra. Minden kapott komment/DM-re 3 választ adsz: rövid, közepes, hosszú.
+KÖTELEZŐ KIMENET kommentenként:
+[KOMMENT #X] eredeti szöveg
+🏷️ KATEGÓRIA: kérdés / panasz / dícséret / spam / lead / vásárlási szándék
+😊 SENTIMENT: pozitív / semleges / negatív (emoji)
+🚦 PRIORITÁS: 🔴 azonnal / 🟡 24 órán belül / 🟢 nem sürgős
+✍️ VÁLASZ A) rövid (1-2 mondat, casual)
+✍️ VÁLASZ B) közepes (empátia + megoldás + CTA)
+✍️ VÁLASZ C) hosszú (storytelling + edukáció + soft sell)
+🎯 FOLLOW-UP javaslat (DM, email, retargeting pixel)
+─── köztük üres sor ───`,
+      `Kommentek / DM-ek:\n${communityInput}\n\nKontextus:\n${buildContext()}`);
+  };
+
+  // ============== ÁRAZÁS / AJÁNLAT LAB ==============
+  const generateOffer = () => runTool(setLoadingOffer, setOfferOutput,
+    `Te a világ legjobb offer engineering + pricing pszichológus vagy. ${platform.label}-ra optimalizált, ellenállhatatlan ajánlatokat építesz magyar piacra (HUF).
+KÖTELEZŐ KIMENET – 5 KÜLÖNBÖZŐ AJÁNLAT VARIÁNS:
+1. 🎁 ALAP ajánlat (termék + 1 bónusz)
+2. 💎 PRÉMIUM bundle (3-5 elem, percieved value 3x ár)
+3. 🔥 FLASH (24-48 óra, scarcity, drop ár)
+4. 🎯 TRIPWIRE (alacsony ár, listára húzás)
+5. 👑 VIP / upsell (high-ticket)
+
+MINDEGYIKHEZ:
+- Mit tartalmaz (sorlista értékben HUF)
+- Eredeti ár vs akciós ár vs "value stack"
+- Garancia (pénzvisszafizetés / cserés / 100%)
+- Scarcity elem (db, idő, csoport méret)
+- Bonus stacking (mit kap MÉG)
+- Risk reversal mondatok
+- 3 db headline javaslat
+- CTA gomb felirat (3 variáns)
+- FAQ (5 leggyakoribb ellenérv + válasz)
+
+📊 ÖSSZEHASONLÍTÓ TÁBLA (a 3 fő ajánlat egymás mellett)
+🧠 PSZICHOLÓGIAI TRIGGERS (anchoring, decoy, charm pricing 990 vs 1000)`,
+    `Generálj 5 variáns ajánlatot ${platform.label}-ra.\n\n${buildContext()}`);
+
+  // ============== STORYTELLING / NARRATIVE ARC ==============
+  const generateStory = () => runTool(setLoadingStory, setStoryOutput,
+    `Te a világ legjobb storyteller + brand narrative architect vagy. ${platform.label}-ra szabott történeteket írsz magyar piacra, érzelmi kötődést építve.
+KÖTELEZŐ KIMENET – 5 KÜLÖNBÖZŐ STORY VARIÁNS:
+1. 🦸 HERO'S JOURNEY (vásárló mint hős, termék mint mentor)
+2. 😱 BEFORE / AFTER (transzformáció, fájdalom→eredmény)
+3. 🏗️ FOUNDER STORY (miért indítottad, mission, "ezért hiszünk")
+4. 💔 RELATABILITY (hibák, esések, "én is voltam ott")
+5. 🔮 FUTURE PACING (képzeld el 6 hónap múlva...)
+
+MINDEGYIKHEZ:
+- Cím / hook
+- Teljes szöveg ${platform.label} formátumra (max ${platform.maxChars} kar)
+- Érzelmi ív (mp/sor szinten: kíváncsi→feszült→megoldás→öröm)
+- Konkrét részletek (név, hely, érzet, szám) – NE legyen geneirikus
+- Beépített USP (rejtve, nem reklámosan)
+- Soft CTA végén
+- Hashtag csomag
+
+🎬 VIDEÓ STORYBOARD a legjobb story-hoz (jelenet/idő/dialógus/B-roll)`,
+    `Generálj 5 storytelling variánst.\n\n${buildContext()}`);
+
+  // ============== LIVE / WEBINAR / PODCAST SCRIPT ==============
+  const generateLive = () => runTool(setLoadingLive, setLiveOutput,
+    `Te a világ legjobb live event + webinar + podcast forgatókönyv-író vagy. ${platform.label}-ra szabott élő tartalom scriptet készítesz magyar piacra.
+KÖTELEZŐ KIMENET – 60 PERCES LIVE FORGATÓKÖNYV percre lebontva:
+00:00-02:00 – Cold open hook (miért maradjon)
+02:00-05:00 – Bemutatkozás + agenda + ígéret
+05:00-15:00 – Storytelling / probléma feltárás
+15:00-35:00 – Fő tartalom 3 pillérben (mindhez konkrét tipp)
+35:00-40:00 – Q&A 1. kör (előre megírt 5 kérdés stand-by)
+40:00-50:00 – Pitch / ajánlat bevezetése (Soap Opera technika)
+50:00-55:00 – Objection handling (5 leggyakoribb + válasz)
+55:00-60:00 – Hard close + szűkített idejű bonus + URL
+
+🎯 MELLÉKLETEK:
+- Pre-live promó poszt (3 db, T-7, T-3, T-0)
+- Reminder email/DM szöveg (T-1 nap, T-1 óra, T-5 perc)
+- Live közben pinned komment (CTA)
+- Replay email (4 részes drip: D+0, D+1, D+3, D+7)
+- Highlight clip lista (5 db, mindegyikhez idő + cím)
+- Repurposing terv (Reel, Short, Carousel a felvételből)`,
+    `Készíts teljes 60 perces live forgatókönyvet.\n\n${buildContext()}`);
+
+  // ============== JOGI / COMPLIANCE / CLAIM CHECK ==============
+  const generateCompliance = () => {
+    if (!complianceInput.trim()) {
+      toast({ title: "Illeszd be a copy-t / hirdetést ellenőrzésre", variant: "destructive" });
+      return;
+    }
+    runTool(setLoadingCompliance, setComplianceOutput,
+      `Te a világ legjobb magyar reklámjogi + GVH + Meta/Google policy + GDPR + fogyasztóvédelmi szakértő vagy. ${platform.label} hirdetéseket és organikus posztokat ellenőrzöl.
+KÖTELEZŐ KIMENET:
+🚨 KOCKÁZAT SZINT: 🟢 OK / 🟡 figyelmeztetés / 🔴 magas / ⛔ tiltott
+
+📋 RÉSZLETES VIZSGÁLAT:
+1. Megtévesztő reklám (Fttv) – konkrét mondat idézve, miért gond
+2. Egészség / fogyás / orvosi claim-ek (tiltott szavak)
+3. "Legjobb / első / #1" típusú felsőfok – bizonyíték kell
+4. Ár / kedvezmény tisztesség (eredeti ár 30 napos szabály)
+5. Tartós ajánlat / scarcity hamis-e
+6. Influencer #ad / #együttműködés jelölés
+7. Gyermek célzás (16 alatti tilalom)
+8. GDPR (szemlészelyes adat, cookie, opt-in)
+9. ${platform.label} platform policy (alkohol, fogyókúra, before/after, dohány stb.)
+10. Szellemi tulajdon (zene, kép, brand említés)
+
+✏️ JAVÍTOTT VERZIÓ (átírva, jogszerűen, ugyanolyan erősen)
+📚 HIVATKOZÁSOK: melyik törvényhely / policy paragrafus
+⚖️ MAX BÍRSÁG ha leszerepel
+✅ CHECKLIST (10 pont) jövőre`,
+      `Ellenőrizendő tartalom:\n${complianceInput}\n\nKontextus:\n${buildContext()}`);
+  };
+
   const copy = (txt: string) => {
     navigator.clipboard.writeText(txt);
     toast({ title: "Vágólapra másolva" });
