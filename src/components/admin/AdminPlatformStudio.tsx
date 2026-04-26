@@ -13,6 +13,8 @@ import {
   Send, RefreshCw, Save, Flame, Users, Trash2, Hash, Mail,
   Calendar, Eye, Layers, Zap, Upload, Scissors, TrendingUp,
   DollarSign, Search, UserCheck, AlertTriangle, FlaskConical, LayoutTemplate,
+  GitBranch, User, Flame as TrendIcon, Languages, MessageCircle,
+  Newspaper, BarChart3, Palette,
 } from "lucide-react";
 
 // ============================================================
