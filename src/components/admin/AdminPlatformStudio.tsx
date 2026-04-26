@@ -1777,6 +1777,7 @@ Mindegyik hirdetéshez:
         <TabsList className="rounded-none w-full grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 h-auto">
           <TabsTrigger value="post" className="rounded-none uppercase text-[10px] py-2"><FileText className="h-3 w-3 mr-1" />Poszt</TabsTrigger>
           <TabsTrigger value="image" className="rounded-none uppercase text-[10px] py-2"><ImageIcon className="h-3 w-3 mr-1" />AI kép</TabsTrigger>
+          <TabsTrigger value="storyboard" className="rounded-none uppercase text-[10px] py-2"><Film className="h-3 w-3 mr-1" />Storyboard</TabsTrigger>
           <TabsTrigger value="edit" className="rounded-none uppercase text-[10px] py-2"><Scissors className="h-3 w-3 mr-1" />Kép-szerk.</TabsTrigger>
           <TabsTrigger value="video" className="rounded-none uppercase text-[10px] py-2"><Video className="h-3 w-3 mr-1" />Videó</TabsTrigger>
           <TabsTrigger value="hooks" className="rounded-none uppercase text-[10px] py-2"><Zap className="h-3 w-3 mr-1" />Hook×10</TabsTrigger>
