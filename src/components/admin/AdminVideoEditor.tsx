@@ -90,6 +90,20 @@ const AdminVideoEditor = ({ platformLabel, defaultAspect }: Props) => {
   const [aiScriptOutput, setAiScriptOutput] = useState<string>("");
   const [loadingScript, setLoadingScript] = useState(false);
 
+  // ===== AI VIDEÓ GENERÁTOR (belső, külső API nélkül) =====
+  const [aiPrompt, setAiPrompt] = useState<string>("");
+  const [aiSceneCount, setAiSceneCount] = useState<number>(5);
+  const [aiSecPerScene, setAiSecPerScene] = useState<number>(3);
+  const [aiQuality, setAiQuality] = useState<"fast" | "pro" | "ultra">("pro");
+  const [aiStyle, setAiStyle] = useState<string>("cinematic, photorealistic, 8k, professional advertising");
+  const [aiMotion, setAiMotion] = useState<"kenburns" | "zoomin" | "zoomout" | "panlr" | "panrl" | "mix">("mix");
+  const [aiVoiceover, setAiVoiceover] = useState<boolean>(false);
+  const [aiVoiceText, setAiVoiceText] = useState<string>("");
+  const [aiMusicMood, setAiMusicMood] = useState<"none" | "epic" | "upbeat" | "chill" | "luxury">("none");
+  const [aiGenerating, setAiGenerating] = useState<boolean>(false);
+  const [aiGenStep, setAiGenStep] = useState<string>("");
+  const [aiScenes, setAiScenes] = useState<{ prompt: string; b64?: string }[]>([]);
+
   // Load ffmpeg
   useEffect(() => {
     (async () => {
