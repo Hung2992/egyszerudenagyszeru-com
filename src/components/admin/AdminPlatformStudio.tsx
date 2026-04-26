@@ -10,7 +10,8 @@ import { toast } from "@/hooks/use-toast";
 import {
   Sparkles, Loader2, Copy, Wand2, Target, Clock, MapPin,
   Image as ImageIcon, Video, FileText, Megaphone, Download,
-  Send, RefreshCw, Save, Flame, Users, Trash2,
+  Send, RefreshCw, Save, Flame, Users, Trash2, Hash, Mail,
+  Calendar, Eye, Layers, Zap, Upload, Scissors, TrendingUp,
 } from "lucide-react";
 
 // ============================================================
@@ -80,11 +81,28 @@ const AdminPlatformStudio = ({ platform }: Props) => {
   const [videoOutput, setVideoOutput] = useState<string>("");
   const [imageBase64, setImageBase64] = useState<string>("");
   const [imagePrompt, setImagePrompt] = useState<string>("");
+  const [hashtagOutput, setHashtagOutput] = useState<string>("");
+  const [carouselOutput, setCarouselOutput] = useState<string>("");
+  const [emailOutput, setEmailOutput] = useState<string>("");
+  const [hookOutput, setHookOutput] = useState<string>("");
+  const [calendarOutput, setCalendarOutput] = useState<string>("");
+  const [competitorUrl, setCompetitorUrl] = useState<string>("");
+  const [competitorOutput, setCompetitorOutput] = useState<string>("");
+  const [editPrompt, setEditPrompt] = useState<string>("");
+  const [editSourceB64, setEditSourceB64] = useState<string>("");
+  const [editedB64, setEditedB64] = useState<string>("");
 
   // States
   const [loadingPost, setLoadingPost] = useState(false);
   const [loadingVideo, setLoadingVideo] = useState(false);
   const [loadingImage, setLoadingImage] = useState(false);
+  const [loadingHashtag, setLoadingHashtag] = useState(false);
+  const [loadingCarousel, setLoadingCarousel] = useState(false);
+  const [loadingEmail, setLoadingEmail] = useState(false);
+  const [loadingHook, setLoadingHook] = useState(false);
+  const [loadingCalendar, setLoadingCalendar] = useState(false);
+  const [loadingCompetitor, setLoadingCompetitor] = useState(false);
+  const [loadingEdit, setLoadingEdit] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -390,12 +408,243 @@ KÖTELEZŐ KIMENET:
     }
   };
 
-  const downloadImage = () => {
-    if (!imageBase64) return;
+  const downloadImage = (b64?: string, suffix = "") => {
+    const src = b64 || imageBase64;
+    if (!src) return;
     const a = document.createElement("a");
-    a.href = imageBase64;
-    a.download = `${platform.key}-${Date.now()}.png`;
+    a.href = src;
+    a.download = `${platform.key}${suffix}-${Date.now()}.png`;
     a.click();
+  };
+
+  // ======================================================
+  // GENERIC STREAMING AI HELPER
+  // ======================================================
+  const streamAi = async (
+    system: string,
+    user: string,
+    onDelta: (acc: string) => void,
+    historyKind: HistoryItem["kind"] = "post",
+  ) => {
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-ai-assistant`;
+    const { data: { session } } = await supabase.auth.getSession();
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      },
+      body: JSON.stringify({
+        messages: [{ role: "system", content: system }, { role: "user", content: user }],
+      }),
+    });
+    if (!resp.ok || !resp.body) {
+      if (resp.status === 429) throw new Error("Túl sok kérés – várj egy kicsit.");
+      if (resp.status === 402) throw new Error("Lovable AI kredit elfogyott.");
+      throw new Error(`Hiba: ${resp.status}`);
+    }
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+    let acc = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let idx: number;
+      while ((idx = buf.indexOf("\n")) !== -1) {
+        let line = buf.slice(0, idx);
+        buf = buf.slice(idx + 1);
+        if (line.endsWith("\r")) line = line.slice(0, -1);
+        if (!line.startsWith("data: ")) continue;
+        const json = line.slice(6).trim();
+        if (json === "[DONE]") continue;
+        try {
+          const p = JSON.parse(json);
+          const c = p.choices?.[0]?.delta?.content;
+          if (c) { acc += c; onDelta(acc); }
+        } catch { buf = line + "\n" + buf; break; }
+      }
+    }
+    setHistory((h) => [{ kind: historyKind, text: acc, createdAt: Date.now() }, ...h]);
+    return acc;
+  };
+
+  const runTool = async (
+    setLoading: (b: boolean) => void,
+    setOutput: (s: string) => void,
+    system: string,
+    user: string,
+  ) => {
+    if (!selectedProduct && !customTopic.trim()) {
+      toast({ title: "Adj meg terméket vagy témát", variant: "destructive" });
+      return;
+    }
+    setLoading(true); setOutput("");
+    try { await streamAi(system, user, setOutput); }
+    catch (e: any) { toast({ title: "Hiba", description: e.message, variant: "destructive" }); }
+    finally { setLoading(false); }
+  };
+
+  // ============== HASHTAG STRATÉGIA ==============
+  const generateHashtags = () => runTool(setLoadingHashtag, setHashtagOutput,
+    `Te a világ legjobb ${platform.label} hashtag stratégia szakértője vagy. Magyar piacra dolgozol.
+KÖTELEZŐ KIMENET:
+🔥 TIER 1 – NAGY (1M+ poszt) – 5 db, brand awareness
+⚡ TIER 2 – KÖZÉP (100k–1M) – 10 db, edzett konverzió
+🎯 TIER 3 – NICHE (10k–100k) – 10 db, célzott közönség
+🇭🇺 MAGYAR HASHTAGEK – 5 db (pl. #magyardivat #budapest)
+🚫 TILTOTT/SHADOWBAN-VESZÉLYES listája
+📊 HASHTAG MIX javaslat (hány-hány tier-ből egy poszthoz)
+💡 TREND HASHTAGEK most aktuálisan ${platform.label}-on`,
+    `Generálj hashtag stratégiát.\n\n${buildContext()}`);
+
+  // ============== CAROUSEL / THREAD ==============
+  const generateCarousel = () => runTool(setLoadingCarousel, setCarouselOutput,
+    `Te a világ legjobb ${platform.label} carousel/thread copywriter vagy. Magyarul írsz, hook-driven.
+KÖTELEZŐ KIMENET (8–10 slide / tweet):
+SLIDE 1: 🎯 HOOK (cliffhanger, NAGY szöveg javaslat)
+SLIDE 2-3: 😱 PROBLÉMA / FÁJDALOMPONT (storytelling)
+SLIDE 4-6: 💡 MEGOLDÁS LÉPÉSEK (értékadó, számozott)
+SLIDE 7-8: 🔥 TERMÉK BEMUTATÁS (USP-k)
+SLIDE 9: 📈 SOCIAL PROOF (számok, vélemény)
+SLIDE 10: 🚀 CTA (mit csináljon MOST)
+
+Minden slide-hoz: cím, body szöveg, vizuál ötlet, ${platform.label}-specifikus tipp.`,
+    `Generálj carousel/thread tartalmat ${platform.label}-ra.\n\n${buildContext()}`);
+
+  // ============== EMAIL / DM ==============
+  const generateEmail = () => runTool(setLoadingEmail, setEmailOutput,
+    `Te a világ legjobb magyar direct response copywriter vagy (Gary Halbert + Dan Kennedy szint).
+KÖTELEZŐ KIMENET 3 verzióban:
+
+📧 EMAIL VERZIÓ:
+- TÁRGY (3 A/B variáns, max 50 kar)
+- PREVIEW TEXT
+- ÜDVÖZLÉS (személyes)
+- HOOK (1. mondat – kíváncsiság/sokk/szám)
+- TÖRZS (PAS: Problem-Agitate-Solution)
+- CTA gomb szöveg + link helye
+- P.S. (urgency/scarcity)
+
+💬 DM VERZIÓ (Instagram/Messenger):
+- 3 mondatos cold opener
+- Follow-up 24h múlva
+- Follow-up 3 nap múlva
+
+📱 SMS VERZIÓ:
+- Max 160 karakter, link rövidítve
+- A/B 2 verzió`,
+    `Generálj email + DM + SMS sequence-t.\n\n${buildContext()}`);
+
+  // ============== HOOK GENERÁTOR ==============
+  const generateHooks = () => runTool(setLoadingHook, setHookOutput,
+    `Te a világ legjobb scroll-stopper hook copywriter vagy ${platform.label}-ra. Magyarul.
+Generálj 10 PRO HOOK-OT, mindegyik más kategóriából:
+1. SZÁM/STATISZTIKA hook ("87% nem tudja, hogy...")
+2. KÉRDÉS hook ("Te is unod, hogy...?")
+3. SOKK/CONTROVERSY hook
+4. PERSZONÁLIS STORY hook ("Tegnap egy vásárlóm...")
+5. BEFORE/AFTER hook
+6. TILTOTT/TITKOS hook ("Amit a SHEIN nem mond el...")
+7. HIBA/FIGYELEM hook ("3 hiba amit MINDENKI elkövet...")
+8. LISTÁS hook ("5 dolog amit ma...")
+9. URGENCY hook ("Csak ma...")
+10. CONTRARIAN hook ("Mindenki azt mondja X, de...")
+
+Mindegyikhez: a hook + miért működik (1 mondat) + ${platform.label}-specifikus megjelenítés tipp.`,
+    `Generálj 10 hook variánst.\n\n${buildContext()}`);
+
+  // ============== 30 NAPOS NAPTÁR ==============
+  const generateCalendar = () => runTool(setLoadingCalendar, setCalendarOutput,
+    `Te a világ legjobb ${platform.label} content calendar stratégája vagy. Magyar webshop számára dolgozol.
+KÉSZÍTS 30 NAPOS POSZT NAPTÁRT táblázat formában:
+
+| Nap | Dátum | Típus | Téma | Hook | CTA | Időpont | Hashtag |
+
+Szabályok:
+- 4-6 poszt/hét (nem mindennap, hogy fenntartható legyen)
+- 60% érték / 30% termék / 10% community/UGC szabály
+- ${platform.bestDays} legyen erős nap
+- ${platform.bestTime} legyenek az időpontok
+- Magyar ünnepek/szezon figyelembevétele
+- Tematikus hetek (pl. Hét 1: launch, Hét 2: social proof...)
+
+Végén: 📊 KPI célkitűzés a hónapra + heti review checklist.`,
+    `Készíts 30 napos naptárt.\n\n${buildContext()}`);
+
+  // ============== VERSENYTÁRS ANALÍZIS ==============
+  const generateCompetitorAnalysis = async () => {
+    if (!competitorUrl.trim() && !customTopic.trim()) {
+      toast({ title: "Adj meg versenytárs URL-t vagy nevet", variant: "destructive" });
+      return;
+    }
+    setLoadingCompetitor(true); setCompetitorOutput("");
+    try {
+      await streamAi(
+        `Te egy keményvonalas marketing intelligence elemző vagy. ${platform.label}-ra fókuszálsz.
+KÖTELEZŐ KIMENET:
+🎯 VERSENYTÁRS POZÍCIONÁLÁS (1 mondat összegzés)
+💪 ERŐSSÉGEIK (5 pont – mit csinálnak jól)
+🔻 GYENGESÉGEIK (5 pont – hol lehet támadni)
+📊 BECSÜLT KÖZÖNSÉG & KPI (kor, nem, engagement rate)
+🔥 TOP 3 POSZT TÍPUS amit használnak
+🎨 VIZUÁLIS STÍLUS (szín, font, hangulat)
+💬 HANGNEM elemzés
+🚀 STRATÉGIAI JAVASLAT NEKED – hogy megverjük őket (5 konkrét lépés)
+⚔️ DIFFERENCIÁLÁSI PONTOK (hol vagy te jobb)`,
+        `Versenytárs: ${competitorUrl || customTopic}\nMi a mi termékünk/cégünk: ${selectedProduct?.name || customTopic}\nPlatform: ${platform.label}`,
+        setCompetitorOutput,
+        "post",
+      );
+    } catch (e: any) { toast({ title: "Hiba", description: e.message, variant: "destructive" }); }
+    finally { setLoadingCompetitor(false); }
+  };
+
+  // ============== KÉPSZERKESZTŐ (AI image edit) ==============
+  const handleEditUpload = async (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => setEditSourceB64(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const generateEditedImage = async () => {
+    if (!editSourceB64) { toast({ title: "Tölts fel egy képet", variant: "destructive" }); return; }
+    if (!editPrompt.trim()) { toast({ title: "Add meg, mit változtassunk", variant: "destructive" }); return; }
+    setLoadingEdit(true); setEditedB64("");
+    try {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-ai-assistant`;
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-image",
+          modalities: ["image", "text"],
+          messages: [{
+            role: "user",
+            content: [
+              { type: "text", text: `${editPrompt}. ${platform.label} ${postFormat} optimized, aspect ${platform.imageAspect}, premium, no text overlay.` },
+              { type: "image_url", image_url: { url: editSourceB64 } },
+            ],
+          }],
+        }),
+      });
+      if (!resp.ok) {
+        if (resp.status === 429) throw new Error("Túl sok kérés.");
+        if (resp.status === 402) throw new Error("Kredit elfogyott.");
+        throw new Error(`Hiba: ${resp.status}`);
+      }
+      const j = await resp.json();
+      const b64 = j?.choices?.[0]?.message?.images?.[0]?.image_url?.url || "";
+      if (!b64) throw new Error("Nem érkezett szerkesztett kép.");
+      setEditedB64(b64);
+      setHistory((h) => [{ kind: "image", text: `EDIT: ${editPrompt}`, imageBase64: b64, createdAt: Date.now() }, ...h]);
+    } catch (e: any) { toast({ title: "Kép hiba", description: e.message, variant: "destructive" }); }
+    finally { setLoadingEdit(false); }
   };
 
   const copy = (txt: string) => {
@@ -514,16 +763,17 @@ KÖTELEZŐ KIMENET:
 
       {/* TOOLS */}
       <Tabs defaultValue="post" className="space-y-4">
-        <TabsList className="rounded-none w-full grid grid-cols-3 h-auto">
-          <TabsTrigger value="post" className="rounded-none uppercase text-xs py-3">
-            <FileText className="h-3.5 w-3.5 mr-1" /> Poszt szöveg
-          </TabsTrigger>
-          <TabsTrigger value="image" className="rounded-none uppercase text-xs py-3">
-            <ImageIcon className="h-3.5 w-3.5 mr-1" /> AI kép
-          </TabsTrigger>
-          <TabsTrigger value="video" className="rounded-none uppercase text-xs py-3">
-            <Video className="h-3.5 w-3.5 mr-1" /> Videó script
-          </TabsTrigger>
+        <TabsList className="rounded-none w-full grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 h-auto">
+          <TabsTrigger value="post" className="rounded-none uppercase text-[10px] py-2"><FileText className="h-3 w-3 mr-1" />Poszt</TabsTrigger>
+          <TabsTrigger value="image" className="rounded-none uppercase text-[10px] py-2"><ImageIcon className="h-3 w-3 mr-1" />AI kép</TabsTrigger>
+          <TabsTrigger value="edit" className="rounded-none uppercase text-[10px] py-2"><Scissors className="h-3 w-3 mr-1" />Kép-szerk.</TabsTrigger>
+          <TabsTrigger value="video" className="rounded-none uppercase text-[10px] py-2"><Video className="h-3 w-3 mr-1" />Videó</TabsTrigger>
+          <TabsTrigger value="hooks" className="rounded-none uppercase text-[10px] py-2"><Zap className="h-3 w-3 mr-1" />Hook×10</TabsTrigger>
+          <TabsTrigger value="carousel" className="rounded-none uppercase text-[10px] py-2"><Layers className="h-3 w-3 mr-1" />Carousel</TabsTrigger>
+          <TabsTrigger value="hashtags" className="rounded-none uppercase text-[10px] py-2"><Hash className="h-3 w-3 mr-1" />Hashtag</TabsTrigger>
+          <TabsTrigger value="email" className="rounded-none uppercase text-[10px] py-2"><Mail className="h-3 w-3 mr-1" />Email/DM</TabsTrigger>
+          <TabsTrigger value="calendar" className="rounded-none uppercase text-[10px] py-2"><Calendar className="h-3 w-3 mr-1" />30 nap</TabsTrigger>
+          <TabsTrigger value="competitor" className="rounded-none uppercase text-[10px] py-2"><Eye className="h-3 w-3 mr-1" />Spy</TabsTrigger>
         </TabsList>
 
         {/* POST */}
@@ -569,7 +819,7 @@ KÖTELEZŐ KIMENET:
             <div className="border p-3 space-y-2">
               <img src={imageBase64} alt="Generated" className="w-full max-h-[600px] object-contain border" />
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={downloadImage}>
+                <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => downloadImage()}>
                   <Download className="h-3 w-3 mr-1" /> Letöltés
                 </Button>
                 <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={generateImage}>
@@ -603,6 +853,118 @@ KÖTELEZŐ KIMENET:
               </Button>
             </div>
           )}
+        </TabsContent>
+
+        {/* IMAGE EDIT */}
+        <TabsContent value="edit" className="space-y-3">
+          <Label className="text-xs uppercase">Tölts fel egy képet (saját termékfotó, screenshot stb.)</Label>
+          <Input type="file" accept="image/*" className="rounded-none"
+            onChange={(e) => e.target.files?.[0] && handleEditUpload(e.target.files[0])} />
+          {editSourceB64 && <img src={editSourceB64} alt="source" className="w-full max-h-[300px] object-contain border" />}
+          <Label className="text-xs uppercase">Mit változtassunk rajta?</Label>
+          <Textarea className="rounded-none min-h-[80px]"
+            value={editPrompt} onChange={(e) => setEditPrompt(e.target.value)}
+            placeholder="pl. tedd a hátteret budapesti utcára, adj hozzá természetes fényt, ${platform.label} reels stílus" />
+          <Button onClick={generateEditedImage} disabled={loadingEdit}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingEdit ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Scissors className="h-4 w-4 mr-2" />}
+            {loadingEdit ? "Szerkesztés..." : "AI képszerkesztés indítása"}
+          </Button>
+          {editedB64 && (
+            <div className="border p-3 space-y-2">
+              <img src={editedB64} alt="Edited" className="w-full max-h-[600px] object-contain border" />
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => downloadImage(editedB64, "-edit")}>
+                  <Download className="h-3 w-3 mr-1" /> Letöltés
+                </Button>
+                <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={generateEditedImage}>
+                  <RefreshCw className="h-3 w-3 mr-1" /> Új variáns
+                </Button>
+              </div>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* HOOKS */}
+        <TabsContent value="hooks" className="space-y-3">
+          <Button onClick={generateHooks} disabled={loadingHook}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingHook ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Zap className="h-4 w-4 mr-2" />}
+            {loadingHook ? "10 hook generálása..." : "10 PRO HOOK variáns"}
+          </Button>
+          <Textarea className="rounded-none min-h-[400px] font-mono text-xs"
+            value={hookOutput} onChange={(e) => setHookOutput(e.target.value)}
+            placeholder="10 különböző stílusú scroll-stopper hook..." />
+          {hookOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(hookOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* CAROUSEL */}
+        <TabsContent value="carousel" className="space-y-3">
+          <Button onClick={generateCarousel} disabled={loadingCarousel}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingCarousel ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Layers className="h-4 w-4 mr-2" />}
+            {loadingCarousel ? "Carousel..." : `${platform.label} Carousel/Thread (8-10 slide)`}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs"
+            value={carouselOutput} onChange={(e) => setCarouselOutput(e.target.value)}
+            placeholder="Slide-by-slide carousel/thread tartalom..." />
+          {carouselOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(carouselOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* HASHTAGS */}
+        <TabsContent value="hashtags" className="space-y-3">
+          <Button onClick={generateHashtags} disabled={loadingHashtag}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingHashtag ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Hash className="h-4 w-4 mr-2" />}
+            {loadingHashtag ? "Hashtag stratégia..." : "PRO Hashtag Stratégia (Tier 1/2/3 + magyar)"}
+          </Button>
+          <Textarea className="rounded-none min-h-[400px] font-mono text-xs"
+            value={hashtagOutput} onChange={(e) => setHashtagOutput(e.target.value)}
+            placeholder="3-tier hashtag stratégia + shadowban check + magyar tagek..." />
+          {hashtagOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(hashtagOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* EMAIL/DM/SMS */}
+        <TabsContent value="email" className="space-y-3">
+          <Button onClick={generateEmail} disabled={loadingEmail}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingEmail ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
+            {loadingEmail ? "Sequence..." : "Email + DM + SMS sequence (PAS framework)"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs"
+            value={emailOutput} onChange={(e) => setEmailOutput(e.target.value)}
+            placeholder="Email tárgy A/B + body + DM cold opener + SMS..." />
+          {emailOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(emailOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* CALENDAR 30 DAYS */}
+        <TabsContent value="calendar" className="space-y-3">
+          <Button onClick={generateCalendar} disabled={loadingCalendar}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingCalendar ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Calendar className="h-4 w-4 mr-2" />}
+            {loadingCalendar ? "30 napos naptár..." : "30 napos content calendar"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs"
+            value={calendarOutput} onChange={(e) => setCalendarOutput(e.target.value)}
+            placeholder="Nap | Dátum | Típus | Téma | Hook | CTA | Időpont | Hashtag..." />
+          {calendarOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(calendarOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* COMPETITOR */}
+        <TabsContent value="competitor" className="space-y-3">
+          <Label className="text-xs uppercase">Versenytárs URL vagy név</Label>
+          <Input className="rounded-none"
+            value={competitorUrl} onChange={(e) => setCompetitorUrl(e.target.value)}
+            placeholder="pl. shein.com / @aboutyou_hu / zalando.hu" />
+          <Button onClick={generateCompetitorAnalysis} disabled={loadingCompetitor}
+            className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingCompetitor ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <TrendingUp className="h-4 w-4 mr-2" />}
+            {loadingCompetitor ? "Spy mode..." : "Versenytárs analízis + támadási terv"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs"
+            value={competitorOutput} onChange={(e) => setCompetitorOutput(e.target.value)}
+            placeholder="Pozícionálás, erősségek, gyengeségek, támadási vektorok..." />
+          {competitorOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(competitorOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
         </TabsContent>
       </Tabs>
 
