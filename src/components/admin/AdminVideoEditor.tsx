@@ -553,12 +553,112 @@ KÖTELEZŐ KIMENET:
         {loading && <Badge className="rounded-none bg-blue-600 text-white">{progress}%</Badge>}
       </div>
 
+      {/* ===================== 🚀 AI VIDEÓ GENERÁTOR ===================== */}
+      <div className="border-2 border-foreground bg-gradient-to-br from-violet-600/10 via-fuchsia-500/5 to-amber-500/10 p-4 space-y-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge className="rounded-none uppercase bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white">
+            <Brain className="h-3 w-3 mr-1" /> AI VIDEÓ GENERÁTOR
+          </Badge>
+          <Badge variant="outline" className="rounded-none uppercase text-[10px]">
+            <Rocket className="h-3 w-3 mr-1" /> Saját belső rendszer · külső API nélkül
+          </Badge>
+          <Badge className="rounded-none uppercase bg-amber-500 text-black text-[10px]">
+            <Zap className="h-3 w-3 mr-1" /> 10000% erősebb
+          </Badge>
+        </div>
+
+        <Textarea
+          rows={2}
+          className="rounded-none"
+          placeholder="Mit reklámozzunk? pl. 'Új női kollekció — őszi pulóverek, meleg tónusok, fiatal nő kávéval, Budapest utcái'"
+          value={aiPrompt}
+          onChange={(e) => setAiPrompt(e.target.value)}
+        />
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div>
+            <Label className="text-[10px] uppercase">Jelenetek: {aiSceneCount}</Label>
+            <Slider value={[aiSceneCount]} min={3} max={10} step={1} onValueChange={(v) => setAiSceneCount(v[0])} />
+          </div>
+          <div>
+            <Label className="text-[10px] uppercase">Mp/jelenet: {aiSecPerScene}s</Label>
+            <Slider value={[aiSecPerScene]} min={2} max={6} step={1} onValueChange={(v) => setAiSecPerScene(v[0])} />
+          </div>
+          <div>
+            <Label className="text-[10px] uppercase">Minőség</Label>
+            <select
+              className="w-full border rounded-none p-1.5 text-xs bg-background"
+              value={aiQuality}
+              onChange={(e) => setAiQuality(e.target.value as any)}
+            >
+              <option value="fast">⚡ Gyors (Nano Banana)</option>
+              <option value="pro">🔥 PRO (Nano Banana 2)</option>
+              <option value="ultra">💎 ULTRA (Gemini 3 Pro)</option>
+            </select>
+          </div>
+          <div>
+            <Label className="text-[10px] uppercase">Kameramozgás</Label>
+            <select
+              className="w-full border rounded-none p-1.5 text-xs bg-background"
+              value={aiMotion}
+              onChange={(e) => setAiMotion(e.target.value as any)}
+            >
+              <option value="mix">🎬 Vegyes (Pro)</option>
+              <option value="kenburns">Ken Burns</option>
+              <option value="zoomin">Zoom IN</option>
+              <option value="zoomout">Zoom OUT</option>
+              <option value="panlr">Pan ←→</option>
+              <option value="panrl">Pan ←→ vissza</option>
+            </select>
+          </div>
+        </div>
+
+        <Input
+          className="rounded-none text-xs"
+          placeholder="Vizuális stílus (pl. cinematic, photorealistic, 8k, professional advertising)"
+          value={aiStyle}
+          onChange={(e) => setAiStyle(e.target.value)}
+        />
+
+        <Button
+          onClick={generateAiVideo}
+          disabled={aiGenerating || !ready || !aiPrompt.trim()}
+          className="w-full rounded-none uppercase font-black bg-gradient-to-r from-violet-600 via-fuchsia-600 to-amber-500 text-white hover:opacity-90 h-12"
+        >
+          {aiGenerating ? (
+            <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> {aiGenStep || "Generálás..."} {progress}%</>
+          ) : (
+            <><Wand className="h-5 w-5 mr-2" /> AI VIDEÓ GENERÁLÁSA → {aspect} → {platformLabel}</>
+          )}
+        </Button>
+
+        {aiScenes.length > 0 && (
+          <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+            {aiScenes.map((s, i) => (
+              <div key={i} className="border bg-background/50 aspect-square overflow-hidden relative">
+                {s.b64 ? (
+                  <img src={s.b64} alt={`scene ${i + 1}`} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Loader2 className="h-5 w-5 animate-spin opacity-40" />
+                  </div>
+                )}
+                <Badge className="absolute top-1 left-1 rounded-none text-[9px] bg-black/80 text-white">{i + 1}</Badge>
+              </div>
+            ))}
+          </div>
+        )}
+        <p className="text-[10px] text-muted-foreground">
+          💡 Az AI megtervezi a forgatókönyvet, generálja a fotórealisztikus képeket, majd Ken Burns effekttel összerakja egy MP4 videóvá. A kész videó automatikusan a szerkesztőbe kerül — utána felirat, hang, watermark, trim ráhúzható.
+        </p>
+      </div>
+
       {/* UPLOAD */}
       <div className="border-2 border-dashed border-foreground/40 p-4 text-center">
         <Label className="cursor-pointer block">
           <Upload className="h-6 w-6 mx-auto mb-2" />
           <div className="text-sm font-bold uppercase tracking-wider">
-            {sourceFile ? sourceFile.name : "Tölts fel saját videót (mp4/mov/webm, max 200 MB)"}
+            {sourceFile ? sourceFile.name : "...VAGY tölts fel saját videót (mp4/mov/webm, max 200 MB)"}
           </div>
           <div className="text-xs text-muted-foreground mt-1">
             {sourceFile ? `${(sourceFile.size / 1024 / 1024).toFixed(1)} MB · ${duration.toFixed(1)} mp` : "Kattints vagy húzd ide"}
