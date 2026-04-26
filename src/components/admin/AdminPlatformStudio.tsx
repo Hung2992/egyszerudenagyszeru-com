@@ -91,6 +91,13 @@ const AdminPlatformStudio = ({ platform }: Props) => {
   const [editPrompt, setEditPrompt] = useState<string>("");
   const [editSourceB64, setEditSourceB64] = useState<string>("");
   const [editedB64, setEditedB64] = useState<string>("");
+  const [adsOutput, setAdsOutput] = useState<string>("");
+  const [seoOutput, setSeoOutput] = useState<string>("");
+  const [influencerOutput, setInfluencerOutput] = useState<string>("");
+  const [crisisInput, setCrisisInput] = useState<string>("");
+  const [crisisOutput, setCrisisOutput] = useState<string>("");
+  const [abTestOutput, setAbTestOutput] = useState<string>("");
+  const [landingOutput, setLandingOutput] = useState<string>("");
 
   // States
   const [loadingPost, setLoadingPost] = useState(false);
@@ -103,6 +110,12 @@ const AdminPlatformStudio = ({ platform }: Props) => {
   const [loadingCalendar, setLoadingCalendar] = useState(false);
   const [loadingCompetitor, setLoadingCompetitor] = useState(false);
   const [loadingEdit, setLoadingEdit] = useState(false);
+  const [loadingAds, setLoadingAds] = useState(false);
+  const [loadingSeo, setLoadingSeo] = useState(false);
+  const [loadingInfluencer, setLoadingInfluencer] = useState(false);
+  const [loadingCrisis, setLoadingCrisis] = useState(false);
+  const [loadingAbTest, setLoadingAbTest] = useState(false);
+  const [loadingLanding, setLoadingLanding] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
