@@ -10,7 +10,8 @@ import { toast } from "@/hooks/use-toast";
 import {
   Sparkles, Loader2, Copy, Wand2, Target, Clock, MapPin,
   Image as ImageIcon, Video, FileText, Megaphone, Download,
-  Send, RefreshCw, Save, Flame, Users, Trash2,
+  Send, RefreshCw, Save, Flame, Users, Trash2, Hash, Mail,
+  Calendar, Eye, Layers, Zap, Upload, Scissors, TrendingUp,
 } from "lucide-react";
 
 // ============================================================
