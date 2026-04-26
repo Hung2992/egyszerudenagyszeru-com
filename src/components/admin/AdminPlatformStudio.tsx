@@ -855,6 +855,242 @@ KÖTELEZŐ KIMENET:
     finally { setLoadingCrisis(false); }
   };
 
+  // ============== FUNNEL TÉRKÉP (TOFU/MOFU/BOFU) ==============
+  const generateFunnel = () => runTool(setLoadingFunnel, setFunnelOutput,
+    `Te a világ legjobb magyar marketing funnel architektúra szakértője vagy. ${platform.label}-ra dolgozol.
+KÖTELEZŐ KIMENET – TELJES FUNNEL TÉRKÉP:
+
+🔝 TOFU – AWARENESS (top of funnel)
+- 5 konkrét tartalom ötlet (hook, formátum, cél)
+- Targeting: cold audience
+- KPI: reach, video view, CTR
+- Budget %: 60-70%
+
+🟡 MOFU – CONSIDERATION (middle)
+- 5 konkrét tartalom (ár, garanciák, USP, FAQ, demo)
+- Targeting: 25%+ video view, profile visit, link click
+- KPI: lead, add to cart, save
+- Budget %: 20-25%
+
+🔴 BOFU – CONVERSION (bottom)
+- 5 konkrét tartalom (testimonial, urgency, kedvezmény, abandoned cart)
+- Targeting: cart abandoner, last 30 day visitor
+- KPI: purchase, ROAS
+- Budget %: 10-15%
+
+🔁 RETENTION & LTV növelés (5 ötlet)
+🎯 TELJES USER JOURNEY (1. érintés → vásárlás → ismétlés)
+📊 ATTRIBUCIÓS MODELL javaslat
+🚦 BUDGET ELOSZTÁS pontos % + HUF példával 100k/200k/500k havi költésre`,
+    `Generálj teljes marketing funnel térképet ${platform.label}-ra.\n\n${buildContext()}`);
+
+  // ============== BIO / PROFIL OPTIMALIZÁLÁS ==============
+  const generateBio = () => runTool(setLoadingBio, setBioOutput,
+    `Te a világ legjobb ${platform.label} profil/bio optimalizációs szakértője vagy.
+KÖTELEZŐ KIMENET:
+
+📛 NÉV / DISPLAY NAME (3 variáns – kulcsszóval)
+🆔 USERNAME / HANDLE (3 ötlet ha még nincs)
+📝 BIO SZÖVEG (3 verzió, ${platform.label} max karakterszámon belül):
+   - V1: Érzelmi (story alapú)
+   - V2: Funkcionális (mit csinálok, kinek)
+   - V3: USP-fókuszú (számok, eredmények)
+
+🔗 LINK STRATÉGIA (link in bio – Linktree alternatíva, prioritás)
+📍 LOKÁCIÓ + KATEGÓRIA javaslat
+🎨 PROFIL KÉP brief (mit ábrázoljon, milyen stílus)
+🖼️ COVER / BANNER brief
+📌 KIEMELT POSZTOK (3-5 highlight cover + cím)
+☁️ STORY HIGHLIGHT struktúra (ha van: IG/FB)
+🎯 CTA gomb szöveg (Üzenet / Hívás / Foglalás)
+✅ VERIFIKÁCIÓS CHECKLIST (mit kell még a verified-hez)`,
+    `Optimalizáld a ${platform.label} profilt/bio-t.\n\n${buildContext()}`);
+
+  // ============== TREND RADAR / VIRÁLIS ÖTLETEK ==============
+  const generateTrend = () => runTool(setLoadingTrend, setTrendOutput,
+    `Te a világ legjobb ${platform.label} trend forecaster + virális content strategist vagy. Magyar piacra dolgozol.
+KÖTELEZŐ KIMENET:
+
+🔥 10 AKTUÁLIS / FELFUTÓBAN LÉVŐ TREND ${platform.label}-on most:
+Mindegyikhez:
+- 📈 Trend neve / leírás (1 mondat)
+- 🌡️ Hot score (1-10)
+- ⏰ Becsült életciklus (még meddig viral – nap/hét)
+- 🇭🇺 Magyar adaptáció (hogyan ültesd át magyar piacra)
+- 🎯 Hogyan csatold a TERMÉKEDHEZ konkrétan
+- 🎵 Ha hang/zene: track javaslat
+- 📝 Konkrét poszt ötlet (script vázlat)
+- ⚠️ Kockázat (cringe / cancel veszély)
+
+🚀 3 EVERGREEN VIRAL FORMÁTUM (mindig működik)
+📊 TREND BENCHMARK (mit jelent magyar piacon a "viral" – nézettség/engagement)
+🎯 EXECUTION SPEED – hány órán belül kell kiraknod, hogy ne késsél le róla`,
+    `Generálj trend radart + virális ötleteket.\n\n${buildContext()}`);
+
+  // ============== FORDÍTÓ / LOKALIZÁCIÓ ==============
+  const generateTranslate = async () => {
+    if (!translateInput.trim()) {
+      toast({ title: "Adj meg fordítandó szöveget", variant: "destructive" });
+      return;
+    }
+    setLoadingTranslate(true); setTranslateOutput("");
+    try {
+      await streamAi(
+        `Te egy profi marketing fordító + lokalizációs szakértő vagy. Nem szóról-szóra fordítasz, hanem KULTURÁLISAN ADAPTÁLSZ.
+KÖTELEZŐ KIMENET:
+
+🌍 NYERS FORDÍTÁS (${translateLang}) – pontos, de szó szerint
+🎯 KULTURÁLISAN ADAPTÁLT VERZIÓ – ahogy egy anyanyelvi marketinges írná
+💡 LOKALIZÁCIÓS MEGJEGYZÉSEK (mit változtattam, miért)
+🚫 KULTURÁLIS BUKTATÓK (mit kerüljünk az adott piacon)
+#️⃣ HASHTAG ADAPTÁCIÓ (lokális hashtagek)
+💰 PÉNZNEM / MÉRTÉKEGYSÉG átváltás
+⏰ IDŐPONT ADAPTÁCIÓ (másik időzóna posztolási csúcsa)
+🎨 VIZUÁLIS ADAPTÁCIÓ JAVASLAT (szín, modell, helyszín)`,
+        `Eredeti magyar szöveg:\n${translateInput}\n\nCélnyelv/piac: ${translateLang}\nPlatform: ${platform.label}`,
+        setTranslateOutput,
+        "post",
+      );
+    } catch (e: any) { toast({ title: "Hiba", description: e.message, variant: "destructive" }); }
+    finally { setLoadingTranslate(false); }
+  };
+
+  // ============== CHATBOT / DM AUTOMATA SCRIPT ==============
+  const generateChatbot = () => runTool(setLoadingChatbot, setChatbotOutput,
+    `Te a világ legjobb conversational commerce + DM automation szakértője vagy. ${platform.label}-ra építesz chatbotot/DM flow-t.
+KÖTELEZŐ KIMENET – TELJES CHATBOT FORGATÓKÖNYV:
+
+🤖 ÜDVÖZLŐ ÜZENET (welcome message – 3 verzió)
+🧩 MAIN MENU (4-6 gomb / quick reply opcióval):
+- Termékek
+- Méret tanácsadás
+- Rendelés státusz
+- Visszáru / csere
+- Élő ügyfélszolgálat
+- Kedvezmény / kupon
+
+🌳 PÁRBESZÉD-FA mindegyik gombhoz:
+- Bot kérdés
+- Várt user válaszok (3-4 opció)
+- Bot következő reakció
+
+🎯 FALLBACK ("nem értem" – 3 fokozat, mielőtt élő agent)
+👤 ÉLŐ AGENT ÁTADÁS – mikor és hogyan
+💬 KICSI BESZÉLGETÉS (small talk válaszok – brand hang)
+🛒 KOSÁR-MENTÉS automatizmus (24h, 48h, 72h)
+🎁 LEAD MAGNET (mit ajánljunk az opt-in-ért)
+📊 KPI – mit mérj (válaszidő, escalation rate, conversion)
+⚖️ GDPR + adatvédelem disclaimer szövegek`,
+    `Generálj DM/chatbot teljes flow-t.\n\n${buildContext()}`);
+
+  // ============== SAJTÓKÖZLEMÉNY / PR ==============
+  const generatePress = () => runTool(setLoadingPress, setPressOutput,
+    `Te a világ legjobb magyar PR / sajtó kapcsolattartó vagy. Profi sajtóközleményeket írsz, amit a HVG, 24.hu, Index átvesz.
+KÖTELEZŐ KIMENET – TELJES SAJTÓCSOMAG:
+
+📰 SAJTÓKÖZLEMÉNY (klasszikus szerkezet):
+- TÁRGY (max 80 kar – újságíró-mágnes)
+- DÁTUM + HELYSZÍN (Budapest, 2025...)
+- LEAD bekezdés (5W: ki, mit, mikor, hol, miért – 1 mondatban)
+- TÖRZS (3-4 bekezdés, idézőjelben CEO/founder mondat)
+- BACKGROUND (cégadatok, számok, mission)
+- KAPCSOLAT (név, email, telefon)
+- KÉPEK / VIDEO link sablon
+
+📧 PITCH EMAIL újságíróknak (rövid, 5 mondat)
+📋 MÉDIA LISTA javaslat (10 magyar releváns kiadvány)
+🎯 NEWS HOOK – miért hír ez most (timing, szezon, tárgy)
+📸 KÉPI ANYAG brief (mit küldj sajtóhoz)
+🎙️ INTERJÚ-KÉSZSÉGI BULLET POINTS (válasz template-ek várt kérdésekre)
+🚫 EMBARGO szöveg ha kell
+📊 MÉRÉS – PR ROI hogyan számold`,
+    `Generálj teljes sajtócsomagot.\n\n${buildContext()}`);
+
+  // ============== ANALYTICS ÉRTELMEZŐ ==============
+  const generateAnalytics = async () => {
+    if (!analyticsInput.trim()) {
+      toast({ title: "Illeszd be az analytics adatokat", variant: "destructive" });
+      return;
+    }
+    setLoadingAnalytics(true); setAnalyticsOutput("");
+    try {
+      await streamAi(
+        `Te a világ legjobb magyar marketing analytics elemző vagy. ${platform.label}-ra fókuszálsz.
+KÖTELEZŐ KIMENET:
+
+📊 ADATOK ÖSSZEGZÉSE (1 mondat – mit látunk)
+🌡️ EGÉSZSÉG STÁTUSZ (zöld/sárga/piros + indoklás)
+
+🟢 MI MEGY JÓL (3 pont – konkrét számokkal)
+🔴 MI NEM MEGY (3 pont – konkrét számokkal)
+⚠️ ANOMÁLIÁK (gyanús ugrások / esések)
+
+🎯 ROOT CAUSE elemzés (miért történt – 3 hipotézis)
+🔬 MELYIKET TESZTELD ELŐSZÖR (priorizálva)
+
+🚀 KONKRÉT AKCIÓK (5 lépés holnap reggelre):
+1. ...
+2. ...
+
+📈 HOSSZÚ TÁVÚ AJÁNLÁSOK (3 stratégiai)
+📊 KÖVETKEZŐ MÉRÉSI PERIÓDUS (mit nézz, mikor)
+💰 BUDGET ÚJRAOSZTÁS javaslat (% szerint)
+🎯 ${platform.label} BENCHMARK – hogy állsz a magyar átlaghoz képest`,
+        `Analytics adatok:\n${analyticsInput}\n\nKontextus:\n${buildContext()}`,
+        setAnalyticsOutput,
+        "post",
+      );
+    } catch (e: any) { toast({ title: "Hiba", description: e.message, variant: "destructive" }); }
+    finally { setLoadingAnalytics(false); }
+  };
+
+  // ============== BRAND MOODBOARD / VIZUÁLIS GUIDE ==============
+  const generateMoodboard = () => runTool(setLoadingMoodboard, setMoodboardOutput,
+    `Te a világ legjobb brand identity + art director vagy. ${platform.label}-ra szabsz vizuális stílust magyar piacra.
+KÖTELEZŐ KIMENET – TELJES VIZUÁLIS GUIDE:
+
+🎨 SZÍNPALETTA (5 szín):
+- Primary (HEX + HSL + amikor használd)
+- Secondary
+- Accent
+- Neutral
+- Dark/Light variánsok
+
+🔤 TIPOGRÁFIA:
+- Headline font (Google Font javaslat)
+- Body font
+- Hangsúly font (CTA-hoz)
+- Hierarchia (H1/H2/H3 méret arány)
+
+📸 FOTÓ STÍLUS:
+- Kompozíció (rule of thirds, központosított, asymmetric)
+- Megvilágítás (természetes, stúdió, drámai)
+- Színhőmérséklet (meleg/hideg)
+- Modell típus (kor, etnikum, stílus)
+- Helyszín (urban, otthonos, természet)
+
+✨ GRAFIKAI ELEMEK:
+- Ikonok stílusa (line/filled, sarok)
+- Textúrák
+- Mintázatok
+- Sticker / emoji használat
+
+🎬 VIDEÓ STÍLUS:
+- Vágás ritmus (lassú/gyors)
+- Átmenetek
+- Color grading (LUT javaslat)
+- Felirat stílus (font, animáció)
+
+📐 LAYOUT SZABÁLYOK:
+- Margók, padding ${platform.label}-ra
+- Safe zone (vágási területek)
+- Branding helye (logo, watermark)
+
+🚫 TILTOTT ELEMEK (mit NE használj sose – brand védelem)
+✅ DO's lista
+📋 EXPORT BEÁLLÍTÁSOK ${platform.label}-ra (DPI, format, méret)`,
+    `Generálj teljes brand vizuális guide-ot.\n\n${buildContext()}`);
+
   const copy = (txt: string) => {
     navigator.clipboard.writeText(txt);
     toast({ title: "Vágólapra másolva" });
