@@ -1207,7 +1207,7 @@ KÖTELEZŐ KIMENET – TELJES VIZUÁLIS GUIDE:
 
       {/* TOOLS */}
       <Tabs defaultValue="post" className="space-y-4">
-        <TabsList className="rounded-none w-full grid grid-cols-3 md:grid-cols-5 lg:grid-cols-8 xl:grid-cols-16 h-auto">
+        <TabsList className="rounded-none w-full grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 h-auto">
           <TabsTrigger value="post" className="rounded-none uppercase text-[10px] py-2"><FileText className="h-3 w-3 mr-1" />Poszt</TabsTrigger>
           <TabsTrigger value="image" className="rounded-none uppercase text-[10px] py-2"><ImageIcon className="h-3 w-3 mr-1" />AI kép</TabsTrigger>
           <TabsTrigger value="edit" className="rounded-none uppercase text-[10px] py-2"><Scissors className="h-3 w-3 mr-1" />Kép-szerk.</TabsTrigger>
@@ -1224,6 +1224,14 @@ KÖTELEZŐ KIMENET – TELJES VIZUÁLIS GUIDE:
           <TabsTrigger value="abtest" className="rounded-none uppercase text-[10px] py-2"><FlaskConical className="h-3 w-3 mr-1" />A/B</TabsTrigger>
           <TabsTrigger value="landing" className="rounded-none uppercase text-[10px] py-2"><LayoutTemplate className="h-3 w-3 mr-1" />Landing</TabsTrigger>
           <TabsTrigger value="crisis" className="rounded-none uppercase text-[10px] py-2"><AlertTriangle className="h-3 w-3 mr-1" />Krízis</TabsTrigger>
+          <TabsTrigger value="funnel" className="rounded-none uppercase text-[10px] py-2"><GitBranch className="h-3 w-3 mr-1" />Funnel</TabsTrigger>
+          <TabsTrigger value="bio" className="rounded-none uppercase text-[10px] py-2"><User className="h-3 w-3 mr-1" />Bio</TabsTrigger>
+          <TabsTrigger value="trend" className="rounded-none uppercase text-[10px] py-2"><TrendIcon className="h-3 w-3 mr-1" />Trend</TabsTrigger>
+          <TabsTrigger value="translate" className="rounded-none uppercase text-[10px] py-2"><Languages className="h-3 w-3 mr-1" />Fordító</TabsTrigger>
+          <TabsTrigger value="chatbot" className="rounded-none uppercase text-[10px] py-2"><MessageCircle className="h-3 w-3 mr-1" />Chatbot</TabsTrigger>
+          <TabsTrigger value="press" className="rounded-none uppercase text-[10px] py-2"><Newspaper className="h-3 w-3 mr-1" />PR</TabsTrigger>
+          <TabsTrigger value="analytics" className="rounded-none uppercase text-[10px] py-2"><BarChart3 className="h-3 w-3 mr-1" />Analytics</TabsTrigger>
+          <TabsTrigger value="moodboard" className="rounded-none uppercase text-[10px] py-2"><Palette className="h-3 w-3 mr-1" />Moodboard</TabsTrigger>
         </TabsList>
 
         {/* POST */}
