@@ -17,6 +17,7 @@ import {
   Newspaper, BarChart3, Palette,
   Camera, Recycle, Mic, MessagesSquare, Tag, BookOpen, Radio, ShieldCheck,
   Film,
+  Vault, ClipboardList, Crosshair, Repeat, Activity, Wallet, ScanLine, Telescope,
 } from "lucide-react";
 import AdminVideoEditor from "./AdminVideoEditor";
 
@@ -126,6 +127,18 @@ const AdminPlatformStudio = ({ platform }: Props) => {
   const [liveOutput, setLiveOutput] = useState<string>("");
   const [complianceInput, setComplianceInput] = useState<string>("");
   const [complianceOutput, setComplianceOutput] = useState<string>("");
+  // ===== AD-FOCUSED OUTPUTS =====
+  const [adVaultOutput, setAdVaultOutput] = useState<string>("");
+  const [creativeBriefOutput, setCreativeBriefOutput] = useState<string>("");
+  const [audienceOutput, setAudienceOutput] = useState<string>("");
+  const [retargetOutput, setRetargetOutput] = useState<string>("");
+  const [pixelOutput, setPixelOutput] = useState<string>("");
+  const [budgetInput, setBudgetInput] = useState<string>("");
+  const [budgetOutput, setBudgetOutput] = useState<string>("");
+  const [adComplianceInput, setAdComplianceInput] = useState<string>("");
+  const [adComplianceOutput, setAdComplianceOutput] = useState<string>("");
+  const [adSpyInput, setAdSpyInput] = useState<string>("");
+  const [adSpyOutput, setAdSpyOutput] = useState<string>("");
 
   // States
   const [loadingPost, setLoadingPost] = useState(false);
@@ -160,6 +173,14 @@ const AdminPlatformStudio = ({ platform }: Props) => {
   const [loadingStory, setLoadingStory] = useState(false);
   const [loadingLive, setLoadingLive] = useState(false);
   const [loadingCompliance, setLoadingCompliance] = useState(false);
+  const [loadingAdVault, setLoadingAdVault] = useState(false);
+  const [loadingCreativeBrief, setLoadingCreativeBrief] = useState(false);
+  const [loadingAudience, setLoadingAudience] = useState(false);
+  const [loadingRetarget, setLoadingRetarget] = useState(false);
+  const [loadingPixel, setLoadingPixel] = useState(false);
+  const [loadingBudget, setLoadingBudget] = useState(false);
+  const [loadingAdCompliance, setLoadingAdCompliance] = useState(false);
+  const [loadingAdSpy, setLoadingAdSpy] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -1295,6 +1316,222 @@ KÖTELEZŐ KIMENET:
       `Ellenőrizendő tartalom:\n${complianceInput}\n\nKontextus:\n${buildContext()}`);
   };
 
+  // ===================== AD-FOCUSED TOOLS =====================
+
+  // 50 hirdetés szöveg vault
+  const generateAdVault = () => runTool(setLoadingAdVault, setAdVaultOutput,
+    `Te a világ legjobb direct-response copywritere vagy (David Ogilvy + Gary Halbert + Eugene Schwartz szintjén). ${platform.label} fizetett hirdetésekre specializálódva, magyar piacra.
+KÖTELEZŐ KIMENET – 50 KÉSZ HIRDETÉSSZÖVEG, 10 keretrendszerben (5-5):
+1. PAS (Problem-Agitate-Solve)
+2. AIDA (Attention-Interest-Desire-Action)
+3. BAB (Before-After-Bridge)
+4. 4U (Useful-Urgent-Unique-Ultra-specific)
+5. FAB (Features-Advantages-Benefits)
+6. QUEST (Qualify-Understand-Educate-Stimulate-Transition)
+7. STAR-STORY-SOLUTION
+8. Listicle ("7 ok amiért...")
+9. Kérdés-hook ("Tudtad hogy...?")
+10. Social proof / vélemény-stílus
+
+MINDEGYIK HIRDETÉSHEZ KÖTELEZŐ:
+• Headline (max ${platform.maxChars > 90 ? "90" : platform.maxChars} karakter, hook a 3 első szóban)
+• Primary text (3 verzió: rövid 50, közepes 125, hosszú 300 szó)
+• CTA gomb szöveg (4 variáns)
+• Hirdetés cél matching (Awareness/Traffic/Conversion/Retargeting)
+• Várható CTR sáv (% szerint, magyar benchmark)
+• Tiltott szavak ellenőrizve (GVH/Meta policy safe)`,
+    `Generálj 50 kész ${platform.label} hirdetésszöveget azonnal indítható minőségben.\n\n${buildContext()}`);
+
+  // Creative brief produkcióhoz
+  const generateCreativeBrief = () => runTool(setLoadingCreativeBrief, setCreativeBriefOutput,
+    `Te a világ legjobb performance creative direktora vagy. ${platform.label} hirdetésekhez teljes produkciós briefet írsz forgatás/grafikus csapatnak.
+KÖTELEZŐ KIMENET:
+🎯 KAMPÁNY ÖSSZEFOGLALÓ (1 mondat – mit, kinek, miért)
+🎬 5 KREATÍV KONCEPCIÓ (mindegyikhez):
+   - Concept név + 1 mondatos pitch
+   - Hook (első 1.5 mp – vizuális + szöveg)
+   - Storyboard 6 jelenetre (időbélyeggel)
+   - Prop/díszlet/ruha/helyszín lista
+   - Talent leírás (kor, vibe, casting note)
+   - Music style + tempó (BPM)
+   - Color grading (LUT javaslat)
+   - Felirat overlay terv (font, animáció)
+   - CTA end-card design
+   - Várható gyártási költség (HUF)
+📐 SPEC LISTA: aspect ratio, hossz, codec, fájlformátum (${platform.imageAspect}, ${platform.videoLength})
+📋 SHOT LIST CSV (jelenet, kamera, lens, mozgás, hossz)
+✅ APPROVAL CHECKLIST gyártás előtt`,
+    `Készíts 5 darab teljes performance creative briefet ${platform.label} hirdetésekhez.\n\n${buildContext()}`);
+
+  // Audience builder (Meta/TikTok/Google targeting)
+  const generateAudience = () => runTool(setLoadingAudience, setAudienceOutput,
+    `Te a világ legjobb paid media targeting specialistája vagy. ${platform.label} Ads Manager szintjén pontos audience-eket építesz magyar piacra.
+KÖTELEZŐ KIMENET – 10 KÉSZ AUDIENCE (mindegyikhez):
+1. Cold – broad interest stack
+2. Cold – lookalike (1-3%, 3-5%, 5-10%)
+3. Cold – job titles / behavior
+4. Cold – competitor érdeklődés
+5. Warm – website látogatók (7/30/90 nap)
+6. Warm – Instagram/Facebook engager (365 nap)
+7. Warm – videó néző (25/50/75/95%)
+8. Warm – email lista upload
+9. Hot – kosárelhagyók (1/3/7 nap)
+10. Hot – vásárlók (cross-sell + LTV emelés)
+
+MINDEGYIK AUDIENCE-HEZ:
+• Pontos érdeklődési kategóriák (${platform.label} hivatalos taxonómia szerint)
+• Demográfia (kor, nem, lokáció, nyelv, jövedelem)
+• Behavior + device + OS
+• Becsült méret (Magyarország, ezer fő)
+• Exclude-ok (ki ne lássa)
+• Várható CPM + CPC + CTR sáv (HUF, magyar benchmark)
+• Ad set struktúra (CBO/ABO ajánlás)
+• Daily budget javaslat (HUF) tesztelésre
+• Skálázási tipp ha ROAS > 3`,
+    `Építs 10 készre konfigurált ${platform.label} audience-t magyar e-commerce célra.\n\n${buildContext()}`);
+
+  // Retargeting sequence (full funnel)
+  const generateRetarget = () => runTool(setLoadingRetarget, setRetargetOutput,
+    `Te a világ legjobb retargeting / remarketing stratégája vagy. ${platform.label} platformon teljes 7-touch retargeting szekvenciát építesz magyar piacra.
+KÖTELEZŐ KIMENET – 7 LÉPCSŐS RETARGETING SOROZAT:
+T+1 nap: Reminder (terméket nézte, nem vett) – soft hook
+T+2 nap: Social proof (vásárlói vélemény / UGC)
+T+3 nap: Objection killer (legnagyobb félelem feloldása)
+T+5 nap: Bonus / extra érték hozzáadása
+T+7 nap: Scarcity (limit / készlet / idő)
+T+10 nap: Discount (csak ha más nem ment) – kód
+T+14 nap: Goodbye / utolsó esély + win-back
+
+MINDEGYIK LÉPÉSHEZ:
+• Audience definíció (pontos szabály – pl. ViewContent NOT Purchase 2 nap)
+• Hirdetés formátum (carousel/video/single image/collection)
+• Headline + primary text + CTA (kész copy)
+• Vizuális koncepció (1 mondat)
+• Daily budget javaslat (HUF)
+• Frequency cap
+• Várható ROAS
+• Mikor STOP-ozzunk (frequency > X vagy CTR <)
++ TELJES ADS MANAGER SETUP CHECKLIST`,
+    `Építs teljes 7-touch retargeting funnelt ${platform.label} platformon.\n\n${buildContext()}`);
+
+  // Pixel/tracking setup
+  const generatePixel = () => runTool(setLoadingPixel, setPixelOutput,
+    `Te a világ legjobb tracking / mérés implementáció szakértője vagy (Meta Pixel + CAPI + GA4 + GTM). ${platform.label} hirdetésekhez kompletten beállítod a mérést.
+KÖTELEZŐ KIMENET:
+📊 STANDARD ESEMÉNYEK (mindegyikhez kód snippet + GTM tag terv):
+- PageView, ViewContent, AddToCart, InitiateCheckout, AddPaymentInfo, Purchase, Lead, CompleteRegistration, Search, AddToWishlist
+🎯 CUSTOM EVENTS (e-commerce HU webshop specifikus):
+- Méret kiválasztás, kupon beváltás, ingyen szállítás elérve, gyors-vásárlás, retúr indítás
+🔗 CONVERSIONS API (server-side):
+- Node/Edge function példa kód (deduplication event_id-vel)
+- Required user data hash (em, ph, fn, ln, ct, zp) PII safe módon
+🍪 CONSENT MODE v2 (GDPR):
+- ad_storage / analytics_storage / ad_user_data / ad_personalization
+- Cookie banner integráció kód
+🧪 TESZTELÉS:
+- Pixel Helper/Test Events lépésről lépésre
+- GA4 DebugView checklist
+- 10 leggyakoribb hiba + fix
+📈 ATTRIBÚCIÓ:
+- 7-day click + 1-day view ajánlás
+- View-through és last-click összehasonlítás`,
+    `Készíts teljes ${platform.label} pixel + Conversions API + GA4 setup tervet magyar webshopra.\n\n${buildContext()}`);
+
+  // Budget / ROAS optimizer
+  const generateBudget = () => {
+    runTool(setLoadingBudget, setBudgetOutput,
+      `Te a világ legjobb performance media buyer vagy. ${platform.label} hirdetési költségvetést optimalizálsz maximális ROAS-ra magyar piacra.
+KÖTELEZŐ KIMENET:
+💰 BUDGET ALLOKÁCIÓ (megadott havi keretből):
+• TOFU (cold): X% – Y HUF/nap
+• MOFU (warm): X% – Y HUF/nap
+• BOFU (hot/retargeting): X% – Y HUF/nap
+• Test budget (új kreatívok): 10-15%
+
+📊 KAMPÁNY STRUKTÚRA:
+- Hány kampány / ad set / ad indítson
+- CBO vs ABO döntési mátrix
+- Bid strategy (Lowest Cost / Cost Cap / Bid Cap / ROAS) számokkal
+
+📈 KPI CÉLOK & BENCHMARK (magyar e-commerce):
+- CPM, CPC, CTR, CVR, CPA, ROAS, AOV célok platformra
+- Mikor "winning" egy ad (3-5-7-szabály)
+- Mikor scale-elj 20%-kal vs duplázz
+
+🚀 SCALING ROADMAP:
+- Vertikális scale (budget +20% / 3 nap)
+- Horizontális (új audience / új kreatív)
+- Lookalike laddering 1→3→5→10%
+- International expansion checklist
+
+⚠️ KILL CRITERIA:
+- Ad set szint, ad szint, kreatív szint stop szabályok
+- Mikor pause vs duplicate vs reset learning
+
+📅 30 NAPOS NAPI AKCIÓTERV táblázatban`,
+      `Optimalizáld a budget-et: ${budgetInput || "havi 500.000 HUF + cél ROAS 3"}.\n\n${buildContext()}`);
+  };
+
+  // Ad-specific compliance (Meta / Google / TikTok policy)
+  const generateAdCompliance = () => {
+    if (!adComplianceInput.trim()) {
+      toast({ title: "Illeszd be a hirdetést scan-eléshez", variant: "destructive" });
+      return;
+    }
+    runTool(setLoadingAdCompliance, setAdComplianceOutput,
+      `Te a világ legjobb ${platform.label} Ads policy + magyar reklámjog szakértője vagy. Hirdetés-disapproval / account ban kockázatot szkennelsz percekre lebontva.
+KÖTELEZŐ KIMENET:
+🚨 GLOBÁLIS RIZIKÓ SCORE: 0-100 (szín-kód: 🟢 0-30 / 🟡 31-60 / 🔴 61-100)
+📛 KIMUTATOTT POLICY VIOLATIONS (idézett mondat + policy URL/paragrafus):
+1. Personal attributes (egészség, kor, etnikum, vallás...)
+2. Before/After képek (fogyás, bőr, izom)
+3. "You/Te" 2. személyű túl direkt megszólítás
+4. Sensational / shocking content
+5. Misleading claims / unrealistic results
+6. Tilted text / clickbait button mock-up
+7. Low quality (excessive caps, special chars, emojik túl)
+8. Prohibited products (alcohol, dating, supplements, finance)
+9. Trademark / copyrighted content
+10. Landing page mismatch / disclosure hiány
+
+✏️ JAVÍTOTT HIRDETÉS (azonos hatékonyság, 100% policy-safe)
+🔄 3 ALTERNATÍV HOOK ami biztosan átmegy
+⚠️ ACCOUNT-LEVEL RIZIKÓ: van-e ban veszély (1-strike vs strike-system)
+🛡️ APPEAL TEMPLATE ha mégis disapproval jönne (kész szöveg ${platform.label} support-hoz)
+📋 PRE-LAUNCH CHECKLIST (15 pont)`,
+      `Hirdetés szövege:\n${adComplianceInput}\n\nKontextus:\n${buildContext()}`);
+  };
+
+  // Competitor ads spy / swipe file
+  const generateAdSpy = () => {
+    runTool(setLoadingAdSpy, setAdSpyOutput,
+      `Te a világ legjobb competitive intelligence elemzője vagy paid media-ban. ${platform.label} (Meta Ad Library / TikTok Creative Center / Google Transparency) szintű mélységben elemzed a versenytárs hirdetéseit.
+KÖTELEZŐ KIMENET:
+🔍 VERSENYTÁRS HIRDETÉS DEKÓDOLÁS (3-5 versenytárs × 5 hirdetés):
+Mindegyik hirdetéshez:
+- Hook (első 3 mp / 1. sor) + miért működik
+- Copy framework (PAS/AIDA/...)
+- Vizuális stílus (UGC / studio / motion graphic)
+- Becsült futási idő + spend (HUF)
+- Becsült célzás (audience reverse-engineering)
+- Landing page taktika
+- Offer / ár / kedvezmény / garancia
+- Hiányosság (mit csinálnak ROSSZUL)
+
+📊 PIACI MINTÁZATOK:
+- Top 5 közös hook-pattern
+- Top 5 közös vizuális trend
+- Mit használ MINDENKI (telített) vs mit NEM használ senki (rés)
+
+⚔️ TÁMADÁSI TERV ("Differentiation playbook"):
+- 5 ANGLE amit ők NEM használnak
+- 5 KONKRÉT hirdetés ötlet a réseikbe (kész copy + vizuális brief)
+- Ár / pozicionálási előny kihasználás
+
+🎯 SWIPE FILE (10 legjobb idézhető headline + CTA versenytársaktól, magyarra adaptálva)`,
+      `Versenytárs nevek/URL-ek: ${adSpyInput || "magyar e-commerce versenytársak az adott kategóriában"}.\n\n${buildContext()}`);
+  };
+
   const copy = (txt: string) => {
     navigator.clipboard.writeText(txt);
     toast({ title: "Vágólapra másolva" });
@@ -1444,6 +1681,14 @@ KÖTELEZŐ KIMENET:
           <TabsTrigger value="story" className="rounded-none uppercase text-[10px] py-2"><BookOpen className="h-3 w-3 mr-1" />Story</TabsTrigger>
           <TabsTrigger value="live" className="rounded-none uppercase text-[10px] py-2"><Radio className="h-3 w-3 mr-1" />Live</TabsTrigger>
           <TabsTrigger value="compliance" className="rounded-none uppercase text-[10px] py-2"><ShieldCheck className="h-3 w-3 mr-1" />Jogi</TabsTrigger>
+          <TabsTrigger value="adVault" className="rounded-none uppercase text-[10px] py-2 bg-accent/20"><Vault className="h-3 w-3 mr-1" />Ad Vault×50</TabsTrigger>
+          <TabsTrigger value="creativeBrief" className="rounded-none uppercase text-[10px] py-2 bg-accent/20"><ClipboardList className="h-3 w-3 mr-1" />Creative Brief</TabsTrigger>
+          <TabsTrigger value="audience" className="rounded-none uppercase text-[10px] py-2 bg-accent/20"><Crosshair className="h-3 w-3 mr-1" />Audience×10</TabsTrigger>
+          <TabsTrigger value="retarget" className="rounded-none uppercase text-[10px] py-2 bg-accent/20"><Repeat className="h-3 w-3 mr-1" />Retarget 7×</TabsTrigger>
+          <TabsTrigger value="pixel" className="rounded-none uppercase text-[10px] py-2 bg-accent/20"><Activity className="h-3 w-3 mr-1" />Pixel/CAPI</TabsTrigger>
+          <TabsTrigger value="budget" className="rounded-none uppercase text-[10px] py-2 bg-accent/20"><Wallet className="h-3 w-3 mr-1" />Budget/ROAS</TabsTrigger>
+          <TabsTrigger value="adCompliance" className="rounded-none uppercase text-[10px] py-2 bg-accent/20"><ScanLine className="h-3 w-3 mr-1" />Ad Policy</TabsTrigger>
+          <TabsTrigger value="adSpy" className="rounded-none uppercase text-[10px] py-2 bg-accent/20"><Telescope className="h-3 w-3 mr-1" />Ad Spy</TabsTrigger>
           <TabsTrigger value="videoeditor" className="rounded-none uppercase text-[10px] py-2 col-span-2 md:col-span-1 bg-foreground text-background data-[state=active]:bg-accent"><Film className="h-3 w-3 mr-1" />Videó editor</TabsTrigger>
         </TabsList>
 
@@ -1892,6 +2137,92 @@ KÖTELEZŐ KIMENET:
           </Button>
           <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={complianceOutput} onChange={(e) => setComplianceOutput(e.target.value)} placeholder="Kockázat szint, részletes vizsgálat, javított copy, hivatkozások, max bírság, checklist..." />
           {complianceOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(complianceOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* AD VAULT */}
+        <TabsContent value="adVault" className="space-y-3">
+          <Button onClick={generateAdVault} disabled={loadingAdVault} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingAdVault ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Vault className="h-4 w-4 mr-2" />}
+            {loadingAdVault ? "Generálás..." : `50 kész ${platform.label} hirdetésszöveg (10 framework × 5)`}
+          </Button>
+          <Textarea className="rounded-none min-h-[600px] font-mono text-xs" value={adVaultOutput} onChange={(e) => setAdVaultOutput(e.target.value)} placeholder="50 hirdetés: PAS, AIDA, BAB, 4U, FAB, QUEST, STAR, listicle, kérdés, social proof — mindegyik 3 hosszban + CTA + várható CTR..." />
+          {adVaultOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(adVaultOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* CREATIVE BRIEF */}
+        <TabsContent value="creativeBrief" className="space-y-3">
+          <Button onClick={generateCreativeBrief} disabled={loadingCreativeBrief} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingCreativeBrief ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ClipboardList className="h-4 w-4 mr-2" />}
+            {loadingCreativeBrief ? "Brief..." : "5 kreatív koncepció + storyboard + shot list"}
+          </Button>
+          <Textarea className="rounded-none min-h-[600px] font-mono text-xs" value={creativeBriefOutput} onChange={(e) => setCreativeBriefOutput(e.target.value)} placeholder="5 koncepció, storyboard 6 jelenetre, prop/talent/zene/grade/CTA + spec + shot list CSV..." />
+          {creativeBriefOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(creativeBriefOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* AUDIENCE */}
+        <TabsContent value="audience" className="space-y-3">
+          <Button onClick={generateAudience} disabled={loadingAudience} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingAudience ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Crosshair className="h-4 w-4 mr-2" />}
+            {loadingAudience ? "Audience..." : "10 kész célközönség (cold/warm/hot) – Ads Manager szintig"}
+          </Button>
+          <Textarea className="rounded-none min-h-[600px] font-mono text-xs" value={audienceOutput} onChange={(e) => setAudienceOutput(e.target.value)} placeholder="10 audience pontos érdeklődéssel, mérettel, CPM/CPC/CTR sávval, exclude-okkal, daily budget-tel..." />
+          {audienceOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(audienceOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* RETARGETING */}
+        <TabsContent value="retarget" className="space-y-3">
+          <Button onClick={generateRetarget} disabled={loadingRetarget} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingRetarget ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Repeat className="h-4 w-4 mr-2" />}
+            {loadingRetarget ? "Funnel..." : "7-touch retargeting szekvencia (T+1 → T+14)"}
+          </Button>
+          <Textarea className="rounded-none min-h-[600px] font-mono text-xs" value={retargetOutput} onChange={(e) => setRetargetOutput(e.target.value)} placeholder="7 lépcsős sorozat: reminder → social proof → objection → bonus → scarcity → discount → win-back, mindegyikhez kész copy + budget..." />
+          {retargetOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(retargetOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* PIXEL */}
+        <TabsContent value="pixel" className="space-y-3">
+          <Button onClick={generatePixel} disabled={loadingPixel} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingPixel ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Activity className="h-4 w-4 mr-2" />}
+            {loadingPixel ? "Setup..." : "Teljes Pixel + Conversions API + GA4 + GDPR setup"}
+          </Button>
+          <Textarea className="rounded-none min-h-[600px] font-mono text-xs" value={pixelOutput} onChange={(e) => setPixelOutput(e.target.value)} placeholder="Standard + custom események, CAPI server-side kód, Consent Mode v2, tesztelés, attribúció..." />
+          {pixelOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(pixelOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* BUDGET / ROAS */}
+        <TabsContent value="budget" className="space-y-3">
+          <Label className="text-xs uppercase">Havi keret + cél ROAS (opcionális)</Label>
+          <Input className="rounded-none" value={budgetInput} onChange={(e) => setBudgetInput(e.target.value)} placeholder="pl. 500.000 HUF/hó, cél ROAS 3.5, AOV 18.000 Ft" />
+          <Button onClick={generateBudget} disabled={loadingBudget} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingBudget ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Wallet className="h-4 w-4 mr-2" />}
+            {loadingBudget ? "Optimalizálás..." : "Budget allokáció + KPI célok + 30 napos scaling roadmap"}
+          </Button>
+          <Textarea className="rounded-none min-h-[600px] font-mono text-xs" value={budgetOutput} onChange={(e) => setBudgetOutput(e.target.value)} placeholder="TOFU/MOFU/BOFU split, CBO vs ABO, KPI benchmark, scaling roadmap, kill criteria, 30 napos terv..." />
+          {budgetOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(budgetOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* AD POLICY SCAN */}
+        <TabsContent value="adCompliance" className="space-y-3">
+          <Label className="text-xs uppercase">Hirdetés szövege (scan-elésre)</Label>
+          <Textarea className="rounded-none min-h-[150px]" value={adComplianceInput} onChange={(e) => setAdComplianceInput(e.target.value)} placeholder="Másold ide a teljes hirdetést (headline + primary text + CTA)..." />
+          <Button onClick={generateAdCompliance} disabled={loadingAdCompliance} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingAdCompliance ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ScanLine className="h-4 w-4 mr-2" />}
+            {loadingAdCompliance ? "Scan..." : `${platform.label} Ads policy scan + javított verzió + appeal`}
+          </Button>
+          <Textarea className="rounded-none min-h-[600px] font-mono text-xs" value={adComplianceOutput} onChange={(e) => setAdComplianceOutput(e.target.value)} placeholder="Risk score, policy violations, javított hirdetés, alternatív hookok, account rizikó, appeal template, checklist..." />
+          {adComplianceOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(adComplianceOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* AD SPY */}
+        <TabsContent value="adSpy" className="space-y-3">
+          <Label className="text-xs uppercase">Versenytárs nevek / Ad Library URL-ek (opcionális)</Label>
+          <Input className="rounded-none" value={adSpyInput} onChange={(e) => setAdSpyInput(e.target.value)} placeholder="pl. Answear, About You, Aboutyou.hu, Mango..." />
+          <Button onClick={generateAdSpy} disabled={loadingAdSpy} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingAdSpy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Telescope className="h-4 w-4 mr-2" />}
+            {loadingAdSpy ? "Spy..." : "Versenytárs hirdetés dekódolás + támadási terv + swipe file"}
+          </Button>
+          <Textarea className="rounded-none min-h-[600px] font-mono text-xs" value={adSpyOutput} onChange={(e) => setAdSpyOutput(e.target.value)} placeholder="3-5 versenytárs × 5 hirdetés elemzés, közös minták, 5 angle a réseikbe, swipe file..." />
+          {adSpyOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(adSpyOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
         </TabsContent>
 
         {/* VIDEO EDITOR */}
