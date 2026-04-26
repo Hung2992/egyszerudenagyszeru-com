@@ -15,6 +15,7 @@ import {
   DollarSign, Search, UserCheck, AlertTriangle, FlaskConical, LayoutTemplate,
   GitBranch, User, Flame as TrendIcon, Languages, MessageCircle,
   Newspaper, BarChart3, Palette,
+  Camera, Recycle, Mic, MessagesSquare, Tag, BookOpen, Radio, ShieldCheck,
 } from "lucide-react";
 
 // ============================================================
@@ -112,6 +113,17 @@ const AdminPlatformStudio = ({ platform }: Props) => {
   const [analyticsInput, setAnalyticsInput] = useState<string>("");
   const [analyticsOutput, setAnalyticsOutput] = useState<string>("");
   const [moodboardOutput, setMoodboardOutput] = useState<string>("");
+  const [ugcOutput, setUgcOutput] = useState<string>("");
+  const [repurposeInput, setRepurposeInput] = useState<string>("");
+  const [repurposeOutput, setRepurposeOutput] = useState<string>("");
+  const [voiceOutput, setVoiceOutput] = useState<string>("");
+  const [communityInput, setCommunityInput] = useState<string>("");
+  const [communityOutput, setCommunityOutput] = useState<string>("");
+  const [offerOutput, setOfferOutput] = useState<string>("");
+  const [storyOutput, setStoryOutput] = useState<string>("");
+  const [liveOutput, setLiveOutput] = useState<string>("");
+  const [complianceInput, setComplianceInput] = useState<string>("");
+  const [complianceOutput, setComplianceOutput] = useState<string>("");
 
   // States
   const [loadingPost, setLoadingPost] = useState(false);
@@ -138,6 +150,14 @@ const AdminPlatformStudio = ({ platform }: Props) => {
   const [loadingPress, setLoadingPress] = useState(false);
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
   const [loadingMoodboard, setLoadingMoodboard] = useState(false);
+  const [loadingUgc, setLoadingUgc] = useState(false);
+  const [loadingRepurpose, setLoadingRepurpose] = useState(false);
+  const [loadingVoice, setLoadingVoice] = useState(false);
+  const [loadingCommunity, setLoadingCommunity] = useState(false);
+  const [loadingOffer, setLoadingOffer] = useState(false);
+  const [loadingStory, setLoadingStory] = useState(false);
+  const [loadingLive, setLoadingLive] = useState(false);
+  const [loadingCompliance, setLoadingCompliance] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -1091,6 +1111,188 @@ KÖTELEZŐ KIMENET – TELJES VIZUÁLIS GUIDE:
 📋 EXPORT BEÁLLÍTÁSOK ${platform.label}-ra (DPI, format, méret)`,
     `Generálj teljes brand vizuális guide-ot.\n\n${buildContext()}`);
 
+  // ============== UGC CREATOR BRIEF ==============
+  const generateUgc = () => runTool(setLoadingUgc, setUgcOutput,
+    `Te a világ legjobb UGC (User Generated Content) creator director vagy ${platform.label}-ra, magyar piacra.
+KÖTELEZŐ KIMENET:
+🎬 CREATOR BRIEF (1 oldalas, küldhető):
+- Kampány cél + KPI
+- 3 hook variáns (első 2 mp)
+- Shot list (jelenetek időkóddal mp-ben)
+- Beszéd-script natúr magyar nyelven (NEM reklámos)
+- Kötelező mondatok (USP, CTA)
+- Tiltott szavak / claim-ek (jogi)
+- Ruházat / helyszín ajánlás
+- B-roll lista
+- Hang/zene típus
+💰 DÍJAZÁSI JAVASLAT (HUF, magyar piaci benchmark)
+📦 TERMÉKKÜLDÉS folyamat
+✅ ELFOGADÁSI checklist (mit kell visszanéznem mielőtt fizetek)
+📄 SZERZŐDÉS sarokpontok (usage rights, exkluzivitás, időtartam)`,
+    `Készíts teljes UGC creator briefet ${platform.label}-ra.\n\n${buildContext()}`);
+
+  // ============== TARTALOM ÚJRAHASZNOSÍTÓ (REPURPOSE) ==============
+  const generateRepurpose = () => {
+    if (!repurposeInput.trim()) {
+      toast({ title: "Illeszd be az eredeti tartalmat", variant: "destructive" });
+      return;
+    }
+    runTool(setLoadingRepurpose, setRepurposeOutput,
+      `Te a világ legjobb content repurposing stratégája vagy. 1 darab forrás-tartalmat 12 különböző formátumra fordítasz át, mindet ${platform.label} stílusban + más platformokra is.
+KÖTELEZŐ KIMENET (mind 12 db, készre megírva):
+1. ${platform.label} Feed poszt
+2. ${platform.label} Story (3 frame szöveg)
+3. ${platform.label} Reel/Short script (15 mp, hook+body+CTA)
+4. Twitter/X thread (5-7 tweet)
+5. LinkedIn carousel (5 slide cím + body)
+6. Email newsletter (subject + preview + body)
+7. Blog cikk vázlat (H1, H2-k, kulcsszavak)
+8. YouTube videó cím + leírás + 5 chapter
+9. TikTok hook variáns (3 db)
+10. Pinterest pin szöveg + alt text
+11. WhatsApp/SMS rövidített üzenet
+12. Push notification (40 karakter)`,
+      `Eredeti tartalom:\n${repurposeInput}\n\nKontextus:\n${buildContext()}`);
+  };
+
+  // ============== BRAND VOICE / PERSONA ==============
+  const generateVoice = () => runTool(setLoadingVoice, setVoiceOutput,
+    `Te a világ legjobb brand voice + tone of voice szakértője vagy. ${platform.label}-ra szabott brand persona-t építesz magyar piacra.
+KÖTELEZŐ KIMENET:
+👤 BRAND PERSONA:
+- Archetípus (Hero/Outlaw/Sage/Lover/Jester... + miért)
+- Életkor / nem ha ember lenne
+- Hangmagasság skála (1-10): formal↔casual, vicces↔komoly, tekintély↔barát
+- Kedvenc szavak (10 db, magyarul)
+- Tiltott szavak (10 db, sose használd)
+- Írásjel preferencia (… ! ? — emoji)
+- Mondat hossz (rövid/hosszú)
+📝 30 PÉLDA MONDAT a hangnem demonstrálására
+🎭 3 SCENARIO (örömhír / panasz / launch) – mindhez 2-3 mondat
+✅ DO / 🚫 DON'T táblázat (15-15 sor)
+📋 ONBOARDING DOC új copywriternek`,
+    `Definiálj teljes brand voice guide-ot.\n\n${buildContext()}`);
+
+  // ============== KÖZÖSSÉGI VÁLASZ GENERÁTOR (commentek/DM) ==============
+  const generateCommunity = () => {
+    if (!communityInput.trim()) {
+      toast({ title: "Illeszd be a kommenteket / DM-eket", variant: "destructive" });
+      return;
+    }
+    runTool(setLoadingCommunity, setCommunityOutput,
+      `Te a világ legjobb community manager vagy ${platform.label}-ra, magyar piacra. Minden kapott komment/DM-re 3 választ adsz: rövid, közepes, hosszú.
+KÖTELEZŐ KIMENET kommentenként:
+[KOMMENT #X] eredeti szöveg
+🏷️ KATEGÓRIA: kérdés / panasz / dícséret / spam / lead / vásárlási szándék
+😊 SENTIMENT: pozitív / semleges / negatív (emoji)
+🚦 PRIORITÁS: 🔴 azonnal / 🟡 24 órán belül / 🟢 nem sürgős
+✍️ VÁLASZ A) rövid (1-2 mondat, casual)
+✍️ VÁLASZ B) közepes (empátia + megoldás + CTA)
+✍️ VÁLASZ C) hosszú (storytelling + edukáció + soft sell)
+🎯 FOLLOW-UP javaslat (DM, email, retargeting pixel)
+─── köztük üres sor ───`,
+      `Kommentek / DM-ek:\n${communityInput}\n\nKontextus:\n${buildContext()}`);
+  };
+
+  // ============== ÁRAZÁS / AJÁNLAT LAB ==============
+  const generateOffer = () => runTool(setLoadingOffer, setOfferOutput,
+    `Te a világ legjobb offer engineering + pricing pszichológus vagy. ${platform.label}-ra optimalizált, ellenállhatatlan ajánlatokat építesz magyar piacra (HUF).
+KÖTELEZŐ KIMENET – 5 KÜLÖNBÖZŐ AJÁNLAT VARIÁNS:
+1. 🎁 ALAP ajánlat (termék + 1 bónusz)
+2. 💎 PRÉMIUM bundle (3-5 elem, percieved value 3x ár)
+3. 🔥 FLASH (24-48 óra, scarcity, drop ár)
+4. 🎯 TRIPWIRE (alacsony ár, listára húzás)
+5. 👑 VIP / upsell (high-ticket)
+
+MINDEGYIKHEZ:
+- Mit tartalmaz (sorlista értékben HUF)
+- Eredeti ár vs akciós ár vs "value stack"
+- Garancia (pénzvisszafizetés / cserés / 100%)
+- Scarcity elem (db, idő, csoport méret)
+- Bonus stacking (mit kap MÉG)
+- Risk reversal mondatok
+- 3 db headline javaslat
+- CTA gomb felirat (3 variáns)
+- FAQ (5 leggyakoribb ellenérv + válasz)
+
+📊 ÖSSZEHASONLÍTÓ TÁBLA (a 3 fő ajánlat egymás mellett)
+🧠 PSZICHOLÓGIAI TRIGGERS (anchoring, decoy, charm pricing 990 vs 1000)`,
+    `Generálj 5 variáns ajánlatot ${platform.label}-ra.\n\n${buildContext()}`);
+
+  // ============== STORYTELLING / NARRATIVE ARC ==============
+  const generateStory = () => runTool(setLoadingStory, setStoryOutput,
+    `Te a világ legjobb storyteller + brand narrative architect vagy. ${platform.label}-ra szabott történeteket írsz magyar piacra, érzelmi kötődést építve.
+KÖTELEZŐ KIMENET – 5 KÜLÖNBÖZŐ STORY VARIÁNS:
+1. 🦸 HERO'S JOURNEY (vásárló mint hős, termék mint mentor)
+2. 😱 BEFORE / AFTER (transzformáció, fájdalom→eredmény)
+3. 🏗️ FOUNDER STORY (miért indítottad, mission, "ezért hiszünk")
+4. 💔 RELATABILITY (hibák, esések, "én is voltam ott")
+5. 🔮 FUTURE PACING (képzeld el 6 hónap múlva...)
+
+MINDEGYIKHEZ:
+- Cím / hook
+- Teljes szöveg ${platform.label} formátumra (max ${platform.maxChars} kar)
+- Érzelmi ív (mp/sor szinten: kíváncsi→feszült→megoldás→öröm)
+- Konkrét részletek (név, hely, érzet, szám) – NE legyen geneirikus
+- Beépített USP (rejtve, nem reklámosan)
+- Soft CTA végén
+- Hashtag csomag
+
+🎬 VIDEÓ STORYBOARD a legjobb story-hoz (jelenet/idő/dialógus/B-roll)`,
+    `Generálj 5 storytelling variánst.\n\n${buildContext()}`);
+
+  // ============== LIVE / WEBINAR / PODCAST SCRIPT ==============
+  const generateLive = () => runTool(setLoadingLive, setLiveOutput,
+    `Te a világ legjobb live event + webinar + podcast forgatókönyv-író vagy. ${platform.label}-ra szabott élő tartalom scriptet készítesz magyar piacra.
+KÖTELEZŐ KIMENET – 60 PERCES LIVE FORGATÓKÖNYV percre lebontva:
+00:00-02:00 – Cold open hook (miért maradjon)
+02:00-05:00 – Bemutatkozás + agenda + ígéret
+05:00-15:00 – Storytelling / probléma feltárás
+15:00-35:00 – Fő tartalom 3 pillérben (mindhez konkrét tipp)
+35:00-40:00 – Q&A 1. kör (előre megírt 5 kérdés stand-by)
+40:00-50:00 – Pitch / ajánlat bevezetése (Soap Opera technika)
+50:00-55:00 – Objection handling (5 leggyakoribb + válasz)
+55:00-60:00 – Hard close + szűkített idejű bonus + URL
+
+🎯 MELLÉKLETEK:
+- Pre-live promó poszt (3 db, T-7, T-3, T-0)
+- Reminder email/DM szöveg (T-1 nap, T-1 óra, T-5 perc)
+- Live közben pinned komment (CTA)
+- Replay email (4 részes drip: D+0, D+1, D+3, D+7)
+- Highlight clip lista (5 db, mindegyikhez idő + cím)
+- Repurposing terv (Reel, Short, Carousel a felvételből)`,
+    `Készíts teljes 60 perces live forgatókönyvet.\n\n${buildContext()}`);
+
+  // ============== JOGI / COMPLIANCE / CLAIM CHECK ==============
+  const generateCompliance = () => {
+    if (!complianceInput.trim()) {
+      toast({ title: "Illeszd be a copy-t / hirdetést ellenőrzésre", variant: "destructive" });
+      return;
+    }
+    runTool(setLoadingCompliance, setComplianceOutput,
+      `Te a világ legjobb magyar reklámjogi + GVH + Meta/Google policy + GDPR + fogyasztóvédelmi szakértő vagy. ${platform.label} hirdetéseket és organikus posztokat ellenőrzöl.
+KÖTELEZŐ KIMENET:
+🚨 KOCKÁZAT SZINT: 🟢 OK / 🟡 figyelmeztetés / 🔴 magas / ⛔ tiltott
+
+📋 RÉSZLETES VIZSGÁLAT:
+1. Megtévesztő reklám (Fttv) – konkrét mondat idézve, miért gond
+2. Egészség / fogyás / orvosi claim-ek (tiltott szavak)
+3. "Legjobb / első / #1" típusú felsőfok – bizonyíték kell
+4. Ár / kedvezmény tisztesség (eredeti ár 30 napos szabály)
+5. Tartós ajánlat / scarcity hamis-e
+6. Influencer #ad / #együttműködés jelölés
+7. Gyermek célzás (16 alatti tilalom)
+8. GDPR (szemlészelyes adat, cookie, opt-in)
+9. ${platform.label} platform policy (alkohol, fogyókúra, before/after, dohány stb.)
+10. Szellemi tulajdon (zene, kép, brand említés)
+
+✏️ JAVÍTOTT VERZIÓ (átírva, jogszerűen, ugyanolyan erősen)
+📚 HIVATKOZÁSOK: melyik törvényhely / policy paragrafus
+⚖️ MAX BÍRSÁG ha leszerepel
+✅ CHECKLIST (10 pont) jövőre`,
+      `Ellenőrizendő tartalom:\n${complianceInput}\n\nKontextus:\n${buildContext()}`);
+  };
+
   const copy = (txt: string) => {
     navigator.clipboard.writeText(txt);
     toast({ title: "Vágólapra másolva" });
@@ -1232,6 +1434,14 @@ KÖTELEZŐ KIMENET – TELJES VIZUÁLIS GUIDE:
           <TabsTrigger value="press" className="rounded-none uppercase text-[10px] py-2"><Newspaper className="h-3 w-3 mr-1" />PR</TabsTrigger>
           <TabsTrigger value="analytics" className="rounded-none uppercase text-[10px] py-2"><BarChart3 className="h-3 w-3 mr-1" />Analytics</TabsTrigger>
           <TabsTrigger value="moodboard" className="rounded-none uppercase text-[10px] py-2"><Palette className="h-3 w-3 mr-1" />Moodboard</TabsTrigger>
+          <TabsTrigger value="ugc" className="rounded-none uppercase text-[10px] py-2"><Camera className="h-3 w-3 mr-1" />UGC brief</TabsTrigger>
+          <TabsTrigger value="repurpose" className="rounded-none uppercase text-[10px] py-2"><Recycle className="h-3 w-3 mr-1" />Repurpose</TabsTrigger>
+          <TabsTrigger value="voice" className="rounded-none uppercase text-[10px] py-2"><Mic className="h-3 w-3 mr-1" />Brand voice</TabsTrigger>
+          <TabsTrigger value="community" className="rounded-none uppercase text-[10px] py-2"><MessagesSquare className="h-3 w-3 mr-1" />Reply</TabsTrigger>
+          <TabsTrigger value="offer" className="rounded-none uppercase text-[10px] py-2"><Tag className="h-3 w-3 mr-1" />Offer lab</TabsTrigger>
+          <TabsTrigger value="story" className="rounded-none uppercase text-[10px] py-2"><BookOpen className="h-3 w-3 mr-1" />Story</TabsTrigger>
+          <TabsTrigger value="live" className="rounded-none uppercase text-[10px] py-2"><Radio className="h-3 w-3 mr-1" />Live</TabsTrigger>
+          <TabsTrigger value="compliance" className="rounded-none uppercase text-[10px] py-2"><ShieldCheck className="h-3 w-3 mr-1" />Jogi</TabsTrigger>
         </TabsList>
 
         {/* POST */}
@@ -1593,6 +1803,92 @@ KÖTELEZŐ KIMENET – TELJES VIZUÁLIS GUIDE:
           </Button>
           <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={moodboardOutput} onChange={(e) => setMoodboardOutput(e.target.value)} placeholder="Színek HEX-ben, fontok, fotó stílus, videó style, layout szabályok..." />
           {moodboardOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(moodboardOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* UGC */}
+        <TabsContent value="ugc" className="space-y-3">
+          <Button onClick={generateUgc} disabled={loadingUgc} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingUgc ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Camera className="h-4 w-4 mr-2" />}
+            {loadingUgc ? "UGC brief..." : "UGC creator brief + shot list + díjazás"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={ugcOutput} onChange={(e) => setUgcOutput(e.target.value)} placeholder="Hook variánsok, shot list, script, díjazás HUF, szerződés sarokpontok..." />
+          {ugcOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(ugcOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* REPURPOSE */}
+        <TabsContent value="repurpose" className="space-y-3">
+          <Label className="text-xs uppercase">Eredeti tartalom (cikk, videó leirat, poszt, ötlet)</Label>
+          <Textarea className="rounded-none min-h-[150px]" value={repurposeInput} onChange={(e) => setRepurposeInput(e.target.value)} placeholder="Másold ide a forrás tartalmat..." />
+          <Button onClick={generateRepurpose} disabled={loadingRepurpose} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingRepurpose ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Recycle className="h-4 w-4 mr-2" />}
+            {loadingRepurpose ? "Átalakítás..." : "1 tartalom → 12 formátum (minden platformra)"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={repurposeOutput} onChange={(e) => setRepurposeOutput(e.target.value)} placeholder="Feed, Story, Reel, Thread, LinkedIn, Email, Blog, YouTube, TikTok, Pinterest, SMS, Push..." />
+          {repurposeOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(repurposeOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* BRAND VOICE */}
+        <TabsContent value="voice" className="space-y-3">
+          <Button onClick={generateVoice} disabled={loadingVoice} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingVoice ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mic className="h-4 w-4 mr-2" />}
+            {loadingVoice ? "Voice..." : "Brand voice + persona + 30 példa mondat"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={voiceOutput} onChange={(e) => setVoiceOutput(e.target.value)} placeholder="Archetípus, hangmagasság, kedvenc/tiltott szavak, példa mondatok, DO/DON'T..." />
+          {voiceOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(voiceOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* COMMUNITY REPLY */}
+        <TabsContent value="community" className="space-y-3">
+          <Label className="text-xs uppercase">Másold ide a kommenteket / DM-eket (egy/sor vagy szabadon)</Label>
+          <Textarea className="rounded-none min-h-[150px]" value={communityInput} onChange={(e) => setCommunityInput(e.target.value)} placeholder="Pl. 1) Mennyibe kerül? 2) Nem jött meg a csomag... 3) Imádom a terméket!" />
+          <Button onClick={generateCommunity} disabled={loadingCommunity} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingCommunity ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <MessagesSquare className="h-4 w-4 mr-2" />}
+            {loadingCommunity ? "Válaszok..." : "3 válasz / komment + sentiment + prioritás"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={communityOutput} onChange={(e) => setCommunityOutput(e.target.value)} placeholder="Kategória, sentiment, prioritás, 3 válasz variáns, follow-up..." />
+          {communityOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(communityOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* OFFER LAB */}
+        <TabsContent value="offer" className="space-y-3">
+          <Button onClick={generateOffer} disabled={loadingOffer} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingOffer ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Tag className="h-4 w-4 mr-2" />}
+            {loadingOffer ? "Offers..." : "5 ajánlat variáns (Alap/Prémium/Flash/Tripwire/VIP)"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={offerOutput} onChange={(e) => setOfferOutput(e.target.value)} placeholder="Bundle-ök, garancia, scarcity, headline, CTA, FAQ, pszichológiai triggers..." />
+          {offerOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(offerOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* STORYTELLING */}
+        <TabsContent value="story" className="space-y-3">
+          <Button onClick={generateStory} disabled={loadingStory} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingStory ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <BookOpen className="h-4 w-4 mr-2" />}
+            {loadingStory ? "Story..." : "5 storytelling variáns + storyboard"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={storyOutput} onChange={(e) => setStoryOutput(e.target.value)} placeholder="Hero's Journey, Before/After, Founder, Relatability, Future pacing..." />
+          {storyOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(storyOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* LIVE / WEBINAR */}
+        <TabsContent value="live" className="space-y-3">
+          <Button onClick={generateLive} disabled={loadingLive} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingLive ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Radio className="h-4 w-4 mr-2" />}
+            {loadingLive ? "Forgatókönyv..." : "60 perces live/webinar script + replay drip"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={liveOutput} onChange={(e) => setLiveOutput(e.target.value)} placeholder="Percre lebontott forgatókönyv, pre/in/post promó, replay email sorozat, highlight clipek..." />
+          {liveOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(liveOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
+        </TabsContent>
+
+        {/* COMPLIANCE */}
+        <TabsContent value="compliance" className="space-y-3">
+          <Label className="text-xs uppercase">Ellenőrizendő copy / hirdetés / poszt szövege</Label>
+          <Textarea className="rounded-none min-h-[150px]" value={complianceInput} onChange={(e) => setComplianceInput(e.target.value)} placeholder="Másold ide a szöveget jogi átvilágításra (Fttv, GVH, GDPR, platform policy)..." />
+          <Button onClick={generateCompliance} disabled={loadingCompliance} className="w-full rounded-none uppercase tracking-wider font-bold">
+            {loadingCompliance ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
+            {loadingCompliance ? "Ellenőrzés..." : "Jogi/compliance check + javított verzió"}
+          </Button>
+          <Textarea className="rounded-none min-h-[500px] font-mono text-xs" value={complianceOutput} onChange={(e) => setComplianceOutput(e.target.value)} placeholder="Kockázat szint, részletes vizsgálat, javított copy, hivatkozások, max bírság, checklist..." />
+          {complianceOutput && <Button size="sm" variant="outline" className="rounded-none uppercase text-xs" onClick={() => copy(complianceOutput)}><Copy className="h-3 w-3 mr-1" /> Másolás</Button>}
         </TabsContent>
       </Tabs>
 
