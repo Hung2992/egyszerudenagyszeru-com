@@ -184,6 +184,13 @@ const AdminPlatformStudio = ({ platform }: Props) => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
+  // ===== ULTRA IMAGE + STORYBOARD =====
+  const [imageQuality, setImageQuality] = useState<"fast" | "pro">("pro");
+  const [storyboardScenes, setStoryboardScenes] = useState<number>(4);
+  const [storyboardImages, setStoryboardImages] = useState<{ prompt: string; b64: string }[]>([]);
+  const [loadingStoryboard, setLoadingStoryboard] = useState(false);
+  const [storyboardProgress, setStoryboardProgress] = useState<string>("");
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem(storageKey);
