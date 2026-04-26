@@ -436,7 +436,7 @@ KÖTELEZŐ KIMENET:
           Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image",
+          model: imageQuality === "pro" ? "google/gemini-3-pro-image-preview" : "google/gemini-2.5-flash-image",
           modalities: ["image", "text"],
           messages: [{ role: "user", content: prompt }],
         }),
