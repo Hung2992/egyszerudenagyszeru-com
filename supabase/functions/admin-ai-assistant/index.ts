@@ -935,13 +935,23 @@ Mindig magyarul válaszolj. Légy igazi társ — okos, melegszívű, megbízhat
     if (wantsJsonText) {
       const data = await response.json()
       const text = data?.choices?.[0]?.message?.content || ''
-      return new Response(JSON.stringify({ text }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      return new Response(JSON.stringify({ text, strategy_id: pickedStrategyId, strategy_name: pickedStrategyName }), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          ...(pickedStrategyId ? { 'x-ai-strategy-id': pickedStrategyId } : {}),
+          ...(pickedStrategyName ? { 'x-ai-strategy-name': pickedStrategyName } : {}),
+        },
       })
     }
 
     return new Response(response.body, {
-      headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' },
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/event-stream',
+        ...(pickedStrategyId ? { 'x-ai-strategy-id': pickedStrategyId } : {}),
+        ...(pickedStrategyName ? { 'x-ai-strategy-name': pickedStrategyName } : {}),
+      },
     })
   } catch (error) {
     console.error('Admin AI error:', error)
