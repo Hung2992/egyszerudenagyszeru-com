@@ -324,7 +324,17 @@ const AdminAiAssistant = () => {
               )}
             </div>
             {m.role === "assistant" && m.reflectionId && (
-              <div className="flex gap-1 mt-1 ml-1">
+              <div className="flex flex-wrap items-center gap-1 mt-1 ml-1">
+                {m.context && m.context !== "general" && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+                    {m.context}{m.exploration ? " • exp" : ""}
+                  </span>
+                )}
+                {m.strategyName && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                    {m.strategyName}
+                  </span>
+                )}
                 <button
                   onClick={() => sendFeedback(i, 1)}
                   disabled={!!m.feedbackGiven}
@@ -334,10 +344,19 @@ const AdminAiAssistant = () => {
                   <ThumbsUp className="w-3 h-3" />
                 </button>
                 <button
-                  onClick={() => sendFeedback(i, -1)}
+                  onClick={() => {
+                    if (m.feedbackGiven) return;
+                    const choice = window.prompt(
+                      "Miért nem volt jó? (vesszővel válaszd: tul_hosszu, tul_rovid, pontatlan, hianyos, rossz_hangnem, rossz_celkozonseg, homalyos, nincs_konkret_pelda, nincs_kovetkezo_lepes)\n\nÜres = csak negatív értékelés",
+                      ""
+                    );
+                    if (choice === null) return;
+                    const reasons = choice.split(",").map(s => s.trim()).filter(Boolean);
+                    sendFeedback(i, -1, reasons);
+                  }}
                   disabled={!!m.feedbackGiven}
                   className={`p-1 rounded hover:bg-muted transition-colors ${m.feedbackGiven === -1 ? "text-red-500" : "text-muted-foreground"} disabled:opacity-50`}
-                  title="Nem volt jó"
+                  title="Nem volt jó (címkével)"
                 >
                   <ThumbsDown className="w-3 h-3" />
                 </button>
