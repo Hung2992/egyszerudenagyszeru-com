@@ -922,8 +922,23 @@ Mindig magyarul válaszolj. Légy igazi társ — okos, melegszívű, megbízhat
       }
     } catch (e) { console.warn('strategy v2 pick failed', e) }
 
+    // 🧠 META-ELVEK: a meta-tanulási réteg által felfedezett magas szintű szabályok
+    let principlesContext = ''
+    try {
+      const { data: principles } = await supabase.rpc('get_active_principles', {
+        _context: pickedContext || 'general',
+        _limit: 5,
+      })
+      if (Array.isArray(principles) && principles.length > 0) {
+        principlesContext = `\n\n## META-ELVEK (önfelfedezett, kötelező követni)\n` +
+          principles.map((p: any, i: number) =>
+            `${i + 1}. [súly ${Number(p.weight).toFixed(2)}] ${p.principle}`
+          ).join('\n')
+      }
+    } catch (e) { console.warn('principles fetch failed', e) }
+
     const extraSystem = [customSystem, ...clientSystemMessages].filter(Boolean).join('\n\n')
-    const finalSystemPrompt = `${systemPrompt}${ownerContext}${ragContext}${reflectionContext}${strategyContext}${extraSystem ? `\n\n## SPECIÁLIS UTASÍTÁS\n${extraSystem}` : ''}`
+    const finalSystemPrompt = `${systemPrompt}${ownerContext}${ragContext}${reflectionContext}${strategyContext}${principlesContext}${extraSystem ? `\n\n## SPECIÁLIS UTASÍTÁS\n${extraSystem}` : ''}`
 
     const response = await fetch(AI_GATEWAY_URL, {
       method: 'POST',
