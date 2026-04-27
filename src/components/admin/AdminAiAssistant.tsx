@@ -11,6 +11,8 @@ type Msg = {
   content: string;
   reflectionId?: string;
   feedbackGiven?: 1 | -1;
+  strategyId?: string;
+  strategyName?: string;
 };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-ai-assistant`;
