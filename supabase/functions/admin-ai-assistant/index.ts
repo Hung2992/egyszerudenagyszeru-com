@@ -877,8 +877,24 @@ Mindig magyarul válaszolj. Légy igazi társ — okos, melegszívű, megbízhat
       }
     } catch (e) { console.warn('reflection insights failed', e) }
 
+    // 🧬 STRATÉGIA-EVOLÚCIÓ: bandit kiválasztás (epsilon-greedy 20% felfedezés)
+    let strategyContext = ''
+    let pickedStrategyId: string | null = null
+    let pickedStrategyName: string | null = null
+    try {
+      const { data: strat } = await supabase.rpc('pick_response_strategy', { _epsilon: 0.2 })
+      const s: any = Array.isArray(strat) ? strat[0] : strat
+      if (s?.id) {
+        pickedStrategyId = s.id
+        pickedStrategyName = s.name
+        if (s.prompt_addon && s.prompt_addon.trim().length > 0) {
+          strategyContext = `\n\n${s.prompt_addon}`
+        }
+      }
+    } catch (e) { console.warn('strategy pick failed', e) }
+
     const extraSystem = [customSystem, ...clientSystemMessages].filter(Boolean).join('\n\n')
-    const finalSystemPrompt = `${systemPrompt}${ownerContext}${ragContext}${reflectionContext}${extraSystem ? `\n\n## SPECIÁLIS UTASÍTÁS\n${extraSystem}` : ''}`
+    const finalSystemPrompt = `${systemPrompt}${ownerContext}${ragContext}${reflectionContext}${strategyContext}${extraSystem ? `\n\n## SPECIÁLIS UTASÍTÁS\n${extraSystem}` : ''}`
 
     const response = await fetch(AI_GATEWAY_URL, {
       method: 'POST',
