@@ -3430,6 +3430,7 @@ const Admin = () => {
         {tab === "advanced_discounts" && <AdminAdvancedDiscountsTab />}
         {tab === "accounting" && <AdminAccountingTab />}
         {tab === "ai_bookkeeper" && <AdminAiBookkeeperTab />}
+        {tab === "ai_knowledge_base" && <AdminAiKnowledgeBaseTab />}
         {tab === "multilang" && <AdminMultilangTab />}
         {tab === "email_templates_custom" && <AdminEmailCenterTab />}
         {tab === "attribution" && <AdminAttributionTab />}
