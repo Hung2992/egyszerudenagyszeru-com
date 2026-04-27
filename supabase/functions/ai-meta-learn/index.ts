@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
       })
       .eq("id", runId);
 
-    // 4. Új elvek mentése (vagy meglévő erősítése)
+    // 4. Új elvek mentése PENDING állapotban — admin jóváhagyásra vár
     const principlesAdded: string[] = [];
     for (const p of insights.new_principles ?? []) {
       const principleText = String(p.principle || "").slice(0, 500);
@@ -128,34 +128,53 @@ Deno.serve(async (req) => {
       const ctxName = String(p.context || "general").slice(0, 50);
       const weight = Math.max(0, Math.min(1, Number(p.weight) || 0.5));
 
-      // Meglévő hasonló elv keresése (egyszerű exact match)
+      // Meglévő hasonló elv keresése
       const { data: existing } = await admin
         .from("ai_meta_principles")
-        .select("id, weight, reinforcement_count")
+        .select("id, weight, reinforcement_count, approval_status")
         .eq("principle", principleText)
         .eq("context", ctxName)
         .maybeSingle();
 
       if (existing) {
+        // Csak megerősítjük (újra-jóváhagyást NEM csinálunk automatikusan)
         await admin
           .from("ai_meta_principles")
           .update({
             reinforcement_count: existing.reinforcement_count + 1,
-            weight: Math.min(1, existing.weight + 0.1),
+            weight: Math.min(1, existing.weight + 0.05),
             last_reinforced_at: new Date().toISOString(),
-            is_active: true,
           })
           .eq("id", existing.id);
       } else {
+        // ÚJ elv → pending, nem aktív, nincs effective_at
         await admin.from("ai_meta_principles").insert({
           principle: principleText,
           context: ctxName,
           source: "meta_learning",
           weight,
+          approval_status: "pending",
+          is_active: false,
         });
         principlesAdded.push(principleText);
       }
     }
+
+    // 4.5 Audit log a futáshoz
+    await admin.rpc("log_meta_run_audit", {
+      _run_id: runId,
+      _event_type: "meta_run_completed",
+      _input_stats: {
+        reflections: (analysis as any).reflections_count ?? 0,
+        feedback: (analysis as any).feedback_count ?? 0,
+        weak_strategies: (analysis as any).weak_strategies?.length ?? 0,
+      },
+      _output_payload: {
+        new_principles_count: principlesAdded.length,
+        patterns_found: insights.patterns?.length ?? 0,
+        summary: (insights.executive_summary ?? "").slice(0, 500),
+      },
+    });
 
     // 5. Recommendation alapján meta-akciók generálása (pending státuszban)
     const actionsCreated: any[] = [];
