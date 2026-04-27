@@ -11,12 +11,12 @@ type Msg = { role: "user" | "assistant"; content: string };
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-ai-assistant`;
 
 const QUICK_PROMPTS = [
-  "Mennyi a mai profit?",
-  "Melyik termék fogy legjobban?",
-  "Milyen beszerzések várnak?",
-  "Alacsony készletű termékek?",
-  "Árazási javaslat",
-  "Havi összefoglaló",
+  "Szia! Mi a helyzet? 👋",
+  "Mit javasolsz most?",
+  "Mai profit & teendők",
+  "Mire figyeljek ma?",
+  "Beszélgessünk egy kicsit",
+  "Adj egy üzleti tippet",
 ];
 
 const AdminAiAssistant = () => {
