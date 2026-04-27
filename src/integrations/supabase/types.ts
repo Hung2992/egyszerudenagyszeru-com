@@ -408,6 +408,92 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_response_feedback: {
+        Row: {
+          correction: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          rating: number
+          reflection_id: string | null
+        }
+        Insert: {
+          correction?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          rating: number
+          reflection_id?: string | null
+        }
+        Update: {
+          correction?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          rating?: number
+          reflection_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_response_feedback_reflection_id_fkey"
+            columns: ["reflection_id"]
+            isOneToOne: false
+            referencedRelation: "ai_response_reflections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_response_reflections: {
+        Row: {
+          ai_response: string
+          applied_to_learning: boolean
+          conversation_id: string | null
+          created_at: string
+          id: string
+          identified_gaps: string | null
+          overall_score: number | null
+          self_completeness: number
+          self_correctness: number
+          self_tone: number
+          suggested_strategy: string | null
+          used_domains: string[] | null
+          used_knowledge_ids: string[] | null
+          user_question: string
+        }
+        Insert: {
+          ai_response: string
+          applied_to_learning?: boolean
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          identified_gaps?: string | null
+          overall_score?: number | null
+          self_completeness?: number
+          self_correctness?: number
+          self_tone?: number
+          suggested_strategy?: string | null
+          used_domains?: string[] | null
+          used_knowledge_ids?: string[] | null
+          user_question: string
+        }
+        Update: {
+          ai_response?: string
+          applied_to_learning?: boolean
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          identified_gaps?: string | null
+          overall_score?: number | null
+          self_completeness?: number
+          self_correctness?: number
+          self_tone?: number
+          suggested_strategy?: string | null
+          used_domains?: string[] | null
+          used_knowledge_ids?: string[] | null
+          user_question?: string
+        }
+        Relationships: []
+      }
       auto_procurement_log: {
         Row: {
           created_at: string
@@ -3624,6 +3710,18 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_reflection_insights: {
+        Args: { _limit?: number }
+        Returns: {
+          avg_completeness: number
+          avg_correctness: number
+          avg_overall: number
+          avg_tone: number
+          recent_gaps: string
+          total: number
+          weak_count: number
+        }[]
       }
       has_role: {
         Args: {
