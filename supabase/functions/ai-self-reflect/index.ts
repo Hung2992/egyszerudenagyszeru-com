@@ -42,6 +42,7 @@ Deno.serve(async (req) => {
       conversation_id,
       used_knowledge_ids = [],
       used_domains = [],
+      strategy_id,
     } = await req.json();
 
     if (!user_question || !ai_response) {
@@ -104,6 +105,7 @@ Deno.serve(async (req) => {
         self_tone: clamp(parsed.self_tone),
         identified_gaps: String(parsed.identified_gaps || "").slice(0, 500),
         suggested_strategy: String(parsed.suggested_strategy || "").slice(0, 500),
+        strategy_id: strategy_id ?? null,
       })
       .select("id, overall_score")
       .single();
@@ -150,6 +152,12 @@ Deno.serve(async (req) => {
           .update({ applied_to_learning: true })
           .eq("id", reflection.id);
       }
+    }
+
+    // 🧬 Stratégia statisztika frissítése (önreflexiós átlag updatelése)
+    if (strategy_id) {
+      admin.rpc("update_strategy_stats", { _strategy_id: strategy_id })
+        .then(() => {}, () => {});
     }
 
     return new Response(

@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.104.1'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+  'Access-Control-Expose-Headers': 'x-ai-strategy-id, x-ai-strategy-name',
 }
 
 const AI_GATEWAY_URL = 'https://ai.gateway.lovable.dev/v1/chat/completions'
@@ -877,8 +878,24 @@ Mindig magyarul válaszolj. Légy igazi társ — okos, melegszívű, megbízhat
       }
     } catch (e) { console.warn('reflection insights failed', e) }
 
+    // 🧬 STRATÉGIA-EVOLÚCIÓ: bandit kiválasztás (epsilon-greedy 20% felfedezés)
+    let strategyContext = ''
+    let pickedStrategyId: string | null = null
+    let pickedStrategyName: string | null = null
+    try {
+      const { data: strat } = await supabase.rpc('pick_response_strategy', { _epsilon: 0.2 })
+      const s: any = Array.isArray(strat) ? strat[0] : strat
+      if (s?.id) {
+        pickedStrategyId = s.id
+        pickedStrategyName = s.name
+        if (s.prompt_addon && s.prompt_addon.trim().length > 0) {
+          strategyContext = `\n\n${s.prompt_addon}`
+        }
+      }
+    } catch (e) { console.warn('strategy pick failed', e) }
+
     const extraSystem = [customSystem, ...clientSystemMessages].filter(Boolean).join('\n\n')
-    const finalSystemPrompt = `${systemPrompt}${ownerContext}${ragContext}${reflectionContext}${extraSystem ? `\n\n## SPECIÁLIS UTASÍTÁS\n${extraSystem}` : ''}`
+    const finalSystemPrompt = `${systemPrompt}${ownerContext}${ragContext}${reflectionContext}${strategyContext}${extraSystem ? `\n\n## SPECIÁLIS UTASÍTÁS\n${extraSystem}` : ''}`
 
     const response = await fetch(AI_GATEWAY_URL, {
       method: 'POST',
@@ -918,13 +935,23 @@ Mindig magyarul válaszolj. Légy igazi társ — okos, melegszívű, megbízhat
     if (wantsJsonText) {
       const data = await response.json()
       const text = data?.choices?.[0]?.message?.content || ''
-      return new Response(JSON.stringify({ text }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      return new Response(JSON.stringify({ text, strategy_id: pickedStrategyId, strategy_name: pickedStrategyName }), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          ...(pickedStrategyId ? { 'x-ai-strategy-id': pickedStrategyId } : {}),
+          ...(pickedStrategyName ? { 'x-ai-strategy-name': pickedStrategyName } : {}),
+        },
       })
     }
 
     return new Response(response.body, {
-      headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' },
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/event-stream',
+        ...(pickedStrategyId ? { 'x-ai-strategy-id': pickedStrategyId } : {}),
+        ...(pickedStrategyName ? { 'x-ai-strategy-name': pickedStrategyName } : {}),
+      },
     })
   } catch (error) {
     console.error('Admin AI error:', error)

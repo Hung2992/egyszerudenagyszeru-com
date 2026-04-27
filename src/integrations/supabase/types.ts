@@ -455,6 +455,7 @@ export type Database = {
           self_completeness: number
           self_correctness: number
           self_tone: number
+          strategy_id: string | null
           suggested_strategy: string | null
           used_domains: string[] | null
           used_knowledge_ids: string[] | null
@@ -471,6 +472,7 @@ export type Database = {
           self_completeness?: number
           self_correctness?: number
           self_tone?: number
+          strategy_id?: string | null
           suggested_strategy?: string | null
           used_domains?: string[] | null
           used_knowledge_ids?: string[] | null
@@ -487,10 +489,70 @@ export type Database = {
           self_completeness?: number
           self_correctness?: number
           self_tone?: number
+          strategy_id?: string | null
           suggested_strategy?: string | null
           used_domains?: string[] | null
           used_knowledge_ids?: string[] | null
           user_question?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_response_reflections_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "ai_response_strategies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_response_strategies: {
+        Row: {
+          avg_self_score: number
+          avg_user_rating: number
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          last_used_at: string | null
+          name: string
+          negative_feedback_count: number
+          positive_feedback_count: number
+          prompt_addon: string
+          updated_at: string
+          usage_count: number
+          win_rate: number
+        }
+        Insert: {
+          avg_self_score?: number
+          avg_user_rating?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          name: string
+          negative_feedback_count?: number
+          positive_feedback_count?: number
+          prompt_addon: string
+          updated_at?: string
+          usage_count?: number
+          win_rate?: number
+        }
+        Update: {
+          avg_self_score?: number
+          avg_user_rating?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          name?: string
+          negative_feedback_count?: number
+          positive_feedback_count?: number
+          prompt_addon?: string
+          updated_at?: string
+          usage_count?: number
+          win_rate?: number
         }
         Relationships: []
       }
@@ -3753,6 +3815,14 @@ export type Database = {
         }
         Returns: number
       }
+      pick_response_strategy: {
+        Args: { _epsilon?: number }
+        Returns: {
+          id: string
+          name: string
+          prompt_addon: string
+        }[]
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
@@ -3774,6 +3844,10 @@ export type Database = {
       set_maintenance_password: {
         Args: { _password: string }
         Returns: boolean
+      }
+      update_strategy_stats: {
+        Args: { _strategy_id: string }
+        Returns: undefined
       }
       validate_coupon: {
         Args: { _code: string; _order_total: number }
