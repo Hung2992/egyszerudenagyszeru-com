@@ -337,6 +337,13 @@ const AdminAiKnowledgeBaseTab = () => {
         data?.reply ||
         (typeof data === "string" ? data : "Nincs válasz.");
       setChatMsgs((prev) => [...prev, { role: "assistant", content: reply }]);
+
+      // 🧠 ÖNTANULÁS: háttérben kinyerjük a tartós tudást
+      if (reply && reply.length > 50) {
+        supabase.functions.invoke("ai-self-learn", {
+          body: { userMessage: text, assistantMessage: reply },
+        }).catch(() => { /* csendben */ });
+      }
     } catch (e: any) {
       toast({ title: "AI hiba", description: e.message || "Ismeretlen", variant: "destructive" });
       setChatMsgs((prev) => [...prev, { role: "assistant", content: "Hiba történt: " + (e.message || "ismeretlen") }]);

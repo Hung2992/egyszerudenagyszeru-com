@@ -138,6 +138,13 @@ const AdminAiAssistant = () => {
       toast({ title: "Hiba", description: err.message || "AI kapcsolódási hiba", variant: "destructive" });
     } finally {
       setIsLoading(false);
+
+      // 🧠 ÖNTANULÁS: háttérben kinyerjük és lementjük a tartós tudást a RAG-ba
+      if (assistantSoFar.length > 50) {
+        supabase.functions.invoke("ai-self-learn", {
+          body: { userMessage: text.trim(), assistantMessage: assistantSoFar },
+        }).catch(() => { /* csendben hibatűrő */ });
+      }
     }
   };
 
