@@ -1,4 +1,4 @@
-// AI Self-Learning: extracts durable knowledge from conversations and stores in RAG
+// AI Self-Learning v2: with confidence, domain classification, daily quota, review queue
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -11,6 +11,8 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1";
+
+type ExtractedFact = { fact: string; domain: string; confidence: number };
 
 async function embedOne(text: string): Promise<number[] | null> {
   try {
@@ -25,24 +27,29 @@ async function embedOne(text: string): Promise<number[] | null> {
   } catch { return null; }
 }
 
-async function extractKnowledge(userMsg: string, assistantMsg: string): Promise<{ keep: boolean; title: string; facts: string[] }> {
+async function extractKnowledge(userMsg: string, assistantMsg: string): Promise<{ keep: boolean; title: string; facts: ExtractedFact[] }> {
   const resp = await fetch(`${AI_GATEWAY}/chat/completions`, {
     method: "POST",
     headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: "google/gemini-2.5-flash",
       messages: [
-        { role: "system", content: `Te egy tudásmenedzser vagy. Egy admin-AI beszélgetésből kell kinyerned a TARTÓS, ÚJRAHASZNOSÍTHATÓ tudást.
+        { role: "system", content: `Te egy szigorú tudásmenedzser vagy. Egy admin-AI beszélgetésből kell kinyerned a TARTÓS, ÚJRAHASZNOSÍTHATÓ tudást.
 
-SZABÁLYOK:
-- Csak akkor tarts meg, ha a beszélgetésben TÉNY, DÖNTÉS, PREFERENCIA, SZABÁLY, vagy üzleti INFO van
-- Ne tarts meg: small talk, köszönések, jelenlegi pillanatnyi adatok (pl. "ma 5 rendelés")
-- Ha tényt találsz, írd át 3. személyben általános formára (pl. "A tulajdonos preferálja az AliExpress beszállítót")
-- Max 5 tény, mindegyik max 2 mondat
+KEMÉNY SZABÁLYOK:
+- Csak akkor tarts meg, ha TÉNY, DÖNTÉS, PREFERENCIA, SZABÁLY vagy üzleti INFO van
+- TILOS megtartani: small talk, köszönések, pillanatnyi adatok, érzelmek, vélemények
+- Ha bizonytalan vagy → INKÁBB DOBD KI
+- Írd át 3. személyben általános formára
+- Max 3 tény (kevesebb jobb!), mindegyik max 2 mondat
 - Magyarul
 
+MINDEN ténynél KÖTELEZŐEN add meg:
+- "domain": "product" | "marketing" | "customer" | "operations" | "general"
+- "confidence": 0.0–1.0 (mennyire vagy biztos benne, hogy ez tartós igazság)
+
 Válaszolj CSAK ezzel a JSON formátummal:
-{"keep": true|false, "title": "rövid cím", "facts": ["tény 1", "tény 2"]}` },
+{"keep": true|false, "title": "rövid cím", "facts": [{"fact": "...", "domain": "product", "confidence": 0.85}]}` },
         { role: "user", content: `FELHASZNÁLÓ:\n${userMsg.slice(0, 2000)}\n\nAI VÁLASZ:\n${assistantMsg.slice(0, 3000)}` },
       ],
       response_format: { type: "json_object" },
@@ -52,7 +59,14 @@ Válaszolj CSAK ezzel a JSON formátummal:
   const data = await resp.json();
   try {
     const parsed = JSON.parse(data?.choices?.[0]?.message?.content || "{}");
-    return { keep: !!parsed.keep, title: String(parsed.title || ""), facts: Array.isArray(parsed.facts) ? parsed.facts.slice(0, 5) : [] };
+    const rawFacts = Array.isArray(parsed.facts) ? parsed.facts : [];
+    const validDomains = ["product", "marketing", "customer", "operations", "general"];
+    const facts: ExtractedFact[] = rawFacts.slice(0, 3).map((f: any) => ({
+      fact: String(f.fact || "").trim(),
+      domain: validDomains.includes(f.domain) ? f.domain : "general",
+      confidence: Math.max(0, Math.min(1, Number(f.confidence) || 0.5)),
+    })).filter((f: ExtractedFact) => f.fact.length >= 10);
+    return { keep: !!parsed.keep, title: String(parsed.title || ""), facts };
   } catch { return { keep: false, title: "", facts: [] }; }
 }
 
@@ -81,57 +95,92 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ skipped: true, reason: "too_short" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // 🚦 NAPI KVÓTA ELLENŐRZÉS
+    const { data: quotaOk } = await admin.rpc("check_and_bump_learn_quota", { _kind: "fact" });
+    if (!quotaOk) {
+      return new Response(JSON.stringify({ skipped: true, reason: "daily_quota_exceeded" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const extracted = await extractKnowledge(userMsg, assistantMsg);
     if (!extracted.keep || extracted.facts.length === 0) {
       return new Response(JSON.stringify({ skipped: true, reason: "no_durable_knowledge" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-    // 🔍 DUPLIKÁCIÓ SZŰRÉS: minden tényt összevetünk a meglévő tudással
-    const uniqueFacts: { fact: string; embedding: number[] }[] = [];
+    // 🔍 DUPLIKÁCIÓ + ALACSONY CONFIDENCE SZŰRÉS
+    const validFacts: { fact: ExtractedFact; embedding: number[] }[] = [];
     let duplicateCount = 0;
-    for (const fact of extracted.facts) {
-      const vec = await embedOne(fact);
+    let lowConfidenceCount = 0;
+
+    for (const f of extracted.facts) {
+      // Confidence threshold: alatta nem mentjük el
+      if (f.confidence < 0.55) { lowConfidenceCount++; continue; }
+
+      const vec = await embedOne(f.fact);
       if (!vec) continue;
-      // Keressünk hasonlót a meglévő tudásban
+
       const { data: matches } = await admin.rpc("match_ai_knowledge", {
         query_embedding: vec, match_count: 1, similarity_threshold: 0.92,
       });
       if (Array.isArray(matches) && matches.length > 0) {
-        // Már tudjuk — kihagyjuk
         duplicateCount++;
         continue;
       }
-      uniqueFacts.push({ fact, embedding: vec });
+      validFacts.push({ fact: f, embedding: vec });
     }
 
-    if (uniqueFacts.length === 0) {
-      return new Response(JSON.stringify({ skipped: true, reason: "all_duplicates", duplicates: duplicateCount }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (validFacts.length === 0) {
+      return new Response(JSON.stringify({
+        skipped: true, reason: "all_filtered",
+        duplicates: duplicateCount, lowConfidence: lowConfidenceCount,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const title = `🧠 Tanulás: ${extracted.title || userMsg.slice(0, 60)}`;
-    const fullText = uniqueFacts.map((f, i) => `${i + 1}. ${f.fact}`).join("\n");
+    // Domain szerint csoportosítás
+    const byDomain = new Map<string, typeof validFacts>();
+    for (const vf of validFacts) {
+      const d = vf.fact.domain;
+      if (!byDomain.has(d)) byDomain.set(d, []);
+      byDomain.get(d)!.push(vf);
+    }
 
-    const { data: doc, error: docErr } = await admin.from("ai_knowledge_documents").insert({
-      title, source_type: "self_learning", raw_text: fullText, summary: extracted.title || null,
-      status: "ready", chunk_count: uniqueFacts.length, created_by: userId,
-    }).select().single();
-    if (docErr || !doc) throw new Error(docErr?.message || "doc insert failed");
+    const createdDocs: { id: string; title: string; domain: string; review: string }[] = [];
 
-    const chunks = uniqueFacts.map((uf, idx) => ({
-      document_id: doc.id, chunk_index: idx, content: uf.fact,
-      embedding: uf.embedding, token_count: Math.ceil(uf.fact.length / 4),
-    }));
-    await admin.from("ai_knowledge_chunks").insert(chunks);
+    for (const [domain, facts] of byDomain) {
+      const avgConfidence = facts.reduce((s, f) => s + f.fact.confidence, 0) / facts.length;
+      // Alacsony confidence single-source tény → review queue
+      const reviewStatus = avgConfidence < 0.75 ? "pending_review" : "auto_approved";
+      const status = reviewStatus === "pending_review" ? "pending" : "ready";
+
+      const title = `🧠 [${domain}] ${extracted.title || userMsg.slice(0, 60)}`;
+      const fullText = facts.map((f, i) => `${i + 1}. ${f.fact.fact}`).join("\n");
+
+      const { data: doc, error: docErr } = await admin.from("ai_knowledge_documents").insert({
+        title, source_type: "self_learning", raw_text: fullText, summary: extracted.title || null,
+        status, chunk_count: facts.length, created_by: userId,
+        confidence: avgConfidence, source_count: facts.length, domain,
+        review_status: reviewStatus, version: 1,
+      }).select().single();
+      if (docErr || !doc) continue;
+
+      const chunks = facts.map((vf, idx) => ({
+        document_id: doc.id, chunk_index: idx, content: vf.fact.fact,
+        embedding: vf.embedding, token_count: Math.ceil(vf.fact.fact.length / 4),
+      }));
+      await admin.from("ai_knowledge_chunks").insert(chunks);
+
+      createdDocs.push({ id: doc.id, title, domain, review: reviewStatus });
+    }
 
     return new Response(JSON.stringify({
-      learned: true, factCount: uniqueFacts.length, duplicates: duplicateCount, title,
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+      learned: createdDocs.length > 0,
+      docs: createdDocs,
+      duplicates: duplicateCount,
+      lowConfidence: lowConfidenceCount,
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     console.error("self-learn error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "unknown" }), {
