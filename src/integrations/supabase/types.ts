@@ -408,30 +408,72 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_question_context_rules: {
+        Row: {
+          context_name: string
+          created_at: string
+          description: string | null
+          disable_exploration: boolean
+          forced_strategy_name: string | null
+          id: string
+          is_active: boolean
+          keywords: string[]
+        }
+        Insert: {
+          context_name: string
+          created_at?: string
+          description?: string | null
+          disable_exploration?: boolean
+          forced_strategy_name?: string | null
+          id?: string
+          is_active?: boolean
+          keywords?: string[]
+        }
+        Update: {
+          context_name?: string
+          created_at?: string
+          description?: string | null
+          disable_exploration?: boolean
+          forced_strategy_name?: string | null
+          id?: string
+          is_active?: boolean
+          keywords?: string[]
+        }
+        Relationships: []
+      }
       ai_response_feedback: {
         Row: {
           correction: string | null
           created_at: string
           created_by: string | null
+          feedback_reasons: string[]
           id: string
+          is_admin: boolean
           rating: number
           reflection_id: string | null
+          weight: number
         }
         Insert: {
           correction?: string | null
           created_at?: string
           created_by?: string | null
+          feedback_reasons?: string[]
           id?: string
+          is_admin?: boolean
           rating: number
           reflection_id?: string | null
+          weight?: number
         }
         Update: {
           correction?: string | null
           created_at?: string
           created_by?: string | null
+          feedback_reasons?: string[]
           id?: string
+          is_admin?: boolean
           rating?: number
           reflection_id?: string | null
+          weight?: number
         }
         Relationships: [
           {
@@ -451,7 +493,9 @@ export type Database = {
           created_at: string
           id: string
           identified_gaps: string | null
+          improvement_suggestion: string | null
           overall_score: number | null
+          question_context: string
           self_completeness: number
           self_correctness: number
           self_tone: number
@@ -460,6 +504,7 @@ export type Database = {
           used_domains: string[] | null
           used_knowledge_ids: string[] | null
           user_question: string
+          weakness_tags: string[]
         }
         Insert: {
           ai_response: string
@@ -468,7 +513,9 @@ export type Database = {
           created_at?: string
           id?: string
           identified_gaps?: string | null
+          improvement_suggestion?: string | null
           overall_score?: number | null
+          question_context?: string
           self_completeness?: number
           self_correctness?: number
           self_tone?: number
@@ -477,6 +524,7 @@ export type Database = {
           used_domains?: string[] | null
           used_knowledge_ids?: string[] | null
           user_question: string
+          weakness_tags?: string[]
         }
         Update: {
           ai_response?: string
@@ -485,7 +533,9 @@ export type Database = {
           created_at?: string
           id?: string
           identified_gaps?: string | null
+          improvement_suggestion?: string | null
           overall_score?: number | null
+          question_context?: string
           self_completeness?: number
           self_correctness?: number
           self_tone?: number
@@ -494,6 +544,7 @@ export type Database = {
           used_domains?: string[] | null
           used_knowledge_ids?: string[] | null
           user_question?: string
+          weakness_tags?: string[]
         }
         Relationships: [
           {
@@ -509,11 +560,13 @@ export type Database = {
         Row: {
           avg_self_score: number
           avg_user_rating: number
+          context_stats: Json
           created_at: string
           description: string | null
           id: string
           is_active: boolean
           last_used_at: string | null
+          min_confidence_threshold: number
           name: string
           negative_feedback_count: number
           positive_feedback_count: number
@@ -525,11 +578,13 @@ export type Database = {
         Insert: {
           avg_self_score?: number
           avg_user_rating?: number
+          context_stats?: Json
           created_at?: string
           description?: string | null
           id?: string
           is_active?: boolean
           last_used_at?: string | null
+          min_confidence_threshold?: number
           name: string
           negative_feedback_count?: number
           positive_feedback_count?: number
@@ -541,11 +596,13 @@ export type Database = {
         Update: {
           avg_self_score?: number
           avg_user_rating?: number
+          context_stats?: Json
           created_at?: string
           description?: string | null
           id?: string
           is_active?: boolean
           last_used_at?: string | null
+          min_confidence_threshold?: number
           name?: string
           negative_feedback_count?: number
           positive_feedback_count?: number
@@ -3785,6 +3842,18 @@ export type Database = {
           weak_count: number
         }[]
       }
+      get_reflection_summary: {
+        Args: { _limit?: number }
+        Returns: {
+          avg_completeness: number
+          avg_correctness: number
+          avg_tone: number
+          top_improvement_hints: string[]
+          top_weakness_tags: Json
+          total: number
+          weak_response_count: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3823,6 +3892,16 @@ export type Database = {
           prompt_addon: string
         }[]
       }
+      pick_response_strategy_v2: {
+        Args: { _epsilon?: number; _question: string }
+        Returns: {
+          context_name: string
+          exploration_used: boolean
+          prompt_addon: string
+          strategy_id: string
+          strategy_name: string
+        }[]
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
@@ -3847,6 +3926,16 @@ export type Database = {
       }
       update_strategy_stats: {
         Args: { _strategy_id: string }
+        Returns: undefined
+      }
+      update_strategy_stats_v2: {
+        Args: {
+          _context: string
+          _is_admin?: boolean
+          _self_score?: number
+          _strategy_id: string
+          _user_rating?: number
+        }
         Returns: undefined
       }
       validate_coupon: {

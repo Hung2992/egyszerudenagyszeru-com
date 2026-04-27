@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.104.1'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
-  'Access-Control-Expose-Headers': 'x-ai-strategy-id, x-ai-strategy-name',
+  'Access-Control-Expose-Headers': 'x-ai-strategy-id, x-ai-strategy-name, x-ai-context, x-ai-exploration',
 }
 
 const AI_GATEWAY_URL = 'https://ai.gateway.lovable.dev/v1/chat/completions'
@@ -859,40 +859,68 @@ Mindig magyarul válaszolj. Légy igazi társ — okos, melegszívű, megbízhat
       }
     } catch (e) { console.warn('RAG retrieval failed', e) }
 
-    // 🪞 ÖNREFLEXIÓS BETEKINTÉS: az AI tudja, miben gyenge mostanában
+    // 🪞 ÖNREFLEXIÓS ÖSSZEGZÉS: tömör aggregált insight (nem nyers reflexiók)
     let reflectionContext = ''
     try {
-      const { data: insights } = await supabase.rpc('get_reflection_insights', { _limit: 30 })
-      const r: any = Array.isArray(insights) ? insights[0] : insights
+      const { data: summary } = await supabase.rpc('get_reflection_summary', { _limit: 30 })
+      const r: any = Array.isArray(summary) ? summary[0] : summary
       if (r && Number(r.total) > 0) {
         const weak: string[] = []
         if (Number(r.avg_correctness) < 0.7) weak.push('pontosság')
         if (Number(r.avg_completeness) < 0.7) weak.push('teljesség')
         if (Number(r.avg_tone) < 0.7) weak.push('hangnem')
-        if (weak.length > 0 || r.recent_gaps) {
-          reflectionContext = `\n\n## ÖNREFLEXIÓS TANULSÁGOK (utóbbi ${r.total} válaszod alapján)\n` +
-            `Átlagos önértékelés: pontosság ${r.avg_correctness}, teljesség ${r.avg_completeness}, hangnem ${r.avg_tone}.\n` +
-            (weak.length ? `⚠️ Gyengébb területek, amikre most fokozottan figyelj: ${weak.join(', ')}.\n` : '') +
-            (r.recent_gaps ? `Korábbi felismert hibák, amiket NE ismételj meg: ${String(r.recent_gaps).slice(0, 600)}\n` : '')
+
+        // Top weakness tagok formázása ("túl hosszú: 8, pontatlan: 5")
+        let topTags = ''
+        try {
+          const tags = r.top_weakness_tags || {}
+          const entries = Object.entries(tags).map(([k, v]) => `${k}: ${v}`).slice(0, 5)
+          if (entries.length) topTags = entries.join(', ')
+        } catch {}
+
+        const hints: string[] = Array.isArray(r.top_improvement_hints) ? r.top_improvement_hints.filter(Boolean).slice(0, 3) : []
+
+        if (weak.length || topTags || hints.length || Number(r.weak_response_count) > 0) {
+          reflectionContext = `\n\n## ÖNREFLEXIÓS ÖSSZEGZÉS (utóbbi ${r.total} válasz)\n` +
+            `Átlag: pontosság ${r.avg_correctness}, teljesség ${r.avg_completeness}, hangnem ${r.avg_tone}. ` +
+            `Gyenge válasz: ${r.weak_response_count}/${r.total}.\n` +
+            (weak.length ? `⚠️ Fókusz: ${weak.join(', ')}.\n` : '') +
+            (topTags ? `Leggyakoribb gyengeségek: ${topTags}.\n` : '') +
+            (hints.length ? `Konkrét javítási irányok:\n- ${hints.join('\n- ')}\n` : '')
         }
       }
-    } catch (e) { console.warn('reflection insights failed', e) }
+    } catch (e) { console.warn('reflection summary failed', e) }
 
-    // 🧬 STRATÉGIA-EVOLÚCIÓ: bandit kiválasztás (epsilon-greedy 20% felfedezés)
+    // 🧬 STRATÉGIA-EVOLÚCIÓ v2: KONTEXTUS-AWARE bandit + hard rule
+    // - jogi/pénzügyi kérdés -> mindig mély elemzés (0% exploration)
+    // - gyors ténykérdés -> tömör (0% exploration)
+    // - egyébként kontextusonkénti win_rate alapján 80/20
     let strategyContext = ''
     let pickedStrategyId: string | null = null
     let pickedStrategyName: string | null = null
+    let pickedContext: string | null = null
+    let explorationUsed = false
     try {
-      const { data: strat } = await supabase.rpc('pick_response_strategy', { _epsilon: 0.2 })
+      // utolsó user üzenet a kontextus felismeréséhez
+      const lastUserMsg = [...messages].reverse().find((m: any) => m.role === 'user')?.content || prompt || ''
+      const { data: strat } = await supabase.rpc('pick_response_strategy_v2', {
+        _question: String(lastUserMsg).slice(0, 1000),
+        _epsilon: 0.2,
+      })
       const s: any = Array.isArray(strat) ? strat[0] : strat
-      if (s?.id) {
-        pickedStrategyId = s.id
-        pickedStrategyName = s.name
-        if (s.prompt_addon && s.prompt_addon.trim().length > 0) {
+      if (s?.strategy_id) {
+        pickedStrategyId = s.strategy_id
+        pickedStrategyName = s.strategy_name
+        pickedContext = s.context_name || 'general'
+        explorationUsed = !!s.exploration_used
+        if (s.prompt_addon && String(s.prompt_addon).trim().length > 0) {
           strategyContext = `\n\n${s.prompt_addon}`
         }
+        if (pickedContext && pickedContext !== 'general') {
+          strategyContext += `\n\n[Felismert kontextus: ${pickedContext}${explorationUsed ? ' • exploration' : ''}]`
+        }
       }
-    } catch (e) { console.warn('strategy pick failed', e) }
+    } catch (e) { console.warn('strategy v2 pick failed', e) }
 
     const extraSystem = [customSystem, ...clientSystemMessages].filter(Boolean).join('\n\n')
     const finalSystemPrompt = `${systemPrompt}${ownerContext}${ragContext}${reflectionContext}${strategyContext}${extraSystem ? `\n\n## SPECIÁLIS UTASÍTÁS\n${extraSystem}` : ''}`
@@ -935,12 +963,14 @@ Mindig magyarul válaszolj. Légy igazi társ — okos, melegszívű, megbízhat
     if (wantsJsonText) {
       const data = await response.json()
       const text = data?.choices?.[0]?.message?.content || ''
-      return new Response(JSON.stringify({ text, strategy_id: pickedStrategyId, strategy_name: pickedStrategyName }), {
+      return new Response(JSON.stringify({ text, strategy_id: pickedStrategyId, strategy_name: pickedStrategyName, context: pickedContext, exploration: explorationUsed }), {
         headers: {
           ...corsHeaders,
           'Content-Type': 'application/json',
           ...(pickedStrategyId ? { 'x-ai-strategy-id': pickedStrategyId } : {}),
           ...(pickedStrategyName ? { 'x-ai-strategy-name': pickedStrategyName } : {}),
+          ...(pickedContext ? { 'x-ai-context': pickedContext } : {}),
+          'x-ai-exploration': explorationUsed ? '1' : '0',
         },
       })
     }
@@ -951,6 +981,8 @@ Mindig magyarul válaszolj. Légy igazi társ — okos, melegszívű, megbízhat
         'Content-Type': 'text/event-stream',
         ...(pickedStrategyId ? { 'x-ai-strategy-id': pickedStrategyId } : {}),
         ...(pickedStrategyName ? { 'x-ai-strategy-name': pickedStrategyName } : {}),
+        ...(pickedContext ? { 'x-ai-context': pickedContext } : {}),
+        'x-ai-exploration': explorationUsed ? '1' : '0',
       },
     })
   } catch (error) {

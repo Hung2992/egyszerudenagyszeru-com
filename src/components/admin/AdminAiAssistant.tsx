@@ -13,6 +13,8 @@ type Msg = {
   feedbackGiven?: 1 | -1;
   strategyId?: string;
   strategyName?: string;
+  context?: string;
+  exploration?: boolean;
 };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-ai-assistant`;
@@ -58,6 +60,8 @@ const AdminAiAssistant = () => {
     let assistantSoFar = "";
     let strategyId: string | undefined;
     let strategyName: string | undefined;
+    let pickedContext: string | undefined;
+    let exploration: boolean | undefined;
 
     const updateAssistant = (content: string) => {
       assistantSoFar += content;
@@ -92,9 +96,11 @@ const AdminAiAssistant = () => {
         return;
       }
 
-      // 🧬 Stratégia ID a header-ben (evolúciós tanuláshoz)
+      // 🧬 Stratégia ID + KONTEXTUS a header-ben (kontextus-aware bandit)
       strategyId = resp.headers.get("x-ai-strategy-id") || undefined;
       strategyName = resp.headers.get("x-ai-strategy-name") || undefined;
+      pickedContext = resp.headers.get("x-ai-context") || undefined;
+      exploration = resp.headers.get("x-ai-exploration") === "1";
 
       if (!resp.body) throw new Error("No stream body");
 
@@ -169,21 +175,22 @@ const AdminAiAssistant = () => {
           }
         }).catch(() => { /* csendben hibatűrő */ });
 
-        // Stratégia ID hozzáfűzése a legutóbbi assistant üzenethez
-        if (strategyId) {
+        // Stratégia + kontextus hozzáfűzése a legutóbbi assistant üzenethez
+        if (strategyId || pickedContext) {
           setMessages(prev => prev.map((m, i) =>
             i === prev.length - 1 && m.role === "assistant"
-              ? { ...m, strategyId, strategyName }
+              ? { ...m, strategyId, strategyName, context: pickedContext, exploration }
               : m
           ));
         }
 
-        // 🪞 REFLEXIÓ: az AI kiértékeli a saját válaszát és tanul belőle
+        // 🪞 REFLEXIÓ: az AI kiértékeli a saját válaszát (kontextus átadva)
         supabase.functions.invoke("ai-self-reflect", {
           body: {
             user_question: text.trim(),
             ai_response: assistantSoFar,
             strategy_id: strategyId,
+            question_context: pickedContext,
           },
         }).then(({ data }) => {
           if (data?.reflection_id) {
@@ -198,23 +205,34 @@ const AdminAiAssistant = () => {
     }
   };
 
-  const sendFeedback = async (msgIdx: number, rating: 1 | -1) => {
+  const sendFeedback = async (msgIdx: number, rating: 1 | -1, reasons: string[] = []) => {
     const msg = messages[msgIdx];
     if (!msg?.reflectionId || msg.feedbackGiven) return;
     setMessages(prev => prev.map((m, i) => i === msgIdx ? { ...m, feedbackGiven: rating } : m));
     try {
+      // Admin chat → admin súly (1.4) + címkézett okok
       await supabase.from("ai_response_feedback" as any).insert({
         reflection_id: msg.reflectionId,
         rating,
+        feedback_reasons: reasons,
+        weight: 1.4,
+        is_admin: true,
       });
-      // 🧬 Stratégia statisztika frissítés: a feedback alapján a bandit megtanulja melyik a nyertes
+      // 🧬 Stratégia statisztika v2: kontextusonkénti, ADMIN súly nagyobb mint AI önértékelés
       if (msg.strategyId) {
-        supabase.rpc("update_strategy_stats" as any, { _strategy_id: msg.strategyId })
-          .then(() => {}, () => {});
+        supabase.rpc("update_strategy_stats_v2" as any, {
+          _strategy_id: msg.strategyId,
+          _context: msg.context || "general",
+          _user_rating: rating === 1 ? 1.0 : 0.0,
+          _self_score: null,
+          _is_admin: true,
+        }).then(() => {}, () => {});
       }
       toast({
         title: rating === 1 ? "Köszi! 💙" : "Köszi a visszajelzést",
-        description: rating === 1 ? "Megjegyzem, hogy ez segített." : "Tanulok belőle, legközelebb jobb leszek.",
+        description: rating === 1
+          ? "Megjegyzem ezt a stratégiát a(z) " + (msg.context || "általános") + " kontextushoz."
+          : (reasons.length ? `Tanulok belőle: ${reasons.join(", ")}` : "Tanulok belőle, legközelebb jobb leszek."),
       });
     } catch {
       // csendben
@@ -306,7 +324,17 @@ const AdminAiAssistant = () => {
               )}
             </div>
             {m.role === "assistant" && m.reflectionId && (
-              <div className="flex gap-1 mt-1 ml-1">
+              <div className="flex flex-wrap items-center gap-1 mt-1 ml-1">
+                {m.context && m.context !== "general" && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+                    {m.context}{m.exploration ? " • exp" : ""}
+                  </span>
+                )}
+                {m.strategyName && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                    {m.strategyName}
+                  </span>
+                )}
                 <button
                   onClick={() => sendFeedback(i, 1)}
                   disabled={!!m.feedbackGiven}
@@ -316,10 +344,19 @@ const AdminAiAssistant = () => {
                   <ThumbsUp className="w-3 h-3" />
                 </button>
                 <button
-                  onClick={() => sendFeedback(i, -1)}
+                  onClick={() => {
+                    if (m.feedbackGiven) return;
+                    const choice = window.prompt(
+                      "Miért nem volt jó? (vesszővel válaszd: tul_hosszu, tul_rovid, pontatlan, hianyos, rossz_hangnem, rossz_celkozonseg, homalyos, nincs_konkret_pelda, nincs_kovetkezo_lepes)\n\nÜres = csak negatív értékelés",
+                      ""
+                    );
+                    if (choice === null) return;
+                    const reasons = choice.split(",").map(s => s.trim()).filter(Boolean);
+                    sendFeedback(i, -1, reasons);
+                  }}
                   disabled={!!m.feedbackGiven}
                   className={`p-1 rounded hover:bg-muted transition-colors ${m.feedbackGiven === -1 ? "text-red-500" : "text-muted-foreground"} disabled:opacity-50`}
-                  title="Nem volt jó"
+                  title="Nem volt jó (címkével)"
                 >
                   <ThumbsDown className="w-3 h-3" />
                 </button>
