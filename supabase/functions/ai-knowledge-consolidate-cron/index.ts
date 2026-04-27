@@ -113,10 +113,17 @@ Deno.serve(async (req) => {
       return emb ? { id: c.id, content: c.content, embedding: emb } : null;
     }).filter((x): x is { id: string; content: string; embedding: number[] } => x !== null);
 
-    const clusters = clusterFacts(items, 0.78);
+    // ⚠️ STRICT clustering: 0.85 (szigorúbb mint 0.78), min 5 source
+    const clusters = clusterFacts(items, 0.85).filter((c) => c.length >= 5);
     let metaCreated = 0;
+    let blockedByQuota = 0;
+    let blockedByReview = 0;
 
-    for (const cluster of clusters.slice(0, 10)) {
+    for (const cluster of clusters.slice(0, 5)) { // max 5 meta per run
+      // Daily meta quota check
+      const { data: quotaOk } = await admin.rpc("check_and_bump_learn_quota", { _kind: "meta" });
+      if (!quotaOk) { blockedByQuota++; break; }
+
       const facts = cluster.map((c) => c.content);
       const meta = await synthesizeMeta(facts);
       if (!meta) continue;
@@ -124,17 +131,35 @@ Deno.serve(async (req) => {
       const metaVec = await embedOne(meta.summary);
       if (!metaVec) continue;
 
+      // Look for existing similar meta-knowledge
       const { data: existing } = await admin.rpc("match_ai_knowledge", {
         query_embedding: metaVec, match_count: 1, similarity_threshold: 0.93,
       });
-      if (Array.isArray(existing) && existing.length > 0) continue;
+
+      // Confidence based on cluster size (more sources = higher confidence)
+      const confidence = Math.min(0.5 + cluster.length * 0.06, 0.95);
+      // Auto-approve only if high confidence AND many sources
+      const autoApprove = confidence >= 0.75 && cluster.length >= 8;
+      const reviewStatus = autoApprove ? "auto_approved" : "pending_review";
+      const status = autoApprove ? "ready" : "pending";
+      if (!autoApprove) blockedByReview++;
+
+      // Versioning: if similar exists, link as new version
+      const parentId = Array.isArray(existing) && existing.length > 0 ? existing[0].document_id : null;
+      const version = parentId ? 2 : 1;
+
+      // Skip true duplicates (no new info)
+      if (parentId && autoApprove) continue;
 
       const { data: doc } = await admin.from("ai_knowledge_documents").insert({
         title: `🌌 Meta-tudás: ${meta.title}`,
         source_type: "meta_consolidation",
-        raw_text: `${meta.summary}\n\n--- Forrás tények ---\n${facts.join("\n")}`,
-        summary: meta.title, status: "ready", chunk_count: 1,
-        quality_score: 2.0, // meta starts with higher score
+        raw_text: `${meta.summary}\n\n--- ${cluster.length} forrás tényből ---\n${facts.join("\n")}`,
+        summary: meta.title, status, chunk_count: 1,
+        quality_score: 2.0,
+        confidence, source_count: cluster.length,
+        domain: "general", review_status: reviewStatus, version,
+        parent_document_id: parentId,
       }).select().single();
       if (!doc) continue;
 
@@ -146,7 +171,9 @@ Deno.serve(async (req) => {
     }
 
     return new Response(JSON.stringify({
-      ok: true, analyzedChunks: items.length, clustersFound: clusters.length, metaCreated,
+      ok: true, analyzedChunks: items.length,
+      clustersFound: clusters.length, metaCreated,
+      blockedByQuota, blockedByReview,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     console.error("consolidate-cron error:", e);

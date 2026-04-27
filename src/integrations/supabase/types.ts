@@ -258,60 +258,105 @@ export type Database = {
       ai_knowledge_documents: {
         Row: {
           chunk_count: number
+          confidence: number
           created_at: string
           created_by: string | null
+          domain: string
           error_message: string | null
           file_path: string | null
           file_size_bytes: number | null
           id: string
           last_used_at: string | null
           mime_type: string | null
+          parent_document_id: string | null
           quality_score: number
           raw_text: string | null
+          review_status: string
+          source_count: number
           source_type: string
           status: string
           summary: string | null
           title: string
           updated_at: string
           usage_count: number
+          version: number
         }
         Insert: {
           chunk_count?: number
+          confidence?: number
           created_at?: string
           created_by?: string | null
+          domain?: string
           error_message?: string | null
           file_path?: string | null
           file_size_bytes?: number | null
           id?: string
           last_used_at?: string | null
           mime_type?: string | null
+          parent_document_id?: string | null
           quality_score?: number
           raw_text?: string | null
+          review_status?: string
+          source_count?: number
           source_type: string
           status?: string
           summary?: string | null
           title: string
           updated_at?: string
           usage_count?: number
+          version?: number
         }
         Update: {
           chunk_count?: number
+          confidence?: number
           created_at?: string
           created_by?: string | null
+          domain?: string
           error_message?: string | null
           file_path?: string | null
           file_size_bytes?: number | null
           id?: string
           last_used_at?: string | null
           mime_type?: string | null
+          parent_document_id?: string | null
           quality_score?: number
           raw_text?: string | null
+          review_status?: string
+          source_count?: number
           source_type?: string
           status?: string
           summary?: string | null
           title?: string
           updated_at?: string
           usage_count?: number
+          version?: number
+        }
+        Relationships: []
+      }
+      ai_learn_quota: {
+        Row: {
+          daily_limit: number
+          id: number
+          learn_count: number
+          learn_date: string
+          meta_count: number
+          meta_daily_limit: number
+        }
+        Insert: {
+          daily_limit?: number
+          id?: number
+          learn_count?: number
+          learn_date?: string
+          meta_count?: number
+          meta_daily_limit?: number
+        }
+        Update: {
+          daily_limit?: number
+          id?: number
+          learn_count?: number
+          learn_date?: string
+          meta_count?: number
+          meta_daily_limit?: number
         }
         Relationships: []
       }
@@ -3389,6 +3434,7 @@ export type Database = {
     }
     Functions: {
       admin_audit_coupon: { Args: { _code: string }; Returns: Json }
+      approve_ai_knowledge: { Args: { _doc_id: string }; Returns: boolean }
       authenticated_email: { Args: never; Returns: string }
       bump_ai_knowledge_usage: {
         Args: { _document_ids: string[] }
@@ -3401,6 +3447,7 @@ export type Database = {
           velocity: number
         }[]
       }
+      check_and_bump_learn_quota: { Args: { _kind?: string }; Returns: boolean }
       decay_ai_knowledge_quality: { Args: never; Returns: number }
       delete_email: {
         Args: { message_id: number; queue_name: string }
@@ -3411,6 +3458,21 @@ export type Database = {
         Returns: number
       }
       generate_invoice_number: { Args: never; Returns: string }
+      get_pending_ai_reviews: {
+        Args: { _limit?: number }
+        Returns: {
+          confidence: number
+          created_at: string
+          domain: string
+          id: string
+          raw_text: string
+          source_count: number
+          source_type: string
+          summary: string
+          title: string
+          version: number
+        }[]
+      }
       get_product_poll_counts: {
         Args: { _product_id: string }
         Returns: {
@@ -3606,6 +3668,11 @@ export type Database = {
         Returns: undefined
       }
       register_waitlist_share: { Args: { _share_code: string }; Returns: Json }
+      reject_ai_knowledge: {
+        Args: { _doc_id: string; _reason?: string }
+        Returns: boolean
+      }
+      rollback_ai_knowledge: { Args: { _doc_id: string }; Returns: boolean }
       set_maintenance_password: {
         Args: { _password: string }
         Returns: boolean
