@@ -865,6 +865,7 @@ Mindig magyarul válaszolj. Légy igazi társ — okos, melegszívű, megbízhat
           ...messages,
         ],
         stream: !wantsJsonText,
+        reasoning: { effort: 'high' },
       }),
     })
 
