@@ -167,15 +167,24 @@ const AdminAiAssistant = () => {
           }
         }).catch(() => { /* csendben hibatűrő */ });
 
+        // Stratégia ID hozzáfűzése a legutóbbi assistant üzenethez
+        if (strategyId) {
+          setMessages(prev => prev.map((m, i) =>
+            i === prev.length - 1 && m.role === "assistant"
+              ? { ...m, strategyId, strategyName }
+              : m
+          ));
+        }
+
         // 🪞 REFLEXIÓ: az AI kiértékeli a saját válaszát és tanul belőle
         supabase.functions.invoke("ai-self-reflect", {
           body: {
             user_question: text.trim(),
             ai_response: assistantSoFar,
+            strategy_id: strategyId,
           },
         }).then(({ data }) => {
           if (data?.reflection_id) {
-            // hozzáfűzöm a reflexió ID-t az utolsó asszisztens üzenethez (👍/👎-hoz)
             setMessages(prev => prev.map((m, i) =>
               i === prev.length - 1 && m.role === "assistant"
                 ? { ...m, reflectionId: data.reflection_id }
@@ -196,6 +205,11 @@ const AdminAiAssistant = () => {
         reflection_id: msg.reflectionId,
         rating,
       });
+      // 🧬 Stratégia statisztika frissítés: a feedback alapján a bandit megtanulja melyik a nyertes
+      if (msg.strategyId) {
+        supabase.rpc("update_strategy_stats" as any, { _strategy_id: msg.strategyId })
+          .then(() => {}, () => {});
+      }
       toast({
         title: rating === 1 ? "Köszi! 💙" : "Köszi a visszajelzést",
         description: rating === 1 ? "Megjegyzem, hogy ez segített." : "Tanulok belőle, legközelebb jobb leszek.",
