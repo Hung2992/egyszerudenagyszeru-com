@@ -267,7 +267,7 @@ const AdminAiAssistant = () => {
         )}
 
         {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+          <div key={i} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
             <div
               className={`max-w-[90%] text-xs px-3 py-2 ${
                 m.role === "user"
@@ -283,6 +283,26 @@ const AdminAiAssistant = () => {
                 m.content
               )}
             </div>
+            {m.role === "assistant" && m.reflectionId && (
+              <div className="flex gap-1 mt-1 ml-1">
+                <button
+                  onClick={() => sendFeedback(i, 1)}
+                  disabled={!!m.feedbackGiven}
+                  className={`p-1 rounded hover:bg-muted transition-colors ${m.feedbackGiven === 1 ? "text-green-500" : "text-muted-foreground"} disabled:opacity-50`}
+                  title="Hasznos volt"
+                >
+                  <ThumbsUp className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => sendFeedback(i, -1)}
+                  disabled={!!m.feedbackGiven}
+                  className={`p-1 rounded hover:bg-muted transition-colors ${m.feedbackGiven === -1 ? "text-red-500" : "text-muted-foreground"} disabled:opacity-50`}
+                  title="Nem volt jó"
+                >
+                  <ThumbsDown className="w-3 h-3" />
+                </button>
+              </div>
+            )}
           </div>
         ))}
 
