@@ -3435,6 +3435,7 @@ const Admin = () => {
         {tab === "ai_bookkeeper" && <AdminAiBookkeeperTab />}
         {tab === "ai_knowledge_base" && <AdminAiKnowledgeBaseTab />}
         {tab === "ai_brain_review" && <AdminAiBrainReviewTab />}
+        {tab === "ai_meta_learn" && <AdminAiMetaLearnTab />}
         {tab === "multilang" && <AdminMultilangTab />}
         {tab === "email_templates_custom" && <AdminEmailCenterTab />}
         {tab === "attribution" && <AdminAttributionTab />}
