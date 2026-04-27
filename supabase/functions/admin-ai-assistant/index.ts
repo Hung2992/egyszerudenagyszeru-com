@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.104.1'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
-  'Access-Control-Expose-Headers': 'x-ai-strategy-id, x-ai-strategy-name',
+  'Access-Control-Expose-Headers': 'x-ai-strategy-id, x-ai-strategy-name, x-ai-context, x-ai-exploration',
 }
 
 const AI_GATEWAY_URL = 'https://ai.gateway.lovable.dev/v1/chat/completions'
