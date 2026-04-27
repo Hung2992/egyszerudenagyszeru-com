@@ -963,12 +963,14 @@ Mindig magyarul válaszolj. Légy igazi társ — okos, melegszívű, megbízhat
     if (wantsJsonText) {
       const data = await response.json()
       const text = data?.choices?.[0]?.message?.content || ''
-      return new Response(JSON.stringify({ text, strategy_id: pickedStrategyId, strategy_name: pickedStrategyName }), {
+      return new Response(JSON.stringify({ text, strategy_id: pickedStrategyId, strategy_name: pickedStrategyName, context: pickedContext, exploration: explorationUsed }), {
         headers: {
           ...corsHeaders,
           'Content-Type': 'application/json',
           ...(pickedStrategyId ? { 'x-ai-strategy-id': pickedStrategyId } : {}),
           ...(pickedStrategyName ? { 'x-ai-strategy-name': pickedStrategyName } : {}),
+          ...(pickedContext ? { 'x-ai-context': pickedContext } : {}),
+          'x-ai-exploration': explorationUsed ? '1' : '0',
         },
       })
     }
@@ -979,6 +981,8 @@ Mindig magyarul válaszolj. Légy igazi társ — okos, melegszívű, megbízhat
         'Content-Type': 'text/event-stream',
         ...(pickedStrategyId ? { 'x-ai-strategy-id': pickedStrategyId } : {}),
         ...(pickedStrategyName ? { 'x-ai-strategy-name': pickedStrategyName } : {}),
+        ...(pickedContext ? { 'x-ai-context': pickedContext } : {}),
+        'x-ai-exploration': explorationUsed ? '1' : '0',
       },
     })
   } catch (error) {
