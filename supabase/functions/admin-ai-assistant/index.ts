@@ -858,8 +858,27 @@ Mindig magyarul válaszolj. Légy igazi társ — okos, melegszívű, megbízhat
       }
     } catch (e) { console.warn('RAG retrieval failed', e) }
 
+    // 🪞 ÖNREFLEXIÓS BETEKINTÉS: az AI tudja, miben gyenge mostanában
+    let reflectionContext = ''
+    try {
+      const { data: insights } = await supabase.rpc('get_reflection_insights', { _limit: 30 })
+      const r: any = Array.isArray(insights) ? insights[0] : insights
+      if (r && Number(r.total) > 0) {
+        const weak: string[] = []
+        if (Number(r.avg_correctness) < 0.7) weak.push('pontosság')
+        if (Number(r.avg_completeness) < 0.7) weak.push('teljesség')
+        if (Number(r.avg_tone) < 0.7) weak.push('hangnem')
+        if (weak.length > 0 || r.recent_gaps) {
+          reflectionContext = `\n\n## ÖNREFLEXIÓS TANULSÁGOK (utóbbi ${r.total} válaszod alapján)\n` +
+            `Átlagos önértékelés: pontosság ${r.avg_correctness}, teljesség ${r.avg_completeness}, hangnem ${r.avg_tone}.\n` +
+            (weak.length ? `⚠️ Gyengébb területek, amikre most fokozottan figyelj: ${weak.join(', ')}.\n` : '') +
+            (r.recent_gaps ? `Korábbi felismert hibák, amiket NE ismételj meg: ${String(r.recent_gaps).slice(0, 600)}\n` : '')
+        }
+      }
+    } catch (e) { console.warn('reflection insights failed', e) }
+
     const extraSystem = [customSystem, ...clientSystemMessages].filter(Boolean).join('\n\n')
-    const finalSystemPrompt = `${systemPrompt}${ownerContext}${ragContext}${extraSystem ? `\n\n## SPECIÁLIS UTASÍTÁS\n${extraSystem}` : ''}`
+    const finalSystemPrompt = `${systemPrompt}${ownerContext}${ragContext}${reflectionContext}${extraSystem ? `\n\n## SPECIÁLIS UTASÍTÁS\n${extraSystem}` : ''}`
 
     const response = await fetch(AI_GATEWAY_URL, {
       method: 'POST',
