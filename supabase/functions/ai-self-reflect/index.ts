@@ -154,6 +154,12 @@ Deno.serve(async (req) => {
       }
     }
 
+    // 🧬 Stratégia statisztika frissítése (önreflexiós átlag updatelése)
+    if (strategy_id) {
+      admin.rpc("update_strategy_stats", { _strategy_id: strategy_id })
+        .then(() => {}, () => {});
+    }
+
     return new Response(
       JSON.stringify({
         reflection_id: reflection.id,
