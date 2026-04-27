@@ -143,6 +143,17 @@ const AdminAiAssistant = () => {
       if (assistantSoFar.length > 50) {
         supabase.functions.invoke("ai-self-learn", {
           body: { userMessage: text.trim(), assistantMessage: assistantSoFar },
+        }).then(({ data }) => {
+          // 🌌 META-KONSZOLIDÁCIÓ: minden 5. új tanulás után átszervezi a tudást
+          if (data?.learned) {
+            const key = "ai_learn_counter";
+            const count = parseInt(localStorage.getItem(key) || "0", 10) + 1;
+            localStorage.setItem(key, String(count));
+            if (count % 5 === 0) {
+              supabase.functions.invoke("ai-knowledge-consolidate", { body: {} })
+                .catch(() => { /* háttérben, csendben */ });
+            }
+          }
         }).catch(() => { /* csendben hibatűrő */ });
       }
     }
