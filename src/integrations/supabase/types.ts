@@ -272,6 +272,7 @@ export type Database = {
           quality_score: number
           raw_text: string | null
           review_status: string
+          reviewer_notes: string | null
           source_count: number
           source_type: string
           status: string
@@ -280,6 +281,7 @@ export type Database = {
           updated_at: string
           usage_count: number
           version: number
+          weakness_reason: string | null
         }
         Insert: {
           chunk_count?: number
@@ -297,6 +299,7 @@ export type Database = {
           quality_score?: number
           raw_text?: string | null
           review_status?: string
+          reviewer_notes?: string | null
           source_count?: number
           source_type: string
           status?: string
@@ -305,6 +308,7 @@ export type Database = {
           updated_at?: string
           usage_count?: number
           version?: number
+          weakness_reason?: string | null
         }
         Update: {
           chunk_count?: number
@@ -322,6 +326,7 @@ export type Database = {
           quality_score?: number
           raw_text?: string | null
           review_status?: string
+          reviewer_notes?: string | null
           source_count?: number
           source_type?: string
           status?: string
@@ -330,6 +335,7 @@ export type Database = {
           updated_at?: string
           usage_count?: number
           version?: number
+          weakness_reason?: string | null
         }
         Relationships: []
       }
@@ -368,9 +374,13 @@ export type Database = {
           auto_applied: boolean
           created_at: string
           description: string
+          effective_at: string | null
           id: string
           payload: Json
           previous_state: Json | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
           reverted_at: string | null
           run_id: string | null
           status: string
@@ -384,9 +394,13 @@ export type Database = {
           auto_applied?: boolean
           created_at?: string
           description: string
+          effective_at?: string | null
           id?: string
           payload?: Json
           previous_state?: Json | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           reverted_at?: string | null
           run_id?: string | null
           status?: string
@@ -400,9 +414,13 @@ export type Database = {
           auto_applied?: boolean
           created_at?: string
           description?: string
+          effective_at?: string | null
           id?: string
           payload?: Json
           previous_state?: Json | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           reverted_at?: string | null
           run_id?: string | null
           status?: string
@@ -418,6 +436,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ai_meta_audit_log: {
+        Row: {
+          actor_id: string | null
+          actor_role: string | null
+          created_at: string
+          decision: string | null
+          event_type: string
+          id: string
+          input_stats: Json | null
+          output_payload: Json | null
+          reason: string | null
+          run_id: string | null
+          target_id: string | null
+          target_table: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_role?: string | null
+          created_at?: string
+          decision?: string | null
+          event_type: string
+          id?: string
+          input_stats?: Json | null
+          output_payload?: Json | null
+          reason?: string | null
+          run_id?: string | null
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_role?: string | null
+          created_at?: string
+          decision?: string | null
+          event_type?: string
+          id?: string
+          input_stats?: Json | null
+          output_payload?: Json | null
+          reason?: string | null
+          run_id?: string | null
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Relationships: []
       }
       ai_meta_learning_runs: {
         Row: {
@@ -464,40 +527,97 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_meta_principle_versions: {
+        Row: {
+          change_reason: string | null
+          change_type: string
+          changed_by: string | null
+          created_at: string
+          id: string
+          principle_id: string
+          snapshot: Json
+          version_number: number
+        }
+        Insert: {
+          change_reason?: string | null
+          change_type?: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          principle_id: string
+          snapshot: Json
+          version_number: number
+        }
+        Update: {
+          change_reason?: string | null
+          change_type?: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          principle_id?: string
+          snapshot?: Json
+          version_number?: number
+        }
+        Relationships: []
+      }
       ai_meta_principles: {
         Row: {
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           context: string
           contradiction_count: number
           created_at: string
+          current_version: number
+          effective_at: string | null
           id: string
           is_active: boolean
           last_reinforced_at: string
           principle: string
           reinforcement_count: number
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
           source: string
           weight: number
         }
         Insert: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           context?: string
           contradiction_count?: number
           created_at?: string
+          current_version?: number
+          effective_at?: string | null
           id?: string
           is_active?: boolean
           last_reinforced_at?: string
           principle: string
           reinforcement_count?: number
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           source?: string
           weight?: number
         }
         Update: {
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           context?: string
           contradiction_count?: number
           created_at?: string
+          current_version?: number
+          effective_at?: string | null
           id?: string
           is_active?: boolean
           last_reinforced_at?: string
           principle?: string
           reinforcement_count?: number
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           source?: string
           weight?: number
         }
@@ -639,6 +759,9 @@ export type Database = {
           improvement_suggestion: string | null
           overall_score: number | null
           question_context: string
+          review_required: boolean
+          review_status: string
+          reviewer_notes: string | null
           self_completeness: number
           self_correctness: number
           self_tone: number
@@ -647,6 +770,7 @@ export type Database = {
           used_domains: string[] | null
           used_knowledge_ids: string[] | null
           user_question: string
+          weakness_reason: string | null
           weakness_tags: string[]
         }
         Insert: {
@@ -659,6 +783,9 @@ export type Database = {
           improvement_suggestion?: string | null
           overall_score?: number | null
           question_context?: string
+          review_required?: boolean
+          review_status?: string
+          reviewer_notes?: string | null
           self_completeness?: number
           self_correctness?: number
           self_tone?: number
@@ -667,6 +794,7 @@ export type Database = {
           used_domains?: string[] | null
           used_knowledge_ids?: string[] | null
           user_question: string
+          weakness_reason?: string | null
           weakness_tags?: string[]
         }
         Update: {
@@ -679,6 +807,9 @@ export type Database = {
           improvement_suggestion?: string | null
           overall_score?: number | null
           question_context?: string
+          review_required?: boolean
+          review_status?: string
+          reviewer_notes?: string | null
           self_completeness?: number
           self_correctness?: number
           self_tone?: number
@@ -687,6 +818,7 @@ export type Database = {
           used_domains?: string[] | null
           used_knowledge_ids?: string[] | null
           user_question?: string
+          weakness_reason?: string | null
           weakness_tags?: string[]
         }
         Relationships: [
@@ -705,6 +837,7 @@ export type Database = {
           avg_user_rating: number
           context_stats: Json
           created_at: string
+          current_version: number
           description: string | null
           id: string
           is_active: boolean
@@ -723,6 +856,7 @@ export type Database = {
           avg_user_rating?: number
           context_stats?: Json
           created_at?: string
+          current_version?: number
           description?: string | null
           id?: string
           is_active?: boolean
@@ -741,6 +875,7 @@ export type Database = {
           avg_user_rating?: number
           context_stats?: Json
           created_at?: string
+          current_version?: number
           description?: string | null
           id?: string
           is_active?: boolean
@@ -753,6 +888,39 @@ export type Database = {
           updated_at?: string
           usage_count?: number
           win_rate?: number
+        }
+        Relationships: []
+      }
+      ai_strategy_versions: {
+        Row: {
+          change_reason: string | null
+          change_type: string
+          changed_by: string | null
+          created_at: string
+          id: string
+          snapshot: Json
+          strategy_id: string
+          version_number: number
+        }
+        Insert: {
+          change_reason?: string | null
+          change_type?: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          snapshot: Json
+          strategy_id: string
+          version_number: number
+        }
+        Update: {
+          change_reason?: string | null
+          change_type?: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          snapshot?: Json
+          strategy_id?: string
+          version_number?: number
         }
         Relationships: []
       }
@@ -3787,6 +3955,14 @@ export type Database = {
         Returns: Json
       }
       approve_ai_knowledge: { Args: { _doc_id: string }; Returns: boolean }
+      approve_meta_action: {
+        Args: { _action_id: string; _effective_at?: string }
+        Returns: undefined
+      }
+      approve_meta_principle: {
+        Args: { _effective_at?: string; _principle_id: string }
+        Returns: undefined
+      }
       authenticated_email: { Args: never; Returns: string }
       bump_ai_knowledge_usage: {
         Args: { _document_ids: string[] }
@@ -3814,6 +3990,7 @@ export type Database = {
         Args: { _context?: string; _limit?: number }
         Returns: {
           context: string
+          id: string
           principle: string
           weight: number
         }[]
@@ -4016,6 +4193,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      log_meta_run_audit: {
+        Args: {
+          _event_type: string
+          _input_stats?: Json
+          _output_payload?: Json
+          _run_id: string
+        }
+        Returns: undefined
+      }
       match_ai_knowledge: {
         Args: {
           match_count?: number
@@ -4074,8 +4260,21 @@ export type Database = {
         Args: { _doc_id: string; _reason?: string }
         Returns: boolean
       }
+      reject_meta_action: {
+        Args: { _action_id: string; _reason: string }
+        Returns: undefined
+      }
+      reject_meta_principle: {
+        Args: { _principle_id: string; _reason: string }
+        Returns: undefined
+      }
       revert_meta_action: { Args: { _action_id: string }; Returns: Json }
       rollback_ai_knowledge: { Args: { _doc_id: string }; Returns: boolean }
+      rollback_meta_principle: {
+        Args: { _version_id: string }
+        Returns: string
+      }
+      rollback_strategy: { Args: { _version_id: string }; Returns: string }
       run_meta_learning_analysis: {
         Args: { _lookback?: number }
         Returns: Json

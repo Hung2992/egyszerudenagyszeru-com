@@ -127,7 +127,11 @@ Deno.serve(async (req) => {
       ? String(question_context)
       : (ALLOWED_CONTEXTS.includes(String(parsed.question_context)) ? String(parsed.question_context) : "general");
 
-    // 2. Reflexió mentése
+    // 2. Reflexió mentése — gyenge válasz esetén KÖTELEZŐ admin review
+    const overallSelfScore =
+      (clamp(parsed.self_correctness) + clamp(parsed.self_completeness) + clamp(parsed.self_tone)) / 3;
+    const isWeak = overallSelfScore < 0.6;
+
     const { data: reflection, error: refErr } = await admin
       .from("ai_response_reflections")
       .insert({
@@ -145,6 +149,8 @@ Deno.serve(async (req) => {
         weakness_tags: safeTags,
         question_context: safeCtx,
         strategy_id: strategy_id ?? null,
+        review_required: isWeak,
+        review_status: isWeak ? "pending_review" : "auto_approved",
       })
       .select("id, overall_score")
       .single();
