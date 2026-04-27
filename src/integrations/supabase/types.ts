@@ -217,6 +217,143 @@ export type Database = {
           },
         ]
       }
+      ai_knowledge_chunks: {
+        Row: {
+          chunk_index: number
+          content: string
+          created_at: string
+          document_id: string
+          embedding: string | null
+          id: string
+          token_count: number | null
+        }
+        Insert: {
+          chunk_index: number
+          content: string
+          created_at?: string
+          document_id: string
+          embedding?: string | null
+          id?: string
+          token_count?: number | null
+        }
+        Update: {
+          chunk_index?: number
+          content?: string
+          created_at?: string
+          document_id?: string
+          embedding?: string | null
+          id?: string
+          token_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_knowledge_chunks_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "ai_knowledge_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_knowledge_documents: {
+        Row: {
+          chunk_count: number
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          file_path: string | null
+          file_size_bytes: number | null
+          id: string
+          mime_type: string | null
+          raw_text: string | null
+          source_type: string
+          status: string
+          summary: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          chunk_count?: number
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          file_path?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          mime_type?: string | null
+          raw_text?: string | null
+          source_type: string
+          status?: string
+          summary?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          chunk_count?: number
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          file_path?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          mime_type?: string | null
+          raw_text?: string | null
+          source_type?: string
+          status?: string
+          summary?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_owner_profile: {
+        Row: {
+          bio: string | null
+          business_name: string | null
+          custom_instructions: string | null
+          expertise_areas: string | null
+          full_name: string | null
+          goals: string | null
+          id: string
+          preferences: string | null
+          role: string | null
+          target_audience: string | null
+          tone_of_voice: string | null
+          updated_at: string
+          writing_style: string | null
+        }
+        Insert: {
+          bio?: string | null
+          business_name?: string | null
+          custom_instructions?: string | null
+          expertise_areas?: string | null
+          full_name?: string | null
+          goals?: string | null
+          id?: string
+          preferences?: string | null
+          role?: string | null
+          target_audience?: string | null
+          tone_of_voice?: string | null
+          updated_at?: string
+          writing_style?: string | null
+        }
+        Update: {
+          bio?: string | null
+          business_name?: string | null
+          custom_instructions?: string | null
+          expertise_areas?: string | null
+          full_name?: string | null
+          goals?: string | null
+          id?: string
+          preferences?: string | null
+          role?: string | null
+          target_audience?: string | null
+          tone_of_voice?: string | null
+          updated_at?: string
+          writing_style?: string | null
+        }
+        Relationships: []
+      }
       auto_procurement_log: {
         Row: {
           created_at: string
@@ -3418,6 +3555,20 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      match_ai_knowledge: {
+        Args: {
+          match_count?: number
+          query_embedding: string
+          similarity_threshold?: number
+        }
+        Returns: {
+          chunk_id: string
+          content: string
+          document_id: string
+          document_title: string
+          similarity: number
+        }[]
       }
       move_to_dlq: {
         Args: {
