@@ -1493,7 +1493,7 @@ const Admin = () => {
   ];
 
   // Mobil gyorselérés: a legfontosabb fülek – AI Marketing + Jogi + Adó kiemelten
-  const primaryTabKeys: Tab[] = ["ai_marketing_studio", "products", "orders", "ai_bookkeeper", "legal_center", "tax_invoice", "accounting", "settings"];
+  const primaryTabKeys: Tab[] = ["ai_marketing_studio", "ai_knowledge_base", "products", "orders", "ai_bookkeeper", "legal_center", "tax_invoice", "accounting", "settings"];
   const primaryTabs = primaryTabKeys
     .map((k) => tabs.find((t) => t.key === k))
     .filter((t): t is { key: Tab; label: string; icon: any } => Boolean(t));
