@@ -143,7 +143,8 @@ Deno.serve(async (req) => {
     const summary = await summarize(doc.raw_text);
 
     // Embed in batches
-    const BATCH = 8;
+    // Embed in nagyobb párhuzamos batch-ekben (gyorsabb tanulás)
+    const BATCH = 16;
     let totalInserted = 0;
     for (let i = 0; i < chunks.length; i += BATCH) {
       const slice = chunks.slice(i, i + BATCH);
