@@ -56,6 +56,8 @@ const AdminAiAssistant = () => {
     setIsLoading(true);
 
     let assistantSoFar = "";
+    let strategyId: string | undefined;
+    let strategyName: string | undefined;
 
     const updateAssistant = (content: string) => {
       assistantSoFar += content;
