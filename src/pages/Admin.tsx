@@ -75,6 +75,7 @@ import AdminAdvancedDiscountsTab from "@/components/admin/AdminAdvancedDiscounts
 import AdminAccountingTab from "@/components/admin/AdminAccountingTab";
 import AdminAiBookkeeperTab from "@/components/admin/AdminAiBookkeeperTab";
 import AdminAiKnowledgeBaseTab from "@/components/admin/AdminAiKnowledgeBaseTab";
+import AdminAiBrainReviewTab from "@/components/admin/AdminAiBrainReviewTab";
 import AdminMultilangTab from "@/components/admin/AdminMultilangTab";
 import AdminEmailTemplatesTab from "@/components/admin/AdminEmailTemplatesTab";
 import AdminAttributionTab from "@/components/admin/AdminAttributionTab";
@@ -3431,6 +3432,7 @@ const Admin = () => {
         {tab === "accounting" && <AdminAccountingTab />}
         {tab === "ai_bookkeeper" && <AdminAiBookkeeperTab />}
         {tab === "ai_knowledge_base" && <AdminAiKnowledgeBaseTab />}
+        {tab === "ai_brain_review" && <AdminAiBrainReviewTab />}
         {tab === "multilang" && <AdminMultilangTab />}
         {tab === "email_templates_custom" && <AdminEmailCenterTab />}
         {tab === "attribution" && <AdminAttributionTab />}
