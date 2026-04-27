@@ -1,12 +1,17 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Bot, Send, X, Loader2, Sparkles, Trash2 } from "lucide-react";
+import { Bot, Send, X, Loader2, Sparkles, Trash2, ThumbsUp, ThumbsDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/untyped-client";
 
-type Msg = { role: "user" | "assistant"; content: string };
+type Msg = {
+  role: "user" | "assistant";
+  content: string;
+  reflectionId?: string;
+  feedbackGiven?: 1 | -1;
+};
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-ai-assistant`;
 
@@ -155,7 +160,42 @@ const AdminAiAssistant = () => {
             }
           }
         }).catch(() => { /* csendben hibatűrő */ });
+
+        // 🪞 REFLEXIÓ: az AI kiértékeli a saját válaszát és tanul belőle
+        supabase.functions.invoke("ai-self-reflect", {
+          body: {
+            user_question: text.trim(),
+            ai_response: assistantSoFar,
+          },
+        }).then(({ data }) => {
+          if (data?.reflection_id) {
+            // hozzáfűzöm a reflexió ID-t az utolsó asszisztens üzenethez (👍/👎-hoz)
+            setMessages(prev => prev.map((m, i) =>
+              i === prev.length - 1 && m.role === "assistant"
+                ? { ...m, reflectionId: data.reflection_id }
+                : m
+            ));
+          }
+        }).catch(() => { /* csendben */ });
       }
+    }
+  };
+
+  const sendFeedback = async (msgIdx: number, rating: 1 | -1) => {
+    const msg = messages[msgIdx];
+    if (!msg?.reflectionId || msg.feedbackGiven) return;
+    setMessages(prev => prev.map((m, i) => i === msgIdx ? { ...m, feedbackGiven: rating } : m));
+    try {
+      await supabase.from("ai_response_feedback" as any).insert({
+        reflection_id: msg.reflectionId,
+        rating,
+      });
+      toast({
+        title: rating === 1 ? "Köszi! 💙" : "Köszi a visszajelzést",
+        description: rating === 1 ? "Megjegyzem, hogy ez segített." : "Tanulok belőle, legközelebb jobb leszek.",
+      });
+    } catch {
+      // csendben
     }
   };
 
@@ -227,7 +267,7 @@ const AdminAiAssistant = () => {
         )}
 
         {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+          <div key={i} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
             <div
               className={`max-w-[90%] text-xs px-3 py-2 ${
                 m.role === "user"
@@ -243,6 +283,26 @@ const AdminAiAssistant = () => {
                 m.content
               )}
             </div>
+            {m.role === "assistant" && m.reflectionId && (
+              <div className="flex gap-1 mt-1 ml-1">
+                <button
+                  onClick={() => sendFeedback(i, 1)}
+                  disabled={!!m.feedbackGiven}
+                  className={`p-1 rounded hover:bg-muted transition-colors ${m.feedbackGiven === 1 ? "text-green-500" : "text-muted-foreground"} disabled:opacity-50`}
+                  title="Hasznos volt"
+                >
+                  <ThumbsUp className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => sendFeedback(i, -1)}
+                  disabled={!!m.feedbackGiven}
+                  className={`p-1 rounded hover:bg-muted transition-colors ${m.feedbackGiven === -1 ? "text-red-500" : "text-muted-foreground"} disabled:opacity-50`}
+                  title="Nem volt jó"
+                >
+                  <ThumbsDown className="w-3 h-3" />
+                </button>
+              </div>
+            )}
           </div>
         ))}
 
