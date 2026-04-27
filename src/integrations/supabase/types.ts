@@ -264,13 +264,16 @@ export type Database = {
           file_path: string | null
           file_size_bytes: number | null
           id: string
+          last_used_at: string | null
           mime_type: string | null
+          quality_score: number
           raw_text: string | null
           source_type: string
           status: string
           summary: string | null
           title: string
           updated_at: string
+          usage_count: number
         }
         Insert: {
           chunk_count?: number
@@ -280,13 +283,16 @@ export type Database = {
           file_path?: string | null
           file_size_bytes?: number | null
           id?: string
+          last_used_at?: string | null
           mime_type?: string | null
+          quality_score?: number
           raw_text?: string | null
           source_type: string
           status?: string
           summary?: string | null
           title: string
           updated_at?: string
+          usage_count?: number
         }
         Update: {
           chunk_count?: number
@@ -296,13 +302,16 @@ export type Database = {
           file_path?: string | null
           file_size_bytes?: number | null
           id?: string
+          last_used_at?: string | null
           mime_type?: string | null
+          quality_score?: number
           raw_text?: string | null
           source_type?: string
           status?: string
           summary?: string | null
           title?: string
           updated_at?: string
+          usage_count?: number
         }
         Relationships: []
       }
@@ -3381,6 +3390,10 @@ export type Database = {
     Functions: {
       admin_audit_coupon: { Args: { _code: string }; Returns: Json }
       authenticated_email: { Args: never; Returns: string }
+      bump_ai_knowledge_usage: {
+        Args: { _document_ids: string[] }
+        Returns: undefined
+      }
       calc_reorder_quantity: {
         Args: { _product_id: string; _product_name: string }
         Returns: {
@@ -3388,6 +3401,7 @@ export type Database = {
           velocity: number
         }[]
       }
+      decay_ai_knowledge_quality: { Args: never; Returns: number }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
