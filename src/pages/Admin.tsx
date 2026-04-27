@@ -1423,6 +1423,7 @@ const Admin = () => {
     { key: "advanced_discounts", label: "Kedvezmények+", icon: Zap },
     { key: "accounting", label: "Könyvelés", icon: Receipt },
     { key: "ai_bookkeeper", label: "AI Könyvelő", icon: Brain },
+    { key: "ai_knowledge_base", label: "AI Tudásbázis", icon: Brain },
     { key: "multilang", label: "Nyelvek", icon: Globe },
     { key: "email_templates_custom", label: "E-mail sablonok", icon: Mail },
     { key: "attribution", label: "Csatornák", icon: MousePointerClick },
