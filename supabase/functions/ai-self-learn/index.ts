@@ -87,24 +87,49 @@ Deno.serve(async (req) => {
     }
 
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // 🔍 DUPLIKÁCIÓ SZŰRÉS: minden tényt összevetünk a meglévő tudással
+    const uniqueFacts: { fact: string; embedding: number[] }[] = [];
+    let duplicateCount = 0;
+    for (const fact of extracted.facts) {
+      const vec = await embedOne(fact);
+      if (!vec) continue;
+      // Keressünk hasonlót a meglévő tudásban
+      const { data: matches } = await admin.rpc("match_ai_knowledge", {
+        query_embedding: vec, match_count: 1, similarity_threshold: 0.92,
+      });
+      if (Array.isArray(matches) && matches.length > 0) {
+        // Már tudjuk — kihagyjuk
+        duplicateCount++;
+        continue;
+      }
+      uniqueFacts.push({ fact, embedding: vec });
+    }
+
+    if (uniqueFacts.length === 0) {
+      return new Response(JSON.stringify({ skipped: true, reason: "all_duplicates", duplicates: duplicateCount }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const title = `🧠 Tanulás: ${extracted.title || userMsg.slice(0, 60)}`;
-    const fullText = extracted.facts.map((f, i) => `${i + 1}. ${f}`).join("\n");
+    const fullText = uniqueFacts.map((f, i) => `${i + 1}. ${f.fact}`).join("\n");
 
     const { data: doc, error: docErr } = await admin.from("ai_knowledge_documents").insert({
       title, source_type: "self_learning", raw_text: fullText, summary: extracted.title || null,
-      status: "ready", chunk_count: extracted.facts.length, created_by: userId,
+      status: "ready", chunk_count: uniqueFacts.length, created_by: userId,
     }).select().single();
     if (docErr || !doc) throw new Error(docErr?.message || "doc insert failed");
 
-    // Embed each fact as its own chunk for precise retrieval
-    const chunks = await Promise.all(extracted.facts.map(async (fact, idx) => {
-      const vec = await embedOne(fact);
-      return { document_id: doc.id, chunk_index: idx, content: fact, embedding: vec, token_count: Math.ceil(fact.length / 4) };
+    const chunks = uniqueFacts.map((uf, idx) => ({
+      document_id: doc.id, chunk_index: idx, content: uf.fact,
+      embedding: uf.embedding, token_count: Math.ceil(uf.fact.length / 4),
     }));
-    const valid = chunks.filter(c => c.embedding);
-    if (valid.length > 0) await admin.from("ai_knowledge_chunks").insert(valid);
+    await admin.from("ai_knowledge_chunks").insert(chunks);
 
-    return new Response(JSON.stringify({ learned: true, factCount: valid.length, title }), {
+    return new Response(JSON.stringify({
+      learned: true, factCount: uniqueFacts.length, duplicates: duplicateCount, title,
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
