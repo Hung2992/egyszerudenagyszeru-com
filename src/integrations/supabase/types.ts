@@ -360,6 +360,149 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_meta_actions: {
+        Row: {
+          action_type: string
+          applied_at: string | null
+          applied_by: string | null
+          auto_applied: boolean
+          created_at: string
+          description: string
+          id: string
+          payload: Json
+          previous_state: Json | null
+          reverted_at: string | null
+          run_id: string | null
+          status: string
+          target_id: string | null
+          target_table: string | null
+        }
+        Insert: {
+          action_type: string
+          applied_at?: string | null
+          applied_by?: string | null
+          auto_applied?: boolean
+          created_at?: string
+          description: string
+          id?: string
+          payload?: Json
+          previous_state?: Json | null
+          reverted_at?: string | null
+          run_id?: string | null
+          status?: string
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Update: {
+          action_type?: string
+          applied_at?: string | null
+          applied_by?: string | null
+          auto_applied?: boolean
+          created_at?: string
+          description?: string
+          id?: string
+          payload?: Json
+          previous_state?: Json | null
+          reverted_at?: string | null
+          run_id?: string | null
+          status?: string
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_meta_actions_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ai_meta_learning_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_meta_learning_runs: {
+        Row: {
+          created_at: string
+          feedback_analyzed: number
+          id: string
+          patterns_found: Json
+          recommended_actions: Json
+          reflections_analyzed: number
+          run_type: string
+          self_deception_score: number
+          summary: string | null
+          top_weakness_tags: Json
+          weak_contexts: Json
+          weak_strategies: Json
+        }
+        Insert: {
+          created_at?: string
+          feedback_analyzed?: number
+          id?: string
+          patterns_found?: Json
+          recommended_actions?: Json
+          reflections_analyzed?: number
+          run_type?: string
+          self_deception_score?: number
+          summary?: string | null
+          top_weakness_tags?: Json
+          weak_contexts?: Json
+          weak_strategies?: Json
+        }
+        Update: {
+          created_at?: string
+          feedback_analyzed?: number
+          id?: string
+          patterns_found?: Json
+          recommended_actions?: Json
+          reflections_analyzed?: number
+          run_type?: string
+          self_deception_score?: number
+          summary?: string | null
+          top_weakness_tags?: Json
+          weak_contexts?: Json
+          weak_strategies?: Json
+        }
+        Relationships: []
+      }
+      ai_meta_principles: {
+        Row: {
+          context: string
+          contradiction_count: number
+          created_at: string
+          id: string
+          is_active: boolean
+          last_reinforced_at: string
+          principle: string
+          reinforcement_count: number
+          source: string
+          weight: number
+        }
+        Insert: {
+          context?: string
+          contradiction_count?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_reinforced_at?: string
+          principle: string
+          reinforcement_count?: number
+          source?: string
+          weight?: number
+        }
+        Update: {
+          context?: string
+          contradiction_count?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_reinforced_at?: string
+          principle?: string
+          reinforcement_count?: number
+          source?: string
+          weight?: number
+        }
+        Relationships: []
+      }
       ai_owner_profile: {
         Row: {
           bio: string | null
@@ -3639,6 +3782,10 @@ export type Database = {
     }
     Functions: {
       admin_audit_coupon: { Args: { _code: string }; Returns: Json }
+      apply_meta_action: {
+        Args: { _action_id: string; _user_id?: string }
+        Returns: Json
+      }
       approve_ai_knowledge: { Args: { _doc_id: string }; Returns: boolean }
       authenticated_email: { Args: never; Returns: string }
       bump_ai_knowledge_usage: {
@@ -3663,6 +3810,14 @@ export type Database = {
         Returns: number
       }
       generate_invoice_number: { Args: never; Returns: string }
+      get_active_principles: {
+        Args: { _context?: string; _limit?: number }
+        Returns: {
+          context: string
+          principle: string
+          weight: number
+        }[]
+      }
       get_pending_ai_reviews: {
         Args: { _limit?: number }
         Returns: {
@@ -3919,7 +4074,12 @@ export type Database = {
         Args: { _doc_id: string; _reason?: string }
         Returns: boolean
       }
+      revert_meta_action: { Args: { _action_id: string }; Returns: Json }
       rollback_ai_knowledge: { Args: { _doc_id: string }; Returns: boolean }
+      run_meta_learning_analysis: {
+        Args: { _lookback?: number }
+        Returns: Json
+      }
       set_maintenance_password: {
         Args: { _password: string }
         Returns: boolean
