@@ -788,8 +788,54 @@ FONTOS: **Konkrét számokkal, táblázatokkal** válaszolj. Adj **3 szintű jav
 
 Mindig magyarul válaszolj. Légy profi, tömör, és adj akcióképes tanácsokat.`
 
+    // ============================================================
+    // 🧠 OWNER PROFILE + RAG KNOWLEDGE INJECTION
+    // ============================================================
+    let ownerContext = ''
+    let ragContext = ''
+    try {
+      const { data: profile } = await supabase.from('ai_owner_profile').select('*').limit(1).maybeSingle()
+      if (profile) {
+        const fields: Array<[string, string]> = [
+          ['Név', profile.full_name], ['Vállalkozás', profile.business_name], ['Szerep', profile.role],
+          ['Bemutatkozás', profile.bio], ['Célok', profile.goals], ['Hangnem', profile.tone_of_voice],
+          ['Írásstílus', profile.writing_style], ['Célközönség', profile.target_audience],
+          ['Szakterületek', profile.expertise_areas], ['Preferenciák', profile.preferences],
+          ['Egyedi utasítások', profile.custom_instructions],
+        ]
+        const lines = fields.filter(([_, v]) => v && String(v).trim()).map(([k, v]) => `- **${k}**: ${v}`)
+        if (lines.length) ownerContext = `\n\n## TULAJDONOS PROFIL (mindig vedd figyelembe)\n${lines.join('\n')}`
+      }
+    } catch (e) { console.warn('owner profile fetch failed', e) }
+
+    try {
+      const lastUser = [...messages].reverse().find((m: any) => m.role === 'user')?.content || ''
+      if (lastUser && lastUser.length > 3) {
+        const embResp = await fetch('https://ai.gateway.lovable.dev/v1/embeddings', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: 'google/text-embedding-004', input: lastUser.slice(0, 2000) }),
+        })
+        if (embResp.ok) {
+          const embData = await embResp.json()
+          const queryVec = embData?.data?.[0]?.embedding
+          if (Array.isArray(queryVec)) {
+            const { data: matches } = await supabase.rpc('match_ai_knowledge', {
+              query_embedding: queryVec, match_count: 6, similarity_threshold: 0.4,
+            })
+            if (Array.isArray(matches) && matches.length) {
+              const formatted = matches.map((m: any, i: number) =>
+                `### Forrás ${i + 1}: ${m.document_title} (egyezés: ${(m.similarity * 100).toFixed(0)}%)\n${m.content}`
+              ).join('\n\n')
+              ragContext = `\n\n## SAJÁT TUDÁSBÁZIS (a kérdéshez kapcsolódó részletek)\n${formatted}\n\n**Hivatkozz erre a tudásra, ha releváns. Ha nem elég, mondd meg őszintén.**`
+            }
+          }
+        }
+      }
+    } catch (e) { console.warn('RAG retrieval failed', e) }
+
     const extraSystem = [customSystem, ...clientSystemMessages].filter(Boolean).join('\n\n')
-    const finalSystemPrompt = extraSystem ? `${systemPrompt}\n\n## SPECIÁLIS UTASÍTÁS\n${extraSystem}` : systemPrompt
+    const finalSystemPrompt = `${systemPrompt}${ownerContext}${ragContext}${extraSystem ? `\n\n## SPECIÁLIS UTASÍTÁS\n${extraSystem}` : ''}`
 
     const response = await fetch(AI_GATEWAY_URL, {
       method: 'POST',
