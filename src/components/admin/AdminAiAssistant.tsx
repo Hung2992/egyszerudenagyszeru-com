@@ -181,17 +181,25 @@ const AdminAiAssistant = () => {
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3">
         {messages.length === 0 && (
-          <div className="text-center space-y-3 py-4">
-            <Bot className="w-10 h-10 mx-auto text-muted-foreground" />
-            <p className="text-xs text-muted-foreground">
-              Kérdezz bármit a webshopról — rendelések, beszerzés, készlet, profit, árazás...
-            </p>
-            <div className="flex flex-wrap gap-1.5 justify-center">
+          <div className="text-center space-y-4 py-6">
+            <div className="relative w-16 h-16 mx-auto">
+              <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping" />
+              <div className="relative w-16 h-16 bg-gradient-to-br from-primary to-primary/70 rounded-full flex items-center justify-center">
+                <Bot className="w-8 h-8 text-primary-foreground" />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-semibold">Szia! Itt vagyok 💙</p>
+              <p className="text-xs text-muted-foreground px-4">
+                Partnered, barátod és jobbkezed egyben. Beszélgessünk, vagy mondd el mire van szükséged!
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-1.5 justify-center px-2">
               {QUICK_PROMPTS.map(q => (
                 <button
                   key={q}
                   onClick={() => sendMessage(q)}
-                  className="text-[10px] border border-border px-2 py-1 hover:bg-accent hover:text-accent-foreground transition-colors uppercase tracking-wider"
+                  className="text-[11px] border border-border rounded-full px-3 py-1.5 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
                 >
                   {q}
                 </button>
