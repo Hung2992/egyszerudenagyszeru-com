@@ -145,21 +145,28 @@ const AdminAiAssistant = () => {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors border border-primary/20"
-        title="AI Asszisztens"
+        className="fixed bottom-6 right-6 z-50 w-16 h-16 rounded-full bg-gradient-to-br from-primary via-primary to-primary/80 text-primary-foreground flex items-center justify-center shadow-2xl hover:scale-110 hover:shadow-primary/50 transition-all duration-300 border-2 border-primary/30 group"
+        title="AI Partnered & Barátod"
       >
-        <Bot className="w-6 h-6" />
+        <Bot className="w-7 h-7 group-hover:rotate-12 transition-transform" />
+        <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-background animate-pulse" />
       </button>
     );
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 w-[380px] h-[520px] bg-card border border-border shadow-2xl flex flex-col">
+    <div className="fixed bottom-6 right-6 z-50 w-[420px] h-[600px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] bg-card border border-border shadow-2xl flex flex-col rounded-lg overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-accent/30">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-primary" />
-          <span className="text-xs font-bold uppercase tracking-wider">AI Admin Asszisztens</span>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-gradient-to-r from-primary/10 via-accent/30 to-primary/10">
+        <div className="flex items-center gap-2.5">
+          <div className="relative">
+            <Sparkles className="w-5 h-5 text-primary" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-bold tracking-wide">Partnered & Barátod</span>
+            <span className="text-[10px] text-muted-foreground">Mindig itt vagyok neked 💙</span>
+          </div>
         </div>
         <div className="flex items-center gap-1">
           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setMessages([])} title="Törlés">
