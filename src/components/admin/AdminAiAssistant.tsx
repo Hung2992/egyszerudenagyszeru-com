@@ -88,6 +88,10 @@ const AdminAiAssistant = () => {
         return;
       }
 
+      // 🧬 Stratégia ID a header-ben (evolúciós tanuláshoz)
+      const strategyId = resp.headers.get("x-ai-strategy-id") || undefined;
+      const strategyName = resp.headers.get("x-ai-strategy-name") || undefined;
+
       if (!resp.body) throw new Error("No stream body");
 
       const reader = resp.body.getReader();
