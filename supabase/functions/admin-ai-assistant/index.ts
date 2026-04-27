@@ -836,7 +836,7 @@ Mindig magyarul válaszolj. Légy igazi társ — okos, melegszívű, megbízhat
           const queryVec = embData?.data?.[0]?.embedding
           if (Array.isArray(queryVec)) {
             const { data: matches } = await supabase.rpc('match_ai_knowledge', {
-              query_embedding: queryVec, match_count: 6, similarity_threshold: 0.4,
+              query_embedding: queryVec, match_count: 12, similarity_threshold: 0.25,
             })
             if (Array.isArray(matches) && matches.length) {
               const formatted = matches.map((m: any, i: number) =>
@@ -865,6 +865,7 @@ Mindig magyarul válaszolj. Légy igazi társ — okos, melegszívű, megbízhat
           ...messages,
         ],
         stream: !wantsJsonText,
+        reasoning: { effort: 'high' },
       }),
     })
 
