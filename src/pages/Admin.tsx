@@ -74,6 +74,7 @@ import AdminProductSchedulingTab from "@/components/admin/AdminProductScheduling
 import AdminAdvancedDiscountsTab from "@/components/admin/AdminAdvancedDiscountsTab";
 import AdminAccountingTab from "@/components/admin/AdminAccountingTab";
 import AdminAiBookkeeperTab from "@/components/admin/AdminAiBookkeeperTab";
+import AdminAiKnowledgeBaseTab from "@/components/admin/AdminAiKnowledgeBaseTab";
 import AdminMultilangTab from "@/components/admin/AdminMultilangTab";
 import AdminEmailTemplatesTab from "@/components/admin/AdminEmailTemplatesTab";
 import AdminAttributionTab from "@/components/admin/AdminAttributionTab";
