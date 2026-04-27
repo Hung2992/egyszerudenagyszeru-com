@@ -105,6 +105,7 @@ Deno.serve(async (req) => {
         self_tone: clamp(parsed.self_tone),
         identified_gaps: String(parsed.identified_gaps || "").slice(0, 500),
         suggested_strategy: String(parsed.suggested_strategy || "").slice(0, 500),
+        strategy_id: strategy_id ?? null,
       })
       .select("id, overall_score")
       .single();
