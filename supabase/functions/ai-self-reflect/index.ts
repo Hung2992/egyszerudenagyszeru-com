@@ -42,6 +42,7 @@ Deno.serve(async (req) => {
       conversation_id,
       used_knowledge_ids = [],
       used_domains = [],
+      strategy_id,
     } = await req.json();
 
     if (!user_question || !ai_response) {
