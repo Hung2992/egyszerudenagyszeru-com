@@ -846,6 +846,12 @@ Mindig magyarul válaszolj. Légy igazi társ — okos, melegszívű, megbízhat
                 `### Forrás ${i + 1}: ${m.document_title} (egyezés: ${(m.similarity * 100).toFixed(0)}%)\n${m.content}`
               ).join('\n\n')
               ragContext = `\n\n## SAJÁT TUDÁSBÁZIS (a kérdéshez kapcsolódó részletek - ${matches.length} forrás)\n${formatted}\n\n**Hivatkozz erre a tudásra, ha releváns. Ha nem elég, mondd meg őszintén.**`
+
+              // 📈 USAGE TRACKING: a használt tudás minősége nő, így a tisztító nem törli
+              const docIds = Array.from(new Set(matches.map((m: any) => m.document_id).filter(Boolean)))
+              if (docIds.length > 0) {
+                supabase.rpc('bump_ai_knowledge_usage', { _document_ids: docIds }).then(() => {}, () => {})
+              }
             }
           }
         }
