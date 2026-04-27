@@ -825,24 +825,27 @@ Mindig magyarul válaszolj. Légy igazi társ — okos, melegszívű, megbízhat
 
     try {
       const lastUser = [...messages].reverse().find((m: any) => m.role === 'user')?.content || ''
-      if (lastUser && lastUser.length > 3) {
+      // Hozzávesszük az előző 2 user üzenetet is, hogy a kontextus ne vesszen el
+      const recentUserMsgs = messages.filter((m: any) => m.role === 'user').slice(-3).map((m: any) => m.content).join(' \n ')
+      const queryText = (recentUserMsgs || lastUser).slice(0, 3000)
+      if (queryText && queryText.length > 3) {
         const embResp = await fetch('https://ai.gateway.lovable.dev/v1/embeddings', {
           method: 'POST',
           headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: 'google/text-embedding-004', input: lastUser.slice(0, 2000) }),
+          body: JSON.stringify({ model: 'google/text-embedding-004', input: queryText }),
         })
         if (embResp.ok) {
           const embData = await embResp.json()
           const queryVec = embData?.data?.[0]?.embedding
           if (Array.isArray(queryVec)) {
             const { data: matches } = await supabase.rpc('match_ai_knowledge', {
-              query_embedding: queryVec, match_count: 24, similarity_threshold: 0.15,
+              query_embedding: queryVec, match_count: 32, similarity_threshold: 0.1,
             })
             if (Array.isArray(matches) && matches.length) {
               const formatted = matches.map((m: any, i: number) =>
                 `### Forrás ${i + 1}: ${m.document_title} (egyezés: ${(m.similarity * 100).toFixed(0)}%)\n${m.content}`
               ).join('\n\n')
-              ragContext = `\n\n## SAJÁT TUDÁSBÁZIS (a kérdéshez kapcsolódó részletek)\n${formatted}\n\n**Hivatkozz erre a tudásra, ha releváns. Ha nem elég, mondd meg őszintén.**`
+              ragContext = `\n\n## SAJÁT TUDÁSBÁZIS (a kérdéshez kapcsolódó részletek - ${matches.length} forrás)\n${formatted}\n\n**Hivatkozz erre a tudásra, ha releváns. Ha nem elég, mondd meg őszintén.**`
             }
           }
         }
