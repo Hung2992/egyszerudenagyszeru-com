@@ -160,7 +160,42 @@ const AdminAiAssistant = () => {
             }
           }
         }).catch(() => { /* csendben hibatűrő */ });
+
+        // 🪞 REFLEXIÓ: az AI kiértékeli a saját válaszát és tanul belőle
+        supabase.functions.invoke("ai-self-reflect", {
+          body: {
+            user_question: text.trim(),
+            ai_response: assistantSoFar,
+          },
+        }).then(({ data }) => {
+          if (data?.reflection_id) {
+            // hozzáfűzöm a reflexió ID-t az utolsó asszisztens üzenethez (👍/👎-hoz)
+            setMessages(prev => prev.map((m, i) =>
+              i === prev.length - 1 && m.role === "assistant"
+                ? { ...m, reflectionId: data.reflection_id }
+                : m
+            ));
+          }
+        }).catch(() => { /* csendben */ });
       }
+    }
+  };
+
+  const sendFeedback = async (msgIdx: number, rating: 1 | -1) => {
+    const msg = messages[msgIdx];
+    if (!msg?.reflectionId || msg.feedbackGiven) return;
+    setMessages(prev => prev.map((m, i) => i === msgIdx ? { ...m, feedbackGiven: rating } : m));
+    try {
+      await supabase.from("ai_response_feedback" as any).insert({
+        reflection_id: msg.reflectionId,
+        rating,
+      });
+      toast({
+        title: rating === 1 ? "Köszi! 💙" : "Köszi a visszajelzést",
+        description: rating === 1 ? "Megjegyzem, hogy ez segített." : "Tanulok belőle, legközelebb jobb leszek.",
+      });
+    } catch {
+      // csendben
     }
   };
 
