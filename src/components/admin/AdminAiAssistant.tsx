@@ -250,7 +250,7 @@ const AdminAiAssistant = () => {
               sendMessage(input);
             }
           }}
-          placeholder="Kérdezz az AI-tól..."
+          placeholder="Írj nekem bármit... 💙"
           rows={1}
           className="flex-1 text-xs resize-none min-h-[36px] max-h-[80px]"
           disabled={isLoading}
