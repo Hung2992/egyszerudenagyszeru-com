@@ -1426,6 +1426,7 @@ const Admin = () => {
     { key: "ai_bookkeeper", label: "AI Könyvelő", icon: Brain },
     { key: "ai_knowledge_base", label: "AI Tudásbázis", icon: Brain },
     { key: "ai_brain_review", label: "AI Agy Review", icon: Brain },
+    { key: "ai_meta_learn", label: "AI Meta-tanulás", icon: Brain },
     { key: "multilang", label: "Nyelvek", icon: Globe },
     { key: "email_templates_custom", label: "E-mail sablonok", icon: Mail },
     { key: "attribution", label: "Csatornák", icon: MousePointerClick },
