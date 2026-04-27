@@ -11,12 +11,12 @@ type Msg = { role: "user" | "assistant"; content: string };
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-ai-assistant`;
 
 const QUICK_PROMPTS = [
-  "Mennyi a mai profit?",
-  "Melyik termék fogy legjobban?",
-  "Milyen beszerzések várnak?",
-  "Alacsony készletű termékek?",
-  "Árazási javaslat",
-  "Havi összefoglaló",
+  "Szia! Mi a helyzet? 👋",
+  "Mit javasolsz most?",
+  "Mai profit & teendők",
+  "Mire figyeljek ma?",
+  "Beszélgessünk egy kicsit",
+  "Adj egy üzleti tippet",
 ];
 
 const AdminAiAssistant = () => {
@@ -145,21 +145,28 @@ const AdminAiAssistant = () => {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors border border-primary/20"
-        title="AI Asszisztens"
+        className="fixed bottom-6 right-6 z-50 w-16 h-16 rounded-full bg-gradient-to-br from-primary via-primary to-primary/80 text-primary-foreground flex items-center justify-center shadow-2xl hover:scale-110 hover:shadow-primary/50 transition-all duration-300 border-2 border-primary/30 group"
+        title="AI Partnered & Barátod"
       >
-        <Bot className="w-6 h-6" />
+        <Bot className="w-7 h-7 group-hover:rotate-12 transition-transform" />
+        <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-background animate-pulse" />
       </button>
     );
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 w-[380px] h-[520px] bg-card border border-border shadow-2xl flex flex-col">
+    <div className="fixed bottom-6 right-6 z-50 w-[420px] h-[600px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] bg-card border border-border shadow-2xl flex flex-col rounded-lg overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-accent/30">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-primary" />
-          <span className="text-xs font-bold uppercase tracking-wider">AI Admin Asszisztens</span>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-gradient-to-r from-primary/10 via-accent/30 to-primary/10">
+        <div className="flex items-center gap-2.5">
+          <div className="relative">
+            <Sparkles className="w-5 h-5 text-primary" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-bold tracking-wide">Partnered & Barátod</span>
+            <span className="text-[10px] text-muted-foreground">Mindig itt vagyok neked 💙</span>
+          </div>
         </div>
         <div className="flex items-center gap-1">
           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setMessages([])} title="Törlés">
@@ -174,17 +181,25 @@ const AdminAiAssistant = () => {
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3">
         {messages.length === 0 && (
-          <div className="text-center space-y-3 py-4">
-            <Bot className="w-10 h-10 mx-auto text-muted-foreground" />
-            <p className="text-xs text-muted-foreground">
-              Kérdezz bármit a webshopról — rendelések, beszerzés, készlet, profit, árazás...
-            </p>
-            <div className="flex flex-wrap gap-1.5 justify-center">
+          <div className="text-center space-y-4 py-6">
+            <div className="relative w-16 h-16 mx-auto">
+              <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping" />
+              <div className="relative w-16 h-16 bg-gradient-to-br from-primary to-primary/70 rounded-full flex items-center justify-center">
+                <Bot className="w-8 h-8 text-primary-foreground" />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-semibold">Szia! Itt vagyok 💙</p>
+              <p className="text-xs text-muted-foreground px-4">
+                Partnered, barátod és jobbkezed egyben. Beszélgessünk, vagy mondd el mire van szükséged!
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-1.5 justify-center px-2">
               {QUICK_PROMPTS.map(q => (
                 <button
                   key={q}
                   onClick={() => sendMessage(q)}
-                  className="text-[10px] border border-border px-2 py-1 hover:bg-accent hover:text-accent-foreground transition-colors uppercase tracking-wider"
+                  className="text-[11px] border border-border rounded-full px-3 py-1.5 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
                 >
                   {q}
                 </button>
@@ -235,7 +250,7 @@ const AdminAiAssistant = () => {
               sendMessage(input);
             }
           }}
-          placeholder="Kérdezz az AI-tól..."
+          placeholder="Írj nekem bármit... 💙"
           rows={1}
           className="flex-1 text-xs resize-none min-h-[36px] max-h-[80px]"
           disabled={isLoading}
