@@ -33,31 +33,32 @@ function chunkText(text: string, maxChars = 1200, overlap = 150): string[] {
   return chunks.filter((c) => c.length > 20);
 }
 
-async function embedBatch(texts: string[]): Promise<number[][]> {
-  // Gemini embedding via Lovable AI Gateway
-  const out: number[][] = [];
-  for (const text of texts) {
+async function embedOne(text: string, retries = 2): Promise<number[]> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
     const resp = await fetch(`${AI_GATEWAY}/embeddings`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/text-embedding-004",
-        input: text,
-      }),
+      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "google/text-embedding-004", input: text }),
     });
-    if (!resp.ok) {
-      const errText = await resp.text();
-      throw new Error(`Embedding failed [${resp.status}]: ${errText}`);
+    if (resp.ok) {
+      const data = await resp.json();
+      const vec = data?.data?.[0]?.embedding;
+      if (Array.isArray(vec)) return vec;
+      throw new Error("No embedding returned");
     }
-    const data = await resp.json();
-    const vec = data?.data?.[0]?.embedding;
-    if (!Array.isArray(vec)) throw new Error("No embedding returned");
-    out.push(vec);
+    if (resp.status === 429 && attempt < retries) {
+      await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+      continue;
+    }
+    const errText = await resp.text();
+    throw new Error(`Embedding failed [${resp.status}]: ${errText}`);
   }
-  return out;
+  throw new Error("Embedding failed after retries");
+}
+
+async function embedBatch(texts: string[]): Promise<number[][]> {
+  // Igazi párhuzamos hívások (Promise.all) — sokkal gyorsabb tanulás
+  return await Promise.all(texts.map((t) => embedOne(t)));
 }
 
 async function summarize(text: string): Promise<string> {
