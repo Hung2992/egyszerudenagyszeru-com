@@ -235,12 +235,20 @@ export default function AdminAiBulkIngestPanel() {
   };
 
   const mediaCounts = {
-    pending: media.filter((m) => m.status === "pending" || m.status === "pending_remote").length,
-    processing: media.filter((m) => m.status === "processing").length,
-    completed: media.filter((m) => m.status === "completed").length,
-    failed: media.filter((m) => m.status === "failed").length,
-    skipped: media.filter((m) => m.status.startsWith("skipped")).length,
+    total: mediaStats.reduce((sum, row) => sum + row.count, 0),
+    video: mediaStats.filter((m) => m.media_type === "video").reduce((sum, row) => sum + row.count, 0),
+    audio: mediaStats.filter((m) => m.media_type === "audio").reduce((sum, row) => sum + row.count, 0),
+    image: mediaStats.filter((m) => m.media_type === "image").reduce((sum, row) => sum + row.count, 0),
+    pending: mediaStats.filter((m) => m.status === "pending" || m.status === "pending_remote").reduce((sum, row) => sum + row.count, 0),
+    localPending: mediaStats.filter((m) => m.status === "pending").reduce((sum, row) => sum + row.count, 0),
+    remotePending: mediaStats.filter((m) => m.status === "pending_remote").reduce((sum, row) => sum + row.count, 0),
+    processing: mediaStats.filter((m) => m.status === "processing").reduce((sum, row) => sum + row.count, 0),
+    completed: mediaStats.filter((m) => m.status === "completed").reduce((sum, row) => sum + row.count, 0),
+    failed: mediaStats.filter((m) => m.status === "failed").reduce((sum, row) => sum + row.count, 0),
+    skipped: mediaStats.filter((m) => m.status.startsWith("skipped")).reduce((sum, row) => sum + row.count, 0),
   };
+
+  const latestErrors = media.filter((m) => m.status === "failed" || m.error_message).slice(0, 20);
 
   return (
     <div className="space-y-6">
