@@ -463,22 +463,57 @@ Deno.serve(async (req) => {
 
     // Média fájlok feltöltése Storage-ba + queue beírás (NEM elemez most, csak tárol)
     let mediaQueued = 0, mediaFailed = 0;
+    let remoteDownloads = 0;
     for (const m of mediaEntries) {
       try {
         const safeName = m.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
-        const storagePath = `media/${job.id}/${crypto.randomUUID()}_${safeName}`;
-        const { error: upErr } = await admin.storage.from("ai-bulk-uploads").upload(storagePath, m.bytes, {
-          contentType: m.mime, upsert: false,
-        });
-        if (upErr) throw upErr;
+        let storagePath = `media/${job.id}/${crypto.randomUUID()}_${safeName}`;
+        let storedSize = m.bytes?.length ?? null;
+        let queueStatus = "pending";
+        const metadata: Record<string, any> = m.sourceUrl ? { remote_url: m.sourceUrl, source_path: m.sourcePath } : {};
+
+        if (m.bytes) {
+          const { error: upErr } = await admin.storage.from("ai-bulk-uploads").upload(storagePath, m.bytes, {
+            contentType: m.mime, upsert: false,
+          });
+          if (upErr) throw upErr;
+        } else if (m.sourceUrl && remoteDownloads < MAX_REMOTE_MEDIA_DOWNLOADS_PER_CALL) {
+          remoteDownloads++;
+          const ctrl = new AbortController();
+          const timeout = setTimeout(() => ctrl.abort(), 12_000);
+          try {
+            const resp = await fetch(m.sourceUrl, { redirect: "follow", signal: ctrl.signal, headers: { "User-Agent": "Mozilla/5.0 LovableAIBulkIngest/1.0" } });
+            if (!resp.ok) throw new Error(`remote HTTP ${resp.status}`);
+            const len = Number(resp.headers.get("content-length") || "0");
+            if (len > MAX_STREAMED_MEDIA_BYTES) throw new Error(`remote media túl nagy: ${len}`);
+            const remoteBytes = new Uint8Array(await resp.arrayBuffer());
+            if (remoteBytes.length > MAX_STREAMED_MEDIA_BYTES) throw new Error(`remote media túl nagy: ${remoteBytes.length}`);
+            storedSize = remoteBytes.length;
+            const contentType = resp.headers.get("content-type") || m.mime;
+            const { error: upErr } = await admin.storage.from("ai-bulk-uploads").upload(storagePath, remoteBytes, {
+              contentType, upsert: false,
+            });
+            if (upErr) throw upErr;
+            m.mime = contentType;
+          } finally {
+            clearTimeout(timeout);
+          }
+        } else if (m.sourceUrl) {
+          storagePath = m.sourceUrl;
+          queueStatus = "skipped_remote_link_only";
+        } else {
+          throw new Error("missing media bytes");
+        }
+
         await admin.from("ai_video_processing_queue").insert({
           bulk_job_id: job.id,
           storage_path: storagePath,
           original_filename: m.filename,
           mime_type: m.mime,
-          file_size_bytes: m.bytes.length,
+          file_size_bytes: storedSize,
           media_type: m.mediaType,
-          status: "pending",
+          status: queueStatus,
+          metadata,
         });
         mediaQueued++;
       } catch (e: any) {
