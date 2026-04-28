@@ -1,6 +1,6 @@
 // AI Bulk Ingest: JSON / URL list / ZIP -> structured article -> embedding-ready knowledge docs
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { unzipSync, strFromU8 } from "https://esm.sh/fflate@0.8.2";
+import { Unzip, UnzipInflate, strFromU8 } from "https://esm.sh/fflate@0.8.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,6 +17,8 @@ const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1";
 const MAX_SOURCES_PER_JOB = 200;
 const MAX_HTML_CHARS = 200_000;
 const MAX_TEXT_ENTRY_BYTES = 80_000_000;
+const MAX_STREAMED_TEXT_BYTES = 4_000_000;
+const MAX_STREAMED_MEDIA_BYTES = 25_000_000;
 const RAW_ONLY_THRESHOLD_CHARS = 80_000;
 const ZIP_CHUNK_CHARS = 24_000;
 const MAX_CHUNKS_PER_TEXT_ENTRY = 120;
