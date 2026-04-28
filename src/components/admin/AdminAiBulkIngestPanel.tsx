@@ -510,12 +510,36 @@ export default function AdminAiBulkIngestPanel() {
             <Film className="w-4 h-4" /> Média fájlok ({mediaCounts.total})
           </h3>
           <div className="flex items-center gap-1">
-            <Button variant="outline" size="sm" onClick={processMediaQueue} disabled={processingQueue || mediaCounts.pending === 0}>
+            <Button variant="outline" size="sm" onClick={processMediaQueue} disabled={processingQueue || autoProcessing || mediaCounts.pending === 0}>
               {processingQueue ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <PlayCircle className="w-4 h-4 mr-1" />}
-              100 feldolgozása
+              250
+            </Button>
+            <Button variant="outline" size="sm" onClick={autoProcessing ? () => { stopAutoRef.current = true; } : processAllMediaQueue} disabled={processingQueue || mediaCounts.pending === 0}>
+              {autoProcessing ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <PlayCircle className="w-4 h-4 mr-1" />}
+              {autoProcessing ? "Stop" : "Mind"}
             </Button>
             <Button variant="ghost" size="sm" onClick={fetchMedia}><RefreshCw className="w-4 h-4" /></Button>
           </div>
+        </div>
+        <div className="mb-3 space-y-2 text-xs">
+          <div className="flex items-center justify-between gap-3">
+            <span className="font-semibold">Letöltés / feldolgozás: {mediaPercent}%</span>
+            <span className="text-muted-foreground">{mediaDone}/{mediaCounts.total}</span>
+          </div>
+          <div className="h-3 w-full border bg-muted overflow-hidden">
+            <div className="h-full bg-primary transition-all" style={{ width: `${Math.min(100, mediaPercent)}%` }} />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="border p-2 flex items-center gap-2"><DownloadCloud className="w-4 h-4" /><span>{mediaCounts.downloaded} letöltött fájl</span></div>
+            <div className="border p-2 flex items-center gap-2"><Link2 className="w-4 h-4" /><span>{mediaCounts.linkRegistered} linkként mentve</span></div>
+            <div className="border p-2 flex items-center gap-2"><HardDrive className="w-4 h-4" /><span>{storageMb.toFixed(1)} MB média</span></div>
+            <div className="border p-2 flex items-center gap-2"><Layers className="w-4 h-4" /><span>Max 250 / kör</span></div>
+          </div>
+          {lastWorkerResult?.memory && (
+            <p className="text-muted-foreground">
+              Memória mód: {lastWorkerResult.memory.safe_mode || "batch feldolgozás"}; max {lastWorkerResult.memory.max_download_mb_per_file}MB / fájl; timeout {lastWorkerResult.memory.remote_timeout_ms}ms.
+            </p>
+          )}
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3 text-xs">
           <div className="border p-2"><div className="text-muted-foreground">Videó</div><div className="font-bold text-lg">{mediaCounts.video}</div></div>
