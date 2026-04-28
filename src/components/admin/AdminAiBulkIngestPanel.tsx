@@ -58,6 +58,8 @@ export default function AdminAiBulkIngestPanel() {
   const [zipFile, setZipFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [jobs, setJobs] = useState<BulkJob[]>([]);
+  const [media, setMedia] = useState<MediaItem[]>([]);
+  const [settings, setSettings] = useState<IngestSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -71,11 +73,50 @@ export default function AdminAiBulkIngestPanel() {
     setLoading(false);
   };
 
+  const fetchMedia = async () => {
+    const { data } = await supabase
+      .from("ai_video_processing_queue")
+      .select("id, media_type, original_filename, status, file_size_bytes, created_at")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (data) setMedia(data as any);
+  };
+
+  const fetchSettings = async () => {
+    const { data } = await supabase
+      .from("ai_bulk_ingest_settings")
+      .select("video_analysis_enabled, max_videos_per_job, daily_budget_usd, spent_today_usd, paused")
+      .eq("id", 1)
+      .maybeSingle();
+    if (data) setSettings(data as any);
+  };
+
+  const toggleVideoAnalysis = async (enabled: boolean) => {
+    const { error } = await supabase
+      .from("ai_bulk_ingest_settings")
+      .update({ video_analysis_enabled: enabled, updated_at: new Date().toISOString() })
+      .eq("id", 1);
+    if (error) {
+      toast({ title: "Hiba", description: error.message, variant: "destructive" });
+      return;
+    }
+    setSettings((s) => s ? { ...s, video_analysis_enabled: enabled } : s);
+    toast({
+      title: enabled ? "Videó-elemzés BEKAPCSOLVA" : "Videó-elemzés KIKAPCSOLVA",
+      description: enabled
+        ? "Az új videók AI-elemzése Lovable AI kreditet fogyaszt."
+        : "Az új videók csak tárolódnak, AI nem elemzi őket. 0 költség.",
+    });
+  };
+
   useEffect(() => {
     fetchJobs();
+    fetchMedia();
+    fetchSettings();
     const ch = supabase
       .channel("bulk-jobs")
       .on("postgres_changes", { event: "*", schema: "public", table: "ai_bulk_ingest_jobs" }, () => fetchJobs())
+      .on("postgres_changes", { event: "*", schema: "public", table: "ai_video_processing_queue" }, () => fetchMedia())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
