@@ -668,6 +668,10 @@ const AdminAiKnowledgeBaseTab = () => {
             )}
           </Card>
         </TabsContent>
+
+        <TabsContent value="bulk">
+          <AdminAiBulkIngestPanel />
+        </TabsContent>
       </Tabs>
     </div>
   );
