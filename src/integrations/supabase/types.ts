@@ -271,6 +271,42 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_bulk_ingest_settings: {
+        Row: {
+          budget_reset_date: string
+          daily_budget_usd: number
+          id: number
+          max_videos_per_job: number
+          parallel_workers: number
+          paused: boolean
+          spent_today_usd: number
+          updated_at: string
+          video_analysis_enabled: boolean
+        }
+        Insert: {
+          budget_reset_date?: string
+          daily_budget_usd?: number
+          id?: number
+          max_videos_per_job?: number
+          parallel_workers?: number
+          paused?: boolean
+          spent_today_usd?: number
+          updated_at?: string
+          video_analysis_enabled?: boolean
+        }
+        Update: {
+          budget_reset_date?: string
+          daily_budget_usd?: number
+          id?: number
+          max_videos_per_job?: number
+          parallel_workers?: number
+          paused?: boolean
+          spent_today_usd?: number
+          updated_at?: string
+          video_analysis_enabled?: boolean
+        }
+        Relationships: []
+      }
       ai_knowledge_chunks: {
         Row: {
           chunk_index: number
@@ -743,6 +779,48 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_personal_profile: {
+        Row: {
+          body_language: string | null
+          communication_style: string | null
+          id: number
+          last_updated_at: string
+          personality_traits: string | null
+          raw_aggregations: Json
+          recurring_themes: string | null
+          total_text_sources: number
+          total_videos_analyzed: number
+          visual_style: string | null
+          voice_style: string | null
+        }
+        Insert: {
+          body_language?: string | null
+          communication_style?: string | null
+          id?: number
+          last_updated_at?: string
+          personality_traits?: string | null
+          raw_aggregations?: Json
+          recurring_themes?: string | null
+          total_text_sources?: number
+          total_videos_analyzed?: number
+          visual_style?: string | null
+          voice_style?: string | null
+        }
+        Update: {
+          body_language?: string | null
+          communication_style?: string | null
+          id?: number
+          last_updated_at?: string
+          personality_traits?: string | null
+          raw_aggregations?: Json
+          recurring_themes?: string | null
+          total_text_sources?: number
+          total_videos_analyzed?: number
+          visual_style?: string | null
+          voice_style?: string | null
+        }
+        Relationships: []
+      }
       ai_question_context_rules: {
         Row: {
           context_name: string
@@ -995,6 +1073,86 @@ export type Database = {
           version_number?: number
         }
         Relationships: []
+      }
+      ai_video_processing_queue: {
+        Row: {
+          attempts: number
+          body_language: string | null
+          bulk_job_id: string | null
+          completed_at: string | null
+          created_at: string
+          environment: string | null
+          error_message: string | null
+          file_size_bytes: number | null
+          generated_article: string | null
+          id: string
+          knowledge_document_id: string | null
+          media_type: string
+          metadata: Json
+          mime_type: string | null
+          original_filename: string
+          started_at: string | null
+          status: string
+          storage_path: string
+          style_notes: string | null
+          transcript: string | null
+          visual_description: string | null
+        }
+        Insert: {
+          attempts?: number
+          body_language?: string | null
+          bulk_job_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          environment?: string | null
+          error_message?: string | null
+          file_size_bytes?: number | null
+          generated_article?: string | null
+          id?: string
+          knowledge_document_id?: string | null
+          media_type?: string
+          metadata?: Json
+          mime_type?: string | null
+          original_filename: string
+          started_at?: string | null
+          status?: string
+          storage_path: string
+          style_notes?: string | null
+          transcript?: string | null
+          visual_description?: string | null
+        }
+        Update: {
+          attempts?: number
+          body_language?: string | null
+          bulk_job_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          environment?: string | null
+          error_message?: string | null
+          file_size_bytes?: number | null
+          generated_article?: string | null
+          id?: string
+          knowledge_document_id?: string | null
+          media_type?: string
+          metadata?: Json
+          mime_type?: string | null
+          original_filename?: string
+          started_at?: string | null
+          status?: string
+          storage_path?: string
+          style_notes?: string | null
+          transcript?: string | null
+          visual_description?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_video_processing_queue_bulk_job_id_fkey"
+            columns: ["bulk_job_id"]
+            isOneToOne: false
+            referencedRelation: "ai_bulk_ingest_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       auto_procurement_log: {
         Row: {
