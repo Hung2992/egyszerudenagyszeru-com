@@ -342,6 +342,41 @@ export default function AdminAiBulkIngestPanel() {
           </ScrollArea>
         )}
       </Card>
+
+      {/* Media queue */}
+      <Card className="p-4">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="font-bold flex items-center gap-2">
+            <Film className="w-4 h-4" /> Média fájlok ({media.length})
+          </h3>
+          <Button variant="ghost" size="sm" onClick={fetchMedia}><RefreshCw className="w-4 h-4" /></Button>
+        </div>
+        <div className="flex flex-wrap gap-2 mb-3 text-xs">
+          <Badge variant="outline">{mediaCounts.pending} vár</Badge>
+          <Badge variant="outline" className="bg-blue-500/10">{mediaCounts.processing} fut</Badge>
+          <Badge variant="outline" className="bg-green-500/10">{mediaCounts.completed} kész</Badge>
+          <Badge variant="outline" className="bg-destructive/10">{mediaCounts.failed} hiba</Badge>
+          <Badge variant="outline" className="bg-muted">{mediaCounts.skipped} kihagyva</Badge>
+        </div>
+        {media.length === 0 ? (
+          <p className="text-xs text-muted-foreground">Még nincs média fájl. Tölts fel egy ZIP-et MP4 / MP3 / képpel.</p>
+        ) : (
+          <ScrollArea className="max-h-72">
+            <div className="space-y-1">
+              {media.map((m) => (
+                <div key={m.id} className="flex items-center gap-2 text-xs border-b py-1">
+                  {mediaIcon(m.media_type)}
+                  <span className="font-mono truncate flex-1">{m.original_filename}</span>
+                  <span className="text-muted-foreground">
+                    {m.file_size_bytes ? `${(m.file_size_bytes / 1024 / 1024).toFixed(1)}MB` : ""}
+                  </span>
+                  <Badge variant="outline" className="text-[10px]">{m.status}</Badge>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        )}
+      </Card>
     </div>
   );
 }
