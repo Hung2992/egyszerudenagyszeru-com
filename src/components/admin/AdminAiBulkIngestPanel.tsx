@@ -166,20 +166,6 @@ export default function AdminAiBulkIngestPanel() {
         grouped.set(key, current);
       });
       setMediaStats(Array.from(grouped.values()));
-      const rows = statRows as any[];
-      setMediaCountsExact({
-        total: rows.length,
-        video: rows.filter((m) => m.media_type === "video").length,
-        audio: rows.filter((m) => m.media_type === "audio").length,
-        image: rows.filter((m) => m.media_type === "image").length,
-        pending: rows.filter((m) => m.status === "pending" || m.status === "pending_remote").length,
-        localPending: rows.filter((m) => m.status === "pending").length,
-        remotePending: rows.filter((m) => m.status === "pending_remote").length,
-        processing: rows.filter((m) => m.status === "processing").length,
-        completed: rows.filter((m) => m.status === "completed").length,
-        failed: rows.filter((m) => m.status === "failed").length,
-        skipped: rows.filter((m) => String(m.status || "").startsWith("skipped")).length,
-      });
     }
   };
 
