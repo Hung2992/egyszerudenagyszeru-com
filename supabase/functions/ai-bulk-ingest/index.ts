@@ -491,6 +491,8 @@ Deno.serve(async (req) => {
         let queueStatus = "pending";
         const metadata: Record<string, any> = m.sourceUrl ? { remote_url: m.sourceUrl, source_path: m.sourcePath } : {};
 
+        const remoteMeta = m.sourceUrl ? { remote_url: m.sourceUrl, source_path: m.sourcePath, download_status: "queued_remote_download", needs_download: true } : {};
+
         if (m.bytes) {
           const { error: upErr } = await admin.storage.from("ai-bulk-uploads").upload(storagePath, m.bytes, {
             contentType: m.mime, upsert: false,
@@ -520,6 +522,7 @@ Deno.serve(async (req) => {
         } else if (m.sourceUrl) {
           storagePath = m.sourceUrl;
           queueStatus = "pending_remote";
+          storedSize = 0;
         } else {
           throw new Error("missing media bytes");
         }
@@ -532,7 +535,7 @@ Deno.serve(async (req) => {
           file_size_bytes: storedSize,
           media_type: m.mediaType,
           status: queueStatus,
-          metadata,
+          metadata: { ...metadata, ...remoteMeta },
         });
         mediaQueued++;
       } catch (e: any) {
