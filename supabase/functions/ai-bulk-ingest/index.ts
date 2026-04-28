@@ -123,20 +123,59 @@ function isTextLikeFilename(name: string): boolean {
   return /\.(txt|md|markdown|json|html?|csv|log)$/i.test(name);
 }
 
-function decodeZipEntries(zipBytes: Uint8Array): Source[] {
+function detectMediaType(name: string): "video" | "audio" | "image" | null {
+  if (/\.(mp4|mov|webm|mkv|avi|m4v)$/i.test(name)) return "video";
+  if (/\.(mp3|wav|m4a|aac|ogg|flac)$/i.test(name)) return "audio";
+  if (/\.(jpe?g|png|webp|gif|heic)$/i.test(name)) return "image";
+  return null;
+}
+
+function detectMimeType(name: string): string {
+  const ext = name.split(".").pop()?.toLowerCase() || "";
+  const map: Record<string, string> = {
+    mp4: "video/mp4", mov: "video/quicktime", webm: "video/webm", mkv: "video/x-matroska",
+    avi: "video/x-msvideo", m4v: "video/x-m4v",
+    mp3: "audio/mpeg", wav: "audio/wav", m4a: "audio/mp4", aac: "audio/aac", ogg: "audio/ogg", flac: "audio/flac",
+    jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif", heic: "image/heic",
+  };
+  return map[ext] || "application/octet-stream";
+}
+
+type MediaEntry = {
+  filename: string;
+  mediaType: "video" | "audio" | "image";
+  bytes: Uint8Array;
+  mime: string;
+};
+
+function decodeZipEntries(zipBytes: Uint8Array): { sources: Source[]; media: MediaEntry[] } {
   const entries = unzipSync(zipBytes);
-  const out: Source[] = [];
+  const sources: Source[] = [];
+  const media: MediaEntry[] = [];
   for (const [name, bytes] of Object.entries(entries)) {
-    if (name.endsWith("/") || !isTextLikeFilename(name)) continue;
+    if (name.endsWith("/")) continue;
+    const mediaType = detectMediaType(name);
+    if (mediaType) {
+      // limit individual media to 200 MB to be safe
+      if (bytes.length > 200_000_000) continue;
+      media.push({
+        filename: name.split("/").pop() || name,
+        mediaType,
+        bytes,
+        mime: detectMimeType(name),
+      });
+      continue;
+    }
+    if (!isTextLikeFilename(name)) continue;
     if (bytes.length > 2_000_000) continue;
     let text = "";
     try { text = strFromU8(bytes); } catch { continue; }
     if (/\.html?$/i.test(name)) text = stripHtml(text);
     text = text.trim();
     if (text.length < 30) continue;
-    out.push({ title: name.split("/").pop() || name, text: text.slice(0, MAX_HTML_CHARS) });
+    sources.push({ title: name.split("/").pop() || name, text: text.slice(0, MAX_HTML_CHARS) });
   }
-  return out;
+  return { sources, media };
 }
 
 function normalizeSources(payload: any): Source[] {
