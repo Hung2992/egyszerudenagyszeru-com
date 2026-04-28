@@ -212,7 +212,7 @@ export default function AdminAiBulkIngestPanel() {
   };
 
   const mediaCounts = {
-    pending: media.filter((m) => m.status === "pending").length,
+    pending: media.filter((m) => m.status === "pending" || m.status === "pending_remote").length,
     processing: media.filter((m) => m.status === "processing").length,
     completed: media.filter((m) => m.status === "completed").length,
     failed: media.filter((m) => m.status === "failed").length,
@@ -369,7 +369,7 @@ export default function AdminAiBulkIngestPanel() {
           <Button variant="ghost" size="sm" onClick={fetchMedia}><RefreshCw className="w-4 h-4" /></Button>
         </div>
         <div className="flex flex-wrap gap-2 mb-3 text-xs">
-          <Badge variant="outline">{mediaCounts.pending} vár</Badge>
+          <Badge variant="outline">{mediaCounts.pending} vár/link</Badge>
           <Badge variant="outline" className="bg-blue-500/10">{mediaCounts.processing} fut</Badge>
           <Badge variant="outline" className="bg-green-500/10">{mediaCounts.completed} kész</Badge>
           <Badge variant="outline" className="bg-destructive/10">{mediaCounts.failed} hiba</Badge>

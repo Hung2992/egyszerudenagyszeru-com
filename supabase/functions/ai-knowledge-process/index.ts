@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -13,7 +13,7 @@ const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 
 const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1";
 
-function chunkText(text: string, maxChars = 1200, overlap = 150): string[] {
+function chunkText(text: string, maxChars = 900, overlap = 80): string[] {
   const clean = text.replace(/\s+/g, " ").trim();
   if (clean.length <= maxChars) return [clean];
   const chunks: string[] = [];
@@ -47,7 +47,8 @@ async function embedOne(text: string, retries = 2): Promise<number[]> {
       throw new Error("No embedding returned");
     }
     if (resp.status === 429 && attempt < retries) {
-      await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+      const retryAfterMs = Number(resp.headers.get("retry-after-ms") || "0") || 1500 * (attempt + 1);
+      await new Promise(r => setTimeout(r, Math.min(retryAfterMs, 10_000)));
       continue;
     }
     const errText = await resp.text();
@@ -57,8 +58,12 @@ async function embedOne(text: string, retries = 2): Promise<number[]> {
 }
 
 async function embedBatch(texts: string[]): Promise<number[][]> {
-  // Igazi párhuzamos hívások (Promise.all) — sokkal gyorsabb tanulás
-  return await Promise.all(texts.map((t) => embedOne(t)));
+  const out: number[][] = [];
+  for (const text of texts) {
+    out.push(await embedOne(text));
+    await new Promise(r => setTimeout(r, 250));
+  }
+  return out;
 }
 
 async function summarize(text: string): Promise<string> {
@@ -139,12 +144,11 @@ Deno.serve(async (req) => {
     // Delete previous chunks (re-process)
     await admin.from("ai_knowledge_chunks").delete().eq("document_id", document_id);
 
-    const chunks = chunkText(doc.raw_text);
+    const chunks = chunkText(String(doc.raw_text || "").slice(0, 24_000)).slice(0, 24);
     const summary = await summarize(doc.raw_text);
 
-    // Embed in batches
-    // Embed in nagyobb párhuzamos batch-ekben (gyorsabb tanulás)
-    const BATCH = 16;
+    // Kis, soros batch: nem veri szét a rate limitet és nem fogyaszt sok memóriát.
+    const BATCH = 4;
     let totalInserted = 0;
     for (let i = 0; i < chunks.length; i += BATCH) {
       const slice = chunks.slice(i, i + BATCH);

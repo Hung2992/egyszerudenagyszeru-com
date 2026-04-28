@@ -2,8 +2,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { Unzip, UnzipInflate, strFromU8 } from "https://esm.sh/fflate@0.8.2";
 
-declare const EdgeRuntime: { waitUntil: (promise: Promise<unknown>) => void };
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
@@ -19,10 +17,11 @@ const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1";
 const MAX_SOURCES_PER_JOB = 200;
 const MAX_HTML_CHARS = 200_000;
 const MAX_TEXT_ENTRY_BYTES = 80_000_000;
-const MAX_STREAMED_TEXT_BYTES = 4_000_000;
+const MAX_STREAMED_TEXT_BYTES = 24_000_000;
 const MAX_STREAMED_MEDIA_BYTES = 25_000_000;
-const MAX_REMOTE_MEDIA_PER_JOB = 250;
-const MAX_REMOTE_MEDIA_DOWNLOADS_PER_CALL = 12;
+const MAX_REMOTE_MEDIA_PER_JOB = 10_000;
+const MAX_LOCAL_MEDIA_PER_JOB = 250;
+const MAX_REMOTE_MEDIA_DOWNLOADS_PER_CALL = 0;
 const RAW_ONLY_THRESHOLD_CHARS = 80_000;
 const ZIP_CHUNK_CHARS = 24_000;
 const MAX_CHUNKS_PER_TEXT_ENTRY = 120;
@@ -327,8 +326,9 @@ async function decodeZipEntries(zipBytes: Uint8Array): Promise<{ sources: Source
     totalEntries++;
     if (sampleNames.length < 20) sampleNames.push(file.name);
     const mediaType = detectMediaType(file.name);
-    const shouldReadMedia = Boolean(mediaType) && (file.originalSize ?? 0) <= MAX_STREAMED_MEDIA_BYTES && media.length < 250;
-    const shouldReadText = !mediaType && isTextLikeFilename(file.name) && (file.originalSize ?? 0) <= MAX_STREAMED_TEXT_BYTES && sources.length < MAX_SOURCES_PER_JOB;
+    const shouldReadMedia = Boolean(mediaType) && (file.originalSize ?? 0) <= MAX_STREAMED_MEDIA_BYTES && media.filter((m) => m.bytes).length < MAX_LOCAL_MEDIA_PER_JOB;
+    const shouldReadTextLike = !mediaType && isTextLikeFilename(file.name) && (file.originalSize ?? 0) <= MAX_STREAMED_TEXT_BYTES;
+    const shouldReadText = shouldReadTextLike && (sources.length < MAX_SOURCES_PER_JOB || remoteMediaSeen.size < MAX_REMOTE_MEDIA_PER_JOB);
 
     if (!shouldReadMedia && !shouldReadText) {
       unsupportedEntries++;
@@ -508,7 +508,7 @@ Deno.serve(async (req) => {
           }
         } else if (m.sourceUrl) {
           storagePath = m.sourceUrl;
-          queueStatus = "skipped_remote_link_only";
+          queueStatus = "pending_remote";
         } else {
           throw new Error("missing media bytes");
         }
@@ -592,18 +592,9 @@ Deno.serve(async (req) => {
     });
     await Promise.all(workers);
 
-    // Háttérben embeddel — fire-and-forget az ai-knowledge-process-szel
-    EdgeRuntime.waitUntil((async () => {
-      for (const docId of createdDocIds) {
-        try {
-          await fetch(`${SUPABASE_URL}/functions/v1/ai-knowledge-process`, {
-            method: "POST",
-            headers: { Authorization: auth, "Content-Type": "application/json" },
-            body: JSON.stringify({ document_id: docId }),
-          });
-        } catch (e) { console.error("embed trigger fail", docId, e); }
-      }
-    })());
+    // Nagy importnál NEM indítunk automatikus tömeges embeddinget.
+    // Ez okozta a rate limit + memory limit hibát. A dokumentumok pending állapotban maradnak,
+    // és később kis adagokban dolgozhatók fel.
 
     const totalFailures = failed + mediaFailed;
     const totalSuccesses = succeeded + mediaQueued + duplicates;
