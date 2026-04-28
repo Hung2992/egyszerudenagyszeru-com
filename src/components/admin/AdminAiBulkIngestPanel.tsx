@@ -136,18 +136,32 @@ export default function AdminAiBulkIngestPanel() {
       .limit(200);
     if (data) setMedia(data as any);
 
-    const { data: allRows } = await supabase
+    const { data: statRows } = await supabase
       .from("ai_video_processing_queue")
       .select("status, media_type");
-    if (allRows) {
+    if (statRows) {
       const grouped = new Map<string, MediaStatsRow>();
-      (allRows as any[]).forEach((row) => {
+      (statRows as any[]).forEach((row) => {
         const key = `${row.status}|${row.media_type}`;
         const current = grouped.get(key) || { status: row.status, media_type: row.media_type, count: 0 };
         current.count += 1;
         grouped.set(key, current);
       });
       setMediaStats(Array.from(grouped.values()));
+      const rows = statRows as any[];
+      setMediaCountsExact({
+        total: rows.length,
+        video: rows.filter((m) => m.media_type === "video").length,
+        audio: rows.filter((m) => m.media_type === "audio").length,
+        image: rows.filter((m) => m.media_type === "image").length,
+        pending: rows.filter((m) => m.status === "pending" || m.status === "pending_remote").length,
+        localPending: rows.filter((m) => m.status === "pending").length,
+        remotePending: rows.filter((m) => m.status === "pending_remote").length,
+        processing: rows.filter((m) => m.status === "processing").length,
+        completed: rows.filter((m) => m.status === "completed").length,
+        failed: rows.filter((m) => m.status === "failed").length,
+        skipped: rows.filter((m) => String(m.status || "").startsWith("skipped")).length,
+      });
     }
   };
 
