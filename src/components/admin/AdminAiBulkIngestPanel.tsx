@@ -31,7 +31,15 @@ interface MediaItem {
   original_filename: string;
   status: string;
   file_size_bytes: number | null;
+  error_message: string | null;
+  metadata: any;
   created_at: string;
+}
+
+interface MediaStatsRow {
+  status: string;
+  media_type: string;
+  count: number;
 }
 
 interface IngestSettings {
@@ -75,6 +83,7 @@ export default function AdminAiBulkIngestPanel() {
   const [submitting, setSubmitting] = useState(false);
   const [jobs, setJobs] = useState<BulkJob[]>([]);
   const [media, setMedia] = useState<MediaItem[]>([]);
+  const [mediaStats, setMediaStats] = useState<MediaStatsRow[]>([]);
   const [settings, setSettings] = useState<IngestSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -92,10 +101,24 @@ export default function AdminAiBulkIngestPanel() {
   const fetchMedia = async () => {
     const { data } = await supabase
       .from("ai_video_processing_queue")
-      .select("id, media_type, original_filename, status, file_size_bytes, created_at")
+      .select("id, media_type, original_filename, status, file_size_bytes, error_message, metadata, created_at")
       .order("created_at", { ascending: false })
-      .limit(50);
+      .limit(200);
     if (data) setMedia(data as any);
+
+    const { data: allRows } = await supabase
+      .from("ai_video_processing_queue")
+      .select("status, media_type");
+    if (allRows) {
+      const grouped = new Map<string, MediaStatsRow>();
+      (allRows as any[]).forEach((row) => {
+        const key = `${row.status}|${row.media_type}`;
+        const current = grouped.get(key) || { status: row.status, media_type: row.media_type, count: 0 };
+        current.count += 1;
+        grouped.set(key, current);
+      });
+      setMediaStats(Array.from(grouped.values()));
+    }
   };
 
   const fetchSettings = async () => {
