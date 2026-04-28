@@ -211,23 +211,62 @@ Deno.serve(async (req) => {
     const jobType: string = body.job_type || (body.zip_storage_path ? "zip" : "json");
     const zipPath: string | undefined = body.zip_storage_path;
     let sources: Source[] = normalizeSources(body.payload);
+    let mediaEntries: MediaEntry[] = [];
 
     // ZIP letöltés és bontás
     if (zipPath) {
       const { data: blob, error: dlErr } = await admin.storage.from("ai-bulk-uploads").download(zipPath);
       if (dlErr || !blob) throw new Error(`ZIP letöltés sikertelen: ${dlErr?.message}`);
       const buf = new Uint8Array(await blob.arrayBuffer());
-      const zipSources = decodeZipEntries(buf);
-      sources = sources.concat(zipSources);
+      const decoded = decodeZipEntries(buf);
+      sources = sources.concat(decoded.sources);
+      mediaEntries = decoded.media;
     }
 
     sources = sources.filter((s) => s.url || (s.text && s.text.trim().length > 30));
-    if (sources.length === 0) {
-      return new Response(JSON.stringify({ error: "No valid sources in payload" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (sources.length === 0 && mediaEntries.length === 0) {
+      return new Response(JSON.stringify({ error: "No valid sources or media in payload" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     if (sources.length > MAX_SOURCES_PER_JOB) sources = sources.slice(0, MAX_SOURCES_PER_JOB);
 
     // Job létrehozás
+    const { data: job, error: jobErr } = await admin.from("ai_bulk_ingest_jobs").insert({
+      job_type: jobType,
+      status: "running",
+      source_payload: { count: sources.length, media_count: mediaEntries.length, sample: sources.slice(0, 3) },
+      zip_storage_path: zipPath || null,
+      total_sources: sources.length + mediaEntries.length,
+      created_by: u.user.id,
+      started_at: new Date().toISOString(),
+    }).select().single();
+    if (jobErr || !job) throw new Error(`Job create failed: ${jobErr?.message}`);
+
+    // Média fájlok feltöltése Storage-ba + queue beírás (NEM elemez most, csak tárol)
+    let mediaQueued = 0, mediaFailed = 0;
+    for (const m of mediaEntries) {
+      try {
+        const safeName = m.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const storagePath = `media/${job.id}/${crypto.randomUUID()}_${safeName}`;
+        const { error: upErr } = await admin.storage.from("ai-bulk-uploads").upload(storagePath, m.bytes, {
+          contentType: m.mime, upsert: false,
+        });
+        if (upErr) throw upErr;
+        await admin.from("ai_video_processing_queue").insert({
+          bulk_job_id: job.id,
+          storage_path: storagePath,
+          original_filename: m.filename,
+          mime_type: m.mime,
+          file_size_bytes: m.bytes.length,
+          media_type: m.mediaType,
+          status: "pending",
+        });
+        mediaQueued++;
+      } catch (e: any) {
+        mediaFailed++;
+        console.error("media upload fail", m.filename, e?.message);
+      }
+    }
+
     const { data: job, error: jobErr } = await admin.from("ai_bulk_ingest_jobs").insert({
       job_type: jobType,
       status: "running",
