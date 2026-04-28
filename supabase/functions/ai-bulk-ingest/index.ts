@@ -17,7 +17,7 @@ const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1";
 const MAX_SOURCES_PER_JOB = 200;
 const MAX_HTML_CHARS = 200_000;
 const MAX_TEXT_ENTRY_BYTES = 80_000_000;
-const MAX_STREAMED_TEXT_BYTES = 4_000_000;
+const MAX_STREAMED_TEXT_BYTES = 24_000_000;
 const MAX_STREAMED_MEDIA_BYTES = 25_000_000;
 const MAX_REMOTE_MEDIA_PER_JOB = 10_000;
 const MAX_LOCAL_MEDIA_PER_JOB = 250;
@@ -327,7 +327,8 @@ async function decodeZipEntries(zipBytes: Uint8Array): Promise<{ sources: Source
     if (sampleNames.length < 20) sampleNames.push(file.name);
     const mediaType = detectMediaType(file.name);
     const shouldReadMedia = Boolean(mediaType) && (file.originalSize ?? 0) <= MAX_STREAMED_MEDIA_BYTES && media.filter((m) => m.bytes).length < MAX_LOCAL_MEDIA_PER_JOB;
-    const shouldReadText = !mediaType && isTextLikeFilename(file.name) && (file.originalSize ?? 0) <= MAX_STREAMED_TEXT_BYTES && sources.length < MAX_SOURCES_PER_JOB;
+    const shouldReadTextLike = !mediaType && isTextLikeFilename(file.name) && (file.originalSize ?? 0) <= MAX_STREAMED_TEXT_BYTES;
+    const shouldReadText = shouldReadTextLike && (sources.length < MAX_SOURCES_PER_JOB || remoteMediaSeen.size < MAX_REMOTE_MEDIA_PER_JOB);
 
     if (!shouldReadMedia && !shouldReadText) {
       unsupportedEntries++;
