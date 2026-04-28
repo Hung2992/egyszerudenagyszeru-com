@@ -44,6 +44,12 @@ function safeName(name: string) {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 180) || "media_file";
 }
 
+function isDirectMediaUrl(url: string) {
+  return /\.(mp4|mov|webm|m4v|mp3|m4a|wav|aac|ogg|jpe?g|png|webp|gif)(\?|$)/i.test(url)
+    || /mime_type=(video|audio|image)/i.test(url)
+    || /tiktokcdn|byteoversea|ibyteimg/i.test(url);
+}
+
 function makeArticle(row: QueueRow, storagePath: string, mode: "stored_file" | "remote_link", warning?: string) {
   const remoteUrl = row.metadata?.remote_url || (row.status === "pending_remote" ? row.storage_path : null);
   const title = `Média import: ${row.original_filename}`.slice(0, 240);
@@ -101,7 +107,7 @@ async function processRemote(admin: any, row: QueueRow) {
   let finalStoragePath = row.storage_path;
   let warning = "Távoli link elmentve; nem közvetlen médiafájl vagy nem letölthető jelenleg.";
 
-  if (remoteUrl && /^https?:\/\//i.test(remoteUrl)) {
+  if (remoteUrl && /^https?:\/\//i.test(remoteUrl) && isDirectMediaUrl(remoteUrl)) {
     const ctrl = new AbortController();
     const timeout = setTimeout(() => ctrl.abort(), REMOTE_FETCH_TIMEOUT_MS);
     try {
@@ -143,6 +149,8 @@ async function processRemote(admin: any, row: QueueRow) {
     } finally {
       clearTimeout(timeout);
     }
+  } else if (remoteUrl && /^https?:\/\//i.test(remoteUrl)) {
+    warning = "Nem közvetlen MP4/MP3/kép URL (TikTok megosztási oldal), ezért gyorsan linkként mentve.";
   }
 
   const docId = await createKnowledgeDoc(admin, row, finalStoragePath, "remote_link", warning);
