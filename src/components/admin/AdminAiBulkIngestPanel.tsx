@@ -356,6 +356,9 @@ export default function AdminAiBulkIngestPanel() {
   };
 
   const mediaCounts = mediaCountsExact;
+  const mediaDone = mediaCounts.completed + mediaCounts.failed + mediaCounts.skipped;
+  const mediaPercent = mediaCounts.total > 0 ? Math.round((mediaDone / mediaCounts.total) * 1000) / 10 : 0;
+  const storageMb = mediaCounts.storedBytes / 1024 / 1024;
 
   const latestErrors = media.filter((m) => m.status === "failed" || m.error_message).slice(0, 20);
 
