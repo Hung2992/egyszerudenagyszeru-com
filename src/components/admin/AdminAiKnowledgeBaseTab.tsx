@@ -15,6 +15,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import ReactMarkdown from "react-markdown";
+import AdminAiBulkIngestPanel from "./AdminAiBulkIngestPanel";
 
 type DocStatus = "pending" | "processing" | "ready" | "error";
 
