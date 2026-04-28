@@ -343,9 +343,9 @@ Deno.serve(async (req) => {
     const finalStatus = failed === 0 ? "completed" : (succeeded === 0 ? "failed" : "partial");
     await admin.from("ai_bulk_ingest_jobs").update({
       status: finalStatus,
-      processed_sources: sources.length,
+      processed_sources: sources.length + mediaQueued,
       succeeded_count: succeeded,
-      failed_count: failed,
+      failed_count: failed + mediaFailed,
       duplicate_count: duplicates,
       errors: errors.slice(0, 50),
       completed_at: new Date().toISOString(),
@@ -354,9 +354,15 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({
       ok: true,
       job_id: job.id,
-      total: sources.length,
+      total_text: sources.length,
+      total_media: mediaEntries.length,
       succeeded, failed, duplicates,
+      media_queued: mediaQueued,
+      media_failed: mediaFailed,
       doc_ids: createdDocIds,
+      message: mediaQueued > 0
+        ? `${succeeded} szöveges cikk + ${mediaQueued} média fájl elmentve. A média elemzés alapból KIKAPCSOLVA (nem fogyaszt creditet). Az admin felületen kapcsolható be.`
+        : `${succeeded} szöveges cikk elmentve.`,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e: any) {
     console.error("ai-bulk-ingest error:", e);
