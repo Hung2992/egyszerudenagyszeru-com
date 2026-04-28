@@ -217,6 +217,60 @@ export type Database = {
           },
         ]
       }
+      ai_bulk_ingest_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          duplicate_count: number
+          errors: Json
+          failed_count: number
+          id: string
+          job_type: string
+          processed_sources: number
+          source_payload: Json | null
+          started_at: string | null
+          status: string
+          succeeded_count: number
+          total_sources: number
+          zip_storage_path: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          duplicate_count?: number
+          errors?: Json
+          failed_count?: number
+          id?: string
+          job_type: string
+          processed_sources?: number
+          source_payload?: Json | null
+          started_at?: string | null
+          status?: string
+          succeeded_count?: number
+          total_sources?: number
+          zip_storage_path?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          duplicate_count?: number
+          errors?: Json
+          failed_count?: number
+          id?: string
+          job_type?: string
+          processed_sources?: number
+          source_payload?: Json | null
+          started_at?: string | null
+          status?: string
+          succeeded_count?: number
+          total_sources?: number
+          zip_storage_path?: string | null
+        }
+        Relationships: []
+      }
       ai_knowledge_chunks: {
         Row: {
           chunk_index: number
@@ -257,6 +311,9 @@ export type Database = {
       }
       ai_knowledge_documents: {
         Row: {
+          article_md: string | null
+          bulk_job_id: string | null
+          category: string | null
           chunk_count: number
           confidence: number
           created_at: string
@@ -274,9 +331,12 @@ export type Database = {
           review_status: string
           reviewer_notes: string | null
           source_count: number
+          source_hash: string | null
           source_type: string
+          source_url: string | null
           status: string
           summary: string | null
+          tags: string[] | null
           title: string
           updated_at: string
           usage_count: number
@@ -284,6 +344,9 @@ export type Database = {
           weakness_reason: string | null
         }
         Insert: {
+          article_md?: string | null
+          bulk_job_id?: string | null
+          category?: string | null
           chunk_count?: number
           confidence?: number
           created_at?: string
@@ -301,9 +364,12 @@ export type Database = {
           review_status?: string
           reviewer_notes?: string | null
           source_count?: number
+          source_hash?: string | null
           source_type: string
+          source_url?: string | null
           status?: string
           summary?: string | null
+          tags?: string[] | null
           title: string
           updated_at?: string
           usage_count?: number
@@ -311,6 +377,9 @@ export type Database = {
           weakness_reason?: string | null
         }
         Update: {
+          article_md?: string | null
+          bulk_job_id?: string | null
+          category?: string | null
           chunk_count?: number
           confidence?: number
           created_at?: string
@@ -328,9 +397,12 @@ export type Database = {
           review_status?: string
           reviewer_notes?: string | null
           source_count?: number
+          source_hash?: string | null
           source_type?: string
+          source_url?: string | null
           status?: string
           summary?: string | null
+          tags?: string[] | null
           title?: string
           updated_at?: string
           usage_count?: number

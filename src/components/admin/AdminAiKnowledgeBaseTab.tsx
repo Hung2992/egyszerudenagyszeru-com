@@ -15,6 +15,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import ReactMarkdown from "react-markdown";
+import AdminAiBulkIngestPanel from "./AdminAiBulkIngestPanel";
 
 type DocStatus = "pending" | "processing" | "ready" | "error";
 
@@ -379,6 +380,7 @@ const AdminAiKnowledgeBaseTab = () => {
           <TabsTrigger value="text"><FileText className="w-4 h-4 mr-2" />Szöveg</TabsTrigger>
           <TabsTrigger value="profile"><User className="w-4 h-4 mr-2" />Profil</TabsTrigger>
           <TabsTrigger value="library"><Database className="w-4 h-4 mr-2" />Könyvtár ({docs.length})</TabsTrigger>
+          <TabsTrigger value="bulk"><Sparkles className="w-4 h-4 mr-2" />Tömeges JSON/URL/ZIP</TabsTrigger>
         </TabsList>
 
         {/* === CHAT TAB === */}
@@ -665,6 +667,10 @@ const AdminAiKnowledgeBaseTab = () => {
               </ScrollArea>
             )}
           </Card>
+        </TabsContent>
+
+        <TabsContent value="bulk">
+          <AdminAiBulkIngestPanel />
         </TabsContent>
       </Tabs>
     </div>
