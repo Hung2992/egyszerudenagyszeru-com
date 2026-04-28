@@ -36,12 +36,6 @@ interface MediaItem {
   created_at: string;
 }
 
-interface MediaStatsRow {
-  status: string;
-  media_type: string;
-  count: number;
-}
-
 interface IngestSettings {
   video_analysis_enabled: boolean;
   max_videos_per_job: number;
@@ -111,7 +105,6 @@ export default function AdminAiBulkIngestPanel() {
   const [submitting, setSubmitting] = useState(false);
   const [jobs, setJobs] = useState<BulkJob[]>([]);
   const [media, setMedia] = useState<MediaItem[]>([]);
-  const [mediaStats, setMediaStats] = useState<MediaStatsRow[]>([]);
   const [mediaCountsExact, setMediaCountsExact] = useState<MediaCounts>(EMPTY_MEDIA_COUNTS);
   const [settings, setSettings] = useState<IngestSettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -154,19 +147,6 @@ export default function AdminAiBulkIngestPanel() {
     ]);
     setMediaCountsExact({ total, video, audio, image, pending: localPending + remotePending, localPending, remotePending, processing, completed, failed, skipped });
 
-    const { data: statRows } = await supabase
-      .from("ai_video_processing_queue")
-      .select("status, media_type");
-    if (statRows) {
-      const grouped = new Map<string, MediaStatsRow>();
-      (statRows as any[]).forEach((row) => {
-        const key = `${row.status}|${row.media_type}`;
-        const current = grouped.get(key) || { status: row.status, media_type: row.media_type, count: 0 };
-        current.count += 1;
-        grouped.set(key, current);
-      });
-      setMediaStats(Array.from(grouped.values()));
-    }
   };
 
   const fetchSettings = async () => {
