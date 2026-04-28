@@ -267,16 +267,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { data: job, error: jobErr } = await admin.from("ai_bulk_ingest_jobs").insert({
-      job_type: jobType,
-      status: "running",
-      source_payload: { count: sources.length, sample: sources.slice(0, 3) },
-      zip_storage_path: zipPath || null,
-      total_sources: sources.length,
-      created_by: u.user.id,
-      started_at: new Date().toISOString(),
-    }).select().single();
-    if (jobErr || !job) throw new Error(`Job create failed: ${jobErr?.message}`);
+    // (Job már létrejött a média blokk előtt — nincs második insert)
 
     const errors: any[] = [];
     let succeeded = 0, failed = 0, duplicates = 0;
