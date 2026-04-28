@@ -189,6 +189,9 @@ Deno.serve(async (req) => {
 
     let completed = 0;
     let failed = 0;
+    let downloaded = 0;
+    let linkRegistered = 0;
+    let bytesDownloaded = 0;
     const errors: any[] = [];
 
     for (const row of (rows || []) as QueueRow[]) {
@@ -202,7 +205,7 @@ Deno.serve(async (req) => {
       try {
         const result = row.status === "pending_remote"
           ? await processRemote(admin, row)
-          : { docId: await createKnowledgeDoc(admin, row, row.storage_path, "stored_file", "Helyi média fájl rögzítve."), finalStoragePath: row.storage_path, warning: "Helyi média fájl rögzítve." };
+          : { docId: await createKnowledgeDoc(admin, row, row.storage_path, "stored_file", "Helyi média fájl rögzítve."), finalStoragePath: row.storage_path, warning: "Helyi média fájl rögzítve.", downloaded: true, linkRegistered: false, bytesDownloaded: row.file_size_bytes || 0 };
 
         await admin.from("ai_video_processing_queue").update({
           status: "completed",
@@ -212,6 +215,9 @@ Deno.serve(async (req) => {
           error_message: null,
         }).eq("id", row.id);
         completed++;
+        if (result.downloaded) downloaded++;
+        if (result.linkRegistered) linkRegistered++;
+        bytesDownloaded += result.bytesDownloaded || 0;
       } catch (e: any) {
         const message = e?.message || String(e);
         await admin.from("ai_video_processing_queue").update({
@@ -230,7 +236,22 @@ Deno.serve(async (req) => {
       .select("id", { count: "exact", head: true })
       .in("status", ["pending_remote", "pending"]);
 
-    return json({ ok: true, picked: rows?.length || 0, completed, failed, remaining: remaining || 0, errors: errors.slice(0, 20) });
+    return json({
+      ok: true,
+      picked: rows?.length || 0,
+      completed,
+      failed,
+      downloaded,
+      link_registered: linkRegistered,
+      bytes_downloaded: bytesDownloaded,
+      remaining: remaining || 0,
+      memory: {
+        max_batch: MAX_BATCH,
+        max_download_mb_per_file: Math.round(MAX_DOWNLOAD_BYTES / 1024 / 1024),
+        remote_timeout_ms: REMOTE_FETCH_TIMEOUT_MS,
+      },
+      errors: errors.slice(0, 20),
+    });
   } catch (e: any) {
     console.error("ai-media-queue-worker error:", e);
     return json({ error: e?.message || "Unknown error" }, 500);
