@@ -138,6 +138,30 @@ export default function AdminAiBulkIngestPanel() {
       .limit(200);
     if (data) setMedia(data as any);
 
+    try {
+      const { data: statsData } = await supabase.functions.invoke("ai-media-queue-worker", { body: { stats_only: true } });
+      if (statsData?.stats) {
+        setMediaCountsExact({
+          total: statsData.stats.total || 0,
+          video: statsData.stats.video || 0,
+          audio: statsData.stats.audio || 0,
+          image: statsData.stats.image || 0,
+          pending: statsData.stats.pending || 0,
+          localPending: statsData.stats.localPending || 0,
+          remotePending: statsData.stats.remotePending || 0,
+          processing: statsData.stats.processing || 0,
+          completed: statsData.stats.completed || 0,
+          failed: statsData.stats.failed || 0,
+          skipped: statsData.stats.skipped || 0,
+          downloaded: statsData.stats.downloaded || 0,
+          linkRegistered: statsData.stats.linkRegistered || 0,
+          storedBytes: statsData.stats.storedBytes || 0,
+        });
+        setLastWorkerResult((prev: any) => ({ ...(prev || {}), percent: statsData.percent, memory: statsData.memory }));
+        return;
+      }
+    } catch {}
+
     const countRows = async (apply: (q: any) => any) => {
       const { count } = await apply(supabase.from("ai_video_processing_queue").select("id", { count: "exact", head: true }));
       return count || 0;
