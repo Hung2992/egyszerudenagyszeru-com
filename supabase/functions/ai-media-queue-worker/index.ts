@@ -102,6 +102,57 @@ async function createKnowledgeDoc(admin: any, row: QueueRow, storagePath: string
   return data.id;
 }
 
+async function collectStats(admin: any) {
+  const pageSize = 1000;
+  let from = 0;
+  const stats = {
+    total: 0,
+    video: 0,
+    audio: 0,
+    image: 0,
+    pending: 0,
+    localPending: 0,
+    remotePending: 0,
+    processing: 0,
+    completed: 0,
+    failed: 0,
+    skipped: 0,
+    downloaded: 0,
+    linkRegistered: 0,
+    storedBytes: 0,
+  };
+
+  while (true) {
+    const { data, error } = await admin
+      .from("ai_video_processing_queue")
+      .select("status, media_type, file_size_bytes, metadata")
+      .order("created_at", { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (error) throw new Error(`Stats query failed: ${error.message}`);
+    const rows = data || [];
+    for (const row of rows) {
+      stats.total++;
+      if (row.media_type === "video") stats.video++;
+      if (row.media_type === "audio") stats.audio++;
+      if (row.media_type === "image") stats.image++;
+      if (row.status === "pending") stats.localPending++;
+      if (row.status === "pending_remote") stats.remotePending++;
+      if (row.status === "processing") stats.processing++;
+      if (row.status === "completed") stats.completed++;
+      if (row.status === "failed") stats.failed++;
+      if (String(row.status || "").startsWith("skipped")) stats.skipped++;
+      const size = Number(row.file_size_bytes || 0);
+      if (size > 0) stats.storedBytes += size;
+      if (row.metadata?.download_status === "downloaded" || (row.status === "completed" && size > 0)) stats.downloaded++;
+      if (row.metadata?.download_status === "link_registered") stats.linkRegistered++;
+    }
+    if (rows.length < pageSize) break;
+    from += pageSize;
+  }
+  stats.pending = stats.localPending + stats.remotePending;
+  return stats;
+}
+
 async function processRemote(admin: any, row: QueueRow) {
   const remoteUrl = row.metadata?.remote_url || row.storage_path;
   let finalStoragePath = row.storage_path;
