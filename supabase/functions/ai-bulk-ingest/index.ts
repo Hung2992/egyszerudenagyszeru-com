@@ -229,17 +229,22 @@ Deno.serve(async (req) => {
     }
     if (sources.length > MAX_SOURCES_PER_JOB) sources = sources.slice(0, MAX_SOURCES_PER_JOB);
 
-    // Job létrehozás
+    // Job létrehozás (errors NOT NULL → üres tömböt adunk)
     const { data: job, error: jobErr } = await admin.from("ai_bulk_ingest_jobs").insert({
       job_type: jobType,
       status: "running",
       source_payload: { count: sources.length, media_count: mediaEntries.length, sample: sources.slice(0, 3) },
       zip_storage_path: zipPath || null,
       total_sources: sources.length + mediaEntries.length,
+      processed_sources: 0,
+      succeeded_count: 0,
+      failed_count: 0,
+      duplicate_count: 0,
+      errors: [],
       created_by: u.user.id,
       started_at: new Date().toISOString(),
     }).select().single();
-    if (jobErr || !job) throw new Error(`Job create failed: ${jobErr?.message}`);
+    if (jobErr || !job) throw new Error(`Job create failed: ${jobErr?.message || JSON.stringify(jobErr)}`);
 
     // Média fájlok feltöltése Storage-ba + queue beírás (NEM elemez most, csak tárol)
     let mediaQueued = 0, mediaFailed = 0;
