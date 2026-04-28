@@ -16,9 +16,14 @@ const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1";
 const MAX_SOURCES_PER_JOB = 200;
 const MAX_HTML_CHARS = 200_000;
+const MAX_TEXT_ENTRY_BYTES = 80_000_000;
+const RAW_ONLY_THRESHOLD_CHARS = 80_000;
+const ZIP_CHUNK_CHARS = 24_000;
+const MAX_CHUNKS_PER_TEXT_ENTRY = 120;
+const MAX_EXTRACTED_JSON_LINES = 30_000;
 const FETCH_CONCURRENCY = 4;
 
-type Source = { title?: string; url?: string; text?: string };
+type Source = { title?: string; url?: string; text?: string; rawOnly?: boolean; category?: string };
 
 async function sha256Hex(input: string): Promise<string> {
   const buf = new TextEncoder().encode(input);
@@ -119,8 +124,22 @@ async function structureWithAI(rawText: string, sourceLabel: string): Promise<{
   };
 }
 
+function structureRawKnowledge(rawText: string, sourceLabel: string, category = "tiktok_export"): {
+  title: string; category: string; summary: string; article_md: string; tags: string[];
+} {
+  const compact = rawText.replace(/\s+/g, " ").trim();
+  const excerpt = compact.slice(0, 900);
+  return {
+    title: String(sourceLabel || "TikTok export részlet").slice(0, 120),
+    category,
+    summary: excerpt ? `Automatikusan mentett TikTok export részlet. Rövid kivonat: ${excerpt}` : "Automatikusan mentett TikTok export részlet.",
+    article_md: `## Lényeg\nEz a tudáselem a feltöltött TikTok exportból lett biztonságosan feldarabolva és eltárolva.\n\n## Kulcspontok\n- Forrás: ${sourceLabel}\n- Feldolgozás: nyers tudás mentése, AI-elemzés nélkül\n- Cél: saját rendszer tanítása ingyenes módban\n\n## Nyers részlet\n\n${rawText.slice(0, 12000)}`,
+    tags: ["tiktok", "export", "sajat-rendszer", "bulk-import"],
+  };
+}
+
 function isTextLikeFilename(name: string): boolean {
-  return /\.(txt|md|markdown|json|html?|csv|log)$/i.test(name);
+  return /\.(txt|md|markdown|json|html?|csv|tsv|xml|log)$/i.test(name);
 }
 
 function detectMediaType(name: string): "video" | "audio" | "image" | null {
@@ -141,6 +160,17 @@ function detectMimeType(name: string): string {
   return map[ext] || "application/octet-stream";
 }
 
+function isProbablyTextBytes(bytes: Uint8Array): boolean {
+  const sample = bytes.slice(0, Math.min(bytes.length, 4096));
+  if (sample.length === 0) return false;
+  let printable = 0;
+  for (const b of sample) {
+    if (b === 0) return false;
+    if (b === 9 || b === 10 || b === 13 || (b >= 32 && b <= 126) || b >= 128) printable++;
+  }
+  return printable / sample.length > 0.88;
+}
+
 type MediaEntry = {
   filename: string;
   mediaType: "video" | "audio" | "image";
@@ -148,12 +178,82 @@ type MediaEntry = {
   mime: string;
 };
 
+function chunkTextEntry(name: string, text: string, rawOnly: boolean, category = "tiktok_export"): Source[] {
+  const clean = text.replace(/\r\n/g, "\n").replace(/[ \t]+/g, " ").trim();
+  if (clean.length < 30) return [];
+  const baseTitle = name.split("/").pop() || name;
+  if (!rawOnly && clean.length <= RAW_ONLY_THRESHOLD_CHARS) {
+    return [{ title: baseTitle, text: clean.slice(0, MAX_HTML_CHARS), category }];
+  }
+
+  const chunks: Source[] = [];
+  for (let start = 0; start < clean.length && chunks.length < MAX_CHUNKS_PER_TEXT_ENTRY; start += ZIP_CHUNK_CHARS) {
+    const part = clean.slice(start, start + ZIP_CHUNK_CHARS).trim();
+    if (part.length >= 30) {
+      chunks.push({
+        title: `${baseTitle} #${chunks.length + 1}`,
+        text: part,
+        rawOnly: true,
+        category,
+      });
+    }
+  }
+  return chunks;
+}
+
+function collectJsonLines(value: any, path: string, out: string[]) {
+  if (out.length >= MAX_EXTRACTED_JSON_LINES || value === null || value === undefined) return;
+  if (typeof value === "string") {
+    const clean = value.replace(/\s+/g, " ").trim();
+    if (clean.length >= 2 && !/^[\d\s:.,_\-/]+$/.test(clean)) out.push(`${path}: ${clean.slice(0, 1200)}`);
+    return;
+  }
+  if (typeof value !== "object") return;
+  if (Array.isArray(value)) {
+    for (let i = 0; i < value.length && out.length < MAX_EXTRACTED_JSON_LINES; i++) collectJsonLines(value[i], `${path}[${i + 1}]`, out);
+    return;
+  }
+  for (const [key, child] of Object.entries(value)) {
+    if (out.length >= MAX_EXTRACTED_JSON_LINES) return;
+    collectJsonLines(child, path ? `${path}.${key}` : key, out);
+  }
+}
+
+function textSourcesFromZipEntry(name: string, bytes: Uint8Array): Source[] {
+  if (bytes.length > MAX_TEXT_ENTRY_BYTES) {
+    console.warn("[bulk-ingest] text entry too large, skipped:", name, bytes.length);
+    return [];
+  }
+  let text = "";
+  try { text = strFromU8(bytes); } catch { return []; }
+  if (/\.html?$/i.test(name)) text = stripHtml(text);
+  text = text.trim();
+  if (text.length < 30) return [];
+
+  if (/\.json$/i.test(name)) {
+    try {
+      const lines: string[] = [];
+      collectJsonLines(JSON.parse(text), "", lines);
+      const extracted = lines.join("\n");
+      if (extracted.length >= 30) return chunkTextEntry(name, extracted, true, "tiktok_export");
+    } catch (e: any) {
+      console.warn("[bulk-ingest] json parse fallback:", name, e?.message || e);
+    }
+  }
+
+  return chunkTextEntry(name, text, text.length > RAW_ONLY_THRESHOLD_CHARS, "tiktok_export");
+}
+
 function decodeZipEntries(zipBytes: Uint8Array): { sources: Source[]; media: MediaEntry[] } {
   const entries = unzipSync(zipBytes);
   const sources: Source[] = [];
   const media: MediaEntry[] = [];
+  const sampleNames: string[] = [];
+  let textEntries = 0;
+  let unsupportedEntries = 0;
   for (const [name, bytes] of Object.entries(entries)) {
     if (name.endsWith("/")) continue;
+    if (sampleNames.length < 20) sampleNames.push(name);
     const mediaType = detectMediaType(name);
     if (mediaType) {
       // limit individual media to 200 MB to be safe
@@ -166,15 +266,11 @@ function decodeZipEntries(zipBytes: Uint8Array): { sources: Source[]; media: Med
       });
       continue;
     }
-    if (!isTextLikeFilename(name)) continue;
-    if (bytes.length > 2_000_000) continue;
-    let text = "";
-    try { text = strFromU8(bytes); } catch { continue; }
-    if (/\.html?$/i.test(name)) text = stripHtml(text);
-    text = text.trim();
-    if (text.length < 30) continue;
-    sources.push({ title: name.split("/").pop() || name, text: text.slice(0, MAX_HTML_CHARS) });
+    if (!isTextLikeFilename(name) && !isProbablyTextBytes(bytes)) { unsupportedEntries++; continue; }
+    textEntries++;
+    sources.push(...textSourcesFromZipEntry(name, bytes));
   }
+  console.log("[bulk-ingest] zip entries:", Object.keys(entries).length, "text entries:", textEntries, "unsupported:", unsupportedEntries, "samples:", sampleNames.join(" | "));
   return { sources, media };
 }
 
@@ -310,8 +406,10 @@ Deno.serve(async (req) => {
           const { data: existing } = await admin.from("ai_knowledge_documents").select("id").eq("source_hash", hash).maybeSingle();
           if (existing) { duplicates++; continue; }
 
-          // Strukturált cikk az AI-tól
-          const article = await structureWithAI(text, label);
+          // Nagy TikTok export részeknél ingyenes / stabil raw mentés, kisebb szövegnél AI-strukturálás
+          const article = src.rawOnly
+            ? structureRawKnowledge(text, label, src.category)
+            : await structureWithAI(text, label);
 
           // Beillesztés a tudásbázisba
           const { data: doc, error: insErr } = await admin.from("ai_knowledge_documents").insert({
@@ -354,12 +452,14 @@ Deno.serve(async (req) => {
       }
     })());
 
-    const finalStatus = failed === 0 ? "completed" : (succeeded === 0 ? "failed" : "partial");
+    const totalFailures = failed + mediaFailed;
+    const totalSuccesses = succeeded + mediaQueued + duplicates;
+    const finalStatus = totalFailures === 0 ? "completed" : (totalSuccesses === 0 ? "failed" : "partial");
     await admin.from("ai_bulk_ingest_jobs").update({
       status: finalStatus,
       processed_sources: sources.length + mediaQueued,
       succeeded_count: succeeded,
-      failed_count: failed + mediaFailed,
+      failed_count: totalFailures,
       duplicate_count: duplicates,
       errors: errors.slice(0, 50),
       completed_at: new Date().toISOString(),
