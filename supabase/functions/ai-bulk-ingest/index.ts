@@ -2,6 +2,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { Unzip, UnzipInflate, strFromU8 } from "https://esm.sh/fflate@0.8.2";
 
+declare const EdgeRuntime: { waitUntil: (promise: Promise<unknown>) => void };
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
@@ -19,6 +21,8 @@ const MAX_HTML_CHARS = 200_000;
 const MAX_TEXT_ENTRY_BYTES = 80_000_000;
 const MAX_STREAMED_TEXT_BYTES = 4_000_000;
 const MAX_STREAMED_MEDIA_BYTES = 25_000_000;
+const MAX_REMOTE_MEDIA_PER_JOB = 250;
+const MAX_REMOTE_MEDIA_DOWNLOADS_PER_CALL = 12;
 const RAW_ONLY_THRESHOLD_CHARS = 80_000;
 const ZIP_CHUNK_CHARS = 24_000;
 const MAX_CHUNKS_PER_TEXT_ENTRY = 120;
@@ -162,6 +166,66 @@ function detectMimeType(name: string): string {
   return map[ext] || "application/octet-stream";
 }
 
+function detectMediaTypeFromUrl(url: string): "video" | "audio" | "image" | null {
+  const normalized = decodeURIComponent(url).toLowerCase();
+  if (/mime_type=video|video_|\.mp4(\?|$)|\.mov(\?|$)|\.webm(\?|$)|tiktokv\.com\/share\/video|tiktok\.com\/@[^/]+\/video\//i.test(normalized)) return "video";
+  if (/mime_type=audio|audio_|\.mp3(\?|$)|\.m4a(\?|$)|\.wav(\?|$)|\.aac(\?|$)/i.test(normalized)) return "audio";
+  if (/mime_type=image|image_|\.jpe?g(\?|$)|\.png(\?|$)|\.webp(\?|$)|coverimage|cover_image/i.test(normalized)) return "image";
+  return null;
+}
+
+function detectMimeTypeFromUrl(url: string, mediaType: "video" | "audio" | "image"): string {
+  const decoded = decodeURIComponent(url).toLowerCase();
+  if (decoded.includes("mime_type=video_mp4") || /\.mp4(\?|$)/i.test(decoded)) return "video/mp4";
+  if (decoded.includes("mime_type=audio") || /\.mp3(\?|$)/i.test(decoded)) return "audio/mpeg";
+  if (/\.m4a(\?|$)/i.test(decoded)) return "audio/mp4";
+  if (/\.wav(\?|$)/i.test(decoded)) return "audio/wav";
+  if (/\.png(\?|$)/i.test(decoded)) return "image/png";
+  if (/\.webp(\?|$)/i.test(decoded)) return "image/webp";
+  if (/\.jpe?g(\?|$)/i.test(decoded) || decoded.includes("image")) return "image/jpeg";
+  return mediaType === "video" ? "video/mp4" : mediaType === "audio" ? "audio/mpeg" : "image/jpeg";
+}
+
+function filenameFromUrl(url: string, mediaType: "video" | "audio" | "image"): string {
+  try {
+    const u = new URL(url);
+    const last = decodeURIComponent(u.pathname.split("/").filter(Boolean).pop() || "");
+    if (last && /\.[a-z0-9]{2,5}$/i.test(last)) return last.slice(0, 180);
+    const id = u.pathname.match(/\/video\/(\d+)/)?.[1] || u.searchParams.get("item_id") || u.hostname.replace(/[^a-z0-9]/gi, "_");
+    const ext = mediaType === "video" ? "mp4" : mediaType === "audio" ? "mp3" : "jpg";
+    return `${id}.${ext}`.slice(0, 180);
+  } catch {
+    const ext = mediaType === "video" ? "mp4" : mediaType === "audio" ? "mp3" : "jpg";
+    return `remote_media.${ext}`;
+  }
+}
+
+function extractRemoteMediaEntriesFromText(text: string, origin: string, seen: Set<string>): MediaEntry[] {
+  const normalizedText = text
+    .replace(/\\\//g, "/")
+    .replace(/\\u0026/gi, "&")
+    .replace(/\\u003d/gi, "=")
+    .replace(/\\u003f/gi, "?")
+    .replace(/&amp;/g, "&");
+  const urls = normalizedText.match(/https?:\/\/[^\s"'<>\\]+/gi) || [];
+  const entries: MediaEntry[] = [];
+  for (const rawUrl of urls) {
+    const url = rawUrl.replace(/[),.;\]]+$/g, "");
+    if (seen.has(url) || seen.size >= MAX_REMOTE_MEDIA_PER_JOB) continue;
+    const mediaType = detectMediaTypeFromUrl(url);
+    if (!mediaType) continue;
+    seen.add(url);
+    entries.push({
+      filename: filenameFromUrl(url, mediaType),
+      mediaType,
+      mime: detectMimeTypeFromUrl(url, mediaType),
+      sourceUrl: url,
+      sourcePath: origin,
+    });
+  }
+  return entries;
+}
+
 function isProbablyTextBytes(bytes: Uint8Array): boolean {
   const sample = bytes.slice(0, Math.min(bytes.length, 4096));
   if (sample.length === 0) return false;
@@ -176,8 +240,10 @@ function isProbablyTextBytes(bytes: Uint8Array): boolean {
 type MediaEntry = {
   filename: string;
   mediaType: "video" | "audio" | "image";
-  bytes: Uint8Array;
+  bytes?: Uint8Array;
   mime: string;
+  sourceUrl?: string;
+  sourcePath?: string;
 };
 
 function chunkTextEntry(name: string, text: string, rawOnly: boolean, category = "tiktok_export"): Source[] {
@@ -249,6 +315,7 @@ function textSourcesFromZipEntry(name: string, bytes: Uint8Array): Source[] {
 async function decodeZipEntries(zipBytes: Uint8Array): Promise<{ sources: Source[]; media: MediaEntry[] }> {
   const sources: Source[] = [];
   const media: MediaEntry[] = [];
+  const remoteMediaSeen = new Set<string>();
   const sampleNames: string[] = [];
   let textEntries = 0;
   let unsupportedEntries = 0;
@@ -286,6 +353,9 @@ async function decodeZipEntries(zipBytes: Uint8Array): Promise<{ sources: Source
           media.push({ filename: file.name.split("/").pop() || file.name, mediaType, bytes, mime: detectMimeType(file.name) });
         } else if (shouldReadText) {
           textEntries++;
+          let textForMedia = "";
+          try { textForMedia = strFromU8(bytes); } catch { textForMedia = ""; }
+          if (textForMedia) media.push(...extractRemoteMediaEntriesFromText(textForMedia, file.name, remoteMediaSeen));
           sources.push(...textSourcesFromZipEntry(file.name, bytes));
         }
         resolve();
@@ -318,7 +388,7 @@ async function decodeZipEntries(zipBytes: Uint8Array): Promise<{ sources: Source
   unzipper.register(UnzipInflate);
   unzipper.push(zipBytes, true);
   await Promise.all(fileReads);
-  console.log("[bulk-ingest] zip entries:", totalEntries, "text entries:", textEntries, "unsupported/skipped:", unsupportedEntries, "samples:", sampleNames.join(" | "));
+  console.log("[bulk-ingest] zip entries:", totalEntries, "text entries:", textEntries, "media/remote media:", media.length, "unsupported/skipped:", unsupportedEntries, "samples:", sampleNames.join(" | "));
   return { sources: sources.slice(0, MAX_SOURCES_PER_JOB), media };
 }
 
@@ -401,22 +471,57 @@ Deno.serve(async (req) => {
 
     // Média fájlok feltöltése Storage-ba + queue beírás (NEM elemez most, csak tárol)
     let mediaQueued = 0, mediaFailed = 0;
+    let remoteDownloads = 0;
     for (const m of mediaEntries) {
       try {
         const safeName = m.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
-        const storagePath = `media/${job.id}/${crypto.randomUUID()}_${safeName}`;
-        const { error: upErr } = await admin.storage.from("ai-bulk-uploads").upload(storagePath, m.bytes, {
-          contentType: m.mime, upsert: false,
-        });
-        if (upErr) throw upErr;
+        let storagePath = `media/${job.id}/${crypto.randomUUID()}_${safeName}`;
+        let storedSize = m.bytes?.length ?? null;
+        let queueStatus = "pending";
+        const metadata: Record<string, any> = m.sourceUrl ? { remote_url: m.sourceUrl, source_path: m.sourcePath } : {};
+
+        if (m.bytes) {
+          const { error: upErr } = await admin.storage.from("ai-bulk-uploads").upload(storagePath, m.bytes, {
+            contentType: m.mime, upsert: false,
+          });
+          if (upErr) throw upErr;
+        } else if (m.sourceUrl && remoteDownloads < MAX_REMOTE_MEDIA_DOWNLOADS_PER_CALL) {
+          remoteDownloads++;
+          const ctrl = new AbortController();
+          const timeout = setTimeout(() => ctrl.abort(), 12_000);
+          try {
+            const resp = await fetch(m.sourceUrl, { redirect: "follow", signal: ctrl.signal, headers: { "User-Agent": "Mozilla/5.0 LovableAIBulkIngest/1.0" } });
+            if (!resp.ok) throw new Error(`remote HTTP ${resp.status}`);
+            const len = Number(resp.headers.get("content-length") || "0");
+            if (len > MAX_STREAMED_MEDIA_BYTES) throw new Error(`remote media túl nagy: ${len}`);
+            const remoteBytes = new Uint8Array(await resp.arrayBuffer());
+            if (remoteBytes.length > MAX_STREAMED_MEDIA_BYTES) throw new Error(`remote media túl nagy: ${remoteBytes.length}`);
+            storedSize = remoteBytes.length;
+            const contentType = resp.headers.get("content-type") || m.mime;
+            const { error: upErr } = await admin.storage.from("ai-bulk-uploads").upload(storagePath, remoteBytes, {
+              contentType, upsert: false,
+            });
+            if (upErr) throw upErr;
+            m.mime = contentType;
+          } finally {
+            clearTimeout(timeout);
+          }
+        } else if (m.sourceUrl) {
+          storagePath = m.sourceUrl;
+          queueStatus = "skipped_remote_link_only";
+        } else {
+          throw new Error("missing media bytes");
+        }
+
         await admin.from("ai_video_processing_queue").insert({
           bulk_job_id: job.id,
           storage_path: storagePath,
           original_filename: m.filename,
           mime_type: m.mime,
-          file_size_bytes: m.bytes.length,
+          file_size_bytes: storedSize,
           media_type: m.mediaType,
-          status: "pending",
+          status: queueStatus,
+          metadata,
         });
         mediaQueued++;
       } catch (e: any) {
@@ -506,7 +611,7 @@ Deno.serve(async (req) => {
     await admin.from("ai_bulk_ingest_jobs").update({
       status: finalStatus,
       processed_sources: sources.length + mediaQueued,
-      succeeded_count: succeeded,
+      succeeded_count: succeeded + mediaQueued,
       failed_count: totalFailures,
       duplicate_count: duplicates,
       errors: errors.slice(0, 50),
