@@ -509,7 +509,7 @@ Deno.serve(async (req) => {
           }
         } else if (m.sourceUrl) {
           storagePath = m.sourceUrl;
-          queueStatus = "skipped_remote_link_only";
+          queueStatus = "pending_remote";
         } else {
           throw new Error("missing media bytes");
         }
@@ -593,18 +593,9 @@ Deno.serve(async (req) => {
     });
     await Promise.all(workers);
 
-    // Háttérben embeddel — fire-and-forget az ai-knowledge-process-szel
-    EdgeRuntime.waitUntil((async () => {
-      for (const docId of createdDocIds) {
-        try {
-          await fetch(`${SUPABASE_URL}/functions/v1/ai-knowledge-process`, {
-            method: "POST",
-            headers: { Authorization: auth, "Content-Type": "application/json" },
-            body: JSON.stringify({ document_id: docId }),
-          });
-        } catch (e) { console.error("embed trigger fail", docId, e); }
-      }
-    })());
+    // Nagy importnál NEM indítunk automatikus tömeges embeddinget.
+    // Ez okozta a rate limit + memory limit hibát. A dokumentumok pending állapotban maradnak,
+    // és később kis adagokban dolgozhatók fel.
 
     const totalFailures = failed + mediaFailed;
     const totalSuccesses = succeeded + mediaQueued + duplicates;
