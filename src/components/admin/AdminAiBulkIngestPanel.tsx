@@ -188,6 +188,20 @@ export default function AdminAiBulkIngestPanel() {
     return <Badge className={m.className}>{m.label}</Badge>;
   };
 
+  const mediaIcon = (t: string) => {
+    if (t === "video") return <Film className="w-3 h-3" />;
+    if (t === "audio") return <Mic className="w-3 h-3" />;
+    return <ImageIcon className="w-3 h-3" />;
+  };
+
+  const mediaCounts = {
+    pending: media.filter((m) => m.status === "pending").length,
+    processing: media.filter((m) => m.status === "processing").length,
+    completed: media.filter((m) => m.status === "completed").length,
+    failed: media.filter((m) => m.status === "failed").length,
+    skipped: media.filter((m) => m.status.startsWith("skipped")).length,
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
@@ -195,9 +209,53 @@ export default function AdminAiBulkIngestPanel() {
         <h2 className="font-bold text-lg">Tömeges AI Tudás-import</h2>
       </div>
       <p className="text-sm text-muted-foreground">
-        Tömegesen tölts fel forrásokat JSON-ban (URL listával vagy nyers szöveggel) vagy egy ZIP archívumban.
-        Az AI letölti, kivonatolja a lényeget, strukturált cikket ír, automatikusan kategorizálja és kiszűri a duplikátumokat.
+        Tölts fel JSON-t, URL listát vagy ZIP archívumot (TikTok export is). A szöveges tartalmakból az AI strukturált cikket ír. A ZIP-ben lévő MP4 / MP3 / kép fájlok eltárolódnak; AI-elemzésük csak akkor indul, ha bekapcsolod (kreditet fogyaszt).
       </p>
+
+      {/* Settings card */}
+      <Card className="p-4 border-2">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Film className="w-4 h-4" />
+            <h3 className="font-bold">Videó / audio / kép AI-elemzés</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">
+              {settings?.video_analysis_enabled ? "BE" : "KI (ingyenes mód)"}
+            </span>
+            <Switch
+              checked={settings?.video_analysis_enabled ?? false}
+              onCheckedChange={toggleVideoAnalysis}
+              disabled={!settings}
+            />
+          </div>
+        </div>
+        {!settings?.video_analysis_enabled ? (
+          <div className="flex items-start gap-2 text-xs bg-muted/50 p-2">
+            <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold">Ingyenes mód aktív</p>
+              <p className="text-muted-foreground mt-1">
+                A média fájlok eltárolódnak Storage-ban (ingyenes), de AI nem elemzi őket — semmi credit nem fogy.
+                Csak a szöveges tartalmakból (JSON, TXT, HTML) tanul az AI.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-start gap-2 text-xs bg-yellow-500/10 border border-yellow-500/30 p-2">
+            <AlertTriangle className="w-4 h-4 text-yellow-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold">AI-elemzés aktív — Lovable AI kredit fogy!</p>
+              <p className="text-muted-foreground mt-1">
+                Becsült költség: ~$0.02-0.05 / videó. Mai elköltött keret: ${settings?.spent_today_usd?.toFixed(2) ?? "0.00"}.
+                Max {settings?.max_videos_per_job} videó / job.
+              </p>
+            </div>
+          </div>
+        )}
+      </Card>
+
+
 
       <Tabs defaultValue="json">
         <TabsList>
