@@ -180,11 +180,12 @@ export default function AdminAiBulkIngestPanel() {
       if (error) throw new Error(await getFunctionErrorMessage(error));
       toast({
         title: "ZIP feldolgozva",
-        description: `${data.succeeded} sikeres, ${data.duplicates} duplikátum, ${data.failed} hiba.`,
+        description: data.message || `${data.succeeded} szöveg, ${data.media_queued || 0} média, ${data.duplicates} duplikátum, ${data.failed + (data.media_failed || 0)} hiba.`,
       });
       setZipFile(null);
       if (fileRef.current) fileRef.current.value = "";
       fetchJobs();
+      fetchMedia();
     } catch (e: any) {
       toast({ title: "Hiba", description: e.message || "Ismeretlen hiba", variant: "destructive" });
     } finally {
@@ -301,7 +302,7 @@ export default function AdminAiBulkIngestPanel() {
         </TabsContent>
 
         <TabsContent value="zip" className="space-y-3">
-          <Label>ZIP fájl (TXT, MD, JSON, HTML tartalmazhat)</Label>
+          <Label>ZIP fájl (TXT, MD, JSON, HTML + TikTok videó/audio/kép linkek)</Label>
           <input
             ref={fileRef}
             type="file"
