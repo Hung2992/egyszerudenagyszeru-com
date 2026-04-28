@@ -102,6 +102,57 @@ async function createKnowledgeDoc(admin: any, row: QueueRow, storagePath: string
   return data.id;
 }
 
+async function collectStats(admin: any) {
+  const pageSize = 1000;
+  let from = 0;
+  const stats = {
+    total: 0,
+    video: 0,
+    audio: 0,
+    image: 0,
+    pending: 0,
+    localPending: 0,
+    remotePending: 0,
+    processing: 0,
+    completed: 0,
+    failed: 0,
+    skipped: 0,
+    downloaded: 0,
+    linkRegistered: 0,
+    storedBytes: 0,
+  };
+
+  while (true) {
+    const { data, error } = await admin
+      .from("ai_video_processing_queue")
+      .select("status, media_type, file_size_bytes, metadata")
+      .order("created_at", { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (error) throw new Error(`Stats query failed: ${error.message}`);
+    const rows = data || [];
+    for (const row of rows) {
+      stats.total++;
+      if (row.media_type === "video") stats.video++;
+      if (row.media_type === "audio") stats.audio++;
+      if (row.media_type === "image") stats.image++;
+      if (row.status === "pending") stats.localPending++;
+      if (row.status === "pending_remote") stats.remotePending++;
+      if (row.status === "processing") stats.processing++;
+      if (row.status === "completed") stats.completed++;
+      if (row.status === "failed") stats.failed++;
+      if (String(row.status || "").startsWith("skipped")) stats.skipped++;
+      const size = Number(row.file_size_bytes || 0);
+      if (size > 0) stats.storedBytes += size;
+      if (row.metadata?.download_status === "downloaded" || (row.status === "completed" && size > 0)) stats.downloaded++;
+      if (row.metadata?.download_status === "link_registered") stats.linkRegistered++;
+    }
+    if (rows.length < pageSize) break;
+    from += pageSize;
+  }
+  stats.pending = stats.localPending + stats.remotePending;
+  return stats;
+}
+
 async function processRemote(admin: any, row: QueueRow) {
   const remoteUrl = row.metadata?.remote_url || row.storage_path;
   let finalStoragePath = row.storage_path;
@@ -136,7 +187,7 @@ async function processRemote(admin: any, row: QueueRow) {
           }).eq("id", row.id);
           warning = "Távoli média letöltve és eltárolva.";
           const docId = await createKnowledgeDoc(admin, { ...row, mime_type: contentType, file_size_bytes: bytes.length }, finalStoragePath, "stored_file", warning);
-          return { docId, finalStoragePath, warning };
+          return { docId, finalStoragePath, warning, downloaded: true, linkRegistered: false, bytesDownloaded: bytes.length };
         }
       }
       warning = !resp.ok
@@ -157,7 +208,7 @@ async function processRemote(admin: any, row: QueueRow) {
   await admin.from("ai_video_processing_queue").update({
     metadata: { ...row.metadata, remote_url: remoteUrl, download_status: "link_registered", warning, processed_at: new Date().toISOString() },
   }).eq("id", row.id);
-  return { docId, finalStoragePath, warning };
+  return { docId, finalStoragePath, warning, downloaded: false, linkRegistered: true, bytesDownloaded: 0 };
 }
 
 Deno.serve(async (req) => {
@@ -176,6 +227,21 @@ Deno.serve(async (req) => {
     if (!roleCheck) return json({ error: "Admin only" }, 403);
 
     const body = await req.json().catch(() => ({}));
+    if (body.stats_only) {
+      const stats = await collectStats(admin);
+      const doneForPercent = stats.completed + stats.failed + stats.skipped;
+      return json({
+        ok: true,
+        stats,
+        percent: stats.total ? Math.round((doneForPercent / stats.total) * 1000) / 10 : 0,
+        memory: {
+          max_batch: MAX_BATCH,
+          max_download_mb_per_file: Math.round(MAX_DOWNLOAD_BYTES / 1024 / 1024),
+          remote_timeout_ms: REMOTE_FETCH_TIMEOUT_MS,
+          safe_mode: "batch feldolgozás, nem egyszerre 10000 videó",
+        },
+      });
+    }
     const limit = Math.max(1, Math.min(Number(body.limit || 50), MAX_BATCH));
     const statuses = Array.isArray(body.statuses) && body.statuses.length ? body.statuses : ["pending_remote", "pending"];
 
@@ -189,6 +255,9 @@ Deno.serve(async (req) => {
 
     let completed = 0;
     let failed = 0;
+    let downloaded = 0;
+    let linkRegistered = 0;
+    let bytesDownloaded = 0;
     const errors: any[] = [];
 
     for (const row of (rows || []) as QueueRow[]) {
@@ -202,7 +271,7 @@ Deno.serve(async (req) => {
       try {
         const result = row.status === "pending_remote"
           ? await processRemote(admin, row)
-          : { docId: await createKnowledgeDoc(admin, row, row.storage_path, "stored_file", "Helyi média fájl rögzítve."), finalStoragePath: row.storage_path, warning: "Helyi média fájl rögzítve." };
+          : { docId: await createKnowledgeDoc(admin, row, row.storage_path, "stored_file", "Helyi média fájl rögzítve."), finalStoragePath: row.storage_path, warning: "Helyi média fájl rögzítve.", downloaded: true, linkRegistered: false, bytesDownloaded: row.file_size_bytes || 0 };
 
         await admin.from("ai_video_processing_queue").update({
           status: "completed",
@@ -212,6 +281,9 @@ Deno.serve(async (req) => {
           error_message: null,
         }).eq("id", row.id);
         completed++;
+        if (result.downloaded) downloaded++;
+        if (result.linkRegistered) linkRegistered++;
+        bytesDownloaded += result.bytesDownloaded || 0;
       } catch (e: any) {
         const message = e?.message || String(e);
         await admin.from("ai_video_processing_queue").update({
@@ -230,7 +302,22 @@ Deno.serve(async (req) => {
       .select("id", { count: "exact", head: true })
       .in("status", ["pending_remote", "pending"]);
 
-    return json({ ok: true, picked: rows?.length || 0, completed, failed, remaining: remaining || 0, errors: errors.slice(0, 20) });
+    return json({
+      ok: true,
+      picked: rows?.length || 0,
+      completed,
+      failed,
+      downloaded,
+      link_registered: linkRegistered,
+      bytes_downloaded: bytesDownloaded,
+      remaining: remaining || 0,
+      memory: {
+        max_batch: MAX_BATCH,
+        max_download_mb_per_file: Math.round(MAX_DOWNLOAD_BYTES / 1024 / 1024),
+        remote_timeout_ms: REMOTE_FETCH_TIMEOUT_MS,
+      },
+      errors: errors.slice(0, 20),
+    });
   } catch (e: any) {
     console.error("ai-media-queue-worker error:", e);
     return json({ error: e?.message || "Unknown error" }, 500);

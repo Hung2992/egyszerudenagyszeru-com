@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Upload, Loader2, FileJson, FileArchive, Globe, RefreshCw, CheckCircle2, AlertCircle, Layers, Film, Mic, Image as ImageIcon, AlertTriangle, PlayCircle } from "lucide-react";
+import { Upload, Loader2, FileJson, FileArchive, Globe, RefreshCw, CheckCircle2, AlertCircle, Layers, Film, Mic, Image as ImageIcon, AlertTriangle, PlayCircle, HardDrive, DownloadCloud, Link2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/untyped-client";
 
@@ -56,6 +56,9 @@ interface MediaCounts {
   completed: number;
   failed: number;
   skipped: number;
+  downloaded: number;
+  linkRegistered: number;
+  storedBytes: number;
 }
 
 const EMPTY_MEDIA_COUNTS: MediaCounts = {
@@ -70,6 +73,9 @@ const EMPTY_MEDIA_COUNTS: MediaCounts = {
   completed: 0,
   failed: 0,
   skipped: 0,
+  downloaded: 0,
+  linkRegistered: 0,
+  storedBytes: 0,
 };
 
 const getFunctionErrorMessage = async (error: any) => {
@@ -109,7 +115,10 @@ export default function AdminAiBulkIngestPanel() {
   const [settings, setSettings] = useState<IngestSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [processingQueue, setProcessingQueue] = useState(false);
+  const [autoProcessing, setAutoProcessing] = useState(false);
+  const [lastWorkerResult, setLastWorkerResult] = useState<any>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const stopAutoRef = useRef(false);
 
   const fetchJobs = async () => {
     const { data } = await supabase
@@ -129,6 +138,30 @@ export default function AdminAiBulkIngestPanel() {
       .limit(200);
     if (data) setMedia(data as any);
 
+    try {
+      const { data: statsData } = await supabase.functions.invoke("ai-media-queue-worker", { body: { stats_only: true } });
+      if (statsData?.stats) {
+        setMediaCountsExact({
+          total: statsData.stats.total || 0,
+          video: statsData.stats.video || 0,
+          audio: statsData.stats.audio || 0,
+          image: statsData.stats.image || 0,
+          pending: statsData.stats.pending || 0,
+          localPending: statsData.stats.localPending || 0,
+          remotePending: statsData.stats.remotePending || 0,
+          processing: statsData.stats.processing || 0,
+          completed: statsData.stats.completed || 0,
+          failed: statsData.stats.failed || 0,
+          skipped: statsData.stats.skipped || 0,
+          downloaded: statsData.stats.downloaded || 0,
+          linkRegistered: statsData.stats.linkRegistered || 0,
+          storedBytes: statsData.stats.storedBytes || 0,
+        });
+        setLastWorkerResult((prev: any) => ({ ...(prev || {}), percent: statsData.percent, memory: statsData.memory }));
+        return;
+      }
+    } catch {}
+
     const countRows = async (apply: (q: any) => any) => {
       const { count } = await apply(supabase.from("ai_video_processing_queue").select("id", { count: "exact", head: true }));
       return count || 0;
@@ -145,7 +178,10 @@ export default function AdminAiBulkIngestPanel() {
       countRows((q) => q.eq("status", "failed")),
       countRows((q) => q.like("status", "skipped%")),
     ]);
-    setMediaCountsExact({ total, video, audio, image, pending: localPending + remotePending, localPending, remotePending, processing, completed, failed, skipped });
+    const downloaded = media.filter((m) => m.metadata?.download_status === "downloaded" || (m.status === "completed" && (m.file_size_bytes || 0) > 0)).length;
+    const linkRegistered = media.filter((m) => m.metadata?.download_status === "link_registered").length;
+    const storedBytes = media.reduce((sum, m) => sum + (m.file_size_bytes || 0), 0);
+    setMediaCountsExact({ total, video, audio, image, pending: localPending + remotePending, localPending, remotePending, processing, completed, failed, skipped, downloaded, linkRegistered, storedBytes });
 
   };
 
@@ -248,12 +284,13 @@ export default function AdminAiBulkIngestPanel() {
     setProcessingQueue(true);
     try {
       const { data, error } = await supabase.functions.invoke("ai-media-queue-worker", {
-        body: { limit: 100, statuses: ["pending_remote", "pending"] },
+        body: { limit: 250, statuses: ["pending_remote", "pending"] },
       });
       if (error) throw new Error(await getFunctionErrorMessage(error));
+      setLastWorkerResult(data);
       toast({
         title: "Média feldolgozás lefutott",
-        description: `${data.completed || 0} kész, ${data.failed || 0} hiba, ${data.remaining || 0} vár még.`,
+        description: `${data.completed || 0} kész, ${data.downloaded || 0} letöltve, ${data.link_registered || 0} link, ${data.failed || 0} hiba, ${data.remaining || 0} vár még.`,
       });
       fetchMedia();
       fetchJobs();
@@ -261,6 +298,42 @@ export default function AdminAiBulkIngestPanel() {
       toast({ title: "Média feldolgozás hiba", description: e.message || "Ismeretlen hiba", variant: "destructive" });
     } finally {
       setProcessingQueue(false);
+    }
+  };
+
+  const processAllMediaQueue = async () => {
+    stopAutoRef.current = false;
+    setAutoProcessing(true);
+    try {
+      let totalCompleted = 0;
+      let totalFailed = 0;
+      let totalDownloaded = 0;
+      let totalLinks = 0;
+      let remaining = mediaCounts.pending;
+      for (let round = 1; round <= 60 && remaining > 0 && !stopAutoRef.current; round++) {
+        const { data, error } = await supabase.functions.invoke("ai-media-queue-worker", {
+          body: { limit: 250, statuses: ["pending_remote", "pending"] },
+        });
+        if (error) throw new Error(await getFunctionErrorMessage(error));
+        setLastWorkerResult(data);
+        totalCompleted += data.completed || 0;
+        totalFailed += data.failed || 0;
+        totalDownloaded += data.downloaded || 0;
+        totalLinks += data.link_registered || 0;
+        remaining = data.remaining || 0;
+        await fetchMedia();
+        if ((data.picked || 0) === 0) break;
+      }
+      toast({
+        title: stopAutoRef.current ? "Feldolgozás megállítva" : "Tömeges média feldolgozás kész",
+        description: `${totalCompleted} kész, ${totalDownloaded} letöltve, ${totalLinks} linkként mentve, ${totalFailed} hiba, ${remaining} vár még.`,
+      });
+      fetchJobs();
+    } catch (e: any) {
+      toast({ title: "Tömeges média hiba", description: e.message || "Ismeretlen hiba", variant: "destructive" });
+    } finally {
+      setAutoProcessing(false);
+      stopAutoRef.current = false;
     }
   };
 
@@ -283,6 +356,9 @@ export default function AdminAiBulkIngestPanel() {
   };
 
   const mediaCounts = mediaCountsExact;
+  const mediaDone = mediaCounts.completed + mediaCounts.failed + mediaCounts.skipped;
+  const mediaPercent = mediaCounts.total > 0 ? Math.round((mediaDone / mediaCounts.total) * 1000) / 10 : 0;
+  const storageMb = mediaCounts.storedBytes / 1024 / 1024;
 
   const latestErrors = media.filter((m) => m.status === "failed" || m.error_message).slice(0, 20);
 
@@ -434,12 +510,36 @@ export default function AdminAiBulkIngestPanel() {
             <Film className="w-4 h-4" /> Média fájlok ({mediaCounts.total})
           </h3>
           <div className="flex items-center gap-1">
-            <Button variant="outline" size="sm" onClick={processMediaQueue} disabled={processingQueue || mediaCounts.pending === 0}>
+            <Button variant="outline" size="sm" onClick={processMediaQueue} disabled={processingQueue || autoProcessing || mediaCounts.pending === 0}>
               {processingQueue ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <PlayCircle className="w-4 h-4 mr-1" />}
-              100 feldolgozása
+              250
+            </Button>
+            <Button variant="outline" size="sm" onClick={autoProcessing ? () => { stopAutoRef.current = true; } : processAllMediaQueue} disabled={processingQueue || mediaCounts.pending === 0}>
+              {autoProcessing ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <PlayCircle className="w-4 h-4 mr-1" />}
+              {autoProcessing ? "Stop" : "Mind"}
             </Button>
             <Button variant="ghost" size="sm" onClick={fetchMedia}><RefreshCw className="w-4 h-4" /></Button>
           </div>
+        </div>
+        <div className="mb-3 space-y-2 text-xs">
+          <div className="flex items-center justify-between gap-3">
+            <span className="font-semibold">Letöltés / feldolgozás: {mediaPercent}%</span>
+            <span className="text-muted-foreground">{mediaDone}/{mediaCounts.total}</span>
+          </div>
+          <div className="h-3 w-full border bg-muted overflow-hidden">
+            <div className="h-full bg-primary transition-all" style={{ width: `${Math.min(100, mediaPercent)}%` }} />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="border p-2 flex items-center gap-2"><DownloadCloud className="w-4 h-4" /><span>{mediaCounts.downloaded} letöltött fájl</span></div>
+            <div className="border p-2 flex items-center gap-2"><Link2 className="w-4 h-4" /><span>{mediaCounts.linkRegistered} linkként mentve</span></div>
+            <div className="border p-2 flex items-center gap-2"><HardDrive className="w-4 h-4" /><span>{storageMb.toFixed(1)} MB média</span></div>
+            <div className="border p-2 flex items-center gap-2"><Layers className="w-4 h-4" /><span>Max 250 / kör</span></div>
+          </div>
+          {lastWorkerResult?.memory && (
+            <p className="text-muted-foreground">
+              Memória mód: {lastWorkerResult.memory.safe_mode || "batch feldolgozás"}; max {lastWorkerResult.memory.max_download_mb_per_file}MB / fájl; timeout {lastWorkerResult.memory.remote_timeout_ms}ms.
+            </p>
+          )}
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3 text-xs">
           <div className="border p-2"><div className="text-muted-foreground">Videó</div><div className="font-bold text-lg">{mediaCounts.video}</div></div>
