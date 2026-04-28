@@ -136,7 +136,7 @@ async function processRemote(admin: any, row: QueueRow) {
           }).eq("id", row.id);
           warning = "Távoli média letöltve és eltárolva.";
           const docId = await createKnowledgeDoc(admin, { ...row, mime_type: contentType, file_size_bytes: bytes.length }, finalStoragePath, "stored_file", warning);
-          return { docId, finalStoragePath, warning };
+          return { docId, finalStoragePath, warning, downloaded: true, linkRegistered: false, bytesDownloaded: bytes.length };
         }
       }
       warning = !resp.ok
@@ -157,7 +157,7 @@ async function processRemote(admin: any, row: QueueRow) {
   await admin.from("ai_video_processing_queue").update({
     metadata: { ...row.metadata, remote_url: remoteUrl, download_status: "link_registered", warning, processed_at: new Date().toISOString() },
   }).eq("id", row.id);
-  return { docId, finalStoragePath, warning };
+  return { docId, finalStoragePath, warning, downloaded: false, linkRegistered: true, bytesDownloaded: 0 };
 }
 
 Deno.serve(async (req) => {
