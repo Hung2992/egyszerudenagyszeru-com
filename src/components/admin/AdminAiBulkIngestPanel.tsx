@@ -136,6 +136,24 @@ export default function AdminAiBulkIngestPanel() {
       .limit(200);
     if (data) setMedia(data as any);
 
+    const countRows = async (apply: (q: any) => any) => {
+      const { count } = await apply(supabase.from("ai_video_processing_queue").select("id", { count: "exact", head: true }));
+      return count || 0;
+    };
+    const [total, video, audio, image, localPending, remotePending, processing, completed, failed, skipped] = await Promise.all([
+      countRows((q) => q),
+      countRows((q) => q.eq("media_type", "video")),
+      countRows((q) => q.eq("media_type", "audio")),
+      countRows((q) => q.eq("media_type", "image")),
+      countRows((q) => q.eq("status", "pending")),
+      countRows((q) => q.eq("status", "pending_remote")),
+      countRows((q) => q.eq("status", "processing")),
+      countRows((q) => q.eq("status", "completed")),
+      countRows((q) => q.eq("status", "failed")),
+      countRows((q) => q.like("status", "skipped%")),
+    ]);
+    setMediaCountsExact({ total, video, audio, image, pending: localPending + remotePending, localPending, remotePending, processing, completed, failed, skipped });
+
     const { data: statRows } = await supabase
       .from("ai_video_processing_queue")
       .select("status, media_type");
