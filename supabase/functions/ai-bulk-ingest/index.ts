@@ -353,7 +353,7 @@ Deno.serve(async (req) => {
       console.log("[bulk-ingest] zip size:", buf.length);
       let decoded: { sources: Source[]; media: MediaEntry[] };
       try {
-        decoded = decodeZipEntries(buf);
+        decoded = await decodeZipEntries(buf);
       } catch (zipErr: any) {
         throw new Error(`ZIP bontás sikertelen: ${zipErr?.message || zipErr}`);
       }
