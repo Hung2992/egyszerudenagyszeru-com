@@ -165,8 +165,16 @@ function detectMimeType(name: string): string {
   return map[ext] || "application/octet-stream";
 }
 
+function safeDecodeUrl(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
 function detectMediaTypeFromUrl(url: string): "video" | "audio" | "image" | null {
-  const normalized = decodeURIComponent(url).toLowerCase();
+  const normalized = safeDecodeUrl(url).toLowerCase();
   if (/mime_type=video|video_|\.mp4(\?|$)|\.mov(\?|$)|\.webm(\?|$)|tiktokv\.com\/share\/video|tiktok\.com\/@[^/]+\/video\//i.test(normalized)) return "video";
   if (/mime_type=audio|audio_|\.mp3(\?|$)|\.m4a(\?|$)|\.wav(\?|$)|\.aac(\?|$)/i.test(normalized)) return "audio";
   if (/mime_type=image|image_|\.jpe?g(\?|$)|\.png(\?|$)|\.webp(\?|$)|coverimage|cover_image/i.test(normalized)) return "image";
@@ -174,7 +182,7 @@ function detectMediaTypeFromUrl(url: string): "video" | "audio" | "image" | null
 }
 
 function detectMimeTypeFromUrl(url: string, mediaType: "video" | "audio" | "image"): string {
-  const decoded = decodeURIComponent(url).toLowerCase();
+  const decoded = safeDecodeUrl(url).toLowerCase();
   if (decoded.includes("mime_type=video_mp4") || /\.mp4(\?|$)/i.test(decoded)) return "video/mp4";
   if (decoded.includes("mime_type=audio") || /\.mp3(\?|$)/i.test(decoded)) return "audio/mpeg";
   if (/\.m4a(\?|$)/i.test(decoded)) return "audio/mp4";
