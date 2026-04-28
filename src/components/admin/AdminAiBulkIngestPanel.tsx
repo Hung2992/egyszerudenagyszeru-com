@@ -4,9 +4,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Upload, Loader2, FileJson, FileArchive, Globe, RefreshCw, CheckCircle2, AlertCircle, Layers } from "lucide-react";
+import { Upload, Loader2, FileJson, FileArchive, Globe, RefreshCw, CheckCircle2, AlertCircle, Layers, Film, Mic, Image as ImageIcon, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/untyped-client";
 
@@ -22,6 +23,23 @@ interface BulkJob {
   errors: any;
   created_at: string;
   completed_at: string | null;
+}
+
+interface MediaItem {
+  id: string;
+  media_type: string;
+  original_filename: string;
+  status: string;
+  file_size_bytes: number | null;
+  created_at: string;
+}
+
+interface IngestSettings {
+  video_analysis_enabled: boolean;
+  max_videos_per_job: number;
+  daily_budget_usd: number;
+  spent_today_usd: number;
+  paused: boolean;
 }
 
 const SAMPLE_JSON = `{
@@ -40,6 +58,8 @@ export default function AdminAiBulkIngestPanel() {
   const [zipFile, setZipFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [jobs, setJobs] = useState<BulkJob[]>([]);
+  const [media, setMedia] = useState<MediaItem[]>([]);
+  const [settings, setSettings] = useState<IngestSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -53,11 +73,50 @@ export default function AdminAiBulkIngestPanel() {
     setLoading(false);
   };
 
+  const fetchMedia = async () => {
+    const { data } = await supabase
+      .from("ai_video_processing_queue")
+      .select("id, media_type, original_filename, status, file_size_bytes, created_at")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (data) setMedia(data as any);
+  };
+
+  const fetchSettings = async () => {
+    const { data } = await supabase
+      .from("ai_bulk_ingest_settings")
+      .select("video_analysis_enabled, max_videos_per_job, daily_budget_usd, spent_today_usd, paused")
+      .eq("id", 1)
+      .maybeSingle();
+    if (data) setSettings(data as any);
+  };
+
+  const toggleVideoAnalysis = async (enabled: boolean) => {
+    const { error } = await supabase
+      .from("ai_bulk_ingest_settings")
+      .update({ video_analysis_enabled: enabled, updated_at: new Date().toISOString() })
+      .eq("id", 1);
+    if (error) {
+      toast({ title: "Hiba", description: error.message, variant: "destructive" });
+      return;
+    }
+    setSettings((s) => s ? { ...s, video_analysis_enabled: enabled } : s);
+    toast({
+      title: enabled ? "Videó-elemzés BEKAPCSOLVA" : "Videó-elemzés KIKAPCSOLVA",
+      description: enabled
+        ? "Az új videók AI-elemzése Lovable AI kreditet fogyaszt."
+        : "Az új videók csak tárolódnak, AI nem elemzi őket. 0 költség.",
+    });
+  };
+
   useEffect(() => {
     fetchJobs();
+    fetchMedia();
+    fetchSettings();
     const ch = supabase
       .channel("bulk-jobs")
       .on("postgres_changes", { event: "*", schema: "public", table: "ai_bulk_ingest_jobs" }, () => fetchJobs())
+      .on("postgres_changes", { event: "*", schema: "public", table: "ai_video_processing_queue" }, () => fetchMedia())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
@@ -129,6 +188,20 @@ export default function AdminAiBulkIngestPanel() {
     return <Badge className={m.className}>{m.label}</Badge>;
   };
 
+  const mediaIcon = (t: string) => {
+    if (t === "video") return <Film className="w-3 h-3" />;
+    if (t === "audio") return <Mic className="w-3 h-3" />;
+    return <ImageIcon className="w-3 h-3" />;
+  };
+
+  const mediaCounts = {
+    pending: media.filter((m) => m.status === "pending").length,
+    processing: media.filter((m) => m.status === "processing").length,
+    completed: media.filter((m) => m.status === "completed").length,
+    failed: media.filter((m) => m.status === "failed").length,
+    skipped: media.filter((m) => m.status.startsWith("skipped")).length,
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
@@ -136,9 +209,53 @@ export default function AdminAiBulkIngestPanel() {
         <h2 className="font-bold text-lg">Tömeges AI Tudás-import</h2>
       </div>
       <p className="text-sm text-muted-foreground">
-        Tömegesen tölts fel forrásokat JSON-ban (URL listával vagy nyers szöveggel) vagy egy ZIP archívumban.
-        Az AI letölti, kivonatolja a lényeget, strukturált cikket ír, automatikusan kategorizálja és kiszűri a duplikátumokat.
+        Tölts fel JSON-t, URL listát vagy ZIP archívumot (TikTok export is). A szöveges tartalmakból az AI strukturált cikket ír. A ZIP-ben lévő MP4 / MP3 / kép fájlok eltárolódnak; AI-elemzésük csak akkor indul, ha bekapcsolod (kreditet fogyaszt).
       </p>
+
+      {/* Settings card */}
+      <Card className="p-4 border-2">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Film className="w-4 h-4" />
+            <h3 className="font-bold">Videó / audio / kép AI-elemzés</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">
+              {settings?.video_analysis_enabled ? "BE" : "KI (ingyenes mód)"}
+            </span>
+            <Switch
+              checked={settings?.video_analysis_enabled ?? false}
+              onCheckedChange={toggleVideoAnalysis}
+              disabled={!settings}
+            />
+          </div>
+        </div>
+        {!settings?.video_analysis_enabled ? (
+          <div className="flex items-start gap-2 text-xs bg-muted/50 p-2">
+            <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold">Ingyenes mód aktív</p>
+              <p className="text-muted-foreground mt-1">
+                A média fájlok eltárolódnak Storage-ban (ingyenes), de AI nem elemzi őket — semmi credit nem fogy.
+                Csak a szöveges tartalmakból (JSON, TXT, HTML) tanul az AI.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-start gap-2 text-xs bg-yellow-500/10 border border-yellow-500/30 p-2">
+            <AlertTriangle className="w-4 h-4 text-yellow-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold">AI-elemzés aktív — Lovable AI kredit fogy!</p>
+              <p className="text-muted-foreground mt-1">
+                Becsült költség: ~$0.02-0.05 / videó. Mai elköltött keret: ${settings?.spent_today_usd?.toFixed(2) ?? "0.00"}.
+                Max {settings?.max_videos_per_job} videó / job.
+              </p>
+            </div>
+          </div>
+        )}
+      </Card>
+
+
 
       <Tabs defaultValue="json">
         <TabsList>
@@ -219,6 +336,41 @@ export default function AdminAiBulkIngestPanel() {
                       </ul>
                     </details>
                   )}
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        )}
+      </Card>
+
+      {/* Media queue */}
+      <Card className="p-4">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="font-bold flex items-center gap-2">
+            <Film className="w-4 h-4" /> Média fájlok ({media.length})
+          </h3>
+          <Button variant="ghost" size="sm" onClick={fetchMedia}><RefreshCw className="w-4 h-4" /></Button>
+        </div>
+        <div className="flex flex-wrap gap-2 mb-3 text-xs">
+          <Badge variant="outline">{mediaCounts.pending} vár</Badge>
+          <Badge variant="outline" className="bg-blue-500/10">{mediaCounts.processing} fut</Badge>
+          <Badge variant="outline" className="bg-green-500/10">{mediaCounts.completed} kész</Badge>
+          <Badge variant="outline" className="bg-destructive/10">{mediaCounts.failed} hiba</Badge>
+          <Badge variant="outline" className="bg-muted">{mediaCounts.skipped} kihagyva</Badge>
+        </div>
+        {media.length === 0 ? (
+          <p className="text-xs text-muted-foreground">Még nincs média fájl. Tölts fel egy ZIP-et MP4 / MP3 / képpel.</p>
+        ) : (
+          <ScrollArea className="max-h-72">
+            <div className="space-y-1">
+              {media.map((m) => (
+                <div key={m.id} className="flex items-center gap-2 text-xs border-b py-1">
+                  {mediaIcon(m.media_type)}
+                  <span className="font-mono truncate flex-1">{m.original_filename}</span>
+                  <span className="text-muted-foreground">
+                    {m.file_size_bytes ? `${(m.file_size_bytes / 1024 / 1024).toFixed(1)}MB` : ""}
+                  </span>
+                  <Badge variant="outline" className="text-[10px]">{m.status}</Badge>
                 </div>
               ))}
             </div>

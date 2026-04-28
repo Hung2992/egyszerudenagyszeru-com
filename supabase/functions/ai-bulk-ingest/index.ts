@@ -123,20 +123,59 @@ function isTextLikeFilename(name: string): boolean {
   return /\.(txt|md|markdown|json|html?|csv|log)$/i.test(name);
 }
 
-function decodeZipEntries(zipBytes: Uint8Array): Source[] {
+function detectMediaType(name: string): "video" | "audio" | "image" | null {
+  if (/\.(mp4|mov|webm|mkv|avi|m4v)$/i.test(name)) return "video";
+  if (/\.(mp3|wav|m4a|aac|ogg|flac)$/i.test(name)) return "audio";
+  if (/\.(jpe?g|png|webp|gif|heic)$/i.test(name)) return "image";
+  return null;
+}
+
+function detectMimeType(name: string): string {
+  const ext = name.split(".").pop()?.toLowerCase() || "";
+  const map: Record<string, string> = {
+    mp4: "video/mp4", mov: "video/quicktime", webm: "video/webm", mkv: "video/x-matroska",
+    avi: "video/x-msvideo", m4v: "video/x-m4v",
+    mp3: "audio/mpeg", wav: "audio/wav", m4a: "audio/mp4", aac: "audio/aac", ogg: "audio/ogg", flac: "audio/flac",
+    jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif", heic: "image/heic",
+  };
+  return map[ext] || "application/octet-stream";
+}
+
+type MediaEntry = {
+  filename: string;
+  mediaType: "video" | "audio" | "image";
+  bytes: Uint8Array;
+  mime: string;
+};
+
+function decodeZipEntries(zipBytes: Uint8Array): { sources: Source[]; media: MediaEntry[] } {
   const entries = unzipSync(zipBytes);
-  const out: Source[] = [];
+  const sources: Source[] = [];
+  const media: MediaEntry[] = [];
   for (const [name, bytes] of Object.entries(entries)) {
-    if (name.endsWith("/") || !isTextLikeFilename(name)) continue;
+    if (name.endsWith("/")) continue;
+    const mediaType = detectMediaType(name);
+    if (mediaType) {
+      // limit individual media to 200 MB to be safe
+      if (bytes.length > 200_000_000) continue;
+      media.push({
+        filename: name.split("/").pop() || name,
+        mediaType,
+        bytes,
+        mime: detectMimeType(name),
+      });
+      continue;
+    }
+    if (!isTextLikeFilename(name)) continue;
     if (bytes.length > 2_000_000) continue;
     let text = "";
     try { text = strFromU8(bytes); } catch { continue; }
     if (/\.html?$/i.test(name)) text = stripHtml(text);
     text = text.trim();
     if (text.length < 30) continue;
-    out.push({ title: name.split("/").pop() || name, text: text.slice(0, MAX_HTML_CHARS) });
+    sources.push({ title: name.split("/").pop() || name, text: text.slice(0, MAX_HTML_CHARS) });
   }
-  return out;
+  return { sources, media };
 }
 
 function normalizeSources(payload: any): Source[] {
@@ -172,19 +211,21 @@ Deno.serve(async (req) => {
     const jobType: string = body.job_type || (body.zip_storage_path ? "zip" : "json");
     const zipPath: string | undefined = body.zip_storage_path;
     let sources: Source[] = normalizeSources(body.payload);
+    let mediaEntries: MediaEntry[] = [];
 
     // ZIP letöltés és bontás
     if (zipPath) {
       const { data: blob, error: dlErr } = await admin.storage.from("ai-bulk-uploads").download(zipPath);
       if (dlErr || !blob) throw new Error(`ZIP letöltés sikertelen: ${dlErr?.message}`);
       const buf = new Uint8Array(await blob.arrayBuffer());
-      const zipSources = decodeZipEntries(buf);
-      sources = sources.concat(zipSources);
+      const decoded = decodeZipEntries(buf);
+      sources = sources.concat(decoded.sources);
+      mediaEntries = decoded.media;
     }
 
     sources = sources.filter((s) => s.url || (s.text && s.text.trim().length > 30));
-    if (sources.length === 0) {
-      return new Response(JSON.stringify({ error: "No valid sources in payload" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (sources.length === 0 && mediaEntries.length === 0) {
+      return new Response(JSON.stringify({ error: "No valid sources or media in payload" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     if (sources.length > MAX_SOURCES_PER_JOB) sources = sources.slice(0, MAX_SOURCES_PER_JOB);
 
@@ -192,13 +233,41 @@ Deno.serve(async (req) => {
     const { data: job, error: jobErr } = await admin.from("ai_bulk_ingest_jobs").insert({
       job_type: jobType,
       status: "running",
-      source_payload: { count: sources.length, sample: sources.slice(0, 3) },
+      source_payload: { count: sources.length, media_count: mediaEntries.length, sample: sources.slice(0, 3) },
       zip_storage_path: zipPath || null,
-      total_sources: sources.length,
+      total_sources: sources.length + mediaEntries.length,
       created_by: u.user.id,
       started_at: new Date().toISOString(),
     }).select().single();
     if (jobErr || !job) throw new Error(`Job create failed: ${jobErr?.message}`);
+
+    // Média fájlok feltöltése Storage-ba + queue beírás (NEM elemez most, csak tárol)
+    let mediaQueued = 0, mediaFailed = 0;
+    for (const m of mediaEntries) {
+      try {
+        const safeName = m.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const storagePath = `media/${job.id}/${crypto.randomUUID()}_${safeName}`;
+        const { error: upErr } = await admin.storage.from("ai-bulk-uploads").upload(storagePath, m.bytes, {
+          contentType: m.mime, upsert: false,
+        });
+        if (upErr) throw upErr;
+        await admin.from("ai_video_processing_queue").insert({
+          bulk_job_id: job.id,
+          storage_path: storagePath,
+          original_filename: m.filename,
+          mime_type: m.mime,
+          file_size_bytes: m.bytes.length,
+          media_type: m.mediaType,
+          status: "pending",
+        });
+        mediaQueued++;
+      } catch (e: any) {
+        mediaFailed++;
+        console.error("media upload fail", m.filename, e?.message);
+      }
+    }
+
+    // (Job már létrejött a média blokk előtt — nincs második insert)
 
     const errors: any[] = [];
     let succeeded = 0, failed = 0, duplicates = 0;
@@ -274,9 +343,9 @@ Deno.serve(async (req) => {
     const finalStatus = failed === 0 ? "completed" : (succeeded === 0 ? "failed" : "partial");
     await admin.from("ai_bulk_ingest_jobs").update({
       status: finalStatus,
-      processed_sources: sources.length,
+      processed_sources: sources.length + mediaQueued,
       succeeded_count: succeeded,
-      failed_count: failed,
+      failed_count: failed + mediaFailed,
       duplicate_count: duplicates,
       errors: errors.slice(0, 50),
       completed_at: new Date().toISOString(),
@@ -285,9 +354,15 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({
       ok: true,
       job_id: job.id,
-      total: sources.length,
+      total_text: sources.length,
+      total_media: mediaEntries.length,
       succeeded, failed, duplicates,
+      media_queued: mediaQueued,
+      media_failed: mediaFailed,
       doc_ids: createdDocIds,
+      message: mediaQueued > 0
+        ? `${succeeded} szöveges cikk + ${mediaQueued} média fájl elmentve. A média elemzés alapból KIKAPCSOLVA (nem fogyaszt creditet). Az admin felületen kapcsolható be.`
+        : `${succeeded} szöveges cikk elmentve.`,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e: any) {
     console.error("ai-bulk-ingest error:", e);
