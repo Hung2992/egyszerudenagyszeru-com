@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Upload, Loader2, FileJson, FileArchive, Globe, RefreshCw, CheckCircle2, AlertCircle, Layers, Film, Mic, Image as ImageIcon, AlertTriangle, PlayCircle } from "lucide-react";
+import { Upload, Loader2, FileJson, FileArchive, Globe, RefreshCw, CheckCircle2, AlertCircle, Layers, Film, Mic, Image as ImageIcon, AlertTriangle, PlayCircle, HardDrive, DownloadCloud, Link2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/untyped-client";
 
@@ -56,6 +56,9 @@ interface MediaCounts {
   completed: number;
   failed: number;
   skipped: number;
+  downloaded: number;
+  linkRegistered: number;
+  storedBytes: number;
 }
 
 const EMPTY_MEDIA_COUNTS: MediaCounts = {
@@ -70,6 +73,9 @@ const EMPTY_MEDIA_COUNTS: MediaCounts = {
   completed: 0,
   failed: 0,
   skipped: 0,
+  downloaded: 0,
+  linkRegistered: 0,
+  storedBytes: 0,
 };
 
 const getFunctionErrorMessage = async (error: any) => {
