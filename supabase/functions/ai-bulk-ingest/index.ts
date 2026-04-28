@@ -469,6 +469,8 @@ Deno.serve(async (req) => {
     }).select().single();
     if (jobErr || !job) throw new Error(`Job create failed: ${jobErr?.message || JSON.stringify(jobErr)}`);
 
+    const errors: any[] = [];
+
     // Média fájlok feltöltése Storage-ba + queue beírás (NEM elemez most, csak tárol)
     let mediaQueued = 0, mediaFailed = 0;
     let remoteDownloads = 0;
@@ -526,13 +528,27 @@ Deno.serve(async (req) => {
         mediaQueued++;
       } catch (e: any) {
         mediaFailed++;
-        console.error("media upload fail", m.filename, e?.message);
+        const message = e?.message || String(e);
+        errors.push({ source: m.filename, type: "media", error: message });
+        console.error("media upload fail", m.filename, message);
+        await admin.from("ai_video_processing_queue").insert({
+          bulk_job_id: job.id,
+          storage_path: m.sourceUrl || m.filename,
+          original_filename: m.filename,
+          mime_type: m.mime,
+          file_size_bytes: m.bytes?.length ?? null,
+          media_type: m.mediaType,
+          status: "failed",
+          error_message: message,
+          metadata: m.sourceUrl ? { remote_url: m.sourceUrl, source_path: m.sourcePath } : {},
+        }).then(({ error }) => {
+          if (error) console.error("media failure row insert fail", m.filename, error.message);
+        });
       }
     }
 
     // (Job már létrejött a média blokk előtt — nincs második insert)
 
-    const errors: any[] = [];
     let succeeded = 0, failed = 0, duplicates = 0;
     const createdDocIds: string[] = [];
 
