@@ -19,6 +19,8 @@ const MAX_HTML_CHARS = 200_000;
 const MAX_TEXT_ENTRY_BYTES = 80_000_000;
 const MAX_STREAMED_TEXT_BYTES = 4_000_000;
 const MAX_STREAMED_MEDIA_BYTES = 25_000_000;
+const MAX_REMOTE_MEDIA_PER_JOB = 250;
+const MAX_REMOTE_MEDIA_DOWNLOADS_PER_CALL = 12;
 const RAW_ONLY_THRESHOLD_CHARS = 80_000;
 const ZIP_CHUNK_CHARS = 24_000;
 const MAX_CHUNKS_PER_TEXT_ENTRY = 120;
@@ -176,8 +178,10 @@ function isProbablyTextBytes(bytes: Uint8Array): boolean {
 type MediaEntry = {
   filename: string;
   mediaType: "video" | "audio" | "image";
-  bytes: Uint8Array;
+  bytes?: Uint8Array;
   mime: string;
+  sourceUrl?: string;
+  sourcePath?: string;
 };
 
 function chunkTextEntry(name: string, text: string, rawOnly: boolean, category = "tiktok_export"): Source[] {
