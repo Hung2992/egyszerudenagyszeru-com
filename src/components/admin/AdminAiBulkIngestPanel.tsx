@@ -260,12 +260,13 @@ export default function AdminAiBulkIngestPanel() {
     setProcessingQueue(true);
     try {
       const { data, error } = await supabase.functions.invoke("ai-media-queue-worker", {
-        body: { limit: 100, statuses: ["pending_remote", "pending"] },
+        body: { limit: 250, statuses: ["pending_remote", "pending"] },
       });
       if (error) throw new Error(await getFunctionErrorMessage(error));
+      setLastWorkerResult(data);
       toast({
         title: "Média feldolgozás lefutott",
-        description: `${data.completed || 0} kész, ${data.failed || 0} hiba, ${data.remaining || 0} vár még.`,
+        description: `${data.completed || 0} kész, ${data.downloaded || 0} letöltve, ${data.link_registered || 0} link, ${data.failed || 0} hiba, ${data.remaining || 0} vár még.`,
       });
       fetchMedia();
       fetchJobs();
@@ -273,6 +274,42 @@ export default function AdminAiBulkIngestPanel() {
       toast({ title: "Média feldolgozás hiba", description: e.message || "Ismeretlen hiba", variant: "destructive" });
     } finally {
       setProcessingQueue(false);
+    }
+  };
+
+  const processAllMediaQueue = async () => {
+    stopAutoRef.current = false;
+    setAutoProcessing(true);
+    try {
+      let totalCompleted = 0;
+      let totalFailed = 0;
+      let totalDownloaded = 0;
+      let totalLinks = 0;
+      let remaining = mediaCounts.pending;
+      for (let round = 1; round <= 60 && remaining > 0 && !stopAutoRef.current; round++) {
+        const { data, error } = await supabase.functions.invoke("ai-media-queue-worker", {
+          body: { limit: 250, statuses: ["pending_remote", "pending"] },
+        });
+        if (error) throw new Error(await getFunctionErrorMessage(error));
+        setLastWorkerResult(data);
+        totalCompleted += data.completed || 0;
+        totalFailed += data.failed || 0;
+        totalDownloaded += data.downloaded || 0;
+        totalLinks += data.link_registered || 0;
+        remaining = data.remaining || 0;
+        await fetchMedia();
+        if ((data.picked || 0) === 0) break;
+      }
+      toast({
+        title: stopAutoRef.current ? "Feldolgozás megállítva" : "Tömeges média feldolgozás kész",
+        description: `${totalCompleted} kész, ${totalDownloaded} letöltve, ${totalLinks} linkként mentve, ${totalFailed} hiba, ${remaining} vár még.`,
+      });
+      fetchJobs();
+    } catch (e: any) {
+      toast({ title: "Tömeges média hiba", description: e.message || "Ismeretlen hiba", variant: "destructive" });
+    } finally {
+      setAutoProcessing(false);
+      stopAutoRef.current = false;
     }
   };
 
