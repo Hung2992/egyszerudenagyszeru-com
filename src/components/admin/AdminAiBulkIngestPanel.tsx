@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Upload, Loader2, FileJson, FileArchive, Globe, RefreshCw, CheckCircle2, AlertCircle, Layers, Film, Mic, Image as ImageIcon, AlertTriangle } from "lucide-react";
+import { Upload, Loader2, FileJson, FileArchive, Globe, RefreshCw, CheckCircle2, AlertCircle, Layers, Film, Mic, Image as ImageIcon, AlertTriangle, PlayCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/untyped-client";
 
@@ -50,6 +50,34 @@ interface IngestSettings {
   paused: boolean;
 }
 
+interface MediaCounts {
+  total: number;
+  video: number;
+  audio: number;
+  image: number;
+  pending: number;
+  localPending: number;
+  remotePending: number;
+  processing: number;
+  completed: number;
+  failed: number;
+  skipped: number;
+}
+
+const EMPTY_MEDIA_COUNTS: MediaCounts = {
+  total: 0,
+  video: 0,
+  audio: 0,
+  image: 0,
+  pending: 0,
+  localPending: 0,
+  remotePending: 0,
+  processing: 0,
+  completed: 0,
+  failed: 0,
+  skipped: 0,
+};
+
 const getFunctionErrorMessage = async (error: any) => {
   const context = error?.context;
   if (context instanceof Response) {
@@ -84,8 +112,10 @@ export default function AdminAiBulkIngestPanel() {
   const [jobs, setJobs] = useState<BulkJob[]>([]);
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [mediaStats, setMediaStats] = useState<MediaStatsRow[]>([]);
+  const [mediaCountsExact, setMediaCountsExact] = useState<MediaCounts>(EMPTY_MEDIA_COUNTS);
   const [settings, setSettings] = useState<IngestSettings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [processingQueue, setProcessingQueue] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const fetchJobs = async () => {
