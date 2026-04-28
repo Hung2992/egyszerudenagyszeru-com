@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Upload, Loader2, FileJson, FileArchive, Globe, RefreshCw, CheckCircle2, AlertCircle, Layers, Film, Mic, Image as ImageIcon, AlertTriangle } from "lucide-react";
+import { Upload, Loader2, FileJson, FileArchive, Globe, RefreshCw, CheckCircle2, AlertCircle, Layers, Film, Mic, Image as ImageIcon, AlertTriangle, PlayCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/untyped-client";
 
@@ -36,12 +36,6 @@ interface MediaItem {
   created_at: string;
 }
 
-interface MediaStatsRow {
-  status: string;
-  media_type: string;
-  count: number;
-}
-
 interface IngestSettings {
   video_analysis_enabled: boolean;
   max_videos_per_job: number;
@@ -49,6 +43,34 @@ interface IngestSettings {
   spent_today_usd: number;
   paused: boolean;
 }
+
+interface MediaCounts {
+  total: number;
+  video: number;
+  audio: number;
+  image: number;
+  pending: number;
+  localPending: number;
+  remotePending: number;
+  processing: number;
+  completed: number;
+  failed: number;
+  skipped: number;
+}
+
+const EMPTY_MEDIA_COUNTS: MediaCounts = {
+  total: 0,
+  video: 0,
+  audio: 0,
+  image: 0,
+  pending: 0,
+  localPending: 0,
+  remotePending: 0,
+  processing: 0,
+  completed: 0,
+  failed: 0,
+  skipped: 0,
+};
 
 const getFunctionErrorMessage = async (error: any) => {
   const context = error?.context;
@@ -83,9 +105,10 @@ export default function AdminAiBulkIngestPanel() {
   const [submitting, setSubmitting] = useState(false);
   const [jobs, setJobs] = useState<BulkJob[]>([]);
   const [media, setMedia] = useState<MediaItem[]>([]);
-  const [mediaStats, setMediaStats] = useState<MediaStatsRow[]>([]);
+  const [mediaCountsExact, setMediaCountsExact] = useState<MediaCounts>(EMPTY_MEDIA_COUNTS);
   const [settings, setSettings] = useState<IngestSettings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [processingQueue, setProcessingQueue] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const fetchJobs = async () => {
@@ -106,19 +129,24 @@ export default function AdminAiBulkIngestPanel() {
       .limit(200);
     if (data) setMedia(data as any);
 
-    const { data: allRows } = await supabase
-      .from("ai_video_processing_queue")
-      .select("status, media_type");
-    if (allRows) {
-      const grouped = new Map<string, MediaStatsRow>();
-      (allRows as any[]).forEach((row) => {
-        const key = `${row.status}|${row.media_type}`;
-        const current = grouped.get(key) || { status: row.status, media_type: row.media_type, count: 0 };
-        current.count += 1;
-        grouped.set(key, current);
-      });
-      setMediaStats(Array.from(grouped.values()));
-    }
+    const countRows = async (apply: (q: any) => any) => {
+      const { count } = await apply(supabase.from("ai_video_processing_queue").select("id", { count: "exact", head: true }));
+      return count || 0;
+    };
+    const [total, video, audio, image, localPending, remotePending, processing, completed, failed, skipped] = await Promise.all([
+      countRows((q) => q),
+      countRows((q) => q.eq("media_type", "video")),
+      countRows((q) => q.eq("media_type", "audio")),
+      countRows((q) => q.eq("media_type", "image")),
+      countRows((q) => q.eq("status", "pending")),
+      countRows((q) => q.eq("status", "pending_remote")),
+      countRows((q) => q.eq("status", "processing")),
+      countRows((q) => q.eq("status", "completed")),
+      countRows((q) => q.eq("status", "failed")),
+      countRows((q) => q.like("status", "skipped%")),
+    ]);
+    setMediaCountsExact({ total, video, audio, image, pending: localPending + remotePending, localPending, remotePending, processing, completed, failed, skipped });
+
   };
 
   const fetchSettings = async () => {
@@ -216,6 +244,26 @@ export default function AdminAiBulkIngestPanel() {
     }
   };
 
+  const processMediaQueue = async () => {
+    setProcessingQueue(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-media-queue-worker", {
+        body: { limit: 100, statuses: ["pending_remote", "pending"] },
+      });
+      if (error) throw new Error(await getFunctionErrorMessage(error));
+      toast({
+        title: "Média feldolgozás lefutott",
+        description: `${data.completed || 0} kész, ${data.failed || 0} hiba, ${data.remaining || 0} vár még.`,
+      });
+      fetchMedia();
+      fetchJobs();
+    } catch (e: any) {
+      toast({ title: "Média feldolgozás hiba", description: e.message || "Ismeretlen hiba", variant: "destructive" });
+    } finally {
+      setProcessingQueue(false);
+    }
+  };
+
   const statusBadge = (s: string) => {
     const map: Record<string, { label: string; className: string }> = {
       completed: { label: "Kész", className: "bg-primary text-primary-foreground" },
@@ -234,19 +282,7 @@ export default function AdminAiBulkIngestPanel() {
     return <ImageIcon className="w-3 h-3" />;
   };
 
-  const mediaCounts = {
-    total: mediaStats.reduce((sum, row) => sum + row.count, 0),
-    video: mediaStats.filter((m) => m.media_type === "video").reduce((sum, row) => sum + row.count, 0),
-    audio: mediaStats.filter((m) => m.media_type === "audio").reduce((sum, row) => sum + row.count, 0),
-    image: mediaStats.filter((m) => m.media_type === "image").reduce((sum, row) => sum + row.count, 0),
-    pending: mediaStats.filter((m) => m.status === "pending" || m.status === "pending_remote").reduce((sum, row) => sum + row.count, 0),
-    localPending: mediaStats.filter((m) => m.status === "pending").reduce((sum, row) => sum + row.count, 0),
-    remotePending: mediaStats.filter((m) => m.status === "pending_remote").reduce((sum, row) => sum + row.count, 0),
-    processing: mediaStats.filter((m) => m.status === "processing").reduce((sum, row) => sum + row.count, 0),
-    completed: mediaStats.filter((m) => m.status === "completed").reduce((sum, row) => sum + row.count, 0),
-    failed: mediaStats.filter((m) => m.status === "failed").reduce((sum, row) => sum + row.count, 0),
-    skipped: mediaStats.filter((m) => m.status.startsWith("skipped")).reduce((sum, row) => sum + row.count, 0),
-  };
+  const mediaCounts = mediaCountsExact;
 
   const latestErrors = media.filter((m) => m.status === "failed" || m.error_message).slice(0, 20);
 
@@ -397,7 +433,13 @@ export default function AdminAiBulkIngestPanel() {
           <h3 className="font-bold flex items-center gap-2">
             <Film className="w-4 h-4" /> Média fájlok ({mediaCounts.total})
           </h3>
-          <Button variant="ghost" size="sm" onClick={fetchMedia}><RefreshCw className="w-4 h-4" /></Button>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" onClick={processMediaQueue} disabled={processingQueue || mediaCounts.pending === 0}>
+              {processingQueue ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <PlayCircle className="w-4 h-4 mr-1" />}
+              100 feldolgozása
+            </Button>
+            <Button variant="ghost" size="sm" onClick={fetchMedia}><RefreshCw className="w-4 h-4" /></Button>
+          </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3 text-xs">
           <div className="border p-2"><div className="text-muted-foreground">Videó</div><div className="font-bold text-lg">{mediaCounts.video}</div></div>

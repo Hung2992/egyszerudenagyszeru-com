@@ -165,8 +165,16 @@ function detectMimeType(name: string): string {
   return map[ext] || "application/octet-stream";
 }
 
+function safeDecodeUrl(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
 function detectMediaTypeFromUrl(url: string): "video" | "audio" | "image" | null {
-  const normalized = decodeURIComponent(url).toLowerCase();
+  const normalized = safeDecodeUrl(url).toLowerCase();
   if (/mime_type=video|video_|\.mp4(\?|$)|\.mov(\?|$)|\.webm(\?|$)|tiktokv\.com\/share\/video|tiktok\.com\/@[^/]+\/video\//i.test(normalized)) return "video";
   if (/mime_type=audio|audio_|\.mp3(\?|$)|\.m4a(\?|$)|\.wav(\?|$)|\.aac(\?|$)/i.test(normalized)) return "audio";
   if (/mime_type=image|image_|\.jpe?g(\?|$)|\.png(\?|$)|\.webp(\?|$)|coverimage|cover_image/i.test(normalized)) return "image";
@@ -174,7 +182,7 @@ function detectMediaTypeFromUrl(url: string): "video" | "audio" | "image" | null
 }
 
 function detectMimeTypeFromUrl(url: string, mediaType: "video" | "audio" | "image"): string {
-  const decoded = decodeURIComponent(url).toLowerCase();
+  const decoded = safeDecodeUrl(url).toLowerCase();
   if (decoded.includes("mime_type=video_mp4") || /\.mp4(\?|$)/i.test(decoded)) return "video/mp4";
   if (decoded.includes("mime_type=audio") || /\.mp3(\?|$)/i.test(decoded)) return "audio/mpeg";
   if (/\.m4a(\?|$)/i.test(decoded)) return "audio/mp4";
@@ -188,7 +196,7 @@ function detectMimeTypeFromUrl(url: string, mediaType: "video" | "audio" | "imag
 function filenameFromUrl(url: string, mediaType: "video" | "audio" | "image"): string {
   try {
     const u = new URL(url);
-    const last = decodeURIComponent(u.pathname.split("/").filter(Boolean).pop() || "");
+    const last = safeDecodeUrl(u.pathname.split("/").filter(Boolean).pop() || "");
     if (last && /\.[a-z0-9]{2,5}$/i.test(last)) return last.slice(0, 180);
     const id = u.pathname.match(/\/video\/(\d+)/)?.[1] || u.searchParams.get("item_id") || u.hostname.replace(/[^a-z0-9]/gi, "_");
     const ext = mediaType === "video" ? "mp4" : mediaType === "audio" ? "mp3" : "jpg";
@@ -205,11 +213,12 @@ function extractRemoteMediaEntriesFromText(text: string, origin: string, seen: S
     .replace(/\\u0026/gi, "&")
     .replace(/\\u003d/gi, "=")
     .replace(/\\u003f/gi, "?")
+    .replace(/\\u0025/gi, "%")
     .replace(/&amp;/g, "&");
   const urls = normalizedText.match(/https?:\/\/[^\s"'<>\\]+/gi) || [];
   const entries: MediaEntry[] = [];
   for (const rawUrl of urls) {
-    const url = rawUrl.replace(/[),.;\]]+$/g, "");
+    const url = rawUrl.replace(/[),.;\]]+$/g, "").replace(/%$/, "");
     if (seen.has(url) || seen.size >= MAX_REMOTE_MEDIA_PER_JOB) continue;
     const mediaType = detectMediaTypeFromUrl(url);
     if (!mediaType) continue;
@@ -319,6 +328,7 @@ async function decodeZipEntries(zipBytes: Uint8Array): Promise<{ sources: Source
   let textEntries = 0;
   let unsupportedEntries = 0;
   let totalEntries = 0;
+  let localMediaReserved = 0;
   const fileReads: Promise<void>[] = [];
 
   const unzipper = new Unzip((file) => {
@@ -326,9 +336,10 @@ async function decodeZipEntries(zipBytes: Uint8Array): Promise<{ sources: Source
     totalEntries++;
     if (sampleNames.length < 20) sampleNames.push(file.name);
     const mediaType = detectMediaType(file.name);
-    const shouldReadMedia = Boolean(mediaType) && (file.originalSize ?? 0) <= MAX_STREAMED_MEDIA_BYTES && media.filter((m) => m.bytes).length < MAX_LOCAL_MEDIA_PER_JOB;
+    const shouldReadMedia = Boolean(mediaType) && (file.originalSize ?? 0) <= MAX_STREAMED_MEDIA_BYTES && localMediaReserved < MAX_LOCAL_MEDIA_PER_JOB;
     const shouldReadTextLike = !mediaType && isTextLikeFilename(file.name) && (file.originalSize ?? 0) <= MAX_STREAMED_TEXT_BYTES;
     const shouldReadText = shouldReadTextLike && (sources.length < MAX_SOURCES_PER_JOB || remoteMediaSeen.size < MAX_REMOTE_MEDIA_PER_JOB);
+    if (shouldReadMedia) localMediaReserved++;
 
     if (!shouldReadMedia && !shouldReadText) {
       unsupportedEntries++;
@@ -474,6 +485,13 @@ Deno.serve(async (req) => {
     // Média fájlok feltöltése Storage-ba + queue beírás (NEM elemez most, csak tárol)
     let mediaQueued = 0, mediaFailed = 0;
     let remoteDownloads = 0;
+    const mediaRows: any[] = [];
+    const flushMediaRows = async () => {
+      if (mediaRows.length === 0) return;
+      const rows = mediaRows.splice(0, mediaRows.length);
+      const { error } = await admin.from("ai_video_processing_queue").insert(rows);
+      if (error) throw new Error(`Média queue batch insert hiba: ${error.message}`);
+    };
     for (const m of mediaEntries) {
       try {
         const safeName = m.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -481,6 +499,8 @@ Deno.serve(async (req) => {
         let storedSize = m.bytes?.length ?? null;
         let queueStatus = "pending";
         const metadata: Record<string, any> = m.sourceUrl ? { remote_url: m.sourceUrl, source_path: m.sourcePath } : {};
+
+        const remoteMeta = m.sourceUrl ? { remote_url: m.sourceUrl, source_path: m.sourcePath, download_status: "queued_remote_download", needs_download: true } : {};
 
         if (m.bytes) {
           const { error: upErr } = await admin.storage.from("ai-bulk-uploads").upload(storagePath, m.bytes, {
@@ -511,11 +531,12 @@ Deno.serve(async (req) => {
         } else if (m.sourceUrl) {
           storagePath = m.sourceUrl;
           queueStatus = "pending_remote";
+          storedSize = 0;
         } else {
           throw new Error("missing media bytes");
         }
 
-        await admin.from("ai_video_processing_queue").insert({
+        mediaRows.push({
           bulk_job_id: job.id,
           storage_path: storagePath,
           original_filename: m.filename,
@@ -523,9 +544,10 @@ Deno.serve(async (req) => {
           file_size_bytes: storedSize,
           media_type: m.mediaType,
           status: queueStatus,
-          metadata,
+          metadata: { ...metadata, ...remoteMeta },
         });
         mediaQueued++;
+        if (mediaRows.length >= 500) await flushMediaRows();
       } catch (e: any) {
         mediaFailed++;
         const message = e?.message || String(e);
@@ -546,6 +568,7 @@ Deno.serve(async (req) => {
         });
       }
     }
+    await flushMediaRows();
 
     // (Job már létrejött a média blokk előtt — nincs második insert)
 
