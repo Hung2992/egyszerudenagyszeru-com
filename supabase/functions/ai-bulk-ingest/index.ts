@@ -328,6 +328,7 @@ async function decodeZipEntries(zipBytes: Uint8Array): Promise<{ sources: Source
   let textEntries = 0;
   let unsupportedEntries = 0;
   let totalEntries = 0;
+  let localMediaReserved = 0;
   const fileReads: Promise<void>[] = [];
 
   const unzipper = new Unzip((file) => {
@@ -335,9 +336,10 @@ async function decodeZipEntries(zipBytes: Uint8Array): Promise<{ sources: Source
     totalEntries++;
     if (sampleNames.length < 20) sampleNames.push(file.name);
     const mediaType = detectMediaType(file.name);
-    const shouldReadMedia = Boolean(mediaType) && (file.originalSize ?? 0) <= MAX_STREAMED_MEDIA_BYTES && media.filter((m) => m.bytes).length < MAX_LOCAL_MEDIA_PER_JOB;
+    const shouldReadMedia = Boolean(mediaType) && (file.originalSize ?? 0) <= MAX_STREAMED_MEDIA_BYTES && localMediaReserved < MAX_LOCAL_MEDIA_PER_JOB;
     const shouldReadTextLike = !mediaType && isTextLikeFilename(file.name) && (file.originalSize ?? 0) <= MAX_STREAMED_TEXT_BYTES;
     const shouldReadText = shouldReadTextLike && (sources.length < MAX_SOURCES_PER_JOB || remoteMediaSeen.size < MAX_REMOTE_MEDIA_PER_JOB);
+    if (shouldReadMedia) localMediaReserved++;
 
     if (!shouldReadMedia && !shouldReadText) {
       unsupportedEntries++;
