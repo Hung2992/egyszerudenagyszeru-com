@@ -115,7 +115,10 @@ export default function AdminAiBulkIngestPanel() {
   const [settings, setSettings] = useState<IngestSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [processingQueue, setProcessingQueue] = useState(false);
+  const [autoProcessing, setAutoProcessing] = useState(false);
+  const [lastWorkerResult, setLastWorkerResult] = useState<any>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const stopAutoRef = useRef(false);
 
   const fetchJobs = async () => {
     const { data } = await supabase
