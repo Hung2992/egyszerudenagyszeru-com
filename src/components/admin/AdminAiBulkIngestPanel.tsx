@@ -264,6 +264,26 @@ export default function AdminAiBulkIngestPanel() {
     }
   };
 
+  const processMediaQueue = async () => {
+    setProcessingQueue(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-media-queue-worker", {
+        body: { limit: 100, statuses: ["pending_remote", "pending"] },
+      });
+      if (error) throw new Error(await getFunctionErrorMessage(error));
+      toast({
+        title: "Média feldolgozás lefutott",
+        description: `${data.completed || 0} kész, ${data.failed || 0} hiba, ${data.remaining || 0} vár még.`,
+      });
+      fetchMedia();
+      fetchJobs();
+    } catch (e: any) {
+      toast({ title: "Média feldolgozás hiba", description: e.message || "Ismeretlen hiba", variant: "destructive" });
+    } finally {
+      setProcessingQueue(false);
+    }
+  };
+
   const statusBadge = (s: string) => {
     const map: Record<string, { label: string; className: string }> = {
       completed: { label: "Kész", className: "bg-primary text-primary-foreground" },
@@ -282,19 +302,7 @@ export default function AdminAiBulkIngestPanel() {
     return <ImageIcon className="w-3 h-3" />;
   };
 
-  const mediaCounts = {
-    total: mediaStats.reduce((sum, row) => sum + row.count, 0),
-    video: mediaStats.filter((m) => m.media_type === "video").reduce((sum, row) => sum + row.count, 0),
-    audio: mediaStats.filter((m) => m.media_type === "audio").reduce((sum, row) => sum + row.count, 0),
-    image: mediaStats.filter((m) => m.media_type === "image").reduce((sum, row) => sum + row.count, 0),
-    pending: mediaStats.filter((m) => m.status === "pending" || m.status === "pending_remote").reduce((sum, row) => sum + row.count, 0),
-    localPending: mediaStats.filter((m) => m.status === "pending").reduce((sum, row) => sum + row.count, 0),
-    remotePending: mediaStats.filter((m) => m.status === "pending_remote").reduce((sum, row) => sum + row.count, 0),
-    processing: mediaStats.filter((m) => m.status === "processing").reduce((sum, row) => sum + row.count, 0),
-    completed: mediaStats.filter((m) => m.status === "completed").reduce((sum, row) => sum + row.count, 0),
-    failed: mediaStats.filter((m) => m.status === "failed").reduce((sum, row) => sum + row.count, 0),
-    skipped: mediaStats.filter((m) => m.status.startsWith("skipped")).reduce((sum, row) => sum + row.count, 0),
-  };
+  const mediaCounts = mediaCountsExact;
 
   const latestErrors = media.filter((m) => m.status === "failed" || m.error_message).slice(0, 20);
 
