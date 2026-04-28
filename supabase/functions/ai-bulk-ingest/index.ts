@@ -314,28 +314,6 @@ async function decodeZipEntries(zipBytes: Uint8Array): Promise<{ sources: Source
       try { file.start(); } catch (e) { reject(e); }
     }));
   });
-          resolve();
-          return;
-        }
-        chunks.push(chunk);
-        if (!final) return;
-
-        const bytes = new Uint8Array(total);
-        let offset = 0;
-        for (const part of chunks) { bytes.set(part, offset); offset += part.length; }
-
-        if (mediaType && shouldReadMedia) {
-          media.push({ filename: file.name.split("/").pop() || file.name, mediaType, bytes, mime: detectMimeType(file.name) });
-        } else if (shouldReadText) {
-          textEntries++;
-          sources.push(...textSourcesFromZipEntry(file.name, bytes));
-        }
-        resolve();
-      };
-
-      try { file.start(); } catch (e) { reject(e); }
-    }));
-  });
 
   unzipper.register(UnzipInflate);
   unzipper.push(zipBytes, true);
