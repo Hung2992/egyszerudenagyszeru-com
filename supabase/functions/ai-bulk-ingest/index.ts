@@ -124,6 +124,20 @@ async function structureWithAI(rawText: string, sourceLabel: string): Promise<{
   };
 }
 
+function structureRawKnowledge(rawText: string, sourceLabel: string, category = "tiktok_export"): {
+  title: string; category: string; summary: string; article_md: string; tags: string[];
+} {
+  const compact = rawText.replace(/\s+/g, " ").trim();
+  const excerpt = compact.slice(0, 900);
+  return {
+    title: String(sourceLabel || "TikTok export részlet").slice(0, 120),
+    category,
+    summary: excerpt ? `Automatikusan mentett TikTok export részlet. Rövid kivonat: ${excerpt}` : "Automatikusan mentett TikTok export részlet.",
+    article_md: `## Lényeg\nEz a tudáselem a feltöltött TikTok exportból lett biztonságosan feldarabolva és eltárolva.\n\n## Kulcspontok\n- Forrás: ${sourceLabel}\n- Feldolgozás: nyers tudás mentése, AI-elemzés nélkül\n- Cél: saját rendszer tanítása ingyenes módban\n\n## Nyers részlet\n\n${rawText.slice(0, 12000)}`,
+    tags: ["tiktok", "export", "sajat-rendszer", "bulk-import"],
+  };
+}
+
 function isTextLikeFilename(name: string): boolean {
   return /\.(txt|md|markdown|json|html?|csv|tsv|xml|log)$/i.test(name);
 }
@@ -381,8 +395,10 @@ Deno.serve(async (req) => {
           const { data: existing } = await admin.from("ai_knowledge_documents").select("id").eq("source_hash", hash).maybeSingle();
           if (existing) { duplicates++; continue; }
 
-          // Strukturált cikk az AI-tól
-          const article = await structureWithAI(text, label);
+          // Nagy TikTok export részeknél ingyenes / stabil raw mentés, kisebb szövegnél AI-strukturálás
+          const article = src.rawOnly
+            ? structureRawKnowledge(text, label, src.category)
+            : await structureWithAI(text, label);
 
           // Beillesztés a tudásbázisba
           const { data: doc, error: insErr } = await admin.from("ai_knowledge_documents").insert({
