@@ -160,6 +160,17 @@ function detectMimeType(name: string): string {
   return map[ext] || "application/octet-stream";
 }
 
+function isProbablyTextBytes(bytes: Uint8Array): boolean {
+  const sample = bytes.slice(0, Math.min(bytes.length, 4096));
+  if (sample.length === 0) return false;
+  let printable = 0;
+  for (const b of sample) {
+    if (b === 0) return false;
+    if (b === 9 || b === 10 || b === 13 || (b >= 32 && b <= 126) || b >= 128) printable++;
+  }
+  return printable / sample.length > 0.88;
+}
+
 type MediaEntry = {
   filename: string;
   mediaType: "video" | "audio" | "image";
@@ -255,7 +266,7 @@ function decodeZipEntries(zipBytes: Uint8Array): { sources: Source[]; media: Med
       });
       continue;
     }
-    if (!isTextLikeFilename(name)) { unsupportedEntries++; continue; }
+    if (!isTextLikeFilename(name) && !isProbablyTextBytes(bytes)) { unsupportedEntries++; continue; }
     textEntries++;
     sources.push(...textSourcesFromZipEntry(name, bytes));
   }
