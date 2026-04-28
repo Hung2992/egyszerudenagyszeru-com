@@ -307,6 +307,7 @@ function textSourcesFromZipEntry(name: string, bytes: Uint8Array): Source[] {
 async function decodeZipEntries(zipBytes: Uint8Array): Promise<{ sources: Source[]; media: MediaEntry[] }> {
   const sources: Source[] = [];
   const media: MediaEntry[] = [];
+  const remoteMediaSeen = new Set<string>();
   const sampleNames: string[] = [];
   let textEntries = 0;
   let unsupportedEntries = 0;
@@ -344,6 +345,9 @@ async function decodeZipEntries(zipBytes: Uint8Array): Promise<{ sources: Source
           media.push({ filename: file.name.split("/").pop() || file.name, mediaType, bytes, mime: detectMimeType(file.name) });
         } else if (shouldReadText) {
           textEntries++;
+          let textForMedia = "";
+          try { textForMedia = strFromU8(bytes); } catch { textForMedia = ""; }
+          if (textForMedia) media.push(...extractRemoteMediaEntriesFromText(textForMedia, file.name, remoteMediaSeen));
           sources.push(...textSourcesFromZipEntry(file.name, bytes));
         }
         resolve();
@@ -376,7 +380,7 @@ async function decodeZipEntries(zipBytes: Uint8Array): Promise<{ sources: Source
   unzipper.register(UnzipInflate);
   unzipper.push(zipBytes, true);
   await Promise.all(fileReads);
-  console.log("[bulk-ingest] zip entries:", totalEntries, "text entries:", textEntries, "unsupported/skipped:", unsupportedEntries, "samples:", sampleNames.join(" | "));
+  console.log("[bulk-ingest] zip entries:", totalEntries, "text entries:", textEntries, "media/remote media:", media.length, "unsupported/skipped:", unsupportedEntries, "samples:", sampleNames.join(" | "));
   return { sources: sources.slice(0, MAX_SOURCES_PER_JOB), media };
 }
 
