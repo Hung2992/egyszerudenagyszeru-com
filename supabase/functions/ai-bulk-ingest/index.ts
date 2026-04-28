@@ -215,17 +215,26 @@ Deno.serve(async (req) => {
 
     // ZIP letöltés és bontás
     if (zipPath) {
+      console.log("[bulk-ingest] downloading zip:", zipPath);
       const { data: blob, error: dlErr } = await admin.storage.from("ai-bulk-uploads").download(zipPath);
-      if (dlErr || !blob) throw new Error(`ZIP letöltés sikertelen: ${dlErr?.message}`);
+      if (dlErr || !blob) throw new Error(`ZIP letöltés sikertelen: ${dlErr?.message || "no blob"}`);
       const buf = new Uint8Array(await blob.arrayBuffer());
-      const decoded = decodeZipEntries(buf);
+      console.log("[bulk-ingest] zip size:", buf.length);
+      let decoded: { sources: Source[]; media: MediaEntry[] };
+      try {
+        decoded = decodeZipEntries(buf);
+      } catch (zipErr: any) {
+        throw new Error(`ZIP bontás sikertelen: ${zipErr?.message || zipErr}`);
+      }
+      console.log("[bulk-ingest] decoded - text sources:", decoded.sources.length, "media:", decoded.media.length);
       sources = sources.concat(decoded.sources);
       mediaEntries = decoded.media;
     }
 
     sources = sources.filter((s) => s.url || (s.text && s.text.trim().length > 30));
+    console.log("[bulk-ingest] total sources after filter:", sources.length, "media:", mediaEntries.length);
     if (sources.length === 0 && mediaEntries.length === 0) {
-      return new Response(JSON.stringify({ error: "No valid sources or media in payload" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "Nincs feldolgozható tartalom a ZIP-ben (se szöveges fájl, se média). Támogatott: .txt, .md, .json, .html, .mp4, .mp3, .jpg, .png" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     if (sources.length > MAX_SOURCES_PER_JOB) sources = sources.slice(0, MAX_SOURCES_PER_JOB);
 
