@@ -452,12 +452,14 @@ Deno.serve(async (req) => {
       }
     })());
 
-    const finalStatus = failed === 0 ? "completed" : (succeeded === 0 ? "failed" : "partial");
+    const totalFailures = failed + mediaFailed;
+    const totalSuccesses = succeeded + mediaQueued + duplicates;
+    const finalStatus = totalFailures === 0 ? "completed" : (totalSuccesses === 0 ? "failed" : "partial");
     await admin.from("ai_bulk_ingest_jobs").update({
       status: finalStatus,
       processed_sources: sources.length + mediaQueued,
       succeeded_count: succeeded,
-      failed_count: failed + mediaFailed,
+      failed_count: totalFailures,
       duplicate_count: duplicates,
       errors: errors.slice(0, 50),
       completed_at: new Date().toISOString(),
