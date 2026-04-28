@@ -605,7 +605,7 @@ Deno.serve(async (req) => {
     await admin.from("ai_bulk_ingest_jobs").update({
       status: finalStatus,
       processed_sources: sources.length + mediaQueued,
-      succeeded_count: succeeded,
+      succeeded_count: succeeded + mediaQueued,
       failed_count: totalFailures,
       duplicate_count: duplicates,
       errors: errors.slice(0, 50),
