@@ -483,6 +483,13 @@ Deno.serve(async (req) => {
     // Média fájlok feltöltése Storage-ba + queue beírás (NEM elemez most, csak tárol)
     let mediaQueued = 0, mediaFailed = 0;
     let remoteDownloads = 0;
+    const mediaRows: any[] = [];
+    const flushMediaRows = async () => {
+      if (mediaRows.length === 0) return;
+      const rows = mediaRows.splice(0, mediaRows.length);
+      const { error } = await admin.from("ai_video_processing_queue").insert(rows);
+      if (error) throw new Error(`Média queue batch insert hiba: ${error.message}`);
+    };
     for (const m of mediaEntries) {
       try {
         const safeName = m.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -527,7 +534,7 @@ Deno.serve(async (req) => {
           throw new Error("missing media bytes");
         }
 
-        await admin.from("ai_video_processing_queue").insert({
+        mediaRows.push({
           bulk_job_id: job.id,
           storage_path: storagePath,
           original_filename: m.filename,
@@ -538,6 +545,7 @@ Deno.serve(async (req) => {
           metadata: { ...metadata, ...remoteMeta },
         });
         mediaQueued++;
+        if (mediaRows.length >= 500) await flushMediaRows();
       } catch (e: any) {
         mediaFailed++;
         const message = e?.message || String(e);
@@ -558,6 +566,7 @@ Deno.serve(async (req) => {
         });
       }
     }
+    await flushMediaRows();
 
     // (Job már létrejött a média blokk előtt — nincs második insert)
 
