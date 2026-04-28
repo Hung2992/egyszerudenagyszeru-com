@@ -213,11 +213,12 @@ function extractRemoteMediaEntriesFromText(text: string, origin: string, seen: S
     .replace(/\\u0026/gi, "&")
     .replace(/\\u003d/gi, "=")
     .replace(/\\u003f/gi, "?")
+    .replace(/\\u0025/gi, "%")
     .replace(/&amp;/g, "&");
   const urls = normalizedText.match(/https?:\/\/[^\s"'<>\\]+/gi) || [];
   const entries: MediaEntry[] = [];
   for (const rawUrl of urls) {
-    const url = rawUrl.replace(/[),.;\]]+$/g, "");
+    const url = rawUrl.replace(/[),.;\]]+$/g, "").replace(/%$/, "");
     if (seen.has(url) || seen.size >= MAX_REMOTE_MEDIA_PER_JOB) continue;
     const mediaType = detectMediaTypeFromUrl(url);
     if (!mediaType) continue;
