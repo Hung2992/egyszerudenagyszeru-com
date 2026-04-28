@@ -273,12 +273,47 @@ async function decodeZipEntries(zipBytes: Uint8Array): Promise<{ sources: Source
       const chunks: Uint8Array[] = [];
       let total = 0;
       const maxBytes = shouldReadMedia ? MAX_STREAMED_MEDIA_BYTES : MAX_STREAMED_TEXT_BYTES;
+      let finished = false;
+
+      const finishWithBytes = () => {
+        if (finished) return;
+        finished = true;
+        const bytes = new Uint8Array(total);
+        let offset = 0;
+        for (const part of chunks) { bytes.set(part, offset); offset += part.length; }
+
+        if (mediaType && shouldReadMedia) {
+          media.push({ filename: file.name.split("/").pop() || file.name, mediaType, bytes, mime: detectMimeType(file.name) });
+        } else if (shouldReadText) {
+          textEntries++;
+          sources.push(...textSourcesFromZipEntry(file.name, bytes));
+        }
+        resolve();
+      };
 
       file.ondata = (err, chunk, final) => {
         if (err) { reject(err); return; }
-        total += chunk.length;
-        if (total > maxBytes) {
+        const remaining = maxBytes - total;
+        if (remaining <= 0) {
           file.terminate();
+          finishWithBytes();
+          return;
+        }
+        const accepted = chunk.length > remaining ? chunk.slice(0, remaining) : chunk;
+        chunks.push(accepted);
+        total += accepted.length;
+        if (chunk.length > remaining) {
+          file.terminate();
+          finishWithBytes();
+          return;
+        }
+        if (!final) return;
+        finishWithBytes();
+      };
+
+      try { file.start(); } catch (e) { reject(e); }
+    }));
+  });
           resolve();
           return;
         }
