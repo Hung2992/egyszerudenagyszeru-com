@@ -42,6 +42,22 @@ interface IngestSettings {
   paused: boolean;
 }
 
+const getFunctionErrorMessage = async (error: any) => {
+  const context = error?.context;
+  if (context instanceof Response) {
+    try {
+      const json = await context.clone().json();
+      if (json?.error) return String(json.error);
+    } catch {
+      try {
+        const text = await context.clone().text();
+        if (text) return text;
+      } catch {}
+    }
+  }
+  return error?.message || "Ismeretlen hiba";
+};
+
 const SAMPLE_JSON = `{
   "urls": [
     "https://example.com/cikk-1",
@@ -134,7 +150,7 @@ export default function AdminAiBulkIngestPanel() {
       const { data, error } = await supabase.functions.invoke("ai-bulk-ingest", {
         body: { job_type: "json", payload },
       });
-      if (error) throw error;
+      if (error) throw new Error(await getFunctionErrorMessage(error));
       toast({
         title: "Tömeges import elindult",
         description: `${data.succeeded} sikeres, ${data.duplicates} duplikátum, ${data.failed} hiba.`,
@@ -161,7 +177,7 @@ export default function AdminAiBulkIngestPanel() {
       const { data, error } = await supabase.functions.invoke("ai-bulk-ingest", {
         body: { job_type: "zip", zip_storage_path: path },
       });
-      if (error) throw error;
+      if (error) throw new Error(await getFunctionErrorMessage(error));
       toast({
         title: "ZIP feldolgozva",
         description: `${data.succeeded} sikeres, ${data.duplicates} duplikátum, ${data.failed} hiba.`,
