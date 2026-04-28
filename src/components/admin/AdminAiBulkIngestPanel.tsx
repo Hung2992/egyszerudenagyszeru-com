@@ -4,9 +4,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Upload, Loader2, FileJson, FileArchive, Globe, RefreshCw, CheckCircle2, AlertCircle, Layers } from "lucide-react";
+import { Upload, Loader2, FileJson, FileArchive, Globe, RefreshCw, CheckCircle2, AlertCircle, Layers, Film, Mic, Image as ImageIcon, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/untyped-client";
 
@@ -22,6 +23,23 @@ interface BulkJob {
   errors: any;
   created_at: string;
   completed_at: string | null;
+}
+
+interface MediaItem {
+  id: string;
+  media_type: string;
+  original_filename: string;
+  status: string;
+  file_size_bytes: number | null;
+  created_at: string;
+}
+
+interface IngestSettings {
+  video_analysis_enabled: boolean;
+  max_videos_per_job: number;
+  daily_budget_usd: number;
+  spent_today_usd: number;
+  paused: boolean;
 }
 
 const SAMPLE_JSON = `{
