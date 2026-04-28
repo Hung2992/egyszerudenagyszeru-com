@@ -31,7 +31,15 @@ interface MediaItem {
   original_filename: string;
   status: string;
   file_size_bytes: number | null;
+  error_message: string | null;
+  metadata: any;
   created_at: string;
+}
+
+interface MediaStatsRow {
+  status: string;
+  media_type: string;
+  count: number;
 }
 
 interface IngestSettings {
@@ -75,6 +83,7 @@ export default function AdminAiBulkIngestPanel() {
   const [submitting, setSubmitting] = useState(false);
   const [jobs, setJobs] = useState<BulkJob[]>([]);
   const [media, setMedia] = useState<MediaItem[]>([]);
+  const [mediaStats, setMediaStats] = useState<MediaStatsRow[]>([]);
   const [settings, setSettings] = useState<IngestSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -92,10 +101,24 @@ export default function AdminAiBulkIngestPanel() {
   const fetchMedia = async () => {
     const { data } = await supabase
       .from("ai_video_processing_queue")
-      .select("id, media_type, original_filename, status, file_size_bytes, created_at")
+      .select("id, media_type, original_filename, status, file_size_bytes, error_message, metadata, created_at")
       .order("created_at", { ascending: false })
-      .limit(50);
+      .limit(200);
     if (data) setMedia(data as any);
+
+    const { data: allRows } = await supabase
+      .from("ai_video_processing_queue")
+      .select("status, media_type");
+    if (allRows) {
+      const grouped = new Map<string, MediaStatsRow>();
+      (allRows as any[]).forEach((row) => {
+        const key = `${row.status}|${row.media_type}`;
+        const current = grouped.get(key) || { status: row.status, media_type: row.media_type, count: 0 };
+        current.count += 1;
+        grouped.set(key, current);
+      });
+      setMediaStats(Array.from(grouped.values()));
+    }
   };
 
   const fetchSettings = async () => {
@@ -212,12 +235,20 @@ export default function AdminAiBulkIngestPanel() {
   };
 
   const mediaCounts = {
-    pending: media.filter((m) => m.status === "pending" || m.status === "pending_remote").length,
-    processing: media.filter((m) => m.status === "processing").length,
-    completed: media.filter((m) => m.status === "completed").length,
-    failed: media.filter((m) => m.status === "failed").length,
-    skipped: media.filter((m) => m.status.startsWith("skipped")).length,
+    total: mediaStats.reduce((sum, row) => sum + row.count, 0),
+    video: mediaStats.filter((m) => m.media_type === "video").reduce((sum, row) => sum + row.count, 0),
+    audio: mediaStats.filter((m) => m.media_type === "audio").reduce((sum, row) => sum + row.count, 0),
+    image: mediaStats.filter((m) => m.media_type === "image").reduce((sum, row) => sum + row.count, 0),
+    pending: mediaStats.filter((m) => m.status === "pending" || m.status === "pending_remote").reduce((sum, row) => sum + row.count, 0),
+    localPending: mediaStats.filter((m) => m.status === "pending").reduce((sum, row) => sum + row.count, 0),
+    remotePending: mediaStats.filter((m) => m.status === "pending_remote").reduce((sum, row) => sum + row.count, 0),
+    processing: mediaStats.filter((m) => m.status === "processing").reduce((sum, row) => sum + row.count, 0),
+    completed: mediaStats.filter((m) => m.status === "completed").reduce((sum, row) => sum + row.count, 0),
+    failed: mediaStats.filter((m) => m.status === "failed").reduce((sum, row) => sum + row.count, 0),
+    skipped: mediaStats.filter((m) => m.status.startsWith("skipped")).reduce((sum, row) => sum + row.count, 0),
   };
+
+  const latestErrors = media.filter((m) => m.status === "failed" || m.error_message).slice(0, 20);
 
   return (
     <div className="space-y-6">
@@ -364,17 +395,37 @@ export default function AdminAiBulkIngestPanel() {
       <Card className="p-4">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-bold flex items-center gap-2">
-            <Film className="w-4 h-4" /> Média fájlok ({media.length})
+            <Film className="w-4 h-4" /> Média fájlok ({mediaCounts.total})
           </h3>
           <Button variant="ghost" size="sm" onClick={fetchMedia}><RefreshCw className="w-4 h-4" /></Button>
         </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3 text-xs">
+          <div className="border p-2"><div className="text-muted-foreground">Videó</div><div className="font-bold text-lg">{mediaCounts.video}</div></div>
+          <div className="border p-2"><div className="text-muted-foreground">Hang</div><div className="font-bold text-lg">{mediaCounts.audio}</div></div>
+          <div className="border p-2"><div className="text-muted-foreground">Kép</div><div className="font-bold text-lg">{mediaCounts.image}</div></div>
+          <div className="border p-2"><div className="text-muted-foreground">Hiba</div><div className="font-bold text-lg text-destructive">{mediaCounts.failed}</div></div>
+        </div>
         <div className="flex flex-wrap gap-2 mb-3 text-xs">
-          <Badge variant="outline">{mediaCounts.pending} vár/link</Badge>
+          <Badge variant="outline">{mediaCounts.pending} vár</Badge>
+          <Badge variant="outline">{mediaCounts.localPending} fájl</Badge>
+          <Badge variant="outline">{mediaCounts.remotePending} link</Badge>
           <Badge variant="outline" className="bg-blue-500/10">{mediaCounts.processing} fut</Badge>
           <Badge variant="outline" className="bg-green-500/10">{mediaCounts.completed} kész</Badge>
           <Badge variant="outline" className="bg-destructive/10">{mediaCounts.failed} hiba</Badge>
           <Badge variant="outline" className="bg-muted">{mediaCounts.skipped} kihagyva</Badge>
         </div>
+        {latestErrors.length > 0 && (
+          <details className="mb-3 border border-destructive/40 p-2 text-xs">
+            <summary className="cursor-pointer font-semibold text-destructive">Legutóbbi média hibák ({latestErrors.length})</summary>
+            <ul className="mt-2 space-y-1 list-disc pl-4">
+              {latestErrors.map((m) => (
+                <li key={m.id}>
+                  <span className="font-mono">{m.original_filename}</span>: {m.error_message || m.status}
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
         {media.length === 0 ? (
           <p className="text-xs text-muted-foreground">Még nincs média fájl. Tölts fel egy ZIP-et MP4 / MP3 / képpel.</p>
         ) : (
@@ -385,7 +436,7 @@ export default function AdminAiBulkIngestPanel() {
                   {mediaIcon(m.media_type)}
                   <span className="font-mono truncate flex-1">{m.original_filename}</span>
                   <span className="text-muted-foreground">
-                    {m.file_size_bytes ? `${(m.file_size_bytes / 1024 / 1024).toFixed(1)}MB` : ""}
+                    {m.file_size_bytes ? `${(m.file_size_bytes / 1024 / 1024).toFixed(1)}MB` : m.metadata?.remote_url ? "link" : ""}
                   </span>
                   <Badge variant="outline" className="text-[10px]">{m.status}</Badge>
                 </div>
