@@ -436,7 +436,7 @@ export default function AdminAiBulkIngestPanel() {
                   {mediaIcon(m.media_type)}
                   <span className="font-mono truncate flex-1">{m.original_filename}</span>
                   <span className="text-muted-foreground">
-                    {m.file_size_bytes ? `${(m.file_size_bytes / 1024 / 1024).toFixed(1)}MB` : ""}
+                    {m.file_size_bytes ? `${(m.file_size_bytes / 1024 / 1024).toFixed(1)}MB` : m.metadata?.remote_url ? "link" : ""}
                   </span>
                   <Badge variant="outline" className="text-[10px]">{m.status}</Badge>
                 </div>
