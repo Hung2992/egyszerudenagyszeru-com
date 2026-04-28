@@ -227,6 +227,21 @@ Deno.serve(async (req) => {
     if (!roleCheck) return json({ error: "Admin only" }, 403);
 
     const body = await req.json().catch(() => ({}));
+    if (body.stats_only) {
+      const stats = await collectStats(admin);
+      const doneForPercent = stats.completed + stats.failed + stats.skipped;
+      return json({
+        ok: true,
+        stats,
+        percent: stats.total ? Math.round((doneForPercent / stats.total) * 1000) / 10 : 0,
+        memory: {
+          max_batch: MAX_BATCH,
+          max_download_mb_per_file: Math.round(MAX_DOWNLOAD_BYTES / 1024 / 1024),
+          remote_timeout_ms: REMOTE_FETCH_TIMEOUT_MS,
+          safe_mode: "batch feldolgozás, nem egyszerre 10000 videó",
+        },
+      });
+    }
     const limit = Math.max(1, Math.min(Number(body.limit || 50), MAX_BATCH));
     const statuses = Array.isArray(body.statuses) && body.statuses.length ? body.statuses : ["pending_remote", "pending"];
 
