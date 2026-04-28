@@ -201,7 +201,13 @@ function filenameFromUrl(url: string, mediaType: "video" | "audio" | "image"): s
 }
 
 function extractRemoteMediaEntriesFromText(text: string, origin: string, seen: Set<string>): MediaEntry[] {
-  const urls = text.match(/https?:\/\/[^\s"'<>\\]+/gi) || [];
+  const normalizedText = text
+    .replace(/\\\//g, "/")
+    .replace(/\\u0026/gi, "&")
+    .replace(/\\u003d/gi, "=")
+    .replace(/\\u003f/gi, "?")
+    .replace(/&amp;/g, "&");
+  const urls = normalizedText.match(/https?:\/\/[^\s"'<>\\]+/gi) || [];
   const entries: MediaEntry[] = [];
   for (const rawUrl of urls) {
     const url = rawUrl.replace(/[),.;\]]+$/g, "");
