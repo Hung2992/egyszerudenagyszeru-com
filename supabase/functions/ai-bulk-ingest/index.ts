@@ -196,7 +196,7 @@ function detectMimeTypeFromUrl(url: string, mediaType: "video" | "audio" | "imag
 function filenameFromUrl(url: string, mediaType: "video" | "audio" | "image"): string {
   try {
     const u = new URL(url);
-    const last = decodeURIComponent(u.pathname.split("/").filter(Boolean).pop() || "");
+    const last = safeDecodeUrl(u.pathname.split("/").filter(Boolean).pop() || "");
     if (last && /\.[a-z0-9]{2,5}$/i.test(last)) return last.slice(0, 180);
     const id = u.pathname.match(/\/video\/(\d+)/)?.[1] || u.searchParams.get("item_id") || u.hostname.replace(/[^a-z0-9]/gi, "_");
     const ext = mediaType === "video" ? "mp4" : mediaType === "audio" ? "mp3" : "jpg";
