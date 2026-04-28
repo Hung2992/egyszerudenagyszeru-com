@@ -151,7 +151,10 @@ export default function AdminAiBulkIngestPanel() {
       countRows((q) => q.eq("status", "failed")),
       countRows((q) => q.like("status", "skipped%")),
     ]);
-    setMediaCountsExact({ total, video, audio, image, pending: localPending + remotePending, localPending, remotePending, processing, completed, failed, skipped });
+    const downloaded = media.filter((m) => m.metadata?.download_status === "downloaded" || (m.status === "completed" && (m.file_size_bytes || 0) > 0)).length;
+    const linkRegistered = media.filter((m) => m.metadata?.download_status === "link_registered").length;
+    const storedBytes = media.reduce((sum, m) => sum + (m.file_size_bytes || 0), 0);
+    setMediaCountsExact({ total, video, audio, image, pending: localPending + remotePending, localPending, remotePending, processing, completed, failed, skipped, downloaded, linkRegistered, storedBytes });
 
   };
 
