@@ -246,34 +246,67 @@ function textSourcesFromZipEntry(name: string, bytes: Uint8Array): Source[] {
   return chunkTextEntry(name, text, text.length > RAW_ONLY_THRESHOLD_CHARS, "tiktok_export");
 }
 
-function decodeZipEntries(zipBytes: Uint8Array): { sources: Source[]; media: MediaEntry[] } {
-  const entries = unzipSync(zipBytes);
+async function decodeZipEntries(zipBytes: Uint8Array): Promise<{ sources: Source[]; media: MediaEntry[] }> {
   const sources: Source[] = [];
   const media: MediaEntry[] = [];
   const sampleNames: string[] = [];
   let textEntries = 0;
   let unsupportedEntries = 0;
-  for (const [name, bytes] of Object.entries(entries)) {
-    if (name.endsWith("/")) continue;
-    if (sampleNames.length < 20) sampleNames.push(name);
-    const mediaType = detectMediaType(name);
-    if (mediaType) {
-      // limit individual media to 200 MB to be safe
-      if (bytes.length > 200_000_000) continue;
-      media.push({
-        filename: name.split("/").pop() || name,
-        mediaType,
-        bytes,
-        mime: detectMimeType(name),
-      });
-      continue;
+  let totalEntries = 0;
+  const fileReads: Promise<void>[] = [];
+
+  const unzipper = new Unzip((file) => {
+    if (file.name.endsWith("/")) return;
+    totalEntries++;
+    if (sampleNames.length < 20) sampleNames.push(file.name);
+    const mediaType = detectMediaType(file.name);
+    const shouldReadMedia = Boolean(mediaType) && (file.originalSize ?? 0) <= MAX_STREAMED_MEDIA_BYTES && media.length < 250;
+    const shouldReadText = !mediaType && isTextLikeFilename(file.name) && (file.originalSize ?? 0) <= MAX_STREAMED_TEXT_BYTES && sources.length < MAX_SOURCES_PER_JOB;
+
+    if (!shouldReadMedia && !shouldReadText) {
+      unsupportedEntries++;
+      file.terminate();
+      return;
     }
-    if (!isTextLikeFilename(name) && !isProbablyTextBytes(bytes)) { unsupportedEntries++; continue; }
-    textEntries++;
-    sources.push(...textSourcesFromZipEntry(name, bytes));
-  }
-  console.log("[bulk-ingest] zip entries:", Object.keys(entries).length, "text entries:", textEntries, "unsupported:", unsupportedEntries, "samples:", sampleNames.join(" | "));
-  return { sources, media };
+
+    fileReads.push(new Promise((resolve, reject) => {
+      const chunks: Uint8Array[] = [];
+      let total = 0;
+      const maxBytes = shouldReadMedia ? MAX_STREAMED_MEDIA_BYTES : MAX_STREAMED_TEXT_BYTES;
+
+      file.ondata = (err, chunk, final) => {
+        if (err) { reject(err); return; }
+        total += chunk.length;
+        if (total > maxBytes) {
+          file.terminate();
+          resolve();
+          return;
+        }
+        chunks.push(chunk);
+        if (!final) return;
+
+        const bytes = new Uint8Array(total);
+        let offset = 0;
+        for (const part of chunks) { bytes.set(part, offset); offset += part.length; }
+
+        if (mediaType && shouldReadMedia) {
+          media.push({ filename: file.name.split("/").pop() || file.name, mediaType, bytes, mime: detectMimeType(file.name) });
+        } else if (shouldReadText) {
+          textEntries++;
+          sources.push(...textSourcesFromZipEntry(file.name, bytes));
+        }
+        resolve();
+      };
+
+      try { file.start(); } catch (e) { reject(e); }
+    }));
+  });
+
+  unzipper.register(UnzipInflate);
+  unzipper.push(zipBytes, true);
+  await Promise.all(fileReads);
+  console.log("[bulk-ingest] zip entries:", totalEntries, "text entries:", textEntries, "unsupported/skipped:", unsupportedEntries, "samples:", sampleNames.join(" | "));
+  return { sources: sources.slice(0, MAX_SOURCES_PER_JOB), media };
 }
 
 function normalizeSources(payload: any): Source[] {
