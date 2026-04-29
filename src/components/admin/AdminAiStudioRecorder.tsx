@@ -241,6 +241,14 @@ const AdminAiStudioRecorder = () => {
           default_clip_title_pattern: settings.default_clip_title_pattern,
           auto_caption_enabled: settings.auto_caption_enabled,
           preferred_voice_lang: settings.preferred_voice_lang,
+          voice_naturalness: settings.voice_naturalness,
+          voice_variance: settings.voice_variance,
+          voice_breathiness: settings.voice_breathiness,
+          preserve_original_video: settings.preserve_original_video,
+          background_only_mode: settings.background_only_mode,
+          never_modify_face: settings.never_modify_face,
+          natural_pauses_enabled: settings.natural_pauses_enabled,
+          avoid_robotic_perfection: settings.avoid_robotic_perfection,
         })
         .eq("id", settings.id);
       if (error) throw error;
