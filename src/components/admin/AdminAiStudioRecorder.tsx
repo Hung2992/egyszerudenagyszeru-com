@@ -499,7 +499,8 @@ const AdminAiStudioRecorder = () => {
 
       // MediaPipe egyszeri szegmentáció
       try {
-        const mod = await import(/* @vite-ignore */ "https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js");
+        // @ts-ignore - CDN module
+        await import(/* @vite-ignore */ ("https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" as string));
         const SS = (window as any).SelfieSegmentation;
         const selfie = new SS({ locateFile: (f: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${f}` });
         selfie.setOptions({ modelSelection: 1 });
