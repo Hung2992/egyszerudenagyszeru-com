@@ -984,6 +984,185 @@ const AdminAiStudioRecorder = () => {
           ))}
           {clips.length === 0 && <p className="text-sm text-muted-foreground">Nincs még klip.</p>}
         </TabsContent>
+
+        {/* ============== ⚙️ BEÁLLÍTÁSOK ============== */}
+        <TabsContent value="settings" className="space-y-4 mt-4">
+          {!settings ? (
+            <Card className="p-4 text-sm text-muted-foreground">Beállítások betöltése…</Card>
+          ) : (
+            <>
+              <Card className="p-4 space-y-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Settings className="h-5 w-5 text-primary" />
+                  <h3 className="font-bold uppercase tracking-wide">Alapértelmezések</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Ezeket az értékeket az AI Stúdió automatikusan használja minden új klipnél, így nem kell minden alkalommal kiválasztani.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs uppercase">Alapértelmezett hangminta</Label>
+                    <select
+                      className="w-full p-2 border bg-background mt-1"
+                      value={settings.default_voice_sample_id ?? ""}
+                      onChange={(e) => setSettings({ ...settings, default_voice_sample_id: e.target.value || null })}
+                    >
+                      <option value="">— nincs —</option>
+                      {voiceSamples.map((v) => (
+                        <option key={v.id} value={v.id}>{v.title} ({Math.round(v.pitch_hz ?? 0)}Hz)</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs uppercase">Alapértelmezett hangforrás</Label>
+                    <select
+                      className="w-full p-2 border bg-background mt-1"
+                      value={settings.default_audio_source}
+                      onChange={(e) => setSettings({ ...settings, default_audio_source: e.target.value })}
+                    >
+                      <option value="tts">💬 AI mondja</option>
+                      <option value="original">🎙️ Eredeti hang</option>
+                      <option value="none">🔇 Néma</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs uppercase">Alapértelmezett háttértípus</Label>
+                    <select
+                      className="w-full p-2 border bg-background mt-1"
+                      value={settings.default_bg_source}
+                      onChange={(e) => setSettings({ ...settings, default_bg_source: e.target.value })}
+                    >
+                      <option value="product">Webshop termék</option>
+                      <option value="uploaded">Feltöltött</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs uppercase">Alapértelmezett háttér-kategória</Label>
+                    <select
+                      className="w-full p-2 border bg-background mt-1"
+                      value={settings.default_bg_category}
+                      onChange={(e) => setSettings({ ...settings, default_bg_category: e.target.value })}
+                    >
+                      {BG_CATEGORIES.map((c) => (
+                        <option key={c.value} value={c.value}>{c.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs uppercase">Hang nyelve</Label>
+                    <select
+                      className="w-full p-2 border bg-background mt-1"
+                      value={settings.preferred_voice_lang}
+                      onChange={(e) => setSettings({ ...settings, preferred_voice_lang: e.target.value })}
+                    >
+                      <option value="hu-HU">Magyar (hu-HU)</option>
+                      <option value="en-US">Angol (en-US)</option>
+                      <option value="de-DE">Német (de-DE)</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-6">
+                    <input
+                      type="checkbox"
+                      id="auto_caption"
+                      checked={settings.auto_caption_enabled}
+                      onChange={(e) => setSettings({ ...settings, auto_caption_enabled: e.target.checked })}
+                    />
+                    <Label htmlFor="auto_caption" className="text-xs cursor-pointer">
+                      Automatikus felirat generálása
+                    </Label>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-4 space-y-3">
+                <h3 className="font-bold uppercase tracking-wide">Brand szövegek</h3>
+                <div>
+                  <Label className="text-xs">Intro szöveg (klip elején)</Label>
+                  <Input
+                    value={settings.brand_intro_text}
+                    onChange={(e) => setSettings({ ...settings, brand_intro_text: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Outro szöveg (klip végén)</Label>
+                  <Input
+                    value={settings.brand_outro_text}
+                    onChange={(e) => setSettings({ ...settings, brand_outro_text: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Klip cím sablon (használható: {"{product}"}, {"{date}"})</Label>
+                  <Input
+                    value={settings.default_clip_title_pattern}
+                    onChange={(e) => setSettings({ ...settings, default_clip_title_pattern: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+              </Card>
+
+              <Card className="p-4 space-y-2">
+                <h3 className="font-bold uppercase tracking-wide">AI prompt sablon</h3>
+                <p className="text-xs text-muted-foreground">
+                  Ezt a sablont használja az AI a reklámszöveg generálásához. Helyettesítők: <code>{"{product_name}"}</code>, <code>{"{price}"}</code>.
+                </p>
+                <Textarea
+                  rows={5}
+                  value={settings.ai_prompt_template}
+                  onChange={(e) => setSettings({ ...settings, ai_prompt_template: e.target.value })}
+                />
+              </Card>
+
+              <Card className="p-4 space-y-3">
+                <h3 className="font-bold uppercase tracking-wide">Háttér-könyvtár kezelés</h3>
+                <p className="text-xs text-muted-foreground">
+                  Adj kategóriát és csillagozd a kedvenceket — ezekkel szűrhetsz a Klip készítés fülön.
+                </p>
+                <div className="space-y-2 max-h-96 overflow-auto">
+                  {backgrounds.map((b) => (
+                    <div key={b.id} className="flex items-center gap-2 p-2 border">
+                      <button
+                        onClick={() => toggleBgFavorite(b.id, !!b.is_favorite)}
+                        className="text-amber-500"
+                        title="Kedvenc"
+                      >
+                        <Star className={`h-4 w-4 ${b.is_favorite ? "fill-amber-500" : ""}`} />
+                      </button>
+                      <span className="text-sm flex-1 truncate">{b.title}</span>
+                      <select
+                        className="p-1 border bg-background text-xs"
+                        value={b.category ?? "general"}
+                        onChange={(e) => updateBgCategory(b.id, e.target.value)}
+                      >
+                        {BG_CATEGORIES.map((c) => (
+                          <option key={c.value} value={c.value}>{c.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
+                  {backgrounds.length === 0 && (
+                    <p className="text-xs text-muted-foreground">Még nincs feltöltött háttér.</p>
+                  )}
+                </div>
+              </Card>
+
+              <Button onClick={saveSettings} disabled={savingSettings} size="lg" className="w-full">
+                {savingSettings ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Mentés…</>
+                ) : (
+                  <><Save className="h-4 w-4 mr-2" /> Beállítások mentése</>
+                )}
+              </Button>
+            </>
+          )}
+        </TabsContent>
       </Tabs>
     </div>
   );
