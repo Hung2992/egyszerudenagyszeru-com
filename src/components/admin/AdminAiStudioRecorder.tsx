@@ -128,6 +128,24 @@ interface ClipAsset {
   created_at: string;
 }
 
+interface ExportLog {
+  id: string;
+  preset_key: string;
+  preset_label: string | null;
+  width: number;
+  height: number;
+  fps: number;
+  video_bitrate_mbps: number;
+  audio_bitrate_kbps: number | null;
+  audio_sample_rate: number | null;
+  render_duration_ms: number;
+  output_size_bytes: number | null;
+  status: string;
+  warnings: any;
+  error_message: string | null;
+  created_at: string;
+}
+
 interface ShopProduct {
   id: string;
   name: string;
