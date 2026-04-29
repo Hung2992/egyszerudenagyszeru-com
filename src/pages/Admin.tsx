@@ -31,6 +31,7 @@ import AdminGoogleAdsStudioTab from "@/components/admin/AdminGoogleAdsStudioTab"
 import AdminPinterestStudioTab from "@/components/admin/AdminPinterestStudioTab";
 import AdminLinkedinStudioTab from "@/components/admin/AdminLinkedinStudioTab";
 import AdminTwitterStudioTab from "@/components/admin/AdminTwitterStudioTab";
+import AdminAiStudioRecorder from "@/components/admin/AdminAiStudioRecorder";
 import { Facebook as FacebookIcon, Instagram as InstagramIcon, Youtube as YoutubeIcon, Music2, Linkedin as LinkedinIcon, Twitter as TwitterIcon } from "lucide-react";
 import AdminGdprTab from "@/components/admin/AdminGdprTab";
 import AdminSupportTab from "@/components/admin/AdminSupportTab";
