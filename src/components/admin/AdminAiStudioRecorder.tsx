@@ -191,6 +191,8 @@ const AdminAiStudioRecorder = () => {
   const [audioSource, setAudioSource] = useState<AudioSource>("tts");
   const [scriptText, setScriptText] = useState<string>("");
   const [clipTitle, setClipTitle] = useState<string>("");
+  const [bgPrompt, setBgPrompt] = useState<string>("");
+  const [generatingBg, setGeneratingBg] = useState(false);
 
   const [uploading, setUploading] = useState(false);
   const [rendering, setRendering] = useState(false);
