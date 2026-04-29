@@ -457,8 +457,8 @@ const AdminAiStudioRecorder = () => {
     }
   };
 
-  // ============== GYORS 4K ELŐNÉZET (egyetlen frame, alacsony felbontáson) ==============
-  const runFastPreview = async () => {
+  // ============== ELŐNÉZET (gyors 480p VAGY HD 1080p egyetlen frame) ==============
+  const runFastPreview = async (hd: boolean = false) => {
     if (!selectedVideo) {
       toast({ title: "Válassz videót az előnézethez", variant: "destructive" });
       return;
