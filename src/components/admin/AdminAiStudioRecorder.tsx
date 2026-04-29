@@ -730,6 +730,20 @@ const AdminAiStudioRecorder = () => {
       const useCustom = presetKey === "custom";
       const W = useCustom ? (settings?.export_width || nativeW) : preset.width;
       const H = useCustom ? (settings?.export_height || nativeH) : preset.height;
+      const fps = preset.fps || 30;
+      logPresetKey = presetKey;
+      logPresetLabel = preset.label;
+      logW = W; logH = H; logFps = fps;
+      // Figyelmeztetés ha a forrás videó kisebb mint a kívánt export — felskálázás történik
+      if (nativeW < W || nativeH < H) {
+        logWarnings.push(`A forrás videó (${nativeW}×${nativeH}) kisebb mint az export méret (${W}×${H}) — felskálázás történik, ami életlenebb képet ad.`);
+      }
+      // Aspect arány figyelmeztetés
+      const srcAr = nativeW / nativeH;
+      const dstAr = W / H;
+      if (Math.abs(srcAr - dstAr) > 0.15) {
+        logWarnings.push(`A forrás (${srcAr.toFixed(2)}) és export (${dstAr.toFixed(2)}) képarány eltér — fekete sávok vagy vágás keletkezhet.`);
+      }
       const canvas = document.createElement("canvas");
       canvas.width = W; canvas.height = H;
       const ctx = canvas.getContext("2d", { alpha: false })!;
@@ -737,7 +751,7 @@ const AdminAiStudioRecorder = () => {
       ctx.imageSmoothingQuality = "high";
 
       // ===== AUDIO MIXING =====
-      const videoStream = canvas.captureStream(30);
+      const videoStream = canvas.captureStream(fps);
       let audioCtx: AudioContext | null = null;
       let audioDest: MediaStreamAudioDestinationNode | null = null;
 
