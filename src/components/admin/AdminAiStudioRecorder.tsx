@@ -83,6 +83,13 @@ interface StudioSettings {
   supports_any_background: boolean;
   busy_background_tolerance: number;
   mask_threshold: number;
+  // Új: 4K export, hangminőség, kompozíciós keret, háttér ember-check
+  export_4k: boolean;
+  audio_sample_rate: number;
+  audio_bitrate_kbps: number;
+  show_safe_zone: boolean;
+  bg_human_check_enabled: boolean;
+  bg_max_regenerations: number;
 }
 
 const BG_CATEGORIES = [
@@ -197,6 +204,8 @@ const AdminAiStudioRecorder = () => {
   const [uploading, setUploading] = useState(false);
   const [rendering, setRendering] = useState(false);
   const [renderProgress, setRenderProgress] = useState(0);
+  const [previewing, setPreviewing] = useState(false);
+  const [previewReady, setPreviewReady] = useState(false);
 
   const [settings, setSettings] = useState<StudioSettings | null>(null);
   const [savingSettings, setSavingSettings] = useState(false);
@@ -262,6 +271,12 @@ const AdminAiStudioRecorder = () => {
           supports_any_background: settings.supports_any_background,
           busy_background_tolerance: settings.busy_background_tolerance,
           mask_threshold: settings.mask_threshold,
+          export_4k: settings.export_4k,
+          audio_sample_rate: settings.audio_sample_rate,
+          audio_bitrate_kbps: settings.audio_bitrate_kbps,
+          show_safe_zone: settings.show_safe_zone,
+          bg_human_check_enabled: settings.bg_human_check_enabled,
+          bg_max_regenerations: settings.bg_max_regenerations,
         })
         .eq("id", settings.id);
       if (error) throw error;
@@ -418,6 +433,136 @@ const AdminAiStudioRecorder = () => {
     }
   };
 
+  // ============== GYORS 4K ELŐNÉZET (egyetlen frame, alacsony felbontáson) ==============
+  const runFastPreview = async () => {
+    if (!selectedVideo) {
+      toast({ title: "Válassz videót az előnézethez", variant: "destructive" });
+      return;
+    }
+    if (bgSource === "uploaded" && !selectedBg) {
+      toast({ title: "Válassz hátteret", variant: "destructive" });
+      return;
+    }
+    if (bgSource === "product" && !selectedProductBg) {
+      toast({ title: "Válassz termék hátteret", variant: "destructive" });
+      return;
+    }
+    setPreviewing(true);
+    try {
+      const previewCanvas = previewCanvasRef.current;
+      if (!previewCanvas) throw new Error("Preview canvas nem érhető el");
+
+      const video = videos.find((v) => v.id === selectedVideo)!;
+      const videoSigned = await supabase.storage.from("ai-studio-videos").createSignedUrl(video.storage_path, 3600);
+      if (videoSigned.error || !videoSigned.data) throw new Error("Videó URL hiba");
+
+      let bgUrl: string | null = null;
+      if (bgSource === "uploaded") {
+        const bg = backgrounds.find((b) => b.id === selectedBg)!;
+        bgUrl = supabase.storage.from("ai-studio-backgrounds").getPublicUrl(bg.storage_path!).data.publicUrl;
+      } else {
+        bgUrl = shopProducts.find((p) => p.id === selectedProductBg)?.image_url ?? null;
+      }
+      if (!bgUrl) throw new Error("Háttér URL hiba");
+
+      // kis videó betöltés első frame-re
+      const vEl = document.createElement("video");
+      vEl.crossOrigin = "anonymous";
+      vEl.muted = true;
+      vEl.src = videoSigned.data.signedUrl;
+      await new Promise<void>((res) => { vEl.onloadeddata = () => res(); });
+      vEl.currentTime = Math.min(0.3, (vEl.duration || 1) / 4);
+      await new Promise<void>((res) => { vEl.onseeked = () => res(); });
+
+      const bgImg = new Image();
+      bgImg.crossOrigin = "anonymous";
+      bgImg.src = bgUrl;
+      await new Promise<void>((res, rej) => { bgImg.onload = () => res(); bgImg.onerror = () => rej(); });
+
+      // előnézet: max 480px szélesség, megőrzött arány (gyors)
+      const targetW = 480;
+      const aspect = (vEl.videoWidth || 720) / (vEl.videoHeight || 1280);
+      const W = targetW;
+      const H = Math.round(targetW / aspect);
+      previewCanvas.width = W;
+      previewCanvas.height = H;
+      const ctx = previewCanvas.getContext("2d", { alpha: false })!;
+      ctx.imageSmoothingQuality = "high";
+
+      // háttér (cover)
+      const bgAr = bgImg.width / bgImg.height;
+      const tAr = W / H;
+      let sx = 0, sy = 0, sw = bgImg.width, sh = bgImg.height;
+      if (bgAr > tAr) { sw = bgImg.height * tAr; sx = (bgImg.width - sw) / 2; }
+      else { sh = bgImg.width / tAr; sy = (bgImg.height - sh) / 2; }
+      ctx.drawImage(bgImg, sx, sy, sw, sh, 0, 0, W, H);
+
+      // MediaPipe egyszeri szegmentáció
+      try {
+        // @ts-ignore - CDN module
+        await import(/* @vite-ignore */ ("https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" as string));
+        const SS = (window as any).SelfieSegmentation;
+        const selfie = new SS({ locateFile: (f: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${f}` });
+        selfie.setOptions({ modelSelection: 1 });
+        await new Promise<void>((res) => {
+          selfie.onResults((results: any) => {
+            const tmp = document.createElement("canvas");
+            tmp.width = W; tmp.height = H;
+            const tctx = tmp.getContext("2d")!;
+            const softnessPx = Math.round((settings?.edge_softness ?? 0.5) * 6);
+            if (softnessPx > 0) (tctx as any).filter = `blur(${softnessPx}px)`;
+            tctx.drawImage(results.segmentationMask, 0, 0, W, H);
+            (tctx as any).filter = "none";
+            tctx.globalCompositeOperation = "source-in";
+            tctx.drawImage(results.image, 0, 0, W, H);
+            ctx.drawImage(tmp, 0, 0);
+            res();
+          });
+          selfie.send({ image: vEl });
+        });
+      } catch (e) {
+        console.warn("MediaPipe preview hiba, csak videó frame-mel folytatom", e);
+        ctx.drawImage(vEl, 0, 0, W, H);
+      }
+
+      // Safe zone overlay (16:9 középre)
+      if (settings?.show_safe_zone ?? true) {
+        const safeAr = 16 / 9;
+        let szW = W * 0.6, szH = szW / safeAr;
+        if (szH > H * 0.85) { szH = H * 0.85; szW = szH * safeAr; }
+        const szX = (W - szW) / 2;
+        const szY = (H - szH) / 2;
+        ctx.save();
+        ctx.strokeStyle = "rgba(255, 215, 0, 0.9)";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 6]);
+        ctx.strokeRect(szX, szY, szW, szH);
+        ctx.setLineDash([]);
+        // sarkok
+        ctx.strokeStyle = "rgba(255, 215, 0, 1)";
+        ctx.lineWidth = 3;
+        const c = 14;
+        ctx.beginPath();
+        ctx.moveTo(szX, szY + c); ctx.lineTo(szX, szY); ctx.lineTo(szX + c, szY);
+        ctx.moveTo(szX + szW - c, szY); ctx.lineTo(szX + szW, szY); ctx.lineTo(szX + szW, szY + c);
+        ctx.moveTo(szX + szW, szY + szH - c); ctx.lineTo(szX + szW, szY + szH); ctx.lineTo(szX + szW - c, szY + szH);
+        ctx.moveTo(szX + c, szY + szH); ctx.lineTo(szX, szY + szH); ctx.lineTo(szX, szY + szH - c);
+        ctx.stroke();
+        ctx.font = "bold 11px sans-serif";
+        ctx.fillStyle = "rgba(255, 215, 0, 1)";
+        ctx.fillText("16:9 SAFE ZONE", szX + 6, szY + 16);
+        ctx.restore();
+      }
+
+      setPreviewReady(true);
+      toast({ title: "✅ Előnézet kész", description: "A teljes klip ennek alapján készül." });
+    } catch (e: any) {
+      toast({ title: "Előnézet hiba", description: e?.message || "Ismeretlen", variant: "destructive" });
+    } finally {
+      setPreviewing(false);
+    }
+  };
+
   const previewTts = () => {
     if (!scriptText.trim()) {
       toast({ title: "Adj meg szöveget", variant: "destructive" });
@@ -518,8 +663,12 @@ const AdminAiStudioRecorder = () => {
       bgImg.src = bgUrl;
       await new Promise((res, rej) => { bgImg.onload = () => res(null); bgImg.onerror = rej; });
 
-      const W = vEl.videoWidth || 720;
-      const H = vEl.videoHeight || 1280;
+      // 4K export: ha be van kapcsolva, 3840×2160 a célméret (16:9), egyébként a videó natív
+      const want4K = settings?.export_4k ?? false;
+      const nativeW = vEl.videoWidth || 720;
+      const nativeH = vEl.videoHeight || 1280;
+      const W = want4K ? 3840 : nativeW;
+      const H = want4K ? 2160 : nativeH;
       const canvas = document.createElement("canvas");
       canvas.width = W; canvas.height = H;
       const ctx = canvas.getContext("2d", { alpha: false })!;
@@ -533,7 +682,7 @@ const AdminAiStudioRecorder = () => {
 
       if (audioSource === "original") {
         try {
-          audioCtx = new AudioContext();
+          audioCtx = new AudioContext({ sampleRate: settings?.audio_sample_rate ?? 48000 });
           audioDest = audioCtx.createMediaStreamDestination();
           const srcNode = audioCtx.createMediaElementSource(vEl);
           srcNode.connect(audioDest);
@@ -548,9 +697,13 @@ const AdminAiStudioRecorder = () => {
         // Itt csak elindítjuk visszajátszáshoz; a TTS audio sávot a kliphez későbbi lépésben fűzzük (jelenleg only video + UI-ban hallható).
       }
 
+      // Bitráta a felbontás függvényében (4K = 25 Mbps, FullHD = 12 Mbps)
+      const videoBps = want4K ? 25_000_000 : 12_000_000;
+      const audioBps = (settings?.audio_bitrate_kbps ?? 256) * 1000;
       const recorder = new MediaRecorder(videoStream, {
         mimeType: "video/webm;codecs=vp9,opus",
-        videoBitsPerSecond: 12_000_000, // 12 Mbps — 4K-szerű élesség
+        videoBitsPerSecond: videoBps,
+        audioBitsPerSecond: audioBps,
       });
       const chunks: Blob[] = [];
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
@@ -973,6 +1126,27 @@ const AdminAiStudioRecorder = () => {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Gyors előnézet canvas + gomb */}
+            <div className="border-2 border-dashed border-primary/30 p-3 bg-muted/30">
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-xs uppercase font-bold">Gyors előnézet (1 frame, ~480px)</Label>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={runFastPreview}
+                  disabled={previewing || !selectedVideo}
+                >
+                  {previewing ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />…</> : <><Play className="h-3 w-3 mr-1" /> Előnézet</>}
+                </Button>
+              </div>
+              <canvas
+                ref={previewCanvasRef}
+                className="w-full bg-black border"
+                style={{ display: previewReady ? "block" : "none" }}
+              />
+              {!previewReady && <p className="text-xs text-muted-foreground">Klikkelj az "Előnézet"-re az első keret megtekintéséhez (a sárga keret a 16:9 safe zone, oda kerülj).</p>}
             </div>
 
             {/* Lépés 5: Generálás */}
