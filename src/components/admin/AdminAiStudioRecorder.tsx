@@ -466,12 +466,16 @@ const AdminAiStudioRecorder = () => {
       }
       if (!bgUrl) throw new Error("Háttér URL hiba");
 
-      // MediaPipe betöltés
+      // MediaPipe betöltés — a "general" model (1) bármilyen színes/normális háttérről
+      // pontosan kivágja az embert, NEM kell zöld háttér. Ez egy AI szegmentációs modell,
+      // amely emberi alakot felismer, nem szín-kulcsot.
       const SelfieSegmentation = await loadMediaPipe();
       const selfie = new SelfieSegmentation({
         locateFile: (f: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${f}`,
       });
-      selfie.setOptions({ modelSelection: 1 });
+      // modelSelection: 0 = landscape (gyors), 1 = general (pontosabb, bármilyen háttér)
+      const modelSel = settings?.segmentation_quality === "fast" ? 0 : 1;
+      selfie.setOptions({ modelSelection: modelSel });
 
       // Setup video + bg
       const vEl = document.createElement("video");
