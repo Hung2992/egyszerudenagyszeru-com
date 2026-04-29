@@ -573,7 +573,7 @@ const Admin = () => {
   const navigate = useNavigate();
   const { isAdmin, loading } = useAdminCheck();
   const [tab, setTab] = useState<Tab>("ai_marketing_studio");
-  const [marketingStudioTab, setMarketingStudioTab] = useState<Tab>("fb_studio");
+  const [marketingStudioTab, setMarketingStudioTab] = useState<Tab>("ai_studio_recorder");
   const [settingsSection, setSettingsSection] = useState<SettingsSection>("store");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
