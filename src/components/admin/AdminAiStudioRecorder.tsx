@@ -1330,7 +1330,8 @@ const AdminAiStudioRecorder = () => {
 
               <Card className="p-4 space-y-3">
                 <h3 className="font-bold uppercase tracking-wide">Brand szövegek</h3>
-
+                <div>
+                  <Label className="text-xs">Intro szöveg (klip elején)</Label>
                   <Input
                     value={settings.brand_intro_text}
                     onChange={(e) => setSettings({ ...settings, brand_intro_text: e.target.value })}
