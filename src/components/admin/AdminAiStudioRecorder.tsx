@@ -543,12 +543,19 @@ const AdminAiStudioRecorder = () => {
         }
         ctx.drawImage(bgImg, sx, sy, sw, sh, 0, 0, W, H);
 
-        // 2. személy maszkkal
+        // 2. személy maszkkal — élenlágyítással a természetes átmenethez
         ctx.globalCompositeOperation = "source-over";
         const tmp = document.createElement("canvas");
         tmp.width = W; tmp.height = H;
         const tctx = tmp.getContext("2d")!;
+        // Élenlágyítás: a beállítás alapján blur-t alkalmazunk a maszkra,
+        // így nem lesz szaggatott a kivágás bármilyen színes háttéren
+        const softnessPx = Math.round((settings?.edge_softness ?? 0.5) * 6);
+        if (softnessPx > 0) {
+          (tctx as any).filter = `blur(${softnessPx}px)`;
+        }
         tctx.drawImage(results.segmentationMask, 0, 0, W, H);
+        (tctx as any).filter = "none";
         tctx.globalCompositeOperation = "source-in";
         tctx.drawImage(results.image, 0, 0, W, H);
         ctx.drawImage(tmp, 0, 0);
