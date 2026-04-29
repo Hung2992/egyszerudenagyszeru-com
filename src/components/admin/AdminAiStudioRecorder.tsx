@@ -319,8 +319,16 @@ const AdminAiStudioRecorder = () => {
 
   // ============== VIDEO + BACKGROUND COMPOSITE ==============
   const renderClip = async () => {
-    if (!selectedVideo || !selectedBg) {
-      toast({ title: "Válassz videót és hátteret", variant: "destructive" });
+    if (!selectedVideo) {
+      toast({ title: "Válassz videót", variant: "destructive" });
+      return;
+    }
+    if (bgSource === "uploaded" && !selectedBg) {
+      toast({ title: "Válassz feltöltött hátteret", variant: "destructive" });
+      return;
+    }
+    if (bgSource === "product" && !selectedProductBg) {
+      toast({ title: "Válassz webshop terméket háttérnek", variant: "destructive" });
       return;
     }
     setRendering(true);
@@ -328,17 +336,28 @@ const AdminAiStudioRecorder = () => {
 
     try {
       const video = videos.find((v) => v.id === selectedVideo);
-      const bg = backgrounds.find((b) => b.id === selectedBg);
-      if (!video || !bg) throw new Error("Hibás kiválasztás");
+      if (!video) throw new Error("Hibás videó kiválasztás");
 
       // Signed URL videóhoz
       const videoSigned = await supabase.storage.from("ai-studio-videos").createSignedUrl(video.storage_path, 3600);
       if (videoSigned.error || !videoSigned.data) throw new Error("Videó URL hiba");
 
-      // Háttér public URL
-      const bgUrl = bg.storage_path
-        ? supabase.storage.from("ai-studio-backgrounds").getPublicUrl(bg.storage_path).data.publicUrl
-        : null;
+      // Háttér URL: feltöltött vagy termékkép
+      let bgUrl: string | null = null;
+      let bgLabel = "";
+      if (bgSource === "uploaded") {
+        const bg = backgrounds.find((b) => b.id === selectedBg);
+        if (!bg) throw new Error("Háttér hiba");
+        bgUrl = bg.storage_path
+          ? supabase.storage.from("ai-studio-backgrounds").getPublicUrl(bg.storage_path).data.publicUrl
+          : null;
+        bgLabel = bg.title;
+      } else {
+        const prod = shopProducts.find((p) => p.id === selectedProductBg);
+        if (!prod) throw new Error("Termék hiba");
+        bgUrl = prod.image_url;
+        bgLabel = prod.name;
+      }
       if (!bgUrl) throw new Error("Háttér URL hiba");
 
       // MediaPipe betöltés
