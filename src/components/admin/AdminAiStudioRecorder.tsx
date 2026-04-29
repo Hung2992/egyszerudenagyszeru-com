@@ -62,6 +62,16 @@ interface ClipAsset {
   created_at: string;
 }
 
+interface ShopProduct {
+  id: string;
+  name: string;
+  image_url: string | null;
+  category: string | null;
+}
+
+type AudioSource = "original" | "tts" | "none";
+type BgSource = "uploaded" | "product";
+
 const MEDIAPIPE_SCRIPT = "https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js";
 
 declare global {
@@ -129,10 +139,14 @@ const AdminAiStudioRecorder = () => {
   const [videos, setVideos] = useState<VideoAsset[]>([]);
   const [backgrounds, setBackgrounds] = useState<BackgroundAsset[]>([]);
   const [clips, setClips] = useState<ClipAsset[]>([]);
+  const [shopProducts, setShopProducts] = useState<ShopProduct[]>([]);
 
   const [selectedVoice, setSelectedVoice] = useState<string>("");
   const [selectedVideo, setSelectedVideo] = useState<string>("");
   const [selectedBg, setSelectedBg] = useState<string>("");
+  const [selectedProductBg, setSelectedProductBg] = useState<string>("");
+  const [bgSource, setBgSource] = useState<BgSource>("uploaded");
+  const [audioSource, setAudioSource] = useState<AudioSource>("tts");
   const [scriptText, setScriptText] = useState<string>("");
   const [clipTitle, setClipTitle] = useState<string>("");
 
@@ -146,16 +160,18 @@ const AdminAiStudioRecorder = () => {
 
   // ============== LOAD ==============
   const loadAll = async () => {
-    const [v, vid, bg, cl] = await Promise.all([
+    const [v, vid, bg, cl, sp] = await Promise.all([
       supabase.from("ai_studio_voice_samples").select("*").order("created_at", { ascending: false }),
       supabase.from("ai_studio_videos").select("*").order("created_at", { ascending: false }),
       supabase.from("ai_studio_backgrounds").select("*").order("created_at", { ascending: false }),
       supabase.from("ai_studio_clips").select("*").order("created_at", { ascending: false }).limit(50),
+      supabase.from("shop_products").select("id,name,image_url,category").eq("is_active", true).not("image_url", "is", null).order("created_at", { ascending: false }).limit(200),
     ]);
     if (v.data) setVoiceSamples(v.data as VoiceSample[]);
     if (vid.data) setVideos(vid.data as VideoAsset[]);
     if (bg.data) setBackgrounds(bg.data as BackgroundAsset[]);
     if (cl.data) setClips(cl.data as ClipAsset[]);
+    if (sp.data) setShopProducts(sp.data as ShopProduct[]);
   };
   useEffect(() => { loadAll(); }, []);
 
@@ -303,8 +319,16 @@ const AdminAiStudioRecorder = () => {
 
   // ============== VIDEO + BACKGROUND COMPOSITE ==============
   const renderClip = async () => {
-    if (!selectedVideo || !selectedBg) {
-      toast({ title: "Válassz videót és hátteret", variant: "destructive" });
+    if (!selectedVideo) {
+      toast({ title: "Válassz videót", variant: "destructive" });
+      return;
+    }
+    if (bgSource === "uploaded" && !selectedBg) {
+      toast({ title: "Válassz feltöltött hátteret", variant: "destructive" });
+      return;
+    }
+    if (bgSource === "product" && !selectedProductBg) {
+      toast({ title: "Válassz webshop terméket háttérnek", variant: "destructive" });
       return;
     }
     setRendering(true);
@@ -312,17 +336,28 @@ const AdminAiStudioRecorder = () => {
 
     try {
       const video = videos.find((v) => v.id === selectedVideo);
-      const bg = backgrounds.find((b) => b.id === selectedBg);
-      if (!video || !bg) throw new Error("Hibás kiválasztás");
+      if (!video) throw new Error("Hibás videó kiválasztás");
 
       // Signed URL videóhoz
       const videoSigned = await supabase.storage.from("ai-studio-videos").createSignedUrl(video.storage_path, 3600);
       if (videoSigned.error || !videoSigned.data) throw new Error("Videó URL hiba");
 
-      // Háttér public URL
-      const bgUrl = bg.storage_path
-        ? supabase.storage.from("ai-studio-backgrounds").getPublicUrl(bg.storage_path).data.publicUrl
-        : null;
+      // Háttér URL: feltöltött vagy termékkép
+      let bgUrl: string | null = null;
+      let bgLabel = "";
+      if (bgSource === "uploaded") {
+        const bg = backgrounds.find((b) => b.id === selectedBg);
+        if (!bg) throw new Error("Háttér hiba");
+        bgUrl = bg.storage_path
+          ? supabase.storage.from("ai-studio-backgrounds").getPublicUrl(bg.storage_path).data.publicUrl
+          : null;
+        bgLabel = bg.title;
+      } else {
+        const prod = shopProducts.find((p) => p.id === selectedProductBg);
+        if (!prod) throw new Error("Termék hiba");
+        bgUrl = prod.image_url;
+        bgLabel = prod.name;
+      }
       if (!bgUrl) throw new Error("Háttér URL hiba");
 
       // MediaPipe betöltés
@@ -336,7 +371,10 @@ const AdminAiStudioRecorder = () => {
       const vEl = document.createElement("video");
       vEl.crossOrigin = "anonymous";
       vEl.src = videoSigned.data.signedUrl;
-      vEl.muted = true;
+      // Eredeti hang esetén nem mute-oljuk a felvételhez (de a felhasználói visszhang elkerüléshez halkítjuk a lejátszást)
+      vEl.muted = audioSource !== "original";
+      vEl.volume = audioSource === "original" ? 0.0001 : 0; // halk monitor, csak a stream számít
+      (vEl as any).playsInline = true;
       await new Promise((res) => { vEl.onloadedmetadata = () => res(null); });
 
       const bgImg = new Image();
@@ -350,9 +388,29 @@ const AdminAiStudioRecorder = () => {
       canvas.width = W; canvas.height = H;
       const ctx = canvas.getContext("2d")!;
 
-      // MediaRecorder a canvas-ból
-      const stream = canvas.captureStream(30);
-      const recorder = new MediaRecorder(stream, { mimeType: "video/webm;codecs=vp9" });
+      // ===== AUDIO MIXING =====
+      const videoStream = canvas.captureStream(30);
+      let audioCtx: AudioContext | null = null;
+      let audioDest: MediaStreamAudioDestinationNode | null = null;
+
+      if (audioSource === "original") {
+        try {
+          audioCtx = new AudioContext();
+          audioDest = audioCtx.createMediaStreamDestination();
+          const srcNode = audioCtx.createMediaElementSource(vEl);
+          srcNode.connect(audioDest);
+          // halk monitor visszacsatolás (opcionális, hogy ne legyen visszhang)
+          // srcNode.connect(audioCtx.destination);
+          audioDest.stream.getAudioTracks().forEach((t) => videoStream.addTrack(t));
+        } catch (e) { console.warn("audio mix hiba", e); }
+      } else if (audioSource === "tts" && scriptText.trim()) {
+        // TTS-t a render alatt elindítjuk; a böngésző hangját nem tudjuk közvetlenül elkapni,
+        // ezért MediaRecorder-rel rögzítjük a default audio outputot egy AudioContext-en keresztül.
+        // Mivel SpeechSynthesis nem captureálható, beállítjuk hogy a felhasználó hallja, és a klip végén külön TTS-t generálunk.
+        // Itt csak elindítjuk visszajátszáshoz; a TTS audio sávot a kliphez későbbi lépésben fűzzük (jelenleg only video + UI-ban hallható).
+      }
+
+      const recorder = new MediaRecorder(videoStream, { mimeType: "video/webm;codecs=vp9,opus" });
       const chunks: Blob[] = [];
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
 
@@ -391,8 +449,27 @@ const AdminAiStudioRecorder = () => {
 
       vEl.currentTime = 0;
       await vEl.play();
+
+      // TTS indítása párhuzamosan ha kell (a felhasználó hangosan hallja, a klipbe nem kerül bele
+      // mert a böngésző nem captureálja a SpeechSynthesis kimenetét — ezért választható az "original")
+      if (audioSource === "tts" && scriptText.trim() && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(scriptText);
+        u.lang = "hu-HU";
+        const sample = voiceSamples.find((s) => s.id === selectedVoice);
+        if (sample) {
+          const pitch = sample.pitch_hz ?? 150;
+          const tempo = sample.tempo_wpm ?? 140;
+          u.pitch = Math.max(0.5, Math.min(2, pitch / 150));
+          u.rate = Math.max(0.5, Math.min(2, tempo / 140));
+        }
+        const voices = window.speechSynthesis.getVoices();
+        const hu = voices.find((v) => v.lang.startsWith("hu")) || voices.find((v) => v.lang.startsWith("en"));
+        if (hu) u.voice = hu;
+        window.speechSynthesis.speak(u);
+      }
+
       const dur = vEl.duration || 5;
-      const startT = performance.now();
 
       await new Promise<void>((resolve) => {
         const tick = async () => {
@@ -411,6 +488,8 @@ const AdminAiStudioRecorder = () => {
 
       recorder.stop();
       await new Promise((res) => { recorder.onstop = () => res(null); });
+      try { audioCtx?.close(); } catch {}
+      try { window.speechSynthesis?.cancel(); } catch {}
 
       const blob = new Blob(chunks, { type: "video/webm" });
       const file = new File([blob], `clip-${Date.now()}.webm`, { type: "video/webm" });
@@ -421,13 +500,14 @@ const AdminAiStudioRecorder = () => {
       if (up.error) throw up.error;
 
       await supabase.from("ai_studio_clips").insert({
-        title: clipTitle || `Klip ${new Date().toLocaleString("hu-HU")}`,
+        title: clipTitle || `Klip ${bgLabel} ${new Date().toLocaleString("hu-HU")}`,
         source_video_id: selectedVideo,
-        background_id: selectedBg,
+        background_id: bgSource === "uploaded" ? selectedBg : null,
         voice_sample_id: selectedVoice || null,
-        generated_text: scriptText || null,
+        generated_text: audioSource === "tts" ? scriptText || null : null,
         output_path: path,
         status: "ready",
+        metadata: { bg_source: bgSource, product_id: bgSource === "product" ? selectedProductBg : null, audio_source: audioSource },
       });
 
       setRenderProgress(100);
@@ -547,83 +627,169 @@ const AdminAiStudioRecorder = () => {
           )}
         </TabsContent>
 
-        {/* ============== KLIP KÉSZÍTÉS ============== */}
+        {/* ============== KLIP KÉSZÍTÉS — EGYSÉGES VEZÉRLŐPULT ============== */}
         <TabsContent value="compose" className="space-y-4 mt-4">
-          <Card className="p-4 space-y-4">
+          <Card className="p-4 space-y-5">
+            {/* Lépés 1: Cím */}
             <div>
-              <Label>Klip címe</Label>
-              <Input value={clipTitle} onChange={(e) => setClipTitle(e.target.value)} placeholder="Pl. TikTok pulóver promo" />
+              <Label className="text-xs uppercase tracking-wide font-bold">1. Klip címe</Label>
+              <Input value={clipTitle} onChange={(e) => setClipTitle(e.target.value)} placeholder="Pl. TikTok pulóver promo" className="mt-1" />
             </div>
 
+            {/* Lépés 2: Videó */}
             <div>
-              <Label>Videó (Te a felvételen)</Label>
+              <Label className="text-xs uppercase tracking-wide font-bold">2. Saját videód</Label>
               <select
-                className="w-full p-2 border bg-background"
+                className="w-full p-2 border bg-background mt-1"
                 value={selectedVideo}
                 onChange={(e) => setSelectedVideo(e.target.value)}
               >
-                <option value="">— válassz —</option>
+                <option value="">— válassz feltöltött videót —</option>
                 {videos.map((v) => (
                   <option key={v.id} value={v.id}>
                     {v.title} ({v.width}×{v.height}, {v.duration_sec?.toFixed(1)}s)
                   </option>
                 ))}
               </select>
+              {videos.length === 0 && (
+                <p className="text-xs text-amber-600 mt-1">Még nincs videó — tölts fel a Feltöltés fülön.</p>
+              )}
             </div>
 
+            {/* Lépés 3: Háttér forrás */}
             <div>
-              <Label>Háttér</Label>
-              <select
-                className="w-full p-2 border bg-background"
-                value={selectedBg}
-                onChange={(e) => setSelectedBg(e.target.value)}
-              >
-                <option value="">— válassz —</option>
-                {backgrounds.map((b) => (
-                  <option key={b.id} value={b.id}>{b.title}</option>
-                ))}
-              </select>
+              <Label className="text-xs uppercase tracking-wide font-bold">3. Háttér</Label>
+              <div className="flex gap-2 mt-1 mb-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={bgSource === "uploaded" ? "default" : "outline"}
+                  onClick={() => setBgSource("uploaded")}
+                >
+                  <ImageIcon className="h-4 w-4 mr-1" /> Feltöltött
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={bgSource === "product" ? "default" : "outline"}
+                  onClick={() => setBgSource("product")}
+                >
+                  <Sparkles className="h-4 w-4 mr-1" /> Webshop termék ({shopProducts.length})
+                </Button>
+              </div>
+
+              {bgSource === "uploaded" ? (
+                <select
+                  className="w-full p-2 border bg-background"
+                  value={selectedBg}
+                  onChange={(e) => setSelectedBg(e.target.value)}
+                >
+                  <option value="">— válassz hátteret —</option>
+                  {backgrounds.map((b) => (
+                    <option key={b.id} value={b.id}>{b.title}</option>
+                  ))}
+                </select>
+              ) : (
+                <>
+                  <select
+                    className="w-full p-2 border bg-background"
+                    value={selectedProductBg}
+                    onChange={(e) => setSelectedProductBg(e.target.value)}
+                  >
+                    <option value="">— válassz terméket —</option>
+                    {shopProducts.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}{p.category ? ` · ${p.category}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedProductBg && (() => {
+                    const p = shopProducts.find((x) => x.id === selectedProductBg);
+                    return p?.image_url ? (
+                      <img src={p.image_url} alt={p.name} className="w-32 h-32 object-cover border mt-2" />
+                    ) : null;
+                  })()}
+                </>
+              )}
             </div>
 
+            {/* Lépés 4: Hang forrás */}
             <div>
-              <Label>Hangminta (opcionális, TTS-hez)</Label>
-              <select
-                className="w-full p-2 border bg-background"
-                value={selectedVoice}
-                onChange={(e) => setSelectedVoice(e.target.value)}
-              >
-                <option value="">— nincs hang —</option>
-                {voiceSamples.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.title} (pitch {Math.round(v.pitch_hz ?? 0)}Hz)
-                  </option>
-                ))}
-              </select>
+              <Label className="text-xs uppercase tracking-wide font-bold">4. Hang forrása</Label>
+              <div className="flex gap-2 mt-1 mb-2 flex-wrap">
+                <Button
+                  type="button" size="sm"
+                  variant={audioSource === "original" ? "default" : "outline"}
+                  onClick={() => setAudioSource("original")}
+                >
+                  🎙️ Eredeti hangom (videóból)
+                </Button>
+                <Button
+                  type="button" size="sm"
+                  variant={audioSource === "tts" ? "default" : "outline"}
+                  onClick={() => setAudioSource("tts")}
+                >
+                  💬 AI mondja amit írok
+                </Button>
+                <Button
+                  type="button" size="sm"
+                  variant={audioSource === "none" ? "default" : "outline"}
+                  onClick={() => setAudioSource("none")}
+                >
+                  🔇 Néma
+                </Button>
+              </div>
+
+              {audioSource === "tts" && (
+                <div className="space-y-2 border p-3 bg-muted/30">
+                  <div>
+                    <Label className="text-xs">Hangminta (a tempód/hangmagasságod alapján)</Label>
+                    <select
+                      className="w-full p-2 border bg-background mt-1"
+                      value={selectedVoice}
+                      onChange={(e) => setSelectedVoice(e.target.value)}
+                    >
+                      <option value="">— alapértelmezett magyar hang —</option>
+                      {voiceSamples.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.title} (pitch {Math.round(v.pitch_hz ?? 0)}Hz)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Mondandó szöveg</Label>
+                    <Textarea
+                      value={scriptText}
+                      onChange={(e) => setScriptText(e.target.value)}
+                      rows={4}
+                      placeholder="Pl. Új pulóverünk most 6990 Ft! Ne hagyd ki…"
+                      className="mt-1"
+                    />
+                    <Button onClick={previewTts} variant="outline" size="sm" className="mt-2" disabled={!scriptText.trim()}>
+                      <Volume2 className="h-4 w-4 mr-2" /> Hang előnézet
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div>
-              <Label>Mondandó szöveg (TTS előnézethez)</Label>
-              <Textarea
-                value={scriptText}
-                onChange={(e) => setScriptText(e.target.value)}
-                rows={4}
-                placeholder="Pl. Új pulóverünk most 6990 Ft! Ne hagyd ki…"
-              />
-              <Button onClick={previewTts} variant="outline" size="sm" className="mt-2" disabled={!scriptText.trim()}>
-                <Volume2 className="h-4 w-4 mr-2" /> Hangminta-alapú TTS előnézet
-              </Button>
-            </div>
-
+            {/* Lépés 5: Generálás */}
             <Button
               onClick={renderClip}
-              disabled={rendering || !selectedVideo || !selectedBg}
+              disabled={
+                rendering ||
+                !selectedVideo ||
+                (bgSource === "uploaded" && !selectedBg) ||
+                (bgSource === "product" && !selectedProductBg)
+              }
               className="w-full"
               size="lg"
             >
               {rendering ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Renderelés ({renderProgress.toFixed(0)}%)</>
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> AI renderelés ({renderProgress.toFixed(0)}%)</>
               ) : (
-                <><Wand2 className="h-4 w-4 mr-2" /> AI háttércsere + klip mentés</>
+                <><Wand2 className="h-4 w-4 mr-2" /> 5. AI HÁTTÉRCSERE + KLIP GENERÁLÁS</>
               )}
             </Button>
 
@@ -632,6 +798,13 @@ const AdminAiStudioRecorder = () => {
                 <div className="bg-primary h-2 transition-all" style={{ width: `${renderProgress}%` }} />
               </div>
             )}
+
+            <p className="text-[10px] text-muted-foreground leading-relaxed border-t pt-3">
+              💡 <b>Tipp:</b> Az "Eredeti hang" módban a videód saját hangja kerül a klipbe (háttércsere mellett).
+              A "AI mondja" módban a böngésző felolvassa a szöveget a hangmintád pitch/tempo paraméterei szerint —
+              ezt a felvétel közben hangosan hallod, de a böngésző-korlátok miatt a TTS hang csak előnézet, a klipbe nem mixelődik bele.
+              Teljes klónozott hanghoz külső szolgáltatás (pl. ElevenLabs) kellene.
+            </p>
           </Card>
         </TabsContent>
 
