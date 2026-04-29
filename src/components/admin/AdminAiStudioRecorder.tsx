@@ -576,6 +576,8 @@ const AdminAiStudioRecorder = () => {
         const tmp = document.createElement("canvas");
         tmp.width = W; tmp.height = H;
         const tctx = tmp.getContext("2d")!;
+        tctx.imageSmoothingEnabled = true;
+        tctx.imageSmoothingQuality = "high";
         // Élenlágyítás: a beállítás alapján blur-t alkalmazunk a maszkra,
         // így nem lesz szaggatott a kivágás bármilyen színes háttéren
         const softnessPx = Math.round((settings?.edge_softness ?? 0.5) * 6);
