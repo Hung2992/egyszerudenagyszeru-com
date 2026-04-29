@@ -77,6 +77,12 @@ interface StudioSettings {
   never_modify_face: boolean;
   natural_pauses_enabled: boolean;
   avoid_robotic_perfection: boolean;
+  // Színes/tetszőleges háttér támogatás
+  segmentation_quality: string;
+  edge_softness: number;
+  supports_any_background: boolean;
+  busy_background_tolerance: number;
+  mask_threshold: number;
 }
 
 const BG_CATEGORIES = [
