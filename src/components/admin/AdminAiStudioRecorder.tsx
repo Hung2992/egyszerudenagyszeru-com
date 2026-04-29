@@ -266,6 +266,15 @@ const AdminAiStudioRecorder = () => {
     if (bg.data) setBackgrounds(bg.data as BackgroundAsset[]);
     if (cl.data) setClips(cl.data as ClipAsset[]);
     if (sp.data) setShopProducts(sp.data as ShopProduct[]);
+    // Export naplók (új tábla, lehet hogy a típusgenerálás még nem futott)
+    try {
+      const { data: logs } = await (supabase as any)
+        .from("ai_studio_export_logs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (logs) setExportLogs(logs as ExportLog[]);
+    } catch (e) { /* ignore */ }
     if (st.data) {
       const s = st.data as StudioSettings;
       setSettings(s);
