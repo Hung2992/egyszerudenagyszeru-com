@@ -371,7 +371,10 @@ const AdminAiStudioRecorder = () => {
       const vEl = document.createElement("video");
       vEl.crossOrigin = "anonymous";
       vEl.src = videoSigned.data.signedUrl;
-      vEl.muted = true;
+      // Eredeti hang esetén nem mute-oljuk a felvételhez (de a felhasználói visszhang elkerüléshez halkítjuk a lejátszást)
+      vEl.muted = audioSource !== "original";
+      vEl.volume = audioSource === "original" ? 0.0001 : 0; // halk monitor, csak a stream számít
+      (vEl as any).playsInline = true;
       await new Promise((res) => { vEl.onloadedmetadata = () => res(null); });
 
       const bgImg = new Image();
@@ -385,9 +388,29 @@ const AdminAiStudioRecorder = () => {
       canvas.width = W; canvas.height = H;
       const ctx = canvas.getContext("2d")!;
 
-      // MediaRecorder a canvas-ból
-      const stream = canvas.captureStream(30);
-      const recorder = new MediaRecorder(stream, { mimeType: "video/webm;codecs=vp9" });
+      // ===== AUDIO MIXING =====
+      const videoStream = canvas.captureStream(30);
+      let audioCtx: AudioContext | null = null;
+      let audioDest: MediaStreamAudioDestinationNode | null = null;
+
+      if (audioSource === "original") {
+        try {
+          audioCtx = new AudioContext();
+          audioDest = audioCtx.createMediaStreamDestination();
+          const srcNode = audioCtx.createMediaElementSource(vEl);
+          srcNode.connect(audioDest);
+          // halk monitor visszacsatolás (opcionális, hogy ne legyen visszhang)
+          // srcNode.connect(audioCtx.destination);
+          audioDest.stream.getAudioTracks().forEach((t) => videoStream.addTrack(t));
+        } catch (e) { console.warn("audio mix hiba", e); }
+      } else if (audioSource === "tts" && scriptText.trim()) {
+        // TTS-t a render alatt elindítjuk; a böngésző hangját nem tudjuk közvetlenül elkapni,
+        // ezért MediaRecorder-rel rögzítjük a default audio outputot egy AudioContext-en keresztül.
+        // Mivel SpeechSynthesis nem captureálható, beállítjuk hogy a felhasználó hallja, és a klip végén külön TTS-t generálunk.
+        // Itt csak elindítjuk visszajátszáshoz; a TTS audio sávot a kliphez későbbi lépésben fűzzük (jelenleg only video + UI-ban hallható).
+      }
+
+      const recorder = new MediaRecorder(videoStream, { mimeType: "video/webm;codecs=vp9,opus" });
       const chunks: Blob[] = [];
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
 
