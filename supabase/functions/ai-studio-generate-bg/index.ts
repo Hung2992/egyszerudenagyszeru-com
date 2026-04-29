@@ -107,15 +107,17 @@ Deno.serve(async (req) => {
     // beállítások betöltése
     const { data: settings } = await supabase
       .from("ai_studio_settings")
-      .select("bg_human_check_enabled, bg_max_regenerations")
+      .select("bg_human_check_enabled, bg_max_regenerations, bg_strict_human_check")
       .limit(1).maybeSingle();
     const checkEnabled = settings?.bg_human_check_enabled ?? true;
+    const strictMode = settings?.bg_strict_human_check ?? false;
     const maxRetries = Math.max(0, Math.min(5, settings?.bg_max_regenerations ?? 2));
 
     // Generálás + ellenőrzés ciklus
     let dataUrl = "";
     let attempts = 0;
     let lastReason = "";
+    let visionFailed = false;
     const totalAttempts = checkEnabled ? maxRetries + 1 : 1;
 
     for (let i = 0; i < totalAttempts; i++) {
@@ -128,6 +130,14 @@ Deno.serve(async (req) => {
       if (!checkEnabled) break;
 
       const check = await detectHuman(LOVABLE_API_KEY, dataUrl);
+      if (check.reason === "vision_check_failed") {
+        visionFailed = true;
+        if (strictMode) {
+          // Szigorú mód: vision hiba esetén ne mentsünk
+          throw new Error("Vision ellenőrzés meghibásodott (szigorú mód aktív). Próbáld újra.");
+        }
+        break; // laza mód: engedjük át
+      }
       if (!check.has_human) break;
       lastReason = check.reason;
       console.log(`[bg-gen] human detected, retry ${i + 1}/${maxRetries}: ${check.reason}`);
