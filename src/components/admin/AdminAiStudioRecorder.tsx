@@ -255,6 +255,11 @@ const AdminAiStudioRecorder = () => {
           never_modify_face: settings.never_modify_face,
           natural_pauses_enabled: settings.natural_pauses_enabled,
           avoid_robotic_perfection: settings.avoid_robotic_perfection,
+          segmentation_quality: settings.segmentation_quality,
+          edge_softness: settings.edge_softness,
+          supports_any_background: settings.supports_any_background,
+          busy_background_tolerance: settings.busy_background_tolerance,
+          mask_threshold: settings.mask_threshold,
         })
         .eq("id", settings.id);
       if (error) throw error;
