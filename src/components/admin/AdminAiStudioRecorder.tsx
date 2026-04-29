@@ -724,8 +724,9 @@ const AdminAiStudioRecorder = () => {
         // Itt csak elindítjuk visszajátszáshoz; a TTS audio sávot a kliphez későbbi lépésben fűzzük (jelenleg only video + UI-ban hallható).
       }
 
-      // Bitráta a felbontás függvényében (4K = 25 Mbps, FullHD = 12 Mbps)
-      const videoBps = want4K ? 25_000_000 : 12_000_000;
+      // Bitráta: preset alapján (custom esetén az admin érték), Mbps -> bps
+      const presetBitrate = useCustom ? (settings?.export_video_bitrate_mbps || 30) : preset.bitrate_mbps;
+      const videoBps = Math.max(8, Math.min(60, presetBitrate)) * 1_000_000;
       const audioBps = (settings?.audio_bitrate_kbps ?? 256) * 1000;
       const recorder = new MediaRecorder(videoStream, {
         mimeType: "video/webm;codecs=vp9,opus",
