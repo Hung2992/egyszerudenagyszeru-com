@@ -1074,6 +1074,190 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_studio_backgrounds: {
+        Row: {
+          bg_type: string
+          category: string | null
+          created_at: string
+          id: string
+          product_id: string | null
+          storage_path: string | null
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          bg_type?: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          product_id?: string | null
+          storage_path?: string | null
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          bg_type?: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          product_id?: string | null
+          storage_path?: string | null
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      ai_studio_clips: {
+        Row: {
+          audio_path: string | null
+          background_id: string | null
+          created_at: string
+          error_message: string | null
+          generated_text: string | null
+          id: string
+          metadata: Json | null
+          output_path: string | null
+          source_video_id: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string | null
+          voice_sample_id: string | null
+        }
+        Insert: {
+          audio_path?: string | null
+          background_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          generated_text?: string | null
+          id?: string
+          metadata?: Json | null
+          output_path?: string | null
+          source_video_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id?: string | null
+          voice_sample_id?: string | null
+        }
+        Update: {
+          audio_path?: string | null
+          background_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          generated_text?: string | null
+          id?: string
+          metadata?: Json | null
+          output_path?: string | null
+          source_video_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+          voice_sample_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_studio_clips_background_id_fkey"
+            columns: ["background_id"]
+            isOneToOne: false
+            referencedRelation: "ai_studio_backgrounds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_studio_clips_source_video_id_fkey"
+            columns: ["source_video_id"]
+            isOneToOne: false
+            referencedRelation: "ai_studio_videos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_studio_clips_voice_sample_id_fkey"
+            columns: ["voice_sample_id"]
+            isOneToOne: false
+            referencedRelation: "ai_studio_voice_samples"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_studio_videos: {
+        Row: {
+          created_at: string
+          duration_sec: number | null
+          height: number | null
+          id: string
+          size_bytes: number | null
+          storage_path: string
+          title: string
+          user_id: string | null
+          width: number | null
+        }
+        Insert: {
+          created_at?: string
+          duration_sec?: number | null
+          height?: number | null
+          id?: string
+          size_bytes?: number | null
+          storage_path: string
+          title: string
+          user_id?: string | null
+          width?: number | null
+        }
+        Update: {
+          created_at?: string
+          duration_sec?: number | null
+          height?: number | null
+          id?: string
+          size_bytes?: number | null
+          storage_path?: string
+          title?: string
+          user_id?: string | null
+          width?: number | null
+        }
+        Relationships: []
+      }
+      ai_studio_voice_samples: {
+        Row: {
+          analysis_data: Json | null
+          analysis_status: string
+          created_at: string
+          duration_sec: number | null
+          id: string
+          pitch_hz: number | null
+          storage_path: string
+          tempo_wpm: number | null
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          analysis_data?: Json | null
+          analysis_status?: string
+          created_at?: string
+          duration_sec?: number | null
+          id?: string
+          pitch_hz?: number | null
+          storage_path: string
+          tempo_wpm?: number | null
+          title: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          analysis_data?: Json | null
+          analysis_status?: string
+          created_at?: string
+          duration_sec?: number | null
+          id?: string
+          pitch_hz?: number | null
+          storage_path?: string
+          tempo_wpm?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       ai_video_processing_queue: {
         Row: {
           attempts: number
