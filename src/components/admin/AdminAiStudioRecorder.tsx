@@ -181,26 +181,77 @@ const AdminAiStudioRecorder = () => {
   const [rendering, setRendering] = useState(false);
   const [renderProgress, setRenderProgress] = useState(0);
 
+  const [settings, setSettings] = useState<StudioSettings | null>(null);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [bgFilterCategory, setBgFilterCategory] = useState<string>("");
+
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
   const previewBgImgRef = useRef<HTMLImageElement>(null);
 
   // ============== LOAD ==============
   const loadAll = async () => {
-    const [v, vid, bg, cl, sp] = await Promise.all([
+    const [v, vid, bg, cl, sp, st] = await Promise.all([
       supabase.from("ai_studio_voice_samples").select("*").order("created_at", { ascending: false }),
       supabase.from("ai_studio_videos").select("*").order("created_at", { ascending: false }),
       supabase.from("ai_studio_backgrounds").select("*").order("created_at", { ascending: false }),
       supabase.from("ai_studio_clips").select("*").order("created_at", { ascending: false }).limit(50),
       supabase.from("shop_products").select("id,name,image_url,category").eq("is_active", true).not("image_url", "is", null).order("created_at", { ascending: false }).limit(200),
+      supabase.from("ai_studio_settings").select("*").limit(1).maybeSingle(),
     ]);
     if (v.data) setVoiceSamples(v.data as VoiceSample[]);
     if (vid.data) setVideos(vid.data as VideoAsset[]);
     if (bg.data) setBackgrounds(bg.data as BackgroundAsset[]);
     if (cl.data) setClips(cl.data as ClipAsset[]);
     if (sp.data) setShopProducts(sp.data as ShopProduct[]);
+    if (st.data) {
+      const s = st.data as StudioSettings;
+      setSettings(s);
+      // alapértelmezések alkalmazása ha még üres az UI
+      if (!selectedVoice && s.default_voice_sample_id) setSelectedVoice(s.default_voice_sample_id);
+      if (s.default_audio_source) setAudioSource(s.default_audio_source as AudioSource);
+      if (s.default_bg_source === "uploaded" || s.default_bg_source === "product") setBgSource(s.default_bg_source);
+    }
   };
   useEffect(() => { loadAll(); }, []);
+
+  const saveSettings = async () => {
+    if (!settings) return;
+    setSavingSettings(true);
+    try {
+      const { error } = await supabase
+        .from("ai_studio_settings")
+        .update({
+          default_voice_sample_id: settings.default_voice_sample_id,
+          default_audio_source: settings.default_audio_source,
+          default_bg_source: settings.default_bg_source,
+          default_bg_category: settings.default_bg_category,
+          brand_intro_text: settings.brand_intro_text,
+          brand_outro_text: settings.brand_outro_text,
+          ai_prompt_template: settings.ai_prompt_template,
+          default_clip_title_pattern: settings.default_clip_title_pattern,
+          auto_caption_enabled: settings.auto_caption_enabled,
+          preferred_voice_lang: settings.preferred_voice_lang,
+        })
+        .eq("id", settings.id);
+      if (error) throw error;
+      toast({ title: "✅ Beállítások mentve" });
+    } catch (e: any) {
+      toast({ title: "Mentési hiba", description: e?.message || "Ismeretlen", variant: "destructive" });
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const updateBgCategory = async (id: string, category: string) => {
+    await supabase.from("ai_studio_backgrounds").update({ category }).eq("id", id);
+    await loadAll();
+  };
+
+  const toggleBgFavorite = async (id: string, current: boolean) => {
+    await supabase.from("ai_studio_backgrounds").update({ is_favorite: !current }).eq("id", id);
+    await loadAll();
+  };
 
   // ============== UPLOAD: VOICE ==============
   const uploadVoice = async (file: File) => {
