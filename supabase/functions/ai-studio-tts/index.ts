@@ -57,19 +57,54 @@ Deno.serve(async (req) => {
       ? (pitch_hz < 110 ? "deep_male" : "normal_male")
       : (pitch_hz > 220 ? "high_female" : "normal_female");
 
-    // SSML-szerű prozódia
-    const rate = Math.max(0.7, Math.min(1.3, tempo_wpm / 140));
-    const pitchAdjust = Math.round(((pitch_hz - 150) / 150) * 100); // %
+    // Emberi hang beállítások betöltése (alapértelmezések, ha nincs)
+    const { data: settings } = await supabase
+      .from("ai_studio_settings")
+      .select("voice_naturalness, voice_variance, voice_breathiness, natural_pauses_enabled, avoid_robotic_perfection, preferred_voice_lang")
+      .limit(1)
+      .maybeSingle();
+
+    const naturalness = settings?.voice_naturalness ?? 0.75;
+    const variance = settings?.voice_variance ?? 0.35;
+    const breathiness = settings?.voice_breathiness ?? 0.4;
+    const naturalPauses = settings?.natural_pauses_enabled ?? true;
+    const avoidPerfect = settings?.avoid_robotic_perfection ?? true;
+    const lang = settings?.preferred_voice_lang ?? "hu-HU";
+
+    // Természetes szünetek beszúrása vesszőknél/mondatok között
+    let processedText = text;
+    if (naturalPauses) {
+      processedText = processedText
+        .replace(/,\s*/g, ", ")        // rövid szünet vessző után
+        .replace(/\.\s+/g, ". ")        // hosszabb mondat után
+        .replace(/\?\s+/g, "? ")
+        .replace(/!\s+/g, "! ");
+    }
+
+    // Apró ingadozás a sebességben/pitch-ben (kerüli a robot-tökéletességet)
+    const baseRate = Math.max(0.7, Math.min(1.3, tempo_wpm / 140));
+    const baseRand = avoidPerfect ? (Math.random() - 0.5) * variance * 0.15 : 0;
+    const rate = +(baseRate + baseRand).toFixed(3);
+
+    const basePitch = ((pitch_hz - 150) / 150) * 100;
+    const pitchRand = avoidPerfect ? (Math.random() - 0.5) * variance * 8 : 0;
+    const pitchAdjust = Math.round(basePitch + pitchRand);
 
     return new Response(JSON.stringify({
       ok: true,
-      text,
+      text: processedText,
       synthesis_hint: {
         voice: recommendedVoice,
         rate,
         pitch_percent: pitchAdjust,
         target_pitch_hz: pitch_hz,
         target_tempo_wpm: tempo_wpm,
+        lang,
+        naturalness,
+        variance,
+        breathiness,
+        natural_pauses: naturalPauses,
+        avoid_robotic_perfection: avoidPerfect,
       },
       // a böngésző oldalon SpeechSynthesis API-val olvasunk be (saját, ingyenes)
       mode: "browser_speech_synthesis",

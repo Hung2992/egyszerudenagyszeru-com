@@ -1190,6 +1190,8 @@ export type Database = {
         Row: {
           ai_prompt_template: string | null
           auto_caption_enabled: boolean | null
+          avoid_robotic_perfection: boolean
+          background_only_mode: boolean
           brand_intro_text: string | null
           brand_outro_text: string | null
           created_at: string
@@ -1199,12 +1201,20 @@ export type Database = {
           default_clip_title_pattern: string | null
           default_voice_sample_id: string | null
           id: string
+          natural_pauses_enabled: boolean
+          never_modify_face: boolean
           preferred_voice_lang: string | null
+          preserve_original_video: boolean
           updated_at: string
+          voice_breathiness: number
+          voice_naturalness: number
+          voice_variance: number
         }
         Insert: {
           ai_prompt_template?: string | null
           auto_caption_enabled?: boolean | null
+          avoid_robotic_perfection?: boolean
+          background_only_mode?: boolean
           brand_intro_text?: string | null
           brand_outro_text?: string | null
           created_at?: string
@@ -1214,12 +1224,20 @@ export type Database = {
           default_clip_title_pattern?: string | null
           default_voice_sample_id?: string | null
           id?: string
+          natural_pauses_enabled?: boolean
+          never_modify_face?: boolean
           preferred_voice_lang?: string | null
+          preserve_original_video?: boolean
           updated_at?: string
+          voice_breathiness?: number
+          voice_naturalness?: number
+          voice_variance?: number
         }
         Update: {
           ai_prompt_template?: string | null
           auto_caption_enabled?: boolean | null
+          avoid_robotic_perfection?: boolean
+          background_only_mode?: boolean
           brand_intro_text?: string | null
           brand_outro_text?: string | null
           created_at?: string
@@ -1229,8 +1247,14 @@ export type Database = {
           default_clip_title_pattern?: string | null
           default_voice_sample_id?: string | null
           id?: string
+          natural_pauses_enabled?: boolean
+          never_modify_face?: boolean
           preferred_voice_lang?: string | null
+          preserve_original_video?: boolean
           updated_at?: string
+          voice_breathiness?: number
+          voice_naturalness?: number
+          voice_variance?: number
         }
         Relationships: [
           {

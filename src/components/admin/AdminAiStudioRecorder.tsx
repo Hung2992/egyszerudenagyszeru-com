@@ -68,6 +68,15 @@ interface StudioSettings {
   default_clip_title_pattern: string;
   auto_caption_enabled: boolean;
   preferred_voice_lang: string;
+  // Emberi hang + eredeti videó védelme
+  voice_naturalness: number;
+  voice_variance: number;
+  voice_breathiness: number;
+  preserve_original_video: boolean;
+  background_only_mode: boolean;
+  never_modify_face: boolean;
+  natural_pauses_enabled: boolean;
+  avoid_robotic_perfection: boolean;
 }
 
 const BG_CATEGORIES = [
@@ -232,6 +241,14 @@ const AdminAiStudioRecorder = () => {
           default_clip_title_pattern: settings.default_clip_title_pattern,
           auto_caption_enabled: settings.auto_caption_enabled,
           preferred_voice_lang: settings.preferred_voice_lang,
+          voice_naturalness: settings.voice_naturalness,
+          voice_variance: settings.voice_variance,
+          voice_breathiness: settings.voice_breathiness,
+          preserve_original_video: settings.preserve_original_video,
+          background_only_mode: settings.background_only_mode,
+          never_modify_face: settings.never_modify_face,
+          natural_pauses_enabled: settings.natural_pauses_enabled,
+          avoid_robotic_perfection: settings.avoid_robotic_perfection,
         })
         .eq("id", settings.id);
       if (error) throw error;
@@ -1080,8 +1097,133 @@ const AdminAiStudioRecorder = () => {
                 </div>
               </Card>
 
+              {/* ============== 🎙️ EMBERI HANG ============== */}
+              <Card className="p-4 space-y-4 border-2 border-primary/30">
+                <div className="flex items-center gap-2">
+                  <Volume2 className="h-5 w-5 text-primary" />
+                  <h3 className="font-bold uppercase tracking-wide">Emberi hang — természetes, nem robot</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Az AI hang ne legyen túl tökéletes. Lélegzetvétel, apró ingadozás, természetes szünetek — emberi módon szólaljon meg.
+                </p>
+
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <Label>Természetesség (mennyire emberi)</Label>
+                    <span className="font-mono">{Math.round(settings.voice_naturalness * 100)}%</span>
+                  </div>
+                  <input
+                    type="range" min="0" max="1" step="0.05"
+                    className="w-full"
+                    value={settings.voice_naturalness}
+                    onChange={(e) => setSettings({ ...settings, voice_naturalness: parseFloat(e.target.value) })}
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    100% = nagyon emberi (ajánlott), 0% = robot
+                  </p>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <Label>Hangszín-ingadozás (variancia)</Label>
+                    <span className="font-mono">{Math.round(settings.voice_variance * 100)}%</span>
+                  </div>
+                  <input
+                    type="range" min="0" max="1" step="0.05"
+                    className="w-full"
+                    value={settings.voice_variance}
+                    onChange={(e) => setSettings({ ...settings, voice_variance: parseFloat(e.target.value) })}
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Magasabb = élőbb, természetesebb beszéd
+                  </p>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <Label>Lélegzet-érzet (légzéses minőség)</Label>
+                    <span className="font-mono">{Math.round(settings.voice_breathiness * 100)}%</span>
+                  </div>
+                  <input
+                    type="range" min="0" max="1" step="0.05"
+                    className="w-full"
+                    value={settings.voice_breathiness}
+                    onChange={(e) => setSettings({ ...settings, voice_breathiness: parseFloat(e.target.value) })}
+                  />
+                </div>
+
+                <div className="space-y-2 pt-2 border-t">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.natural_pauses_enabled}
+                      onChange={(e) => setSettings({ ...settings, natural_pauses_enabled: e.target.checked })}
+                    />
+                    <span className="text-xs">Természetes szünetek (vesszőknél, mondatok között)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settings.avoid_robotic_perfection}
+                      onChange={(e) => setSettings({ ...settings, avoid_robotic_perfection: e.target.checked })}
+                    />
+                    <span className="text-xs">Kerülje a robotszerű tökéletességet (apró tökéletlenségek)</span>
+                  </label>
+                </div>
+              </Card>
+
+              {/* ============== 🎬 EREDETI VIDEÓ VÉDELME ============== */}
+              <Card className="p-4 space-y-3 border-2 border-amber-500/40 bg-amber-500/5">
+                <div className="flex items-center gap-2">
+                  <VideoIcon className="h-5 w-5 text-amber-600" />
+                  <h3 className="font-bold uppercase tracking-wide">Eredeti videó védelme</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  ⚠️ FONTOS: A feltöltött saját videó SOHA nem szerkeszthető. Csak a hátteret cseréljük, az arc, a mozgás, az eredeti felvétel érintetlen marad.
+                </p>
+
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={settings.preserve_original_video}
+                    onChange={(e) => setSettings({ ...settings, preserve_original_video: e.target.checked })}
+                  />
+                  <div>
+                    <div className="text-xs font-semibold">Eredeti videó megőrzése (ajánlott BE)</div>
+                    <div className="text-[10px] text-muted-foreground">A felvétel pixel-pontosan megmarad</div>
+                  </div>
+                </label>
+
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={settings.background_only_mode}
+                    onChange={(e) => setSettings({ ...settings, background_only_mode: e.target.checked })}
+                  />
+                  <div>
+                    <div className="text-xs font-semibold">Csak háttér csere mód</div>
+                    <div className="text-[10px] text-muted-foreground">Az AI kizárólag a hátteret cseréli, semmi mást</div>
+                  </div>
+                </label>
+
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={settings.never_modify_face}
+                    onChange={(e) => setSettings({ ...settings, never_modify_face: e.target.checked })}
+                  />
+                  <div>
+                    <div className="text-xs font-semibold">SOHA ne módosítsa az arcot/testet</div>
+                    <div className="text-[10px] text-muted-foreground">Tilos szépítés, deepfake, arccsere</div>
+                  </div>
+                </label>
+              </Card>
+
               <Card className="p-4 space-y-3">
-                <h3 className="font-bold uppercase tracking-wide">Brand szövegek</h3>
+
                 <div>
                   <Label className="text-xs">Intro szöveg (klip elején)</Label>
                   <Input
