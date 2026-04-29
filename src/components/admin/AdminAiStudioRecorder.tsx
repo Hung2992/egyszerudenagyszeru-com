@@ -823,16 +823,58 @@ const AdminAiStudioRecorder = () => {
               </div>
 
               {bgSource === "uploaded" ? (
-                <select
-                  className="w-full p-2 border bg-background"
-                  value={selectedBg}
-                  onChange={(e) => setSelectedBg(e.target.value)}
-                >
-                  <option value="">— válassz hátteret —</option>
-                  {backgrounds.map((b) => (
-                    <option key={b.id} value={b.id}>{b.title}</option>
-                  ))}
-                </select>
+                <>
+                  <select
+                    className="w-full p-2 border bg-background"
+                    value={selectedBg}
+                    onChange={(e) => setSelectedBg(e.target.value)}
+                  >
+                    <option value="">— válassz feltöltött / generált hátteret —</option>
+                    {backgrounds.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.category === "ai_generated" ? "🪄 " : ""}{b.title}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedBg && (() => {
+                    const b = backgrounds.find((x) => x.id === selectedBg);
+                    if (!b?.storage_path) return null;
+                    const url = supabase.storage.from("ai-studio-backgrounds").getPublicUrl(b.storage_path).data.publicUrl;
+                    return <img src={url} alt={b.title} className="w-32 h-32 object-cover border mt-2" />;
+                  })()}
+
+                  {/* AI háttér generálás szövegből */}
+                  <div className="mt-3 p-3 border-2 border-dashed border-primary/40 bg-primary/5">
+                    <Label className="text-xs uppercase tracking-wide font-bold flex items-center gap-1">
+                      <Wand2 className="h-3 w-3" /> Vagy generálj AI-val szövegből
+                    </Label>
+                    <Textarea
+                      value={bgPrompt}
+                      onChange={(e) => setBgPrompt(e.target.value.slice(0, 1000))}
+                      rows={2}
+                      placeholder="Pl. naplemente városi tetőterasz, modern beton, meleg fény, 16:9"
+                      className="mt-2 text-sm"
+                      disabled={generatingBg}
+                    />
+                    <div className="flex items-center justify-between mt-2">
+                      <Button
+                        onClick={generateBackground}
+                        size="sm"
+                        disabled={generatingBg || bgPrompt.trim().length < 3}
+                      >
+                        {generatingBg ? (
+                          <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Generálás…</>
+                        ) : (
+                          <><Sparkles className="h-4 w-4 mr-1" /> Háttér generálása</>
+                        )}
+                      </Button>
+                      <span className="text-xs text-muted-foreground">{bgPrompt.length}/1000</span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Az AI csak a környezetet generálja — embert/arcot soha nem tesz rá.
+                    </p>
+                  </div>
+                </>
               ) : (
                 <>
                   <select
