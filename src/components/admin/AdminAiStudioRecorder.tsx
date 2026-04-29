@@ -62,6 +62,16 @@ interface ClipAsset {
   created_at: string;
 }
 
+interface ShopProduct {
+  id: string;
+  name: string;
+  image_url: string | null;
+  category: string | null;
+}
+
+type AudioSource = "original" | "tts" | "none";
+type BgSource = "uploaded" | "product";
+
 const MEDIAPIPE_SCRIPT = "https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js";
 
 declare global {
