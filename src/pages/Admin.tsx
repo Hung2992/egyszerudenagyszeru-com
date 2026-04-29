@@ -1562,6 +1562,7 @@ const Admin = () => {
         case "pin_studio": return <AdminPinterestStudioTab />;
         case "li_studio": return <AdminLinkedinStudioTab />;
         case "x_studio": return <AdminTwitterStudioTab />;
+        case "ai_studio_recorder" as Tab: return <AdminAiStudioRecorder />;
         case "fb_studio":
         default:
           return <AdminFacebookStudioTab />;
