@@ -1079,7 +1079,9 @@ export type Database = {
           bg_type: string
           category: string | null
           created_at: string
+          description: string | null
           id: string
+          is_favorite: boolean | null
           product_id: string | null
           storage_path: string | null
           title: string
@@ -1089,7 +1091,9 @@ export type Database = {
           bg_type?: string
           category?: string | null
           created_at?: string
+          description?: string | null
           id?: string
+          is_favorite?: boolean | null
           product_id?: string | null
           storage_path?: string | null
           title: string
@@ -1099,7 +1103,9 @@ export type Database = {
           bg_type?: string
           category?: string | null
           created_at?: string
+          description?: string | null
           id?: string
+          is_favorite?: boolean | null
           product_id?: string | null
           storage_path?: string | null
           title?: string
@@ -1180,6 +1186,62 @@ export type Database = {
           },
         ]
       }
+      ai_studio_settings: {
+        Row: {
+          ai_prompt_template: string | null
+          auto_caption_enabled: boolean | null
+          brand_intro_text: string | null
+          brand_outro_text: string | null
+          created_at: string
+          default_audio_source: string | null
+          default_bg_category: string | null
+          default_bg_source: string | null
+          default_clip_title_pattern: string | null
+          default_voice_sample_id: string | null
+          id: string
+          preferred_voice_lang: string | null
+          updated_at: string
+        }
+        Insert: {
+          ai_prompt_template?: string | null
+          auto_caption_enabled?: boolean | null
+          brand_intro_text?: string | null
+          brand_outro_text?: string | null
+          created_at?: string
+          default_audio_source?: string | null
+          default_bg_category?: string | null
+          default_bg_source?: string | null
+          default_clip_title_pattern?: string | null
+          default_voice_sample_id?: string | null
+          id?: string
+          preferred_voice_lang?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ai_prompt_template?: string | null
+          auto_caption_enabled?: boolean | null
+          brand_intro_text?: string | null
+          brand_outro_text?: string | null
+          created_at?: string
+          default_audio_source?: string | null
+          default_bg_category?: string | null
+          default_bg_source?: string | null
+          default_clip_title_pattern?: string | null
+          default_voice_sample_id?: string | null
+          id?: string
+          preferred_voice_lang?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_studio_settings_default_voice_sample_id_fkey"
+            columns: ["default_voice_sample_id"]
+            isOneToOne: false
+            referencedRelation: "ai_studio_voice_samples"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_studio_videos: {
         Row: {
           created_at: string
@@ -1223,6 +1285,7 @@ export type Database = {
           created_at: string
           duration_sec: number | null
           id: string
+          is_default: boolean | null
           pitch_hz: number | null
           storage_path: string
           tempo_wpm: number | null
@@ -1236,6 +1299,7 @@ export type Database = {
           created_at?: string
           duration_sec?: number | null
           id?: string
+          is_default?: boolean | null
           pitch_hz?: number | null
           storage_path: string
           tempo_wpm?: number | null
@@ -1249,6 +1313,7 @@ export type Database = {
           created_at?: string
           duration_sec?: number | null
           id?: string
+          is_default?: boolean | null
           pitch_hz?: number | null
           storage_path?: string
           tempo_wpm?: number | null

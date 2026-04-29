@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Mic, Video as VideoIcon, Image as ImageIcon, Wand2, Loader2,
   Upload, Play, Trash2, Download, Volume2, Sparkles, RefreshCw,
+  Settings, Star, Save,
 } from "lucide-react";
 
 // ======================================================================
@@ -50,8 +51,34 @@ interface BackgroundAsset {
   bg_type: string;
   storage_path: string | null;
   category: string | null;
+  is_favorite?: boolean | null;
+  description?: string | null;
   created_at: string;
 }
+
+interface StudioSettings {
+  id: string;
+  default_voice_sample_id: string | null;
+  default_audio_source: string;
+  default_bg_source: string;
+  default_bg_category: string;
+  brand_intro_text: string;
+  brand_outro_text: string;
+  ai_prompt_template: string;
+  default_clip_title_pattern: string;
+  auto_caption_enabled: boolean;
+  preferred_voice_lang: string;
+}
+
+const BG_CATEGORIES = [
+  { value: "general", label: "Általános" },
+  { value: "street", label: "Utcai" },
+  { value: "studio", label: "Stúdió" },
+  { value: "nature", label: "Természet" },
+  { value: "urban", label: "Városi" },
+  { value: "product", label: "Termék" },
+  { value: "lifestyle", label: "Lifestyle" },
+];
 
 interface ClipAsset {
   id: string;
@@ -154,26 +181,77 @@ const AdminAiStudioRecorder = () => {
   const [rendering, setRendering] = useState(false);
   const [renderProgress, setRenderProgress] = useState(0);
 
+  const [settings, setSettings] = useState<StudioSettings | null>(null);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [bgFilterCategory, setBgFilterCategory] = useState<string>("");
+
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
   const previewBgImgRef = useRef<HTMLImageElement>(null);
 
   // ============== LOAD ==============
   const loadAll = async () => {
-    const [v, vid, bg, cl, sp] = await Promise.all([
+    const [v, vid, bg, cl, sp, st] = await Promise.all([
       supabase.from("ai_studio_voice_samples").select("*").order("created_at", { ascending: false }),
       supabase.from("ai_studio_videos").select("*").order("created_at", { ascending: false }),
       supabase.from("ai_studio_backgrounds").select("*").order("created_at", { ascending: false }),
       supabase.from("ai_studio_clips").select("*").order("created_at", { ascending: false }).limit(50),
       supabase.from("shop_products").select("id,name,image_url,category").eq("is_active", true).not("image_url", "is", null).order("created_at", { ascending: false }).limit(200),
+      supabase.from("ai_studio_settings").select("*").limit(1).maybeSingle(),
     ]);
     if (v.data) setVoiceSamples(v.data as VoiceSample[]);
     if (vid.data) setVideos(vid.data as VideoAsset[]);
     if (bg.data) setBackgrounds(bg.data as BackgroundAsset[]);
     if (cl.data) setClips(cl.data as ClipAsset[]);
     if (sp.data) setShopProducts(sp.data as ShopProduct[]);
+    if (st.data) {
+      const s = st.data as StudioSettings;
+      setSettings(s);
+      // alapértelmezések alkalmazása ha még üres az UI
+      if (!selectedVoice && s.default_voice_sample_id) setSelectedVoice(s.default_voice_sample_id);
+      if (s.default_audio_source) setAudioSource(s.default_audio_source as AudioSource);
+      if (s.default_bg_source === "uploaded" || s.default_bg_source === "product") setBgSource(s.default_bg_source);
+    }
   };
   useEffect(() => { loadAll(); }, []);
+
+  const saveSettings = async () => {
+    if (!settings) return;
+    setSavingSettings(true);
+    try {
+      const { error } = await supabase
+        .from("ai_studio_settings")
+        .update({
+          default_voice_sample_id: settings.default_voice_sample_id,
+          default_audio_source: settings.default_audio_source,
+          default_bg_source: settings.default_bg_source,
+          default_bg_category: settings.default_bg_category,
+          brand_intro_text: settings.brand_intro_text,
+          brand_outro_text: settings.brand_outro_text,
+          ai_prompt_template: settings.ai_prompt_template,
+          default_clip_title_pattern: settings.default_clip_title_pattern,
+          auto_caption_enabled: settings.auto_caption_enabled,
+          preferred_voice_lang: settings.preferred_voice_lang,
+        })
+        .eq("id", settings.id);
+      if (error) throw error;
+      toast({ title: "✅ Beállítások mentve" });
+    } catch (e: any) {
+      toast({ title: "Mentési hiba", description: e?.message || "Ismeretlen", variant: "destructive" });
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
+  const updateBgCategory = async (id: string, category: string) => {
+    await supabase.from("ai_studio_backgrounds").update({ category }).eq("id", id);
+    await loadAll();
+  };
+
+  const toggleBgFavorite = async (id: string, current: boolean) => {
+    await supabase.from("ai_studio_backgrounds").update({ is_favorite: !current }).eq("id", id);
+    await loadAll();
+  };
 
   // ============== UPLOAD: VOICE ==============
   const uploadVoice = async (file: File) => {
@@ -561,11 +639,12 @@ const AdminAiStudioRecorder = () => {
       </div>
 
       <Tabs defaultValue="upload">
-        <TabsList className="grid grid-cols-4 w-full">
+        <TabsList className="grid grid-cols-5 w-full">
           <TabsTrigger value="upload">📤 Feltöltés</TabsTrigger>
-          <TabsTrigger value="compose">🎬 Klip készítés</TabsTrigger>
+          <TabsTrigger value="compose">🎬 Klip</TabsTrigger>
           <TabsTrigger value="library">📚 Könyvtár</TabsTrigger>
-          <TabsTrigger value="clips">🎞️ Kész klipek ({clips.length})</TabsTrigger>
+          <TabsTrigger value="clips">🎞️ Kész ({clips.length})</TabsTrigger>
+          <TabsTrigger value="settings">⚙️ Beállítások</TabsTrigger>
         </TabsList>
 
         {/* ============== FELTÖLTÉS ============== */}
@@ -904,6 +983,185 @@ const AdminAiStudioRecorder = () => {
             </Card>
           ))}
           {clips.length === 0 && <p className="text-sm text-muted-foreground">Nincs még klip.</p>}
+        </TabsContent>
+
+        {/* ============== ⚙️ BEÁLLÍTÁSOK ============== */}
+        <TabsContent value="settings" className="space-y-4 mt-4">
+          {!settings ? (
+            <Card className="p-4 text-sm text-muted-foreground">Beállítások betöltése…</Card>
+          ) : (
+            <>
+              <Card className="p-4 space-y-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Settings className="h-5 w-5 text-primary" />
+                  <h3 className="font-bold uppercase tracking-wide">Alapértelmezések</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Ezeket az értékeket az AI Stúdió automatikusan használja minden új klipnél, így nem kell minden alkalommal kiválasztani.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs uppercase">Alapértelmezett hangminta</Label>
+                    <select
+                      className="w-full p-2 border bg-background mt-1"
+                      value={settings.default_voice_sample_id ?? ""}
+                      onChange={(e) => setSettings({ ...settings, default_voice_sample_id: e.target.value || null })}
+                    >
+                      <option value="">— nincs —</option>
+                      {voiceSamples.map((v) => (
+                        <option key={v.id} value={v.id}>{v.title} ({Math.round(v.pitch_hz ?? 0)}Hz)</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs uppercase">Alapértelmezett hangforrás</Label>
+                    <select
+                      className="w-full p-2 border bg-background mt-1"
+                      value={settings.default_audio_source}
+                      onChange={(e) => setSettings({ ...settings, default_audio_source: e.target.value })}
+                    >
+                      <option value="tts">💬 AI mondja</option>
+                      <option value="original">🎙️ Eredeti hang</option>
+                      <option value="none">🔇 Néma</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs uppercase">Alapértelmezett háttértípus</Label>
+                    <select
+                      className="w-full p-2 border bg-background mt-1"
+                      value={settings.default_bg_source}
+                      onChange={(e) => setSettings({ ...settings, default_bg_source: e.target.value })}
+                    >
+                      <option value="product">Webshop termék</option>
+                      <option value="uploaded">Feltöltött</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs uppercase">Alapértelmezett háttér-kategória</Label>
+                    <select
+                      className="w-full p-2 border bg-background mt-1"
+                      value={settings.default_bg_category}
+                      onChange={(e) => setSettings({ ...settings, default_bg_category: e.target.value })}
+                    >
+                      {BG_CATEGORIES.map((c) => (
+                        <option key={c.value} value={c.value}>{c.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs uppercase">Hang nyelve</Label>
+                    <select
+                      className="w-full p-2 border bg-background mt-1"
+                      value={settings.preferred_voice_lang}
+                      onChange={(e) => setSettings({ ...settings, preferred_voice_lang: e.target.value })}
+                    >
+                      <option value="hu-HU">Magyar (hu-HU)</option>
+                      <option value="en-US">Angol (en-US)</option>
+                      <option value="de-DE">Német (de-DE)</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-6">
+                    <input
+                      type="checkbox"
+                      id="auto_caption"
+                      checked={settings.auto_caption_enabled}
+                      onChange={(e) => setSettings({ ...settings, auto_caption_enabled: e.target.checked })}
+                    />
+                    <Label htmlFor="auto_caption" className="text-xs cursor-pointer">
+                      Automatikus felirat generálása
+                    </Label>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-4 space-y-3">
+                <h3 className="font-bold uppercase tracking-wide">Brand szövegek</h3>
+                <div>
+                  <Label className="text-xs">Intro szöveg (klip elején)</Label>
+                  <Input
+                    value={settings.brand_intro_text}
+                    onChange={(e) => setSettings({ ...settings, brand_intro_text: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Outro szöveg (klip végén)</Label>
+                  <Input
+                    value={settings.brand_outro_text}
+                    onChange={(e) => setSettings({ ...settings, brand_outro_text: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Klip cím sablon (használható: {"{product}"}, {"{date}"})</Label>
+                  <Input
+                    value={settings.default_clip_title_pattern}
+                    onChange={(e) => setSettings({ ...settings, default_clip_title_pattern: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
+              </Card>
+
+              <Card className="p-4 space-y-2">
+                <h3 className="font-bold uppercase tracking-wide">AI prompt sablon</h3>
+                <p className="text-xs text-muted-foreground">
+                  Ezt a sablont használja az AI a reklámszöveg generálásához. Helyettesítők: <code>{"{product_name}"}</code>, <code>{"{price}"}</code>.
+                </p>
+                <Textarea
+                  rows={5}
+                  value={settings.ai_prompt_template}
+                  onChange={(e) => setSettings({ ...settings, ai_prompt_template: e.target.value })}
+                />
+              </Card>
+
+              <Card className="p-4 space-y-3">
+                <h3 className="font-bold uppercase tracking-wide">Háttér-könyvtár kezelés</h3>
+                <p className="text-xs text-muted-foreground">
+                  Adj kategóriát és csillagozd a kedvenceket — ezekkel szűrhetsz a Klip készítés fülön.
+                </p>
+                <div className="space-y-2 max-h-96 overflow-auto">
+                  {backgrounds.map((b) => (
+                    <div key={b.id} className="flex items-center gap-2 p-2 border">
+                      <button
+                        onClick={() => toggleBgFavorite(b.id, !!b.is_favorite)}
+                        className="text-amber-500"
+                        title="Kedvenc"
+                      >
+                        <Star className={`h-4 w-4 ${b.is_favorite ? "fill-amber-500" : ""}`} />
+                      </button>
+                      <span className="text-sm flex-1 truncate">{b.title}</span>
+                      <select
+                        className="p-1 border bg-background text-xs"
+                        value={b.category ?? "general"}
+                        onChange={(e) => updateBgCategory(b.id, e.target.value)}
+                      >
+                        {BG_CATEGORIES.map((c) => (
+                          <option key={c.value} value={c.value}>{c.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
+                  {backgrounds.length === 0 && (
+                    <p className="text-xs text-muted-foreground">Még nincs feltöltött háttér.</p>
+                  )}
+                </div>
+              </Card>
+
+              <Button onClick={saveSettings} disabled={savingSettings} size="lg" className="w-full">
+                {savingSettings ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Mentés…</>
+                ) : (
+                  <><Save className="h-4 w-4 mr-2" /> Beállítások mentése</>
+                )}
+              </Button>
+            </>
+          )}
         </TabsContent>
       </Tabs>
     </div>
