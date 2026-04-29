@@ -1244,10 +1244,93 @@ const AdminAiStudioRecorder = () => {
                 </label>
               </Card>
 
-              <Card className="p-4 space-y-3">
+              {/* ============== 🎨 BÁRMILYEN SZÍNES HÁTTÉR ============== */}
+              <Card className="p-4 space-y-4 border-2 border-emerald-500/40 bg-emerald-500/5">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-emerald-600" />
+                  <h3 className="font-bold uppercase tracking-wide">Bármilyen színes háttér — nem csak zöld!</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  ✅ Az AI (MediaPipe Selfie Segmentation) az embert <strong>bármilyen normális, színes háttérről</strong> kivágja — nem kell zöld háttér, nem kell stúdió. Egy utcán, szobában, parkban felvett videó is működik.
+                </p>
 
                 <div>
-                  <Label className="text-xs">Intro szöveg (klip elején)</Label>
+                  <Label className="text-xs uppercase">Kivágás minősége</Label>
+                  <select
+                    className="w-full p-2 border bg-background mt-1"
+                    value={settings.segmentation_quality}
+                    onChange={(e) => setSettings({ ...settings, segmentation_quality: e.target.value })}
+                  >
+                    <option value="fast">Gyors (landscape modell — egyszerű háttér)</option>
+                    <option value="high">Pontos (general modell — bármilyen háttér, AJÁNLOTT)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <Label>Él lágyítás (ne legyen szaggatott)</Label>
+                    <span className="font-mono">{Math.round(settings.edge_softness * 100)}%</span>
+                  </div>
+                  <input
+                    type="range" min="0" max="1" step="0.05"
+                    className="w-full"
+                    value={settings.edge_softness}
+                    onChange={(e) => setSettings({ ...settings, edge_softness: parseFloat(e.target.value) })}
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Magasabb = lágyabb átmenet ember és háttér között (természetesebb)
+                  </p>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <Label>Forgalmas háttér tűrés</Label>
+                    <span className="font-mono">{Math.round(settings.busy_background_tolerance * 100)}%</span>
+                  </div>
+                  <input
+                    type="range" min="0" max="1" step="0.05"
+                    className="w-full"
+                    value={settings.busy_background_tolerance}
+                    onChange={(e) => setSettings({ ...settings, busy_background_tolerance: parseFloat(e.target.value) })}
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Magasabb = jobb teljesítmény zsúfolt, mintás, sokszínű hátteren
+                  </p>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <Label>Maszk küszöb (érzékenység)</Label>
+                    <span className="font-mono">{settings.mask_threshold.toFixed(2)}</span>
+                  </div>
+                  <input
+                    type="range" min="0.1" max="0.9" step="0.05"
+                    className="w-full"
+                    value={settings.mask_threshold}
+                    onChange={(e) => setSettings({ ...settings, mask_threshold: parseFloat(e.target.value) })}
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Alacsonyabb = több részlet (haj, ujjak), magasabb = tisztább szélek
+                  </p>
+                </div>
+
+                <label className="flex items-start gap-2 cursor-pointer pt-2 border-t">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={settings.supports_any_background}
+                    onChange={(e) => setSettings({ ...settings, supports_any_background: e.target.checked })}
+                  />
+                  <div>
+                    <div className="text-xs font-semibold">Bármilyen háttér támogatás (AJÁNLOTT BE)</div>
+                    <div className="text-[10px] text-muted-foreground">Az AI nem keres zöld színt — emberi alakot ismer fel</div>
+                  </div>
+                </label>
+              </Card>
+
+              <Card className="p-4 space-y-3">
+                <h3 className="font-bold uppercase tracking-wide">Brand szövegek</h3>
+
                   <Input
                     value={settings.brand_intro_text}
                     onChange={(e) => setSettings({ ...settings, brand_intro_text: e.target.value })}
