@@ -1128,6 +1128,27 @@ const AdminAiStudioRecorder = () => {
               )}
             </div>
 
+            {/* Gyors előnézet canvas + gomb */}
+            <div className="border-2 border-dashed border-primary/30 p-3 bg-muted/30">
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-xs uppercase font-bold">Gyors előnézet (1 frame, ~480px)</Label>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={runFastPreview}
+                  disabled={previewing || !selectedVideo}
+                >
+                  {previewing ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />…</> : <><Play className="h-3 w-3 mr-1" /> Előnézet</>}
+                </Button>
+              </div>
+              <canvas
+                ref={previewCanvasRef}
+                className="w-full bg-black border"
+                style={{ display: previewReady ? "block" : "none" }}
+              />
+              {!previewReady && <p className="text-xs text-muted-foreground">Klikkelj az "Előnézet"-re az első keret megtekintéséhez (a sárga keret a 16:9 safe zone, oda kerülj).</p>}
+            </div>
+
             {/* Lépés 5: Generálás */}
             <Button
               onClick={renderClip}
