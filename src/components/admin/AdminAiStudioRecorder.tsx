@@ -433,7 +433,135 @@ const AdminAiStudioRecorder = () => {
     }
   };
 
-  const previewTts = () => {
+  // ============== GYORS 4K ELŐNÉZET (egyetlen frame, alacsony felbontáson) ==============
+  const runFastPreview = async () => {
+    if (!selectedVideo) {
+      toast({ title: "Válassz videót az előnézethez", variant: "destructive" });
+      return;
+    }
+    if (bgSource === "uploaded" && !selectedBg) {
+      toast({ title: "Válassz hátteret", variant: "destructive" });
+      return;
+    }
+    if (bgSource === "product" && !selectedProductBg) {
+      toast({ title: "Válassz termék hátteret", variant: "destructive" });
+      return;
+    }
+    setPreviewing(true);
+    try {
+      const previewCanvas = previewCanvasRef.current;
+      if (!previewCanvas) throw new Error("Preview canvas nem érhető el");
+
+      const video = videos.find((v) => v.id === selectedVideo)!;
+      const videoSigned = await supabase.storage.from("ai-studio-videos").createSignedUrl(video.storage_path, 3600);
+      if (videoSigned.error || !videoSigned.data) throw new Error("Videó URL hiba");
+
+      let bgUrl: string | null = null;
+      if (bgSource === "uploaded") {
+        const bg = backgrounds.find((b) => b.id === selectedBg)!;
+        bgUrl = supabase.storage.from("ai-studio-backgrounds").getPublicUrl(bg.storage_path!).data.publicUrl;
+      } else {
+        bgUrl = shopProducts.find((p) => p.id === selectedProductBg)?.image_url ?? null;
+      }
+      if (!bgUrl) throw new Error("Háttér URL hiba");
+
+      // kis videó betöltés első frame-re
+      const vEl = document.createElement("video");
+      vEl.crossOrigin = "anonymous";
+      vEl.muted = true;
+      vEl.src = videoSigned.data.signedUrl;
+      await new Promise<void>((res) => { vEl.onloadeddata = () => res(); });
+      vEl.currentTime = Math.min(0.3, (vEl.duration || 1) / 4);
+      await new Promise<void>((res) => { vEl.onseeked = () => res(); });
+
+      const bgImg = new Image();
+      bgImg.crossOrigin = "anonymous";
+      bgImg.src = bgUrl;
+      await new Promise<void>((res, rej) => { bgImg.onload = () => res(); bgImg.onerror = () => rej(); });
+
+      // előnézet: max 480px szélesség, megőrzött arány (gyors)
+      const targetW = 480;
+      const aspect = (vEl.videoWidth || 720) / (vEl.videoHeight || 1280);
+      const W = targetW;
+      const H = Math.round(targetW / aspect);
+      previewCanvas.width = W;
+      previewCanvas.height = H;
+      const ctx = previewCanvas.getContext("2d", { alpha: false })!;
+      ctx.imageSmoothingQuality = "high";
+
+      // háttér (cover)
+      const bgAr = bgImg.width / bgImg.height;
+      const tAr = W / H;
+      let sx = 0, sy = 0, sw = bgImg.width, sh = bgImg.height;
+      if (bgAr > tAr) { sw = bgImg.height * tAr; sx = (bgImg.width - sw) / 2; }
+      else { sh = bgImg.width / tAr; sy = (bgImg.height - sh) / 2; }
+      ctx.drawImage(bgImg, sx, sy, sw, sh, 0, 0, W, H);
+
+      // MediaPipe egyszeri szegmentáció
+      try {
+        const mod = await import(/* @vite-ignore */ "https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js");
+        const SS = (window as any).SelfieSegmentation;
+        const selfie = new SS({ locateFile: (f: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${f}` });
+        selfie.setOptions({ modelSelection: 1 });
+        await new Promise<void>((res) => {
+          selfie.onResults((results: any) => {
+            const tmp = document.createElement("canvas");
+            tmp.width = W; tmp.height = H;
+            const tctx = tmp.getContext("2d")!;
+            const softnessPx = Math.round((settings?.edge_softness ?? 0.5) * 6);
+            if (softnessPx > 0) (tctx as any).filter = `blur(${softnessPx}px)`;
+            tctx.drawImage(results.segmentationMask, 0, 0, W, H);
+            (tctx as any).filter = "none";
+            tctx.globalCompositeOperation = "source-in";
+            tctx.drawImage(results.image, 0, 0, W, H);
+            ctx.drawImage(tmp, 0, 0);
+            res();
+          });
+          selfie.send({ image: vEl });
+        });
+      } catch (e) {
+        console.warn("MediaPipe preview hiba, csak videó frame-mel folytatom", e);
+        ctx.drawImage(vEl, 0, 0, W, H);
+      }
+
+      // Safe zone overlay (16:9 középre)
+      if (settings?.show_safe_zone ?? true) {
+        const safeAr = 16 / 9;
+        let szW = W * 0.6, szH = szW / safeAr;
+        if (szH > H * 0.85) { szH = H * 0.85; szW = szH * safeAr; }
+        const szX = (W - szW) / 2;
+        const szY = (H - szH) / 2;
+        ctx.save();
+        ctx.strokeStyle = "rgba(255, 215, 0, 0.9)";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 6]);
+        ctx.strokeRect(szX, szY, szW, szH);
+        ctx.setLineDash([]);
+        // sarkok
+        ctx.strokeStyle = "rgba(255, 215, 0, 1)";
+        ctx.lineWidth = 3;
+        const c = 14;
+        ctx.beginPath();
+        ctx.moveTo(szX, szY + c); ctx.lineTo(szX, szY); ctx.lineTo(szX + c, szY);
+        ctx.moveTo(szX + szW - c, szY); ctx.lineTo(szX + szW, szY); ctx.lineTo(szX + szW, szY + c);
+        ctx.moveTo(szX + szW, szY + szH - c); ctx.lineTo(szX + szW, szY + szH); ctx.lineTo(szX + szW - c, szY + szH);
+        ctx.moveTo(szX + c, szY + szH); ctx.lineTo(szX, szY + szH); ctx.lineTo(szX, szY + szH - c);
+        ctx.stroke();
+        ctx.font = "bold 11px sans-serif";
+        ctx.fillStyle = "rgba(255, 215, 0, 1)";
+        ctx.fillText("16:9 SAFE ZONE", szX + 6, szY + 16);
+        ctx.restore();
+      }
+
+      setPreviewReady(true);
+      toast({ title: "✅ Előnézet kész", description: "A teljes klip ennek alapján készül." });
+    } catch (e: any) {
+      toast({ title: "Előnézet hiba", description: e?.message || "Ismeretlen", variant: "destructive" });
+    } finally {
+      setPreviewing(false);
+    }
+  };
+
     if (!scriptText.trim()) {
       toast({ title: "Adj meg szöveget", variant: "destructive" });
       return;
