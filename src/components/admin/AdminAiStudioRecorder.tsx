@@ -756,7 +756,7 @@ const AdminAiStudioRecorder = () => {
 
             {/* Lépés 2: Videó */}
             <div>
-              <Label className="text-xs uppercase tracking-wide font-bold">2. Saját videód</Label>
+              <Label className="text-xs uppercase tracking-wide font-bold">2. Saját videód <span className="text-muted-foreground normal-case font-normal">(akár 3 perc hosszú is lehet)</span></Label>
               <select
                 className="w-full p-2 border bg-background mt-1"
                 value={selectedVideo}
