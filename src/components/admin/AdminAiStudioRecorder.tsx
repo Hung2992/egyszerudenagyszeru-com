@@ -139,10 +139,14 @@ const AdminAiStudioRecorder = () => {
   const [videos, setVideos] = useState<VideoAsset[]>([]);
   const [backgrounds, setBackgrounds] = useState<BackgroundAsset[]>([]);
   const [clips, setClips] = useState<ClipAsset[]>([]);
+  const [shopProducts, setShopProducts] = useState<ShopProduct[]>([]);
 
   const [selectedVoice, setSelectedVoice] = useState<string>("");
   const [selectedVideo, setSelectedVideo] = useState<string>("");
   const [selectedBg, setSelectedBg] = useState<string>("");
+  const [selectedProductBg, setSelectedProductBg] = useState<string>("");
+  const [bgSource, setBgSource] = useState<BgSource>("uploaded");
+  const [audioSource, setAudioSource] = useState<AudioSource>("tts");
   const [scriptText, setScriptText] = useState<string>("");
   const [clipTitle, setClipTitle] = useState<string>("");
 
@@ -156,11 +160,12 @@ const AdminAiStudioRecorder = () => {
 
   // ============== LOAD ==============
   const loadAll = async () => {
-    const [v, vid, bg, cl] = await Promise.all([
+    const [v, vid, bg, cl, sp] = await Promise.all([
       supabase.from("ai_studio_voice_samples").select("*").order("created_at", { ascending: false }),
       supabase.from("ai_studio_videos").select("*").order("created_at", { ascending: false }),
       supabase.from("ai_studio_backgrounds").select("*").order("created_at", { ascending: false }),
       supabase.from("ai_studio_clips").select("*").order("created_at", { ascending: false }).limit(50),
+      supabase.from("shop_products").select("id,name,image_url,category").eq("is_active", true).not("image_url", "is", null).order("created_at", { ascending: false }).limit(200),
     ]);
     if (v.data) setVoiceSamples(v.data as VoiceSample[]);
     if (vid.data) setVideos(vid.data as VideoAsset[]);
