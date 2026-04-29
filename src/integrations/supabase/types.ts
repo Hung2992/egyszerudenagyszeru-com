@@ -1192,9 +1192,13 @@ export type Database = {
       ai_studio_settings: {
         Row: {
           ai_prompt_template: string | null
+          audio_bitrate_kbps: number
+          audio_sample_rate: number
           auto_caption_enabled: boolean | null
           avoid_robotic_perfection: boolean
           background_only_mode: boolean
+          bg_human_check_enabled: boolean
+          bg_max_regenerations: number
           brand_intro_text: string | null
           brand_outro_text: string | null
           busy_background_tolerance: number
@@ -1205,6 +1209,7 @@ export type Database = {
           default_clip_title_pattern: string | null
           default_voice_sample_id: string | null
           edge_softness: number
+          export_4k: boolean
           id: string
           mask_threshold: number
           natural_pauses_enabled: boolean
@@ -1212,6 +1217,7 @@ export type Database = {
           preferred_voice_lang: string | null
           preserve_original_video: boolean
           segmentation_quality: string
+          show_safe_zone: boolean
           supports_any_background: boolean
           updated_at: string
           voice_breathiness: number
@@ -1220,9 +1226,13 @@ export type Database = {
         }
         Insert: {
           ai_prompt_template?: string | null
+          audio_bitrate_kbps?: number
+          audio_sample_rate?: number
           auto_caption_enabled?: boolean | null
           avoid_robotic_perfection?: boolean
           background_only_mode?: boolean
+          bg_human_check_enabled?: boolean
+          bg_max_regenerations?: number
           brand_intro_text?: string | null
           brand_outro_text?: string | null
           busy_background_tolerance?: number
@@ -1233,6 +1243,7 @@ export type Database = {
           default_clip_title_pattern?: string | null
           default_voice_sample_id?: string | null
           edge_softness?: number
+          export_4k?: boolean
           id?: string
           mask_threshold?: number
           natural_pauses_enabled?: boolean
@@ -1240,6 +1251,7 @@ export type Database = {
           preferred_voice_lang?: string | null
           preserve_original_video?: boolean
           segmentation_quality?: string
+          show_safe_zone?: boolean
           supports_any_background?: boolean
           updated_at?: string
           voice_breathiness?: number
@@ -1248,9 +1260,13 @@ export type Database = {
         }
         Update: {
           ai_prompt_template?: string | null
+          audio_bitrate_kbps?: number
+          audio_sample_rate?: number
           auto_caption_enabled?: boolean | null
           avoid_robotic_perfection?: boolean
           background_only_mode?: boolean
+          bg_human_check_enabled?: boolean
+          bg_max_regenerations?: number
           brand_intro_text?: string | null
           brand_outro_text?: string | null
           busy_background_tolerance?: number
@@ -1261,6 +1277,7 @@ export type Database = {
           default_clip_title_pattern?: string | null
           default_voice_sample_id?: string | null
           edge_softness?: number
+          export_4k?: boolean
           id?: string
           mask_threshold?: number
           natural_pauses_enabled?: boolean
@@ -1268,6 +1285,7 @@ export type Database = {
           preferred_voice_lang?: string | null
           preserve_original_video?: boolean
           segmentation_quality?: string
+          show_safe_zone?: boolean
           supports_any_background?: boolean
           updated_at?: string
           voice_breathiness?: number
