@@ -90,7 +90,24 @@ interface StudioSettings {
   show_safe_zone: boolean;
   bg_human_check_enabled: boolean;
   bg_max_regenerations: number;
+  // Export preset rendszer
+  export_preset: string;
+  export_orientation: string;
+  export_width: number;
+  export_height: number;
+  export_video_bitrate_mbps: number;
+  bg_strict_human_check: boolean;
+  preview_hd_enabled: boolean;
 }
+
+// Export presetek — TikTok, YouTube, egyedi
+export const EXPORT_PRESETS: Record<string, { label: string; orientation: "landscape" | "vertical"; width: number; height: number; bitrate_mbps: number }> = {
+  tiktok_1080_vertical:   { label: "TikTok / Reels — 1080×1920 (függőleges)",  orientation: "vertical",  width: 1080, height: 1920, bitrate_mbps: 18 },
+  tiktok_4k_vertical:     { label: "TikTok 4K — 2160×3840 (függőleges)",        orientation: "vertical",  width: 2160, height: 3840, bitrate_mbps: 30 },
+  youtube_1080_landscape: { label: "YouTube 1080p — 1920×1080 (vízszintes)",    orientation: "landscape", width: 1920, height: 1080, bitrate_mbps: 16 },
+  youtube_4k_landscape:   { label: "YouTube 4K — 3840×2160 (vízszintes)",       orientation: "landscape", width: 3840, height: 2160, bitrate_mbps: 30 },
+  custom:                 { label: "Egyedi (kézi méret + bitráta)",              orientation: "landscape", width: 3840, height: 2160, bitrate_mbps: 30 },
+};
 
 const BG_CATEGORIES = [
   { value: "general", label: "Általános" },
@@ -277,6 +294,13 @@ const AdminAiStudioRecorder = () => {
           show_safe_zone: settings.show_safe_zone,
           bg_human_check_enabled: settings.bg_human_check_enabled,
           bg_max_regenerations: settings.bg_max_regenerations,
+          export_preset: settings.export_preset,
+          export_orientation: settings.export_orientation,
+          export_width: settings.export_width,
+          export_height: settings.export_height,
+          export_video_bitrate_mbps: settings.export_video_bitrate_mbps,
+          bg_strict_human_check: settings.bg_strict_human_check,
+          preview_hd_enabled: settings.preview_hd_enabled,
         })
         .eq("id", settings.id);
       if (error) throw error;
@@ -433,8 +457,8 @@ const AdminAiStudioRecorder = () => {
     }
   };
 
-  // ============== GYORS 4K ELŐNÉZET (egyetlen frame, alacsony felbontáson) ==============
-  const runFastPreview = async () => {
+  // ============== ELŐNÉZET (gyors 480p VAGY HD 1080p egyetlen frame) ==============
+  const runFastPreview = async (hd: boolean = false) => {
     if (!selectedVideo) {
       toast({ title: "Válassz videót az előnézethez", variant: "destructive" });
       return;
@@ -479,8 +503,8 @@ const AdminAiStudioRecorder = () => {
       bgImg.src = bgUrl;
       await new Promise<void>((res, rej) => { bgImg.onload = () => res(); bgImg.onerror = () => rej(); });
 
-      // előnézet: max 480px szélesség, megőrzött arány (gyors)
-      const targetW = 480;
+      // előnézet: gyors=480px, HD=1080px szélesség (megőrzött arány)
+      const targetW = hd ? 1080 : 480;
       const aspect = (vEl.videoWidth || 720) / (vEl.videoHeight || 1280);
       const W = targetW;
       const H = Math.round(targetW / aspect);
@@ -663,12 +687,15 @@ const AdminAiStudioRecorder = () => {
       bgImg.src = bgUrl;
       await new Promise((res, rej) => { bgImg.onload = () => res(null); bgImg.onerror = rej; });
 
-      // 4K export: ha be van kapcsolva, 3840×2160 a célméret (16:9), egyébként a videó natív
-      const want4K = settings?.export_4k ?? false;
+      // Export preset alapú méret + bitrate (TikTok vertikális, YouTube horizontális, 4K, stb.)
+      const presetKey = settings?.export_preset || "youtube_4k_landscape";
+      const preset = EXPORT_PRESETS[presetKey] || EXPORT_PRESETS.youtube_4k_landscape;
       const nativeW = vEl.videoWidth || 720;
       const nativeH = vEl.videoHeight || 1280;
-      const W = want4K ? 3840 : nativeW;
-      const H = want4K ? 2160 : nativeH;
+      // Custom esetén az adminban beállított értékeket vesszük, egyébként a presetet
+      const useCustom = presetKey === "custom";
+      const W = useCustom ? (settings?.export_width || nativeW) : preset.width;
+      const H = useCustom ? (settings?.export_height || nativeH) : preset.height;
       const canvas = document.createElement("canvas");
       canvas.width = W; canvas.height = H;
       const ctx = canvas.getContext("2d", { alpha: false })!;
@@ -697,8 +724,9 @@ const AdminAiStudioRecorder = () => {
         // Itt csak elindítjuk visszajátszáshoz; a TTS audio sávot a kliphez későbbi lépésben fűzzük (jelenleg only video + UI-ban hallható).
       }
 
-      // Bitráta a felbontás függvényében (4K = 25 Mbps, FullHD = 12 Mbps)
-      const videoBps = want4K ? 25_000_000 : 12_000_000;
+      // Bitráta: preset alapján (custom esetén az admin érték), Mbps -> bps
+      const presetBitrate = useCustom ? (settings?.export_video_bitrate_mbps || 30) : preset.bitrate_mbps;
+      const videoBps = Math.max(8, Math.min(60, presetBitrate)) * 1_000_000;
       const audioBps = (settings?.audio_bitrate_kbps ?? 256) * 1000;
       const recorder = new MediaRecorder(videoStream, {
         mimeType: "video/webm;codecs=vp9,opus",
@@ -1130,16 +1158,28 @@ const AdminAiStudioRecorder = () => {
 
             {/* Gyors előnézet canvas + gomb */}
             <div className="border-2 border-dashed border-primary/30 p-3 bg-muted/30">
-              <div className="flex items-center justify-between mb-2">
-                <Label className="text-xs uppercase font-bold">Gyors előnézet (1 frame, ~480px)</Label>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={runFastPreview}
-                  disabled={previewing || !selectedVideo}
-                >
-                  {previewing ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />…</> : <><Play className="h-3 w-3 mr-1" /> Előnézet</>}
-                </Button>
+              <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+                <Label className="text-xs uppercase font-bold">Előnézet (1 frame)</Label>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => runFastPreview(false)}
+                    disabled={previewing || !selectedVideo}
+                  >
+                    {previewing ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />…</> : <><Play className="h-3 w-3 mr-1" /> Gyors (480p)</>}
+                  </Button>
+                  {(settings?.preview_hd_enabled ?? true) && (
+                    <Button
+                      size="sm"
+                      variant="default"
+                      onClick={() => runFastPreview(true)}
+                      disabled={previewing || !selectedVideo}
+                    >
+                      {previewing ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />…</> : <>HD (1080p)</>}
+                    </Button>
+                  )}
+                </div>
               </div>
               <canvas
                 ref={previewCanvasRef}
@@ -1656,6 +1696,81 @@ const AdminAiStudioRecorder = () => {
                     <p className="text-xs text-muted-foreground">Még nincs feltöltött háttér.</p>
                   )}
                 </div>
+              </Card>
+
+              {/* ===== EXPORT PRESET (TikTok / YouTube / 4K / Custom) ===== */}
+              <Card className="p-4 space-y-4">
+                <div>
+                  <h3 className="text-sm font-semibold mb-1">🎯 Export preset</h3>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Válassz célplatformot — ez állítja a felbontást, tájolást és a videó bitrátát. TikTokra függőleges, YouTube-ra vízszintes ajánlott.
+                  </p>
+                  <select
+                    className="w-full p-2 border bg-background text-sm"
+                    value={settings.export_preset || "youtube_4k_landscape"}
+                    onChange={(e) => {
+                      const key = e.target.value;
+                      const p = EXPORT_PRESETS[key];
+                      setSettings({
+                        ...settings,
+                        export_preset: key,
+                        export_orientation: p.orientation,
+                        export_width: p.width,
+                        export_height: p.height,
+                        export_video_bitrate_mbps: p.bitrate_mbps,
+                      });
+                    }}
+                  >
+                    {Object.entries(EXPORT_PRESETS).map(([key, p]) => (
+                      <option key={key} value={key}>{p.label}</option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-muted-foreground mt-2">
+                    Aktuális: <strong>{settings.export_width}×{settings.export_height}</strong> @ <strong>{settings.export_video_bitrate_mbps} Mbps</strong> ({settings.export_orientation === "vertical" ? "függőleges" : "vízszintes"})
+                  </p>
+                </div>
+
+                {settings.export_preset === "custom" && (
+                  <div className="grid grid-cols-3 gap-2 pt-2 border-t">
+                    <label className="text-xs">
+                      Szélesség
+                      <input type="number" min={480} max={4096} className="w-full p-1 border bg-background mt-1"
+                        value={settings.export_width}
+                        onChange={(e) => setSettings({ ...settings, export_width: parseInt(e.target.value) || 1920 })} />
+                    </label>
+                    <label className="text-xs">
+                      Magasság
+                      <input type="number" min={480} max={4096} className="w-full p-1 border bg-background mt-1"
+                        value={settings.export_height}
+                        onChange={(e) => setSettings({ ...settings, export_height: parseInt(e.target.value) || 1080 })} />
+                    </label>
+                    <label className="text-xs">
+                      Bitráta (Mbps)
+                      <input type="number" min={8} max={60} className="w-full p-1 border bg-background mt-1"
+                        value={settings.export_video_bitrate_mbps}
+                        onChange={(e) => setSettings({ ...settings, export_video_bitrate_mbps: parseInt(e.target.value) || 30 })} />
+                    </label>
+                  </div>
+                )}
+
+                <div className="pt-3 border-t space-y-2">
+                  <label className="flex items-center gap-2 text-xs cursor-pointer">
+                    <input type="checkbox"
+                      checked={settings.preview_hd_enabled ?? true}
+                      onChange={(e) => setSettings({ ...settings, preview_hd_enabled: e.target.checked })} />
+                    <span>HD előnézet (1080p) engedélyezése a gyors 480p mellé</span>
+                  </label>
+                  <label className="flex items-center gap-2 text-xs cursor-pointer">
+                    <input type="checkbox"
+                      checked={settings.bg_strict_human_check ?? false}
+                      onChange={(e) => setSettings({ ...settings, bg_strict_human_check: e.target.checked })} />
+                    <span>Szigorú emberellenőrzés — ha az AI vision hibázik, NE mentse a hátteret</span>
+                  </label>
+                </div>
+
+                <p className="text-[11px] text-muted-foreground bg-muted/40 p-2 rounded">
+                  💡 <strong>Tipp:</strong> 4K-hoz min. 25 Mbps ajánlott. TikTok úgyis tömörít, ezért inkább jó fény + 1080p, mint rossz fény + 4K.
+                </p>
               </Card>
 
               <Button onClick={saveSettings} disabled={savingSettings} size="lg" className="w-full">
