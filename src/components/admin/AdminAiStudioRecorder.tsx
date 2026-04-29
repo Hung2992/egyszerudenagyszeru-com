@@ -550,7 +550,7 @@ const AdminAiStudioRecorder = () => {
 
       if (audioSource === "original") {
         try {
-          audioCtx = new AudioContext();
+          audioCtx = new AudioContext({ sampleRate: settings?.audio_sample_rate ?? 48000 });
           audioDest = audioCtx.createMediaStreamDestination();
           const srcNode = audioCtx.createMediaElementSource(vEl);
           srcNode.connect(audioDest);
