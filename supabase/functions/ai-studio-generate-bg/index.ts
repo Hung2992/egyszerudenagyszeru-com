@@ -27,8 +27,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Háttér-orientált prompt finomítás: TILOS ember / arc / kéz, csak környezet
-    const fullPrompt = `${prompt}\n\nFontos: ez egy HÁTTÉR egy reklámvideóhoz. NE legyen rajta ember, arc, kéz vagy testrész. Csak környezet, díszlet, hangulat. Tájkép vagy belső tér, természetes fényviszonyok, fotó-realisztikus, 16:9 arányú, jó minőség.`;
+    // Háttér-orientált prompt — magas minőség, full HD, 16:9, NINCS ember
+    const fullPrompt = `Ultra high quality, photorealistic, 16:9 cinematic background scene for a marketing video: ${prompt}.
+
+Strict requirements:
+- Resolution: 1920x1080, full HD, sharp, crisp details, no pixelation, no compression artifacts
+- Aspect ratio: 16:9 widescreen
+- Style: professional cinematography, natural lighting, depth of field, real photo look
+- ABSOLUTELY NO people, faces, hands, body parts, mannequins, or human silhouettes
+- Only environment, scenery, mood, atmosphere — empty stage where a person can stand later
+- Composition: leave the center area visually balanced (a person will be composited there)`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -37,7 +45,7 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image-preview",
+        model: "google/gemini-3.1-flash-image-preview",
         messages: [{ role: "user", content: fullPrompt }],
         modalities: ["image", "text"],
       }),

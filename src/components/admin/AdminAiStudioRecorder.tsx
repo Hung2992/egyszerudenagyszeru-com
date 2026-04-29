@@ -522,7 +522,9 @@ const AdminAiStudioRecorder = () => {
       const H = vEl.videoHeight || 1280;
       const canvas = document.createElement("canvas");
       canvas.width = W; canvas.height = H;
-      const ctx = canvas.getContext("2d")!;
+      const ctx = canvas.getContext("2d", { alpha: false })!;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
 
       // ===== AUDIO MIXING =====
       const videoStream = canvas.captureStream(30);
@@ -546,7 +548,10 @@ const AdminAiStudioRecorder = () => {
         // Itt csak elindítjuk visszajátszáshoz; a TTS audio sávot a kliphez későbbi lépésben fűzzük (jelenleg only video + UI-ban hallható).
       }
 
-      const recorder = new MediaRecorder(videoStream, { mimeType: "video/webm;codecs=vp9,opus" });
+      const recorder = new MediaRecorder(videoStream, {
+        mimeType: "video/webm;codecs=vp9,opus",
+        videoBitsPerSecond: 8_000_000, // 8 Mbps — éles, nem pixeles
+      });
       const chunks: Blob[] = [];
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
 
@@ -574,6 +579,8 @@ const AdminAiStudioRecorder = () => {
         const tmp = document.createElement("canvas");
         tmp.width = W; tmp.height = H;
         const tctx = tmp.getContext("2d")!;
+        tctx.imageSmoothingEnabled = true;
+        tctx.imageSmoothingQuality = "high";
         // Élenlágyítás: a beállítás alapján blur-t alkalmazunk a maszkra,
         // így nem lesz szaggatott a kivágás bármilyen színes háttéren
         const softnessPx = Math.round((settings?.edge_softness ?? 0.5) * 6);
