@@ -1189,6 +1189,69 @@ export type Database = {
           },
         ]
       }
+      ai_studio_export_logs: {
+        Row: {
+          audio_bitrate_kbps: number | null
+          audio_sample_rate: number | null
+          clip_id: string | null
+          created_at: string
+          error_message: string | null
+          fps: number
+          height: number
+          id: string
+          output_path: string | null
+          output_size_bytes: number | null
+          preset_key: string
+          preset_label: string | null
+          render_duration_ms: number
+          status: string
+          user_id: string | null
+          video_bitrate_mbps: number
+          warnings: Json
+          width: number
+        }
+        Insert: {
+          audio_bitrate_kbps?: number | null
+          audio_sample_rate?: number | null
+          clip_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          fps?: number
+          height: number
+          id?: string
+          output_path?: string | null
+          output_size_bytes?: number | null
+          preset_key: string
+          preset_label?: string | null
+          render_duration_ms: number
+          status?: string
+          user_id?: string | null
+          video_bitrate_mbps: number
+          warnings?: Json
+          width: number
+        }
+        Update: {
+          audio_bitrate_kbps?: number | null
+          audio_sample_rate?: number | null
+          clip_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          fps?: number
+          height?: number
+          id?: string
+          output_path?: string | null
+          output_size_bytes?: number | null
+          preset_key?: string
+          preset_label?: string | null
+          render_duration_ms?: number
+          status?: string
+          user_id?: string | null
+          video_bitrate_mbps?: number
+          warnings?: Json
+          width?: number
+        }
+        Relationships: []
+      }
       ai_studio_settings: {
         Row: {
           ai_prompt_template: string | null

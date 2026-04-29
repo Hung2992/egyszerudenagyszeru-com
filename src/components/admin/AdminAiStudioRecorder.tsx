@@ -101,12 +101,12 @@ interface StudioSettings {
 }
 
 // Export presetek — TikTok, YouTube, egyedi
-export const EXPORT_PRESETS: Record<string, { label: string; orientation: "landscape" | "vertical"; width: number; height: number; bitrate_mbps: number }> = {
-  tiktok_1080_vertical:   { label: "TikTok / Reels — 1080×1920 (függőleges)",  orientation: "vertical",  width: 1080, height: 1920, bitrate_mbps: 18 },
-  tiktok_4k_vertical:     { label: "TikTok 4K — 2160×3840 (függőleges)",        orientation: "vertical",  width: 2160, height: 3840, bitrate_mbps: 30 },
-  youtube_1080_landscape: { label: "YouTube 1080p — 1920×1080 (vízszintes)",    orientation: "landscape", width: 1920, height: 1080, bitrate_mbps: 16 },
-  youtube_4k_landscape:   { label: "YouTube 4K — 3840×2160 (vízszintes)",       orientation: "landscape", width: 3840, height: 2160, bitrate_mbps: 30 },
-  custom:                 { label: "Egyedi (kézi méret + bitráta)",              orientation: "landscape", width: 3840, height: 2160, bitrate_mbps: 30 },
+export const EXPORT_PRESETS: Record<string, { label: string; orientation: "landscape" | "vertical"; width: number; height: number; bitrate_mbps: number; fps: number }> = {
+  tiktok_1080_vertical:   { label: "TikTok / Reels — 1080×1920 (függőleges, 30 fps)",  orientation: "vertical",  width: 1080, height: 1920, bitrate_mbps: 28, fps: 30 },
+  tiktok_4k_vertical:     { label: "TikTok 4K — 2160×3840 (függőleges, 30 fps)",        orientation: "vertical",  width: 2160, height: 3840, bitrate_mbps: 35, fps: 30 },
+  youtube_1080_landscape: { label: "YouTube 1080p — 1920×1080 (vízszintes, 30 fps)",    orientation: "landscape", width: 1920, height: 1080, bitrate_mbps: 16, fps: 30 },
+  youtube_4k_landscape:   { label: "YouTube 4K — 3840×2160 (vízszintes, 30 fps)",       orientation: "landscape", width: 3840, height: 2160, bitrate_mbps: 30, fps: 30 },
+  custom:                 { label: "Egyedi (kézi méret + bitráta)",                       orientation: "landscape", width: 3840, height: 2160, bitrate_mbps: 30, fps: 30 },
 };
 
 const BG_CATEGORIES = [
@@ -125,6 +125,24 @@ interface ClipAsset {
   generated_text: string | null;
   output_path: string | null;
   status: string;
+  created_at: string;
+}
+
+interface ExportLog {
+  id: string;
+  preset_key: string;
+  preset_label: string | null;
+  width: number;
+  height: number;
+  fps: number;
+  video_bitrate_mbps: number;
+  audio_bitrate_kbps: number | null;
+  audio_sample_rate: number | null;
+  render_duration_ms: number;
+  output_size_bytes: number | null;
+  status: string;
+  warnings: any;
+  error_message: string | null;
   created_at: string;
 }
 
@@ -223,6 +241,7 @@ const AdminAiStudioRecorder = () => {
   const [renderProgress, setRenderProgress] = useState(0);
   const [previewing, setPreviewing] = useState(false);
   const [previewReady, setPreviewReady] = useState(false);
+  const [exportLogs, setExportLogs] = useState<ExportLog[]>([]);
 
   const [settings, setSettings] = useState<StudioSettings | null>(null);
   const [savingSettings, setSavingSettings] = useState(false);
@@ -247,6 +266,15 @@ const AdminAiStudioRecorder = () => {
     if (bg.data) setBackgrounds(bg.data as BackgroundAsset[]);
     if (cl.data) setClips(cl.data as ClipAsset[]);
     if (sp.data) setShopProducts(sp.data as ShopProduct[]);
+    // Export naplók (új tábla, lehet hogy a típusgenerálás még nem futott)
+    try {
+      const { data: logs } = await (supabase as any)
+        .from("ai_studio_export_logs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (logs) setExportLogs(logs as ExportLog[]);
+    } catch (e) { /* ignore */ }
     if (st.data) {
       const s = st.data as StudioSettings;
       setSettings(s);
@@ -445,13 +473,29 @@ const AdminAiStudioRecorder = () => {
         body: { prompt },
       });
       if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      toast({ title: "✨ Háttér elkészült!", description: "Automatikusan kiválasztottuk." });
+      if (data?.error) {
+        // Strict mód hibakódok kibontása
+        const msg = String(data.error);
+        if (msg.toLowerCase().includes("vision")) {
+          throw new Error(`[BG_STRICT_VISION_FAIL] ${msg} — Kapcsold ki a szigorú ellenőrzést a beállításoknál, vagy próbáld újra más prompttal.`);
+        }
+        if (msg.toLowerCase().includes("human") || msg.toLowerCase().includes("ember")) {
+          throw new Error(`[BG_STRICT_HUMAN_DETECTED] ${msg} — Az AI ember-alakot rajzolt a háttérre. Pontosíts a prompton (pl. „üres utca, NINCS ember”).`);
+        }
+        throw new Error(msg);
+      }
+      const attempts = data?.attempts || 1;
+      const note = attempts > 1 ? ` (${attempts} próba után)` : "";
+      toast({ title: "✨ Háttér elkészült!", description: `Automatikusan kiválasztottuk.${note}` });
       await loadAll();
       if (data?.background?.id) setSelectedBg(data.background.id);
       setBgPrompt("");
     } catch (e: any) {
-      toast({ title: "AI háttér hiba", description: e?.message || "Ismeretlen", variant: "destructive" });
+      toast({
+        title: "AI háttér hiba",
+        description: e?.message || "Ismeretlen",
+        variant: "destructive",
+      });
     } finally {
       setGeneratingBg(false);
     }
@@ -634,6 +678,12 @@ const AdminAiStudioRecorder = () => {
     }
     setRendering(true);
     setRenderProgress(0);
+    const renderStartedAt = performance.now();
+    let logPresetKey = settings?.export_preset || "youtube_4k_landscape";
+    let logPresetLabel = EXPORT_PRESETS[logPresetKey]?.label || logPresetKey;
+    let logW = 0, logH = 0, logFps = 30, logVBps = 0;
+    let logOutSize: number | null = null;
+    const logWarnings: string[] = [];
 
     try {
       const video = videos.find((v) => v.id === selectedVideo);
@@ -696,6 +746,20 @@ const AdminAiStudioRecorder = () => {
       const useCustom = presetKey === "custom";
       const W = useCustom ? (settings?.export_width || nativeW) : preset.width;
       const H = useCustom ? (settings?.export_height || nativeH) : preset.height;
+      const fps = preset.fps || 30;
+      logPresetKey = presetKey;
+      logPresetLabel = preset.label;
+      logW = W; logH = H; logFps = fps;
+      // Figyelmeztetés ha a forrás videó kisebb mint a kívánt export — felskálázás történik
+      if (nativeW < W || nativeH < H) {
+        logWarnings.push(`A forrás videó (${nativeW}×${nativeH}) kisebb mint az export méret (${W}×${H}) — felskálázás történik, ami életlenebb képet ad.`);
+      }
+      // Aspect arány figyelmeztetés
+      const srcAr = nativeW / nativeH;
+      const dstAr = W / H;
+      if (Math.abs(srcAr - dstAr) > 0.15) {
+        logWarnings.push(`A forrás (${srcAr.toFixed(2)}) és export (${dstAr.toFixed(2)}) képarány eltér — fekete sávok vagy vágás keletkezhet.`);
+      }
       const canvas = document.createElement("canvas");
       canvas.width = W; canvas.height = H;
       const ctx = canvas.getContext("2d", { alpha: false })!;
@@ -703,7 +767,7 @@ const AdminAiStudioRecorder = () => {
       ctx.imageSmoothingQuality = "high";
 
       // ===== AUDIO MIXING =====
-      const videoStream = canvas.captureStream(30);
+      const videoStream = canvas.captureStream(fps);
       let audioCtx: AudioContext | null = null;
       let audioDest: MediaStreamAudioDestinationNode | null = null;
 
@@ -727,6 +791,7 @@ const AdminAiStudioRecorder = () => {
       // Bitráta: preset alapján (custom esetén az admin érték), Mbps -> bps
       const presetBitrate = useCustom ? (settings?.export_video_bitrate_mbps || 30) : preset.bitrate_mbps;
       const videoBps = Math.max(8, Math.min(60, presetBitrate)) * 1_000_000;
+      logVBps = Math.max(8, Math.min(60, presetBitrate));
       const audioBps = (settings?.audio_bitrate_kbps ?? 256) * 1000;
       const recorder = new MediaRecorder(videoStream, {
         mimeType: "video/webm;codecs=vp9,opus",
@@ -823,14 +888,21 @@ const AdminAiStudioRecorder = () => {
       try { window.speechSynthesis?.cancel(); } catch {}
 
       const blob = new Blob(chunks, { type: "video/webm" });
+      logOutSize = blob.size;
       const file = new File([blob], `clip-${Date.now()}.webm`, { type: "video/webm" });
+
+      // Quality figyelmeztetések fájlméret alapján
+      const expectedMinBytes = (logVBps * 1_000_000 / 8) * Math.max(2, Math.min(180, (vEl.duration || 5))) * 0.4;
+      if (blob.size < expectedMinBytes) {
+        logWarnings.push(`A kimenet mérete (${(blob.size/1_000_000).toFixed(1)} MB) szokatlanul kicsi a beállított ${logVBps} Mbps bitrátához képest — lehet, hogy a böngésző csökkentette a tényleges kódolást.`);
+      }
 
       // Upload
       const path = `clips/${Date.now()}-clip.webm`;
       const up = await supabase.storage.from("ai-studio-clips").upload(path, file);
       if (up.error) throw up.error;
 
-      await supabase.from("ai_studio_clips").insert({
+      const clipInsert = await supabase.from("ai_studio_clips").insert({
         title: clipTitle || `Klip ${bgLabel} ${new Date().toLocaleString("hu-HU")}`,
         source_video_id: selectedVideo,
         background_id: bgSource === "uploaded" ? selectedBg : null,
@@ -839,13 +911,49 @@ const AdminAiStudioRecorder = () => {
         output_path: path,
         status: "ready",
         metadata: { bg_source: bgSource, product_id: bgSource === "product" ? selectedProductBg : null, audio_source: audioSource },
-      });
+      }).select("id").single();
+
+      // Export napló — sikeres
+      try {
+        await (supabase as any).from("ai_studio_export_logs").insert({
+          clip_id: clipInsert.data?.id || null,
+          preset_key: logPresetKey,
+          preset_label: logPresetLabel,
+          width: logW,
+          height: logH,
+          fps: logFps,
+          video_bitrate_mbps: logVBps,
+          audio_bitrate_kbps: settings?.audio_bitrate_kbps ?? 256,
+          audio_sample_rate: settings?.audio_sample_rate ?? 48000,
+          render_duration_ms: Math.round(performance.now() - renderStartedAt),
+          output_size_bytes: logOutSize,
+          output_path: path,
+          status: "success",
+          warnings: logWarnings,
+        });
+      } catch (logErr) { console.warn("export log insert hiba", logErr); }
 
       setRenderProgress(100);
-      toast({ title: "✅ Klip kész!", description: "Megnézheted a Klipek fülön." });
+      const warnMsg = logWarnings.length ? ` (${logWarnings.length} figyelmeztetés)` : "";
+      toast({ title: "✅ Klip kész!", description: `Megnézheted a Klipek fülön.${warnMsg}` });
       await loadAll();
     } catch (e: any) {
       console.error(e);
+      // Export napló — hiba
+      try {
+        await (supabase as any).from("ai_studio_export_logs").insert({
+          preset_key: logPresetKey,
+          preset_label: logPresetLabel,
+          width: logW || 0,
+          height: logH || 0,
+          fps: logFps,
+          video_bitrate_mbps: logVBps || 0,
+          render_duration_ms: Math.round(performance.now() - renderStartedAt),
+          status: "error",
+          warnings: logWarnings,
+          error_message: (e?.message || "Ismeretlen hiba").slice(0, 500),
+        });
+      } catch { /* ignore */ }
       toast({ title: "Renderelési hiba", description: e?.message || "Ismeretlen", variant: "destructive" });
     } finally {
       setRendering(false);
@@ -892,11 +1000,12 @@ const AdminAiStudioRecorder = () => {
       </div>
 
       <Tabs defaultValue="upload">
-        <TabsList className="grid grid-cols-5 w-full">
+        <TabsList className="grid grid-cols-6 w-full">
           <TabsTrigger value="upload">📤 Feltöltés</TabsTrigger>
           <TabsTrigger value="compose">🎬 Klip</TabsTrigger>
           <TabsTrigger value="library">📚 Könyvtár</TabsTrigger>
           <TabsTrigger value="clips">🎞️ Kész ({clips.length})</TabsTrigger>
+          <TabsTrigger value="logs">📊 Export log</TabsTrigger>
           <TabsTrigger value="settings">⚙️ Beállítások</TabsTrigger>
         </TabsList>
 
@@ -1319,6 +1428,67 @@ const AdminAiStudioRecorder = () => {
             </Card>
           ))}
           {clips.length === 0 && <p className="text-sm text-muted-foreground">Nincs még klip.</p>}
+        </TabsContent>
+
+        {/* ============== 📊 EXPORT LOG ============== */}
+        <TabsContent value="logs" className="space-y-2 mt-4">
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold uppercase tracking-wide">Render naplók — utolsó 100</h3>
+              <Badge variant="outline">{exportLogs.length} rekord</Badge>
+            </div>
+            {exportLogs.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Még nincs render napló. Renderelj egy klipet, és itt megjelenik a részletes minőség-összegzés.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead className="text-left border-b">
+                    <tr>
+                      <th className="p-2">Időpont</th>
+                      <th className="p-2">Preset</th>
+                      <th className="p-2">Felbontás</th>
+                      <th className="p-2">FPS</th>
+                      <th className="p-2">Bitráta</th>
+                      <th className="p-2">Hang</th>
+                      <th className="p-2">Render idő</th>
+                      <th className="p-2">Méret</th>
+                      <th className="p-2">Státusz</th>
+                      <th className="p-2">Figyelmeztetések</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {exportLogs.map((l) => {
+                      const warns = Array.isArray(l.warnings) ? l.warnings : [];
+                      const ok = l.status === "success";
+                      return (
+                        <tr key={l.id} className="border-b hover:bg-muted/30">
+                          <td className="p-2 whitespace-nowrap">{new Date(l.created_at).toLocaleString("hu-HU")}</td>
+                          <td className="p-2">{l.preset_label || l.preset_key}</td>
+                          <td className="p-2 whitespace-nowrap">{l.width}×{l.height}</td>
+                          <td className="p-2">{l.fps}</td>
+                          <td className="p-2 whitespace-nowrap">{l.video_bitrate_mbps} Mbps</td>
+                          <td className="p-2 whitespace-nowrap">{l.audio_bitrate_kbps ?? "-"} kbps / {l.audio_sample_rate ? `${(l.audio_sample_rate/1000).toFixed(0)} kHz` : "-"}</td>
+                          <td className="p-2 whitespace-nowrap">{(l.render_duration_ms/1000).toFixed(1)} s</td>
+                          <td className="p-2 whitespace-nowrap">{l.output_size_bytes ? `${(l.output_size_bytes/1_000_000).toFixed(1)} MB` : "-"}</td>
+                          <td className="p-2">
+                            <Badge variant={ok ? "default" : "destructive"}>{ok ? "OK" : "Hiba"}</Badge>
+                          </td>
+                          <td className="p-2 max-w-[280px]">
+                            {l.error_message && <div className="text-destructive text-[11px] mb-1">{l.error_message}</div>}
+                            {warns.length > 0 ? (
+                              <ul className="list-disc pl-4 space-y-0.5 text-[11px] text-muted-foreground">
+                                {warns.map((w: string, i: number) => <li key={i}>{w}</li>)}
+                              </ul>
+                            ) : (!l.error_message && <span className="text-muted-foreground">—</span>)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
         </TabsContent>
 
         {/* ============== ⚙️ BEÁLLÍTÁSOK ============== */}
