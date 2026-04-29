@@ -531,8 +531,12 @@ const AdminAiStudioRecorder = () => {
       bgImg.src = bgUrl;
       await new Promise((res, rej) => { bgImg.onload = () => res(null); bgImg.onerror = rej; });
 
-      const W = vEl.videoWidth || 720;
-      const H = vEl.videoHeight || 1280;
+      // 4K export: ha be van kapcsolva, 3840×2160 a célméret (16:9), egyébként a videó natív
+      const want4K = settings?.export_4k ?? false;
+      const nativeW = vEl.videoWidth || 720;
+      const nativeH = vEl.videoHeight || 1280;
+      const W = want4K ? 3840 : nativeW;
+      const H = want4K ? 2160 : nativeH;
       const canvas = document.createElement("canvas");
       canvas.width = W; canvas.height = H;
       const ctx = canvas.getContext("2d", { alpha: false })!;
