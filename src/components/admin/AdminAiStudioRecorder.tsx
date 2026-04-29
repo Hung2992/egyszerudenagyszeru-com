@@ -562,6 +562,7 @@ const AdminAiStudioRecorder = () => {
     }
   };
 
+  const previewTts = () => {
     if (!scriptText.trim()) {
       toast({ title: "Adj meg szöveget", variant: "destructive" });
       return;
