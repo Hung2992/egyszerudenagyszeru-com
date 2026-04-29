@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Mic, Video as VideoIcon, Image as ImageIcon, Wand2, Loader2,
   Upload, Play, Trash2, Download, Volume2, Sparkles, RefreshCw,
+  Settings, Star, Save,
 } from "lucide-react";
 
 // ======================================================================
