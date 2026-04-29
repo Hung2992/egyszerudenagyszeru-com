@@ -756,7 +756,7 @@ const AdminAiStudioRecorder = () => {
 
             {/* Lépés 2: Videó */}
             <div>
-              <Label className="text-xs uppercase tracking-wide font-bold">2. Saját videód</Label>
+              <Label className="text-xs uppercase tracking-wide font-bold">2. Saját videód <span className="text-muted-foreground normal-case font-normal">(akár 3 perc hosszú is lehet)</span></Label>
               <select
                 className="w-full p-2 border bg-background mt-1"
                 value={selectedVideo}
@@ -876,17 +876,25 @@ const AdminAiStudioRecorder = () => {
                     </select>
                   </div>
                   <div>
-                    <Label className="text-xs">Mondandó szöveg</Label>
+                    <Label className="text-xs">
+                      Mondandó szöveg <span className="text-muted-foreground">(akár 3 perc beszéd, max 8000 karakter)</span>
+                    </Label>
                     <Textarea
                       value={scriptText}
-                      onChange={(e) => setScriptText(e.target.value)}
-                      rows={4}
-                      placeholder="Pl. Új pulóverünk most 6990 Ft! Ne hagyd ki…"
+                      onChange={(e) => setScriptText(e.target.value.slice(0, 8000))}
+                      rows={10}
+                      maxLength={8000}
+                      placeholder="Írd ide a teljes reklámszöveget — akár 3 perces is lehet. Pl. Új pulóverünk most 6990 Ft! Prémium pamut, kényelmes szabás…"
                       className="mt-1"
                     />
-                    <Button onClick={previewTts} variant="outline" size="sm" className="mt-2" disabled={!scriptText.trim()}>
-                      <Volume2 className="h-4 w-4 mr-2" /> Hang előnézet
-                    </Button>
+                    <div className="flex items-center justify-between mt-2">
+                      <Button onClick={previewTts} variant="outline" size="sm" disabled={!scriptText.trim()}>
+                        <Volume2 className="h-4 w-4 mr-2" /> Hang előnézet
+                      </Button>
+                      <span className="text-xs text-muted-foreground">
+                        {scriptText.length} / 8000 · ~{Math.ceil(scriptText.split(/\s+/).filter(Boolean).length / 140 * 60)} mp
+                      </span>
+                    </div>
                   </div>
                 </div>
               )}

@@ -24,8 +24,8 @@ Deno.serve(async (req) => {
 
   try {
     const { text, voice_sample_id }: ReqBody = await req.json();
-    if (!text || text.length < 1 || text.length > 5000) {
-      return new Response(JSON.stringify({ error: "Hiányzó vagy hibás szöveg (1-5000 karakter)." }), {
+    if (!text || text.length < 1 || text.length > 8000) {
+      return new Response(JSON.stringify({ error: "Hiányzó vagy hibás szöveg (1-8000 karakter, kb. 3 perc beszéd)." }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
