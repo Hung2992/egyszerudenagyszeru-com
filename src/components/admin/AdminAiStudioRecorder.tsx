@@ -503,8 +503,8 @@ const AdminAiStudioRecorder = () => {
       bgImg.src = bgUrl;
       await new Promise<void>((res, rej) => { bgImg.onload = () => res(); bgImg.onerror = () => rej(); });
 
-      // előnézet: max 480px szélesség, megőrzött arány (gyors)
-      const targetW = 480;
+      // előnézet: gyors=480px, HD=1080px szélesség (megőrzött arány)
+      const targetW = hd ? 1080 : 480;
       const aspect = (vEl.videoWidth || 720) / (vEl.videoHeight || 1280);
       const W = targetW;
       const H = Math.round(targetW / aspect);
