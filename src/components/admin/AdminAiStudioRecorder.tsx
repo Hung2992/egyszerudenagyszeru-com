@@ -269,6 +269,12 @@ const AdminAiStudioRecorder = () => {
           supports_any_background: settings.supports_any_background,
           busy_background_tolerance: settings.busy_background_tolerance,
           mask_threshold: settings.mask_threshold,
+          export_4k: settings.export_4k,
+          audio_sample_rate: settings.audio_sample_rate,
+          audio_bitrate_kbps: settings.audio_bitrate_kbps,
+          show_safe_zone: settings.show_safe_zone,
+          bg_human_check_enabled: settings.bg_human_check_enabled,
+          bg_max_regenerations: settings.bg_max_regenerations,
         })
         .eq("id", settings.id);
       if (error) throw error;
