@@ -872,14 +872,21 @@ const AdminAiStudioRecorder = () => {
       try { window.speechSynthesis?.cancel(); } catch {}
 
       const blob = new Blob(chunks, { type: "video/webm" });
+      logOutSize = blob.size;
       const file = new File([blob], `clip-${Date.now()}.webm`, { type: "video/webm" });
+
+      // Quality figyelmeztetések fájlméret alapján
+      const expectedMinBytes = (logVBps * 1_000_000 / 8) * Math.max(2, Math.min(180, (vEl.duration || 5))) * 0.4;
+      if (blob.size < expectedMinBytes) {
+        logWarnings.push(`A kimenet mérete (${(blob.size/1_000_000).toFixed(1)} MB) szokatlanul kicsi a beállított ${logVBps} Mbps bitrátához képest — lehet, hogy a böngésző csökkentette a tényleges kódolást.`);
+      }
 
       // Upload
       const path = `clips/${Date.now()}-clip.webm`;
       const up = await supabase.storage.from("ai-studio-clips").upload(path, file);
       if (up.error) throw up.error;
 
-      await supabase.from("ai_studio_clips").insert({
+      const clipInsert = await supabase.from("ai_studio_clips").insert({
         title: clipTitle || `Klip ${bgLabel} ${new Date().toLocaleString("hu-HU")}`,
         source_video_id: selectedVideo,
         background_id: bgSource === "uploaded" ? selectedBg : null,
@@ -888,13 +895,49 @@ const AdminAiStudioRecorder = () => {
         output_path: path,
         status: "ready",
         metadata: { bg_source: bgSource, product_id: bgSource === "product" ? selectedProductBg : null, audio_source: audioSource },
-      });
+      }).select("id").single();
+
+      // Export napló — sikeres
+      try {
+        await (supabase as any).from("ai_studio_export_logs").insert({
+          clip_id: clipInsert.data?.id || null,
+          preset_key: logPresetKey,
+          preset_label: logPresetLabel,
+          width: logW,
+          height: logH,
+          fps: logFps,
+          video_bitrate_mbps: logVBps,
+          audio_bitrate_kbps: settings?.audio_bitrate_kbps ?? 256,
+          audio_sample_rate: settings?.audio_sample_rate ?? 48000,
+          render_duration_ms: Math.round(performance.now() - renderStartedAt),
+          output_size_bytes: logOutSize,
+          output_path: path,
+          status: "success",
+          warnings: logWarnings,
+        });
+      } catch (logErr) { console.warn("export log insert hiba", logErr); }
 
       setRenderProgress(100);
-      toast({ title: "✅ Klip kész!", description: "Megnézheted a Klipek fülön." });
+      const warnMsg = logWarnings.length ? ` (${logWarnings.length} figyelmeztetés)` : "";
+      toast({ title: "✅ Klip kész!", description: `Megnézheted a Klipek fülön.${warnMsg}` });
       await loadAll();
     } catch (e: any) {
       console.error(e);
+      // Export napló — hiba
+      try {
+        await (supabase as any).from("ai_studio_export_logs").insert({
+          preset_key: logPresetKey,
+          preset_label: logPresetLabel,
+          width: logW || 0,
+          height: logH || 0,
+          fps: logFps,
+          video_bitrate_mbps: logVBps || 0,
+          render_duration_ms: Math.round(performance.now() - renderStartedAt),
+          status: "error",
+          warnings: logWarnings,
+          error_message: (e?.message || "Ismeretlen hiba").slice(0, 500),
+        });
+      } catch { /* ignore */ }
       toast({ title: "Renderelési hiba", description: e?.message || "Ismeretlen", variant: "destructive" });
     } finally {
       setRendering(false);
