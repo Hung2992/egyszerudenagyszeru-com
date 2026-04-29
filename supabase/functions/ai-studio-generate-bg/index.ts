@@ -27,16 +27,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Háttér-orientált prompt — magas minőség, full HD, 16:9, NINCS ember
-    const fullPrompt = `Ultra high quality, photorealistic, 16:9 cinematic background scene for a marketing video: ${prompt}.
+    // Háttér-orientált prompt — 4K Ultra HD, 16:9, NINCS ember
+    const fullPrompt = `Ultra-detailed 4K Ultra HD photorealistic background scene for a marketing video: ${prompt}.
 
-Strict requirements:
-- Resolution: 1920x1080, full HD, sharp, crisp details, no pixelation, no compression artifacts
-- Aspect ratio: 16:9 widescreen
-- Style: professional cinematography, natural lighting, depth of field, real photo look
-- ABSOLUTELY NO people, faces, hands, body parts, mannequins, or human silhouettes
-- Only environment, scenery, mood, atmosphere — empty stage where a person can stand later
-- Composition: leave the center area visually balanced (a person will be composited there)`;
+STRICT REQUIREMENTS:
+- Resolution: 3840x2160 (4K UHD), maximum sharpness, crystal clear, zero pixelation, zero compression artifacts, zero blur
+- Aspect ratio: 16:9 cinematic widescreen
+- Quality: professional commercial photography, shot on Hasselblad / RED camera, 85mm lens, shallow depth of field, perfect focus, HDR, color graded
+- Lighting: natural cinematic lighting, golden hour or soft studio light, realistic shadows
+- ABSOLUTELY NO people, faces, hands, body parts, mannequins, silhouettes or human figures of any kind
+- Only environment, scenery, atmosphere, mood — empty stage where a person will be composited later
+- Composition: balanced, leave the central area uncluttered for subject placement
+- Texture: visible fine details (concrete grain, fabric weave, leaf veins, dust particles, light rays)`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -45,7 +47,7 @@ Strict requirements:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3.1-flash-image-preview",
+        model: "google/gemini-3-pro-image-preview",
         messages: [{ role: "user", content: fullPrompt }],
         modalities: ["image", "text"],
       }),
