@@ -171,6 +171,7 @@ const AdminAiStudioRecorder = () => {
     if (vid.data) setVideos(vid.data as VideoAsset[]);
     if (bg.data) setBackgrounds(bg.data as BackgroundAsset[]);
     if (cl.data) setClips(cl.data as ClipAsset[]);
+    if (sp.data) setShopProducts(sp.data as ShopProduct[]);
   };
   useEffect(() => { loadAll(); }, []);
 
