@@ -393,7 +393,31 @@ const AdminAiStudioRecorder = () => {
     }
   };
 
-  // ============== TTS PREVIEW ==============
+  // ============== AI HÁTTÉR GENERÁLÁS SZÖVEGBŐL ==============
+  const generateBackground = async () => {
+    const prompt = bgPrompt.trim();
+    if (prompt.length < 3) {
+      toast({ title: "Írj le pontosan milyen hátteret szeretnél", description: "Pl. „naplemente városi tetőterasz, modern beton, meleg fény”", variant: "destructive" });
+      return;
+    }
+    setGeneratingBg(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ai-studio-generate-bg", {
+        body: { prompt },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "✨ Háttér elkészült!", description: "Automatikusan kiválasztottuk." });
+      await loadAll();
+      if (data?.background?.id) setSelectedBg(data.background.id);
+      setBgPrompt("");
+    } catch (e: any) {
+      toast({ title: "AI háttér hiba", description: e?.message || "Ismeretlen", variant: "destructive" });
+    } finally {
+      setGeneratingBg(false);
+    }
+  };
+
   const previewTts = () => {
     if (!scriptText.trim()) {
       toast({ title: "Adj meg szöveget", variant: "destructive" });
