@@ -51,8 +51,34 @@ interface BackgroundAsset {
   bg_type: string;
   storage_path: string | null;
   category: string | null;
+  is_favorite?: boolean | null;
+  description?: string | null;
   created_at: string;
 }
+
+interface StudioSettings {
+  id: string;
+  default_voice_sample_id: string | null;
+  default_audio_source: string;
+  default_bg_source: string;
+  default_bg_category: string;
+  brand_intro_text: string;
+  brand_outro_text: string;
+  ai_prompt_template: string;
+  default_clip_title_pattern: string;
+  auto_caption_enabled: boolean;
+  preferred_voice_lang: string;
+}
+
+const BG_CATEGORIES = [
+  { value: "general", label: "Általános" },
+  { value: "street", label: "Utcai" },
+  { value: "studio", label: "Stúdió" },
+  { value: "nature", label: "Természet" },
+  { value: "urban", label: "Városi" },
+  { value: "product", label: "Termék" },
+  { value: "lifestyle", label: "Lifestyle" },
+];
 
 interface ClipAsset {
   id: string;
