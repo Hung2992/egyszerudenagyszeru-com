@@ -1430,6 +1430,67 @@ const AdminAiStudioRecorder = () => {
           {clips.length === 0 && <p className="text-sm text-muted-foreground">Nincs még klip.</p>}
         </TabsContent>
 
+        {/* ============== 📊 EXPORT LOG ============== */}
+        <TabsContent value="logs" className="space-y-2 mt-4">
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold uppercase tracking-wide">Render naplók — utolsó 100</h3>
+              <Badge variant="outline">{exportLogs.length} rekord</Badge>
+            </div>
+            {exportLogs.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Még nincs render napló. Renderelj egy klipet, és itt megjelenik a részletes minőség-összegzés.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead className="text-left border-b">
+                    <tr>
+                      <th className="p-2">Időpont</th>
+                      <th className="p-2">Preset</th>
+                      <th className="p-2">Felbontás</th>
+                      <th className="p-2">FPS</th>
+                      <th className="p-2">Bitráta</th>
+                      <th className="p-2">Hang</th>
+                      <th className="p-2">Render idő</th>
+                      <th className="p-2">Méret</th>
+                      <th className="p-2">Státusz</th>
+                      <th className="p-2">Figyelmeztetések</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {exportLogs.map((l) => {
+                      const warns = Array.isArray(l.warnings) ? l.warnings : [];
+                      const ok = l.status === "success";
+                      return (
+                        <tr key={l.id} className="border-b hover:bg-muted/30">
+                          <td className="p-2 whitespace-nowrap">{new Date(l.created_at).toLocaleString("hu-HU")}</td>
+                          <td className="p-2">{l.preset_label || l.preset_key}</td>
+                          <td className="p-2 whitespace-nowrap">{l.width}×{l.height}</td>
+                          <td className="p-2">{l.fps}</td>
+                          <td className="p-2 whitespace-nowrap">{l.video_bitrate_mbps} Mbps</td>
+                          <td className="p-2 whitespace-nowrap">{l.audio_bitrate_kbps ?? "-"} kbps / {l.audio_sample_rate ? `${(l.audio_sample_rate/1000).toFixed(0)} kHz` : "-"}</td>
+                          <td className="p-2 whitespace-nowrap">{(l.render_duration_ms/1000).toFixed(1)} s</td>
+                          <td className="p-2 whitespace-nowrap">{l.output_size_bytes ? `${(l.output_size_bytes/1_000_000).toFixed(1)} MB` : "-"}</td>
+                          <td className="p-2">
+                            <Badge variant={ok ? "default" : "destructive"}>{ok ? "OK" : "Hiba"}</Badge>
+                          </td>
+                          <td className="p-2 max-w-[280px]">
+                            {l.error_message && <div className="text-destructive text-[11px] mb-1">{l.error_message}</div>}
+                            {warns.length > 0 ? (
+                              <ul className="list-disc pl-4 space-y-0.5 text-[11px] text-muted-foreground">
+                                {warns.map((w: string, i: number) => <li key={i}>{w}</li>)}
+                              </ul>
+                            ) : (!l.error_message && <span className="text-muted-foreground">—</span>)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+        </TabsContent>
+
         {/* ============== ⚙️ BEÁLLÍTÁSOK ============== */}
         <TabsContent value="settings" className="space-y-4 mt-4">
           {!settings ? (
