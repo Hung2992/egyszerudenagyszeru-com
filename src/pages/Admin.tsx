@@ -1503,9 +1503,9 @@ const Admin = () => {
     .map((k) => tabs.find((t) => t.key === k))
     .filter((t): t is { key: Tab; label: string; icon: any } => Boolean(t));
 
-  const marketingStudioKeys: Tab[] = ["fb_studio", "ig_studio", "tt_studio", "yt_studio", "yts_studio", "gads_studio", "pin_studio", "li_studio", "x_studio"];
+  const marketingStudioKeys: Tab[] = ["fb_studio", "ig_studio", "tt_studio", "yt_studio", "yts_studio", "gads_studio", "pin_studio", "li_studio", "x_studio", "ai_studio_recorder" as Tab];
   const marketingStudioTabs = marketingStudioKeys
-    .map((k) => tabs.find((t) => t.key === k))
+    .map((k) => tabs.find((t) => t.key === k) || (k === ("ai_studio_recorder" as Tab) ? { key: k, label: "Saját videó", icon: Sparkles } : null))
     .filter((t): t is { key: Tab; label: string; icon: any } => Boolean(t));
   const visibleTabs = tabs.filter((t) => !marketingStudioKeys.includes(t.key));
 
