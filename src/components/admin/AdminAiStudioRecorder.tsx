@@ -687,12 +687,15 @@ const AdminAiStudioRecorder = () => {
       bgImg.src = bgUrl;
       await new Promise((res, rej) => { bgImg.onload = () => res(null); bgImg.onerror = rej; });
 
-      // 4K export: ha be van kapcsolva, 3840×2160 a célméret (16:9), egyébként a videó natív
-      const want4K = settings?.export_4k ?? false;
+      // Export preset alapú méret + bitrate (TikTok vertikális, YouTube horizontális, 4K, stb.)
+      const presetKey = settings?.export_preset || "youtube_4k_landscape";
+      const preset = EXPORT_PRESETS[presetKey] || EXPORT_PRESETS.youtube_4k_landscape;
       const nativeW = vEl.videoWidth || 720;
       const nativeH = vEl.videoHeight || 1280;
-      const W = want4K ? 3840 : nativeW;
-      const H = want4K ? 2160 : nativeH;
+      // Custom esetén az adminban beállított értékeket vesszük, egyébként a presetet
+      const useCustom = presetKey === "custom";
+      const W = useCustom ? (settings?.export_width || nativeW) : preset.width;
+      const H = useCustom ? (settings?.export_height || nativeH) : preset.height;
       const canvas = document.createElement("canvas");
       canvas.width = W; canvas.height = H;
       const ctx = canvas.getContext("2d", { alpha: false })!;
