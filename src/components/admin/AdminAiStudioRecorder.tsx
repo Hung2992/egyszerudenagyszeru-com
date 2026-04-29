@@ -662,6 +662,12 @@ const AdminAiStudioRecorder = () => {
     }
     setRendering(true);
     setRenderProgress(0);
+    const renderStartedAt = performance.now();
+    let logPresetKey = settings?.export_preset || "youtube_4k_landscape";
+    let logPresetLabel = EXPORT_PRESETS[logPresetKey]?.label || logPresetKey;
+    let logW = 0, logH = 0, logFps = 30, logVBps = 0;
+    let logOutSize: number | null = null;
+    const logWarnings: string[] = [];
 
     try {
       const video = videos.find((v) => v.id === selectedVideo);
