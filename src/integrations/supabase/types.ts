@@ -1076,6 +1076,7 @@ export type Database = {
       }
       ai_studio_backgrounds: {
         Row: {
+          ai_prompt: string | null
           bg_type: string
           category: string | null
           created_at: string
@@ -1088,6 +1089,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          ai_prompt?: string | null
           bg_type?: string
           category?: string | null
           created_at?: string
@@ -1100,6 +1102,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          ai_prompt?: string | null
           bg_type?: string
           category?: string | null
           created_at?: string
