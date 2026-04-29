@@ -94,8 +94,8 @@ STRICT REQUIREMENTS:
       title: title?.trim() || `AI: ${prompt.slice(0, 60)}`,
       storage_path: path,
       category: "ai_generated",
-      width: 1024,
-      height: 1024,
+      width: 3840,
+      height: 2160,
       ai_prompt: prompt,
     }).select().single();
 
