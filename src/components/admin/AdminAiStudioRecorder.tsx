@@ -83,6 +83,13 @@ interface StudioSettings {
   supports_any_background: boolean;
   busy_background_tolerance: number;
   mask_threshold: number;
+  // Új: 4K export, hangminőség, kompozíciós keret, háttér ember-check
+  export_4k: boolean;
+  audio_sample_rate: number;
+  audio_bitrate_kbps: number;
+  show_safe_zone: boolean;
+  bg_human_check_enabled: boolean;
+  bg_max_regenerations: number;
 }
 
 const BG_CATEGORIES = [
