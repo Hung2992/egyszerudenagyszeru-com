@@ -90,7 +90,24 @@ interface StudioSettings {
   show_safe_zone: boolean;
   bg_human_check_enabled: boolean;
   bg_max_regenerations: number;
+  // Export preset rendszer
+  export_preset: string;
+  export_orientation: string;
+  export_width: number;
+  export_height: number;
+  export_video_bitrate_mbps: number;
+  bg_strict_human_check: boolean;
+  preview_hd_enabled: boolean;
 }
+
+// Export presetek — TikTok, YouTube, egyedi
+export const EXPORT_PRESETS: Record<string, { label: string; orientation: "landscape" | "vertical"; width: number; height: number; bitrate_mbps: number }> = {
+  tiktok_1080_vertical:   { label: "TikTok / Reels — 1080×1920 (függőleges)",  orientation: "vertical",  width: 1080, height: 1920, bitrate_mbps: 18 },
+  tiktok_4k_vertical:     { label: "TikTok 4K — 2160×3840 (függőleges)",        orientation: "vertical",  width: 2160, height: 3840, bitrate_mbps: 30 },
+  youtube_1080_landscape: { label: "YouTube 1080p — 1920×1080 (vízszintes)",    orientation: "landscape", width: 1920, height: 1080, bitrate_mbps: 16 },
+  youtube_4k_landscape:   { label: "YouTube 4K — 3840×2160 (vízszintes)",       orientation: "landscape", width: 3840, height: 2160, bitrate_mbps: 30 },
+  custom:                 { label: "Egyedi (kézi méret + bitráta)",              orientation: "landscape", width: 3840, height: 2160, bitrate_mbps: 30 },
+};
 
 const BG_CATEGORIES = [
   { value: "general", label: "Általános" },
