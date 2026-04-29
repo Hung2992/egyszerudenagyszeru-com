@@ -775,6 +775,7 @@ const AdminAiStudioRecorder = () => {
       // Bitráta: preset alapján (custom esetén az admin érték), Mbps -> bps
       const presetBitrate = useCustom ? (settings?.export_video_bitrate_mbps || 30) : preset.bitrate_mbps;
       const videoBps = Math.max(8, Math.min(60, presetBitrate)) * 1_000_000;
+      logVBps = Math.max(8, Math.min(60, presetBitrate));
       const audioBps = (settings?.audio_bitrate_kbps ?? 256) * 1000;
       const recorder = new MediaRecorder(videoStream, {
         mimeType: "video/webm;codecs=vp9,opus",
