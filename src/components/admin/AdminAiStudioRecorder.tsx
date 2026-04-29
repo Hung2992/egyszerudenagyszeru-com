@@ -1686,6 +1686,81 @@ const AdminAiStudioRecorder = () => {
                 </div>
               </Card>
 
+              {/* ===== EXPORT PRESET (TikTok / YouTube / 4K / Custom) ===== */}
+              <Card className="p-4 space-y-4">
+                <div>
+                  <h3 className="text-sm font-semibold mb-1">🎯 Export preset</h3>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Válassz célplatformot — ez állítja a felbontást, tájolást és a videó bitrátát. TikTokra függőleges, YouTube-ra vízszintes ajánlott.
+                  </p>
+                  <select
+                    className="w-full p-2 border bg-background text-sm"
+                    value={settings.export_preset || "youtube_4k_landscape"}
+                    onChange={(e) => {
+                      const key = e.target.value;
+                      const p = EXPORT_PRESETS[key];
+                      setSettings({
+                        ...settings,
+                        export_preset: key,
+                        export_orientation: p.orientation,
+                        export_width: p.width,
+                        export_height: p.height,
+                        export_video_bitrate_mbps: p.bitrate_mbps,
+                      });
+                    }}
+                  >
+                    {Object.entries(EXPORT_PRESETS).map(([key, p]) => (
+                      <option key={key} value={key}>{p.label}</option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-muted-foreground mt-2">
+                    Aktuális: <strong>{settings.export_width}×{settings.export_height}</strong> @ <strong>{settings.export_video_bitrate_mbps} Mbps</strong> ({settings.export_orientation === "vertical" ? "függőleges" : "vízszintes"})
+                  </p>
+                </div>
+
+                {settings.export_preset === "custom" && (
+                  <div className="grid grid-cols-3 gap-2 pt-2 border-t">
+                    <label className="text-xs">
+                      Szélesség
+                      <input type="number" min={480} max={4096} className="w-full p-1 border bg-background mt-1"
+                        value={settings.export_width}
+                        onChange={(e) => setSettings({ ...settings, export_width: parseInt(e.target.value) || 1920 })} />
+                    </label>
+                    <label className="text-xs">
+                      Magasság
+                      <input type="number" min={480} max={4096} className="w-full p-1 border bg-background mt-1"
+                        value={settings.export_height}
+                        onChange={(e) => setSettings({ ...settings, export_height: parseInt(e.target.value) || 1080 })} />
+                    </label>
+                    <label className="text-xs">
+                      Bitráta (Mbps)
+                      <input type="number" min={8} max={60} className="w-full p-1 border bg-background mt-1"
+                        value={settings.export_video_bitrate_mbps}
+                        onChange={(e) => setSettings({ ...settings, export_video_bitrate_mbps: parseInt(e.target.value) || 30 })} />
+                    </label>
+                  </div>
+                )}
+
+                <div className="pt-3 border-t space-y-2">
+                  <label className="flex items-center gap-2 text-xs cursor-pointer">
+                    <input type="checkbox"
+                      checked={settings.preview_hd_enabled ?? true}
+                      onChange={(e) => setSettings({ ...settings, preview_hd_enabled: e.target.checked })} />
+                    <span>HD előnézet (1080p) engedélyezése a gyors 480p mellé</span>
+                  </label>
+                  <label className="flex items-center gap-2 text-xs cursor-pointer">
+                    <input type="checkbox"
+                      checked={settings.bg_strict_human_check ?? false}
+                      onChange={(e) => setSettings({ ...settings, bg_strict_human_check: e.target.checked })} />
+                    <span>Szigorú emberellenőrzés — ha az AI vision hibázik, NE mentse a hátteret</span>
+                  </label>
+                </div>
+
+                <p className="text-[11px] text-muted-foreground bg-muted/40 p-2 rounded">
+                  💡 <strong>Tipp:</strong> 4K-hoz min. 25 Mbps ajánlott. TikTok úgyis tömörít, ezért inkább jó fény + 1080p, mint rossz fény + 4K.
+                </p>
+              </Card>
+
               <Button onClick={saveSettings} disabled={savingSettings} size="lg" className="w-full">
                 {savingSettings ? (
                   <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Mentés…</>
