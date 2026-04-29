@@ -1158,16 +1158,28 @@ const AdminAiStudioRecorder = () => {
 
             {/* Gyors előnézet canvas + gomb */}
             <div className="border-2 border-dashed border-primary/30 p-3 bg-muted/30">
-              <div className="flex items-center justify-between mb-2">
-                <Label className="text-xs uppercase font-bold">Gyors előnézet (1 frame, ~480px)</Label>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={runFastPreview}
-                  disabled={previewing || !selectedVideo}
-                >
-                  {previewing ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />…</> : <><Play className="h-3 w-3 mr-1" /> Előnézet</>}
-                </Button>
+              <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+                <Label className="text-xs uppercase font-bold">Előnézet (1 frame)</Label>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => runFastPreview(false)}
+                    disabled={previewing || !selectedVideo}
+                  >
+                    {previewing ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />…</> : <><Play className="h-3 w-3 mr-1" /> Gyors (480p)</>}
+                  </Button>
+                  {(settings?.preview_hd_enabled ?? true) && (
+                    <Button
+                      size="sm"
+                      variant="default"
+                      onClick={() => runFastPreview(true)}
+                      disabled={previewing || !selectedVideo}
+                    >
+                      {previewing ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />…</> : <>HD (1080p)</>}
+                    </Button>
+                  )}
+                </div>
               </div>
               <canvas
                 ref={previewCanvasRef}
