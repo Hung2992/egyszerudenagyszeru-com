@@ -473,13 +473,29 @@ const AdminAiStudioRecorder = () => {
         body: { prompt },
       });
       if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      toast({ title: "✨ Háttér elkészült!", description: "Automatikusan kiválasztottuk." });
+      if (data?.error) {
+        // Strict mód hibakódok kibontása
+        const msg = String(data.error);
+        if (msg.toLowerCase().includes("vision")) {
+          throw new Error(`[BG_STRICT_VISION_FAIL] ${msg} — Kapcsold ki a szigorú ellenőrzést a beállításoknál, vagy próbáld újra más prompttal.`);
+        }
+        if (msg.toLowerCase().includes("human") || msg.toLowerCase().includes("ember")) {
+          throw new Error(`[BG_STRICT_HUMAN_DETECTED] ${msg} — Az AI ember-alakot rajzolt a háttérre. Pontosíts a prompton (pl. „üres utca, NINCS ember”).`);
+        }
+        throw new Error(msg);
+      }
+      const attempts = data?.attempts || 1;
+      const note = attempts > 1 ? ` (${attempts} próba után)` : "";
+      toast({ title: "✨ Háttér elkészült!", description: `Automatikusan kiválasztottuk.${note}` });
       await loadAll();
       if (data?.background?.id) setSelectedBg(data.background.id);
       setBgPrompt("");
     } catch (e: any) {
-      toast({ title: "AI háttér hiba", description: e?.message || "Ismeretlen", variant: "destructive" });
+      toast({
+        title: "AI háttér hiba",
+        description: e?.message || "Ismeretlen",
+        variant: "destructive",
+      });
     } finally {
       setGeneratingBg(false);
     }
