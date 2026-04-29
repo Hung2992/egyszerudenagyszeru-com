@@ -548,7 +548,10 @@ const AdminAiStudioRecorder = () => {
         // Itt csak elindítjuk visszajátszáshoz; a TTS audio sávot a kliphez későbbi lépésben fűzzük (jelenleg only video + UI-ban hallható).
       }
 
-      const recorder = new MediaRecorder(videoStream, { mimeType: "video/webm;codecs=vp9,opus" });
+      const recorder = new MediaRecorder(videoStream, {
+        mimeType: "video/webm;codecs=vp9,opus",
+        videoBitsPerSecond: 8_000_000, // 8 Mbps — éles, nem pixeles
+      });
       const chunks: Blob[] = [];
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
 
