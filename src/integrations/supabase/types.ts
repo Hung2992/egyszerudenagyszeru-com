@@ -1199,6 +1199,7 @@ export type Database = {
           background_only_mode: boolean
           bg_human_check_enabled: boolean
           bg_max_regenerations: number
+          bg_strict_human_check: boolean
           brand_intro_text: string | null
           brand_outro_text: string | null
           busy_background_tolerance: number
@@ -1210,12 +1211,18 @@ export type Database = {
           default_voice_sample_id: string | null
           edge_softness: number
           export_4k: boolean
+          export_height: number
+          export_orientation: string
+          export_preset: string
+          export_video_bitrate_mbps: number
+          export_width: number
           id: string
           mask_threshold: number
           natural_pauses_enabled: boolean
           never_modify_face: boolean
           preferred_voice_lang: string | null
           preserve_original_video: boolean
+          preview_hd_enabled: boolean
           segmentation_quality: string
           show_safe_zone: boolean
           supports_any_background: boolean
@@ -1233,6 +1240,7 @@ export type Database = {
           background_only_mode?: boolean
           bg_human_check_enabled?: boolean
           bg_max_regenerations?: number
+          bg_strict_human_check?: boolean
           brand_intro_text?: string | null
           brand_outro_text?: string | null
           busy_background_tolerance?: number
@@ -1244,12 +1252,18 @@ export type Database = {
           default_voice_sample_id?: string | null
           edge_softness?: number
           export_4k?: boolean
+          export_height?: number
+          export_orientation?: string
+          export_preset?: string
+          export_video_bitrate_mbps?: number
+          export_width?: number
           id?: string
           mask_threshold?: number
           natural_pauses_enabled?: boolean
           never_modify_face?: boolean
           preferred_voice_lang?: string | null
           preserve_original_video?: boolean
+          preview_hd_enabled?: boolean
           segmentation_quality?: string
           show_safe_zone?: boolean
           supports_any_background?: boolean
@@ -1267,6 +1281,7 @@ export type Database = {
           background_only_mode?: boolean
           bg_human_check_enabled?: boolean
           bg_max_regenerations?: number
+          bg_strict_human_check?: boolean
           brand_intro_text?: string | null
           brand_outro_text?: string | null
           busy_background_tolerance?: number
@@ -1278,12 +1293,18 @@ export type Database = {
           default_voice_sample_id?: string | null
           edge_softness?: number
           export_4k?: boolean
+          export_height?: number
+          export_orientation?: string
+          export_preset?: string
+          export_video_bitrate_mbps?: number
+          export_width?: number
           id?: string
           mask_threshold?: number
           natural_pauses_enabled?: boolean
           never_modify_face?: boolean
           preferred_voice_lang?: string | null
           preserve_original_video?: boolean
+          preview_hd_enabled?: boolean
           segmentation_quality?: string
           show_safe_zone?: boolean
           supports_any_background?: boolean
