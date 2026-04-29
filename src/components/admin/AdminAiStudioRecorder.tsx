@@ -565,9 +565,13 @@ const AdminAiStudioRecorder = () => {
         // Itt csak elindítjuk visszajátszáshoz; a TTS audio sávot a kliphez későbbi lépésben fűzzük (jelenleg only video + UI-ban hallható).
       }
 
+      // Bitráta a felbontás függvényében (4K = 25 Mbps, FullHD = 12 Mbps)
+      const videoBps = want4K ? 25_000_000 : 12_000_000;
+      const audioBps = (settings?.audio_bitrate_kbps ?? 256) * 1000;
       const recorder = new MediaRecorder(videoStream, {
         mimeType: "video/webm;codecs=vp9,opus",
-        videoBitsPerSecond: 12_000_000, // 12 Mbps — 4K-szerű élesség
+        videoBitsPerSecond: videoBps,
+        audioBitsPerSecond: audioBps,
       });
       const chunks: Blob[] = [];
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
