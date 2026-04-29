@@ -522,7 +522,9 @@ const AdminAiStudioRecorder = () => {
       const H = vEl.videoHeight || 1280;
       const canvas = document.createElement("canvas");
       canvas.width = W; canvas.height = H;
-      const ctx = canvas.getContext("2d")!;
+      const ctx = canvas.getContext("2d", { alpha: false })!;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
 
       // ===== AUDIO MIXING =====
       const videoStream = canvas.captureStream(30);
