@@ -1000,11 +1000,12 @@ const AdminAiStudioRecorder = () => {
       </div>
 
       <Tabs defaultValue="upload">
-        <TabsList className="grid grid-cols-5 w-full">
+        <TabsList className="grid grid-cols-6 w-full">
           <TabsTrigger value="upload">📤 Feltöltés</TabsTrigger>
           <TabsTrigger value="compose">🎬 Klip</TabsTrigger>
           <TabsTrigger value="library">📚 Könyvtár</TabsTrigger>
           <TabsTrigger value="clips">🎞️ Kész ({clips.length})</TabsTrigger>
+          <TabsTrigger value="logs">📊 Export log</TabsTrigger>
           <TabsTrigger value="settings">⚙️ Beállítások</TabsTrigger>
         </TabsList>
 
