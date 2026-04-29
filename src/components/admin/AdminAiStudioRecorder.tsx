@@ -639,11 +639,12 @@ const AdminAiStudioRecorder = () => {
       </div>
 
       <Tabs defaultValue="upload">
-        <TabsList className="grid grid-cols-4 w-full">
+        <TabsList className="grid grid-cols-5 w-full">
           <TabsTrigger value="upload">📤 Feltöltés</TabsTrigger>
-          <TabsTrigger value="compose">🎬 Klip készítés</TabsTrigger>
+          <TabsTrigger value="compose">🎬 Klip</TabsTrigger>
           <TabsTrigger value="library">📚 Könyvtár</TabsTrigger>
-          <TabsTrigger value="clips">🎞️ Kész klipek ({clips.length})</TabsTrigger>
+          <TabsTrigger value="clips">🎞️ Kész ({clips.length})</TabsTrigger>
+          <TabsTrigger value="settings">⚙️ Beállítások</TabsTrigger>
         </TabsList>
 
         {/* ============== FELTÖLTÉS ============== */}
