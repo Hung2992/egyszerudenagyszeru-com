@@ -1194,17 +1194,22 @@ export type Database = {
           background_only_mode: boolean
           brand_intro_text: string | null
           brand_outro_text: string | null
+          busy_background_tolerance: number
           created_at: string
           default_audio_source: string | null
           default_bg_category: string | null
           default_bg_source: string | null
           default_clip_title_pattern: string | null
           default_voice_sample_id: string | null
+          edge_softness: number
           id: string
+          mask_threshold: number
           natural_pauses_enabled: boolean
           never_modify_face: boolean
           preferred_voice_lang: string | null
           preserve_original_video: boolean
+          segmentation_quality: string
+          supports_any_background: boolean
           updated_at: string
           voice_breathiness: number
           voice_naturalness: number
@@ -1217,17 +1222,22 @@ export type Database = {
           background_only_mode?: boolean
           brand_intro_text?: string | null
           brand_outro_text?: string | null
+          busy_background_tolerance?: number
           created_at?: string
           default_audio_source?: string | null
           default_bg_category?: string | null
           default_bg_source?: string | null
           default_clip_title_pattern?: string | null
           default_voice_sample_id?: string | null
+          edge_softness?: number
           id?: string
+          mask_threshold?: number
           natural_pauses_enabled?: boolean
           never_modify_face?: boolean
           preferred_voice_lang?: string | null
           preserve_original_video?: boolean
+          segmentation_quality?: string
+          supports_any_background?: boolean
           updated_at?: string
           voice_breathiness?: number
           voice_naturalness?: number
@@ -1240,17 +1250,22 @@ export type Database = {
           background_only_mode?: boolean
           brand_intro_text?: string | null
           brand_outro_text?: string | null
+          busy_background_tolerance?: number
           created_at?: string
           default_audio_source?: string | null
           default_bg_category?: string | null
           default_bg_source?: string | null
           default_clip_title_pattern?: string | null
           default_voice_sample_id?: string | null
+          edge_softness?: number
           id?: string
+          mask_threshold?: number
           natural_pauses_enabled?: boolean
           never_modify_face?: boolean
           preferred_voice_lang?: string | null
           preserve_original_video?: boolean
+          segmentation_quality?: string
+          supports_any_background?: boolean
           updated_at?: string
           voice_breathiness?: number
           voice_naturalness?: number

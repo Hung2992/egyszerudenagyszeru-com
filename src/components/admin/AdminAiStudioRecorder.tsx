@@ -77,6 +77,12 @@ interface StudioSettings {
   never_modify_face: boolean;
   natural_pauses_enabled: boolean;
   avoid_robotic_perfection: boolean;
+  // Színes/tetszőleges háttér támogatás
+  segmentation_quality: string;
+  edge_softness: number;
+  supports_any_background: boolean;
+  busy_background_tolerance: number;
+  mask_threshold: number;
 }
 
 const BG_CATEGORIES = [
@@ -249,6 +255,11 @@ const AdminAiStudioRecorder = () => {
           never_modify_face: settings.never_modify_face,
           natural_pauses_enabled: settings.natural_pauses_enabled,
           avoid_robotic_perfection: settings.avoid_robotic_perfection,
+          segmentation_quality: settings.segmentation_quality,
+          edge_softness: settings.edge_softness,
+          supports_any_background: settings.supports_any_background,
+          busy_background_tolerance: settings.busy_background_tolerance,
+          mask_threshold: settings.mask_threshold,
         })
         .eq("id", settings.id);
       if (error) throw error;
@@ -455,12 +466,16 @@ const AdminAiStudioRecorder = () => {
       }
       if (!bgUrl) throw new Error("Háttér URL hiba");
 
-      // MediaPipe betöltés
+      // MediaPipe betöltés — a "general" model (1) bármilyen színes/normális háttérről
+      // pontosan kivágja az embert, NEM kell zöld háttér. Ez egy AI szegmentációs modell,
+      // amely emberi alakot felismer, nem szín-kulcsot.
       const SelfieSegmentation = await loadMediaPipe();
       const selfie = new SelfieSegmentation({
         locateFile: (f: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${f}`,
       });
-      selfie.setOptions({ modelSelection: 1 });
+      // modelSelection: 0 = landscape (gyors), 1 = general (pontosabb, bármilyen háttér)
+      const modelSel = settings?.segmentation_quality === "fast" ? 0 : 1;
+      selfie.setOptions({ modelSelection: modelSel });
 
       // Setup video + bg
       const vEl = document.createElement("video");
@@ -528,12 +543,19 @@ const AdminAiStudioRecorder = () => {
         }
         ctx.drawImage(bgImg, sx, sy, sw, sh, 0, 0, W, H);
 
-        // 2. személy maszkkal
+        // 2. személy maszkkal — élenlágyítással a természetes átmenethez
         ctx.globalCompositeOperation = "source-over";
         const tmp = document.createElement("canvas");
         tmp.width = W; tmp.height = H;
         const tctx = tmp.getContext("2d")!;
+        // Élenlágyítás: a beállítás alapján blur-t alkalmazunk a maszkra,
+        // így nem lesz szaggatott a kivágás bármilyen színes háttéren
+        const softnessPx = Math.round((settings?.edge_softness ?? 0.5) * 6);
+        if (softnessPx > 0) {
+          (tctx as any).filter = `blur(${softnessPx}px)`;
+        }
         tctx.drawImage(results.segmentationMask, 0, 0, W, H);
+        (tctx as any).filter = "none";
         tctx.globalCompositeOperation = "source-in";
         tctx.drawImage(results.image, 0, 0, W, H);
         ctx.drawImage(tmp, 0, 0);
@@ -1222,8 +1244,92 @@ const AdminAiStudioRecorder = () => {
                 </label>
               </Card>
 
-              <Card className="p-4 space-y-3">
+              {/* ============== 🎨 BÁRMILYEN SZÍNES HÁTTÉR ============== */}
+              <Card className="p-4 space-y-4 border-2 border-emerald-500/40 bg-emerald-500/5">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-emerald-600" />
+                  <h3 className="font-bold uppercase tracking-wide">Bármilyen színes háttér — nem csak zöld!</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  ✅ Az AI (MediaPipe Selfie Segmentation) az embert <strong>bármilyen normális, színes háttérről</strong> kivágja — nem kell zöld háttér, nem kell stúdió. Egy utcán, szobában, parkban felvett videó is működik.
+                </p>
 
+                <div>
+                  <Label className="text-xs uppercase">Kivágás minősége</Label>
+                  <select
+                    className="w-full p-2 border bg-background mt-1"
+                    value={settings.segmentation_quality}
+                    onChange={(e) => setSettings({ ...settings, segmentation_quality: e.target.value })}
+                  >
+                    <option value="fast">Gyors (landscape modell — egyszerű háttér)</option>
+                    <option value="high">Pontos (general modell — bármilyen háttér, AJÁNLOTT)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <Label>Él lágyítás (ne legyen szaggatott)</Label>
+                    <span className="font-mono">{Math.round(settings.edge_softness * 100)}%</span>
+                  </div>
+                  <input
+                    type="range" min="0" max="1" step="0.05"
+                    className="w-full"
+                    value={settings.edge_softness}
+                    onChange={(e) => setSettings({ ...settings, edge_softness: parseFloat(e.target.value) })}
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Magasabb = lágyabb átmenet ember és háttér között (természetesebb)
+                  </p>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <Label>Forgalmas háttér tűrés</Label>
+                    <span className="font-mono">{Math.round(settings.busy_background_tolerance * 100)}%</span>
+                  </div>
+                  <input
+                    type="range" min="0" max="1" step="0.05"
+                    className="w-full"
+                    value={settings.busy_background_tolerance}
+                    onChange={(e) => setSettings({ ...settings, busy_background_tolerance: parseFloat(e.target.value) })}
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Magasabb = jobb teljesítmény zsúfolt, mintás, sokszínű hátteren
+                  </p>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs mb-1">
+                    <Label>Maszk küszöb (érzékenység)</Label>
+                    <span className="font-mono">{settings.mask_threshold.toFixed(2)}</span>
+                  </div>
+                  <input
+                    type="range" min="0.1" max="0.9" step="0.05"
+                    className="w-full"
+                    value={settings.mask_threshold}
+                    onChange={(e) => setSettings({ ...settings, mask_threshold: parseFloat(e.target.value) })}
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Alacsonyabb = több részlet (haj, ujjak), magasabb = tisztább szélek
+                  </p>
+                </div>
+
+                <label className="flex items-start gap-2 cursor-pointer pt-2 border-t">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={settings.supports_any_background}
+                    onChange={(e) => setSettings({ ...settings, supports_any_background: e.target.checked })}
+                  />
+                  <div>
+                    <div className="text-xs font-semibold">Bármilyen háttér támogatás (AJÁNLOTT BE)</div>
+                    <div className="text-[10px] text-muted-foreground">Az AI nem keres zöld színt — emberi alakot ismer fel</div>
+                  </div>
+                </label>
+              </Card>
+
+              <Card className="p-4 space-y-3">
+                <h3 className="font-bold uppercase tracking-wide">Brand szövegek</h3>
                 <div>
                   <Label className="text-xs">Intro szöveg (klip elején)</Label>
                   <Input
