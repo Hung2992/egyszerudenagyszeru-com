@@ -68,6 +68,15 @@ interface StudioSettings {
   default_clip_title_pattern: string;
   auto_caption_enabled: boolean;
   preferred_voice_lang: string;
+  // Emberi hang + eredeti videó védelme
+  voice_naturalness: number;
+  voice_variance: number;
+  voice_breathiness: number;
+  preserve_original_video: boolean;
+  background_only_mode: boolean;
+  never_modify_face: boolean;
+  natural_pauses_enabled: boolean;
+  avoid_robotic_perfection: boolean;
 }
 
 const BG_CATEGORIES = [
