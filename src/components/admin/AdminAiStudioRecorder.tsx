@@ -294,6 +294,13 @@ const AdminAiStudioRecorder = () => {
           show_safe_zone: settings.show_safe_zone,
           bg_human_check_enabled: settings.bg_human_check_enabled,
           bg_max_regenerations: settings.bg_max_regenerations,
+          export_preset: settings.export_preset,
+          export_orientation: settings.export_orientation,
+          export_width: settings.export_width,
+          export_height: settings.export_height,
+          export_video_bitrate_mbps: settings.export_video_bitrate_mbps,
+          bg_strict_human_check: settings.bg_strict_human_check,
+          preview_hd_enabled: settings.preview_hd_enabled,
         })
         .eq("id", settings.id);
       if (error) throw error;
