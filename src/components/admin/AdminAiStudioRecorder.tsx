@@ -627,83 +627,169 @@ const AdminAiStudioRecorder = () => {
           )}
         </TabsContent>
 
-        {/* ============== KLIP KÉSZÍTÉS ============== */}
+        {/* ============== KLIP KÉSZÍTÉS — EGYSÉGES VEZÉRLŐPULT ============== */}
         <TabsContent value="compose" className="space-y-4 mt-4">
-          <Card className="p-4 space-y-4">
+          <Card className="p-4 space-y-5">
+            {/* Lépés 1: Cím */}
             <div>
-              <Label>Klip címe</Label>
-              <Input value={clipTitle} onChange={(e) => setClipTitle(e.target.value)} placeholder="Pl. TikTok pulóver promo" />
+              <Label className="text-xs uppercase tracking-wide font-bold">1. Klip címe</Label>
+              <Input value={clipTitle} onChange={(e) => setClipTitle(e.target.value)} placeholder="Pl. TikTok pulóver promo" className="mt-1" />
             </div>
 
+            {/* Lépés 2: Videó */}
             <div>
-              <Label>Videó (Te a felvételen)</Label>
+              <Label className="text-xs uppercase tracking-wide font-bold">2. Saját videód</Label>
               <select
-                className="w-full p-2 border bg-background"
+                className="w-full p-2 border bg-background mt-1"
                 value={selectedVideo}
                 onChange={(e) => setSelectedVideo(e.target.value)}
               >
-                <option value="">— válassz —</option>
+                <option value="">— válassz feltöltött videót —</option>
                 {videos.map((v) => (
                   <option key={v.id} value={v.id}>
                     {v.title} ({v.width}×{v.height}, {v.duration_sec?.toFixed(1)}s)
                   </option>
                 ))}
               </select>
+              {videos.length === 0 && (
+                <p className="text-xs text-amber-600 mt-1">Még nincs videó — tölts fel a Feltöltés fülön.</p>
+              )}
             </div>
 
+            {/* Lépés 3: Háttér forrás */}
             <div>
-              <Label>Háttér</Label>
-              <select
-                className="w-full p-2 border bg-background"
-                value={selectedBg}
-                onChange={(e) => setSelectedBg(e.target.value)}
-              >
-                <option value="">— válassz —</option>
-                {backgrounds.map((b) => (
-                  <option key={b.id} value={b.id}>{b.title}</option>
-                ))}
-              </select>
+              <Label className="text-xs uppercase tracking-wide font-bold">3. Háttér</Label>
+              <div className="flex gap-2 mt-1 mb-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={bgSource === "uploaded" ? "default" : "outline"}
+                  onClick={() => setBgSource("uploaded")}
+                >
+                  <ImageIcon className="h-4 w-4 mr-1" /> Feltöltött
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={bgSource === "product" ? "default" : "outline"}
+                  onClick={() => setBgSource("product")}
+                >
+                  <Sparkles className="h-4 w-4 mr-1" /> Webshop termék ({shopProducts.length})
+                </Button>
+              </div>
+
+              {bgSource === "uploaded" ? (
+                <select
+                  className="w-full p-2 border bg-background"
+                  value={selectedBg}
+                  onChange={(e) => setSelectedBg(e.target.value)}
+                >
+                  <option value="">— válassz hátteret —</option>
+                  {backgrounds.map((b) => (
+                    <option key={b.id} value={b.id}>{b.title}</option>
+                  ))}
+                </select>
+              ) : (
+                <>
+                  <select
+                    className="w-full p-2 border bg-background"
+                    value={selectedProductBg}
+                    onChange={(e) => setSelectedProductBg(e.target.value)}
+                  >
+                    <option value="">— válassz terméket —</option>
+                    {shopProducts.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}{p.category ? ` · ${p.category}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedProductBg && (() => {
+                    const p = shopProducts.find((x) => x.id === selectedProductBg);
+                    return p?.image_url ? (
+                      <img src={p.image_url} alt={p.name} className="w-32 h-32 object-cover border mt-2" />
+                    ) : null;
+                  })()}
+                </>
+              )}
             </div>
 
+            {/* Lépés 4: Hang forrás */}
             <div>
-              <Label>Hangminta (opcionális, TTS-hez)</Label>
-              <select
-                className="w-full p-2 border bg-background"
-                value={selectedVoice}
-                onChange={(e) => setSelectedVoice(e.target.value)}
-              >
-                <option value="">— nincs hang —</option>
-                {voiceSamples.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.title} (pitch {Math.round(v.pitch_hz ?? 0)}Hz)
-                  </option>
-                ))}
-              </select>
+              <Label className="text-xs uppercase tracking-wide font-bold">4. Hang forrása</Label>
+              <div className="flex gap-2 mt-1 mb-2 flex-wrap">
+                <Button
+                  type="button" size="sm"
+                  variant={audioSource === "original" ? "default" : "outline"}
+                  onClick={() => setAudioSource("original")}
+                >
+                  🎙️ Eredeti hangom (videóból)
+                </Button>
+                <Button
+                  type="button" size="sm"
+                  variant={audioSource === "tts" ? "default" : "outline"}
+                  onClick={() => setAudioSource("tts")}
+                >
+                  💬 AI mondja amit írok
+                </Button>
+                <Button
+                  type="button" size="sm"
+                  variant={audioSource === "none" ? "default" : "outline"}
+                  onClick={() => setAudioSource("none")}
+                >
+                  🔇 Néma
+                </Button>
+              </div>
+
+              {audioSource === "tts" && (
+                <div className="space-y-2 border p-3 bg-muted/30">
+                  <div>
+                    <Label className="text-xs">Hangminta (a tempód/hangmagasságod alapján)</Label>
+                    <select
+                      className="w-full p-2 border bg-background mt-1"
+                      value={selectedVoice}
+                      onChange={(e) => setSelectedVoice(e.target.value)}
+                    >
+                      <option value="">— alapértelmezett magyar hang —</option>
+                      {voiceSamples.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.title} (pitch {Math.round(v.pitch_hz ?? 0)}Hz)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Mondandó szöveg</Label>
+                    <Textarea
+                      value={scriptText}
+                      onChange={(e) => setScriptText(e.target.value)}
+                      rows={4}
+                      placeholder="Pl. Új pulóverünk most 6990 Ft! Ne hagyd ki…"
+                      className="mt-1"
+                    />
+                    <Button onClick={previewTts} variant="outline" size="sm" className="mt-2" disabled={!scriptText.trim()}>
+                      <Volume2 className="h-4 w-4 mr-2" /> Hang előnézet
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div>
-              <Label>Mondandó szöveg (TTS előnézethez)</Label>
-              <Textarea
-                value={scriptText}
-                onChange={(e) => setScriptText(e.target.value)}
-                rows={4}
-                placeholder="Pl. Új pulóverünk most 6990 Ft! Ne hagyd ki…"
-              />
-              <Button onClick={previewTts} variant="outline" size="sm" className="mt-2" disabled={!scriptText.trim()}>
-                <Volume2 className="h-4 w-4 mr-2" /> Hangminta-alapú TTS előnézet
-              </Button>
-            </div>
-
+            {/* Lépés 5: Generálás */}
             <Button
               onClick={renderClip}
-              disabled={rendering || !selectedVideo || !selectedBg}
+              disabled={
+                rendering ||
+                !selectedVideo ||
+                (bgSource === "uploaded" && !selectedBg) ||
+                (bgSource === "product" && !selectedProductBg)
+              }
               className="w-full"
               size="lg"
             >
               {rendering ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Renderelés ({renderProgress.toFixed(0)}%)</>
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> AI renderelés ({renderProgress.toFixed(0)}%)</>
               ) : (
-                <><Wand2 className="h-4 w-4 mr-2" /> AI háttércsere + klip mentés</>
+                <><Wand2 className="h-4 w-4 mr-2" /> 5. AI HÁTTÉRCSERE + KLIP GENERÁLÁS</>
               )}
             </Button>
 
@@ -712,6 +798,13 @@ const AdminAiStudioRecorder = () => {
                 <div className="bg-primary h-2 transition-all" style={{ width: `${renderProgress}%` }} />
               </div>
             )}
+
+            <p className="text-[10px] text-muted-foreground leading-relaxed border-t pt-3">
+              💡 <b>Tipp:</b> Az "Eredeti hang" módban a videód saját hangja kerül a klipbe (háttércsere mellett).
+              A "AI mondja" módban a böngésző felolvassa a szöveget a hangmintád pitch/tempo paraméterei szerint —
+              ezt a felvétel közben hangosan hallod, de a böngésző-korlátok miatt a TTS hang csak előnézet, a klipbe nem mixelődik bele.
+              Teljes klónozott hanghoz külső szolgáltatás (pl. ElevenLabs) kellene.
+            </p>
           </Card>
         </TabsContent>
 
