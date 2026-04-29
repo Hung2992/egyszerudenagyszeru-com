@@ -449,8 +449,27 @@ const AdminAiStudioRecorder = () => {
 
       vEl.currentTime = 0;
       await vEl.play();
+
+      // TTS indítása párhuzamosan ha kell (a felhasználó hangosan hallja, a klipbe nem kerül bele
+      // mert a böngésző nem captureálja a SpeechSynthesis kimenetét — ezért választható az "original")
+      if (audioSource === "tts" && scriptText.trim() && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(scriptText);
+        u.lang = "hu-HU";
+        const sample = voiceSamples.find((s) => s.id === selectedVoice);
+        if (sample) {
+          const pitch = sample.pitch_hz ?? 150;
+          const tempo = sample.tempo_wpm ?? 140;
+          u.pitch = Math.max(0.5, Math.min(2, pitch / 150));
+          u.rate = Math.max(0.5, Math.min(2, tempo / 140));
+        }
+        const voices = window.speechSynthesis.getVoices();
+        const hu = voices.find((v) => v.lang.startsWith("hu")) || voices.find((v) => v.lang.startsWith("en"));
+        if (hu) u.voice = hu;
+        window.speechSynthesis.speak(u);
+      }
+
       const dur = vEl.duration || 5;
-      const startT = performance.now();
 
       await new Promise<void>((resolve) => {
         const tick = async () => {
@@ -469,6 +488,8 @@ const AdminAiStudioRecorder = () => {
 
       recorder.stop();
       await new Promise((res) => { recorder.onstop = () => res(null); });
+      try { audioCtx?.close(); } catch {}
+      try { window.speechSynthesis?.cancel(); } catch {}
 
       const blob = new Blob(chunks, { type: "video/webm" });
       const file = new File([blob], `clip-${Date.now()}.webm`, { type: "video/webm" });
@@ -479,13 +500,14 @@ const AdminAiStudioRecorder = () => {
       if (up.error) throw up.error;
 
       await supabase.from("ai_studio_clips").insert({
-        title: clipTitle || `Klip ${new Date().toLocaleString("hu-HU")}`,
+        title: clipTitle || `Klip ${bgLabel} ${new Date().toLocaleString("hu-HU")}`,
         source_video_id: selectedVideo,
-        background_id: selectedBg,
+        background_id: bgSource === "uploaded" ? selectedBg : null,
         voice_sample_id: selectedVoice || null,
-        generated_text: scriptText || null,
+        generated_text: audioSource === "tts" ? scriptText || null : null,
         output_path: path,
         status: "ready",
+        metadata: { bg_source: bgSource, product_id: bgSource === "product" ? selectedProductBg : null, audio_source: audioSource },
       });
 
       setRenderProgress(100);
