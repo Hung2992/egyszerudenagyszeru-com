@@ -241,6 +241,7 @@ const AdminAiStudioRecorder = () => {
   const [renderProgress, setRenderProgress] = useState(0);
   const [previewing, setPreviewing] = useState(false);
   const [previewReady, setPreviewReady] = useState(false);
+  const [exportLogs, setExportLogs] = useState<ExportLog[]>([]);
 
   const [settings, setSettings] = useState<StudioSettings | null>(null);
   const [savingSettings, setSavingSettings] = useState(false);
