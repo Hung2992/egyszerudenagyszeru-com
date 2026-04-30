@@ -79,7 +79,21 @@ export default function AdminAiStudioVoiceCloning({
         "ai-studio-clone-voice",
         { body: fd },
       );
-      if (error) throw error;
+      // Ha az edge function 4xx/5xx-szel tér vissza, a `data` is tartalmazhatja a JSON hibát
+      if (data?.error) throw new Error(data.error);
+      if (error) {
+        // Próbáljuk meg kiolvasni a részletes hibaüzenetet a context.response-ból
+        let detail = error.message || "Ismeretlen hiba";
+        try {
+          const ctx: any = (error as any).context;
+          if (ctx?.response) {
+            const txt = await ctx.response.clone().text();
+            const j = JSON.parse(txt);
+            if (j?.error) detail = j.error;
+          }
+        } catch (_) { /* ignore */ }
+        throw new Error(detail);
+      }
       toast({ title: "✓ Hang klónozva", description: data?.voice?.name });
       setFile(null);
       await load();
