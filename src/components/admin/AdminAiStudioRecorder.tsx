@@ -1084,16 +1084,18 @@ const AdminAiStudioRecorder = () => {
       </div>
 
       <Tabs defaultValue="upload">
-        <TabsList className="grid grid-cols-8 w-full">
-          <TabsTrigger value="marketing">🎬 Marketing</TabsTrigger>
-          <TabsTrigger value="upload">📤 Feltöltés</TabsTrigger>
-          <TabsTrigger value="voice">🗣️ Saját hang</TabsTrigger>
-          <TabsTrigger value="compose">🎞️ Klip</TabsTrigger>
-          <TabsTrigger value="library">📚 Könyvtár</TabsTrigger>
-          <TabsTrigger value="clips">🎞️ Kész ({clips.length})</TabsTrigger>
-          <TabsTrigger value="logs">📊 Export log</TabsTrigger>
-          <TabsTrigger value="settings">⚙️ Beállítások</TabsTrigger>
-        </TabsList>
+        <div className="w-full overflow-x-auto -mx-2 px-2">
+          <TabsList className="inline-flex w-max min-w-full gap-1 h-auto p-1">
+            <TabsTrigger value="marketing" className="whitespace-nowrap text-sm px-3 py-2">🎬 Marketing</TabsTrigger>
+            <TabsTrigger value="upload" className="whitespace-nowrap text-sm px-3 py-2">📤 Feltöltés</TabsTrigger>
+            <TabsTrigger value="voice" className="whitespace-nowrap text-sm px-3 py-2">🗣️ Saját hang</TabsTrigger>
+            <TabsTrigger value="compose" className="whitespace-nowrap text-sm px-3 py-2">🎞️ Klip</TabsTrigger>
+            <TabsTrigger value="library" className="whitespace-nowrap text-sm px-3 py-2">📚 Könyvtár</TabsTrigger>
+            <TabsTrigger value="clips" className="whitespace-nowrap text-sm px-3 py-2">🎞️ Kész ({clips.length})</TabsTrigger>
+            <TabsTrigger value="logs" className="whitespace-nowrap text-sm px-3 py-2">📊 Export log</TabsTrigger>
+            <TabsTrigger value="settings" className="whitespace-nowrap text-sm px-3 py-2">⚙️ Beállítások</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="marketing" className="mt-4">
           <AdminAiMarketingStudio />
