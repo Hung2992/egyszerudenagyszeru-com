@@ -96,7 +96,7 @@ export default function AdminAiMarketingStudio() {
       .eq("project_id", projectId)
       .order("created_at", { ascending: false })
       .limit(10);
-    setRenders((data as Render[]) || []);
+    setRenders((data as unknown as Render[]) || []);
   }
 
   async function createProject() {
