@@ -17,10 +17,11 @@ const REPLICATE_MATTING_MODEL =
   "arielreplicate/robust_video_matting:73d2128a371922d5d1abf0712a1d974be0e4e2358cc1218e4e34714767232bac";
 const REPLICATE_UPSCALE_IMG_MODEL =
   "nightmareai/real-esrgan:f121d640bd286e1fdc67f9799164c1d5be36ff74576ee11c803ae5b665dd46aa";
-// Stabil, publikus ffmpeg modell Replicate-en — `command` paramétert vár.
-// Ezt használjuk a háttér + matt subject + voiceover egyetlen mp4-be összeillesztéséhez.
-const REPLICATE_FFMPEG_RUNNER =
-  "fofr/ffmpeg:7a96a8c40a4c7e1fdb97f9ca9c46a4f7c0c6b0a1d3e8b8c7c3f9a5b9b8c7d6e5";
+// MEGJEGYZÉS: A végső kompozíciót (háttér + matt subject + voiceover egy mp4-be)
+// a kliensoldali MediaRecorder pipeline (AdminAiStudioRecorder.tsx) végzi el,
+// mert a Replicate-en jelenleg nincs stabil, dokumentált, általános ffmpeg
+// modellünk amit megbízhatóan hívhatnánk. Ez a függvény a nyersanyagokat (matt
+// videó, háttér, voiceover) készíti elő és tölti fel a Storage-ba.
 
 async function replicateRun(model: string, input: Record<string, unknown>, token: string): Promise<any> {
   const [owner_model, version] = model.split(":");
