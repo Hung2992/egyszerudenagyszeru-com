@@ -571,18 +571,37 @@ export default function AdminAiMarketingStudio() {
                             <div className="text-xs text-muted-foreground">Lépés: {r.current_step}</div>
                           )}
                           {r.status === "assets_ready" && !r.output_video_path && (
-                            <div className="text-xs text-muted-foreground">
-                              Nyersanyagok készen — fejezd be az AI Stúdió → Klip fülön.
+                            <div className="text-xs text-muted-foreground mt-1">
+                              ✅ Nyersanyagok készen — töltsd le és állítsd össze a végső klipet bármilyen szerkesztőben (CapCut, Premiere, DaVinci):
                             </div>
                           )}
                           {r.error_message && (
-                            <div className="text-xs text-destructive">{r.error_message}</div>
+                            <div className="text-xs text-destructive mt-1">{r.error_message}</div>
+                          )}
+                          {r.status === "assets_ready" && (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {r.background_storage_path && (
+                                <Button size="sm" variant="outline" onClick={() => downloadRender(r.background_storage_path!)}>
+                                  🖼️ Háttér {r.background_is_video ? "(videó)" : "(kép)"}
+                                </Button>
+                              )}
+                              {r.subject_storage_path && (
+                                <Button size="sm" variant="outline" onClick={() => downloadRender(r.subject_storage_path!)}>
+                                  🎬 Mattolt alany (zöld háttér)
+                                </Button>
+                              )}
+                              {r.voice_storage_path && (
+                                <Button size="sm" variant="outline" onClick={() => downloadRender(r.voice_storage_path!)}>
+                                  🎤 Klónozott hang (mp3)
+                                </Button>
+                              )}
+                            </div>
                           )}
                         </div>
                         {r.output_video_path && (
                           <Button size="sm" variant="outline" onClick={() => downloadRender(r.output_video_path!)}>
                             <Upload className="w-3 h-3 mr-1 rotate-180" />
-                            Letöltés
+                            Kész klip letöltése
                           </Button>
                         )}
                       </div>
