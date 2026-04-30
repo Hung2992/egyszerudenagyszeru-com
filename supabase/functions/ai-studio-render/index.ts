@@ -219,8 +219,12 @@ Deno.serve(async (req) => {
     } else {
       if (!project.background_asset_path) throw new Error("Háttér asset hiányzik");
       backgroundUrl = await signedUrl(admin, project.background_asset_path);
-      backgroundIsVideo = project.background_type === "video";
-      await logStep(admin, renderId!, "bg", `Felhasználói ${backgroundIsVideo ? "videó" : "kép"} háttér betöltve`);
+      backgroundIsVideo = project.background_type === "video" || project.background_type === "ai_video";
+      const label =
+        project.background_type === "ai_video" ? "AI generált videó"
+        : project.background_type === "video" ? "saját videó"
+        : "saját kép";
+      await logStep(admin, renderId!, "bg", `Háttér betöltve: ${label}`);
     }
 
     // ====== STEP 3: TTS (optional) ======
