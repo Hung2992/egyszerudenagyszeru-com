@@ -245,11 +245,14 @@ Deno.serve(async (req) => {
             },
             body: JSON.stringify({
               text: project.voice_text,
+              // multilingual_v2 = legtisztább, leg-emberibb hang (magyar nyelv támogatás)
               model_id: "eleven_multilingual_v2",
               voice_settings: {
-                stability: vs.stability ?? 0.45,
-                similarity_boost: vs.similarity_boost ?? 0.85,
-                style: vs.style ?? 0.35,
+                // Alacsonyabb stability + magas similarity = természetes, emberi hangzás
+                // (nem robotos, nem túl AI-os)
+                stability: vs.stability ?? 0.40,
+                similarity_boost: vs.similarity_boost ?? 0.92,
+                style: vs.style ?? 0.30,
                 use_speaker_boost: true,
                 speed: vs.speed ?? 1.0,
               },
@@ -281,18 +284,22 @@ Deno.serve(async (req) => {
     // For v1 we ship: if matting_mode=premium, the green-screen output IS our hero clip and we layer in the editor.
     // We just record everything and mark ready so the user can preview in the player which composes client-side.
 
-    // ====== STEP 5: UPSCALE (optional 4K) ======
+    // ====== STEP 5: UPSCALE (max minőség 4K, Real-ESRGAN 4x + face enhance) ======
     let finalVideoUrl = mattedVideoUrl;
     if (project.upscale_enabled && project.matting_mode === "premium") {
       await admin.from("ai_studio_renders").update({ status: "upscale" }).eq("id", renderId!);
-      await logStep(admin, renderId!, "upscale", "Real-ESRGAN 4x upscale indítása");
+      await logStep(admin, renderId!, "upscale", "Real-ESRGAN 4x upscale + face enhance (max 4K)");
       try {
         finalVideoUrl = await replicateRun(
           REPLICATE_UPSCALE_MODEL,
-          { image: mattedVideoUrl, scale: 2, face_enhance: true },
+          {
+            image: mattedVideoUrl,
+            scale: 4, // 4x — legkisebb pixelből 4K, maximum erősség
+            face_enhance: true, // arc finomítás (GFPGAN) — emberi vonások élesek
+          },
           REPLICATE_API_TOKEN,
         );
-        await logStep(admin, renderId!, "upscale", "Upscale kész");
+        await logStep(admin, renderId!, "upscale", "4x upscale + face enhance kész — 4K minőség");
       } catch (e) {
         await logStep(admin, renderId!, "upscale", "Upscale sikertelen, eredetit használjuk: " + (e as Error).message);
       }
