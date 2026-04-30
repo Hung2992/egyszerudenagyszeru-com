@@ -17,12 +17,11 @@ const REPLICATE_MATTING_MODEL =
   "arielreplicate/robust_video_matting:73d2128a371922d5d1abf0712a1d974be0e4e2358cc1218e4e34714767232bac";
 const REPLICATE_UPSCALE_IMG_MODEL =
   "nightmareai/real-esrgan:f121d640bd286e1fdc67f9799164c1d5be36ff74576ee11c803ae5b665dd46aa";
-// Generic ffmpeg modell Replicate-en — bármilyen ffmpeg parancsot tud futtatni
-const REPLICATE_FFMPEG_MODEL =
-  "fofr/any-comfyui-workflow:ca6589497a1d31922ec4e2b7c4d17d4a168bc6ac6d0971b2c8c60fc3de0fee4b";
-// Ehelyett a stabil ffmpeg-runner modellt használjuk:
-const REPLICATE_FFMPEG_RUNNER =
-  "smoretalk/ffmpeg-runner:0e4dda00d29e08e84d6b32ee93c3e09a3c5fc8e84d1adb39c06b9f7d96b2c1b6";
+// MEGJEGYZÉS: A végső kompozíciót (háttér + matt subject + voiceover egy mp4-be)
+// a kliensoldali MediaRecorder pipeline (AdminAiStudioRecorder.tsx) végzi el,
+// mert a Replicate-en jelenleg nincs stabil, dokumentált, általános ffmpeg
+// modellünk amit megbízhatóan hívhatnánk. Ez a függvény a nyersanyagokat (matt
+// videó, háttér, voiceover) készíti elő és tölti fel a Storage-ba.
 
 async function replicateRun(model: string, input: Record<string, unknown>, token: string): Promise<any> {
   const [owner_model, version] = model.split(":");
@@ -259,85 +258,35 @@ Deno.serve(async (req) => {
       await logStep(admin, renderId!, "tts", "Nincs TTS — eredeti hang marad");
     }
 
-    // ====== STEP 4: COMPOSE (ffmpeg via Replicate) ======
-    // Réteg: háttér (kép loop vagy videó loop) + chroma key-elt subject + (opcionális) voice
-    await admin.from("ai_studio_renders").update({ status: "compose" }).eq("id", renderId!);
-    await logStep(admin, renderId!, "compose", "ffmpeg kompozíció indítása");
-
-    // Cél felbontás
-    const outW = project.target_resolution === "4k" ? 2160 : 1080;
-    const outH = project.target_resolution === "4k" ? 3840 : 1920;
-    const maxDur = Math.min(project.max_duration_seconds || 60, 180);
-
-    // ffmpeg parancs: háttér -loop, subject chroma key, audio mix
-    // - chromakey green threshold 0.10, smoothness 0.20
-    // - subject középre skálázva, magassághoz igazítva
-    // - ha van voice, az lekeveri az eredeti hangot (vagy lecseréli)
-    const bgInput = backgroundIsVideo
-      ? `-stream_loop -1 -i "${backgroundUrl}"`
-      : `-loop 1 -i "${backgroundUrl}"`;
-    const subjectInput = `-i "${subjectVideoUrl}"`;
-    const voiceInput = voiceAudioUrl ? `-i "${voiceAudioUrl}"` : "";
-
-    const filter =
-      `[0:v]scale=${outW}:${outH}:force_original_aspect_ratio=increase,crop=${outW}:${outH}[bg];` +
-      `[1:v]chromakey=0x00FF00:0.10:0.20,scale=${outW}:${outH}:force_original_aspect_ratio=decrease[sub];` +
-      `[bg][sub]overlay=(W-w)/2:(H-h)/2:shortest=1[v]`;
-
-    let audioMap: string;
-    if (voiceAudioUrl) {
-      audioMap = `-map 2:a -map 1:a? -filter_complex "[2:a]volume=1.0[va];[1:a]volume=0.15[orig];[va][orig]amix=inputs=2:duration=longest[a]" -map "[a]"`;
-      // Egyszerűsített: a fenti filter_complex-szel együtt nem elegáns; külön audio filter:
-      audioMap = `-map "[v]" -map 2:a:0`;
-    } else {
-      audioMap = `-map "[v]" -map 1:a?`;
-    }
-
-    const ffmpegCmd =
-      `${bgInput} ${subjectInput} ${voiceInput} ` +
-      `-filter_complex "${filter}" ${audioMap} ` +
-      `-c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -r 30 ` +
-      `-c:a aac -b:a 192k -t ${maxDur} -movflags +faststart -y output.mp4`;
-
-    let composedUrl: string | null = null;
-    try {
-      const out = await replicateRun(
-        REPLICATE_FFMPEG_RUNNER,
-        { command: ffmpegCmd, output_filename: "output.mp4" },
-        REPLICATE_API_TOKEN,
-      );
-      composedUrl = firstUrl(out);
-      await logStep(admin, renderId!, "compose", "Kompozíció kész");
-    } catch (e) {
-      await logStep(admin, renderId!, "compose", "FFmpeg compose sikertelen, fallback a matt videóra: " + (e as Error).message);
-      composedUrl = subjectVideoUrl;
-    }
-
-    // ====== STEP 5: UPSCALE (csak ha 4K kérve és nem már 4K) ======
-    let finalVideoUrl = composedUrl!;
-    if (project.upscale_enabled && project.target_resolution === "4k") {
-      await admin.from("ai_studio_renders").update({ status: "upscale" }).eq("id", renderId!);
-      await logStep(admin, renderId!, "upscale", "Felbontás már 4K (kompozíció során), upscale kihagyva");
-    }
-
-    // Mentés a projekt bucketjébe
-    const outPath = `projects/${project_id}/render-${renderId}.mp4`;
-    try {
-      await downloadAndUpload(admin, finalVideoUrl, outPath, "video/mp4");
-    } catch (e) {
-      await logStep(admin, renderId!, "save", "Végső videó mentés sikertelen: " + (e as Error).message);
-      throw e;
-    }
+    // ====== STEP 4: ASSETS READY ======
+    // A render függvény eddig a pontig készíti elő a nyersanyagokat:
+    //   • subject_url    → mattolt (zöld hátterű) videó a klipped személyéről
+    //   • background_url → AI vagy saját háttér (kép vagy videó)
+    //   • voice_url      → ElevenLabs klónozott voiceover (vagy null, ha nincs)
+    //
+    // A végső kompozíciót (overlay + chroma key + audio mux + 4K export) a
+    // kliensoldali MediaRecorder pipeline végzi (AdminAiStudioRecorder.tsx),
+    // mert ez ad nekünk pixel-pontos kontrollt és nem függ kisérletei Replicate
+    // ffmpeg modellektől, amelyek időnként eltűnnek vagy hash-t váltanak.
+    await admin.from("ai_studio_renders").update({ status: "assets_ready" }).eq("id", renderId!);
+    await logStep(admin, renderId!, "assets_ready", "Nyersanyagok készen — kliens kompozícióhoz továbbítva");
 
     await admin.from("ai_studio_renders").update({
-      status: "ready", current_step: "done", output_video_path: outPath,
+      status: "assets_ready", current_step: "done",
     }).eq("id", renderId!);
-    await admin.from("ai_studio_projects").update({ status: "ready" }).eq("id", project_id);
+    await admin.from("ai_studio_projects").update({ status: "assets_ready" }).eq("id", project_id);
 
     return new Response(
       JSON.stringify({
-        render_id: renderId, output_path: outPath,
-        background_url: backgroundUrl, voice_url: voiceAudioUrl, subject_url: subjectVideoUrl,
+        render_id: renderId,
+        status: "assets_ready",
+        background_url: backgroundUrl,
+        background_is_video: backgroundIsVideo,
+        subject_url: subjectVideoUrl,
+        subject_is_green_screen: subjectIsGreenScreen,
+        voice_url: voiceAudioUrl,
+        target_resolution: project.target_resolution,
+        max_duration_seconds: Math.min(project.max_duration_seconds || 60, 180),
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
