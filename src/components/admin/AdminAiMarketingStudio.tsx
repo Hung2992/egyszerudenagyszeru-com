@@ -201,7 +201,12 @@ export default function AdminAiMarketingStudio() {
         body: { project_id: selected.id },
       });
       if (error) throw error;
-      toast({ title: "Render kész", description: `Render ID: ${data.render_id}` });
+      if (data?.error) throw new Error(data.error);
+      toast({
+        title: "Nyersanyagok készen ✅",
+        description:
+          "Háttér + mattolt videó + klónozott hang elkészült. A végső 4K kompozíciót a Stúdió fő felületén (AI Stúdió → Klip) tudod összeállítani.",
+      });
       await loadRenders(selected.id);
       const { data: refreshed } = await supabase
         .from("ai_studio_projects")
