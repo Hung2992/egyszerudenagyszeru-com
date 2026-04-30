@@ -547,12 +547,20 @@ export default function AdminAiMarketingStudio() {
                         <div>
                           <div className="text-sm font-medium">
                             {new Date(r.created_at).toLocaleString("hu-HU")}{" "}
-                            <Badge variant={r.status === "ready" ? "default" : r.status === "error" ? "destructive" : "secondary"}>
+                            <Badge variant={
+                              r.status === "ready" || r.status === "assets_ready" ? "default"
+                              : r.status === "error" ? "destructive" : "secondary"
+                            }>
                               {r.status}
                             </Badge>
                           </div>
                           {r.current_step && (
                             <div className="text-xs text-muted-foreground">Lépés: {r.current_step}</div>
+                          )}
+                          {r.status === "assets_ready" && !r.output_video_path && (
+                            <div className="text-xs text-muted-foreground">
+                              Nyersanyagok készen — fejezd be az AI Stúdió → Klip fülön.
+                            </div>
                           )}
                           {r.error_message && (
                             <div className="text-xs text-destructive">{r.error_message}</div>
