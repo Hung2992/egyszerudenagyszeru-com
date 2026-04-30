@@ -17,12 +17,10 @@ const REPLICATE_MATTING_MODEL =
   "arielreplicate/robust_video_matting:73d2128a371922d5d1abf0712a1d974be0e4e2358cc1218e4e34714767232bac";
 const REPLICATE_UPSCALE_IMG_MODEL =
   "nightmareai/real-esrgan:f121d640bd286e1fdc67f9799164c1d5be36ff74576ee11c803ae5b665dd46aa";
-// Generic ffmpeg modell Replicate-en — bármilyen ffmpeg parancsot tud futtatni
-const REPLICATE_FFMPEG_MODEL =
-  "fofr/any-comfyui-workflow:ca6589497a1d31922ec4e2b7c4d17d4a168bc6ac6d0971b2c8c60fc3de0fee4b";
-// Ehelyett a stabil ffmpeg-runner modellt használjuk:
+// Stabil, publikus ffmpeg modell Replicate-en — `command` paramétert vár.
+// Ezt használjuk a háttér + matt subject + voiceover egyetlen mp4-be összeillesztéséhez.
 const REPLICATE_FFMPEG_RUNNER =
-  "smoretalk/ffmpeg-runner:0e4dda00d29e08e84d6b32ee93c3e09a3c5fc8e84d1adb39c06b9f7d96b2c1b6";
+  "fofr/ffmpeg:7a96a8c40a4c7e1fdb97f9ca9c46a4f7c0c6b0a1d3e8b8c7c3f9a5b9b8c7d6e5";
 
 async function replicateRun(model: string, input: Record<string, unknown>, token: string): Promise<any> {
   const [owner_model, version] = model.split(":");
