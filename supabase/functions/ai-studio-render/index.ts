@@ -302,8 +302,8 @@ Deno.serve(async (req) => {
         subject_is_green_screen: subjectIsGreenScreen,
         voice_url: voiceAudioUrl,
         voice_storage_path: voiceStoragePath,
-        target_resolution: project.target_resolution,
-        max_duration_seconds: Math.min(project.max_duration_seconds || 60, 180),
+        target_resolution: project.target_resolution || "4k",
+        max_duration_seconds: safeMaxDur,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
