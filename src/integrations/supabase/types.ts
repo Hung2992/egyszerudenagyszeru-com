@@ -1386,6 +1386,59 @@ export type Database = {
           },
         ]
       }
+      ai_studio_tts_renders: {
+        Row: {
+          audio_storage_path: string | null
+          created_at: string
+          created_by: string | null
+          duration_sec: number | null
+          id: string
+          model_id: string
+          similarity_boost: number
+          speed: number
+          stability: number
+          style: number
+          text: string
+          voice_id: string | null
+        }
+        Insert: {
+          audio_storage_path?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_sec?: number | null
+          id?: string
+          model_id?: string
+          similarity_boost?: number
+          speed?: number
+          stability?: number
+          style?: number
+          text: string
+          voice_id?: string | null
+        }
+        Update: {
+          audio_storage_path?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_sec?: number | null
+          id?: string
+          model_id?: string
+          similarity_boost?: number
+          speed?: number
+          stability?: number
+          style?: number
+          text?: string
+          voice_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_studio_tts_renders_voice_id_fkey"
+            columns: ["voice_id"]
+            isOneToOne: false
+            referencedRelation: "ai_studio_voices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_studio_videos: {
         Row: {
           created_at: string
@@ -1464,6 +1517,51 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      ai_studio_voices: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          elevenlabs_voice_id: string | null
+          error_message: string | null
+          id: string
+          is_default: boolean
+          name: string
+          sample_duration_sec: number | null
+          sample_storage_path: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          elevenlabs_voice_id?: string | null
+          error_message?: string | null
+          id?: string
+          is_default?: boolean
+          name: string
+          sample_duration_sec?: number | null
+          sample_storage_path?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          elevenlabs_voice_id?: string | null
+          error_message?: string | null
+          id?: string
+          is_default?: boolean
+          name?: string
+          sample_duration_sec?: number | null
+          sample_storage_path?: string | null
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
