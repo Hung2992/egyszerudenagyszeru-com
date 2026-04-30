@@ -49,6 +49,10 @@ interface Render {
   status: string;
   current_step: string | null;
   output_video_path: string | null;
+  subject_storage_path: string | null;
+  background_storage_path: string | null;
+  background_is_video: boolean | null;
+  voice_storage_path: string | null;
   error_message: string | null;
   logs: any;
   created_at: string;
