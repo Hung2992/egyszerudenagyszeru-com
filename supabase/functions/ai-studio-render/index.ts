@@ -147,6 +147,7 @@ Deno.serve(async (req) => {
 
     // ====== STEP 1: MATTING ======
     let subjectVideoUrl: string;
+    let subjectStoragePath: string | null = null;
     let subjectIsGreenScreen = false;
 
     if (project.matting_mode === "premium") {
@@ -157,11 +158,16 @@ Deno.serve(async (req) => {
         { input_video: sourceUrl, output_type: "green-screen" },
         REPLICATE_API_TOKEN,
       );
-      subjectVideoUrl = firstUrl(out);
+      const remoteUrl = firstUrl(out);
+      // FONTOS: a Replicate signed URL néhány óra múlva lejár — letöltjük a saját Storage-ba.
+      subjectStoragePath = `projects/${project_id}/subject-${Date.now()}.mp4`;
+      await downloadAndUpload(admin, remoteUrl, subjectStoragePath, "video/mp4");
+      subjectVideoUrl = await signedUrl(admin, subjectStoragePath);
       subjectIsGreenScreen = true;
-      await logStep(admin, renderId!, "matting", "Premium matting kész (zöld háttér)");
+      await logStep(admin, renderId!, "matting", "Premium matting kész + Storage-ba mentve");
     } else {
-      // Fast: a kliens MediaPipe-pal előre zöld hátteret rakott a feltöltött videóra
+      // Fast: a kliens már zöld hátteret rakott a feltöltött videóra (vagy az eredeti)
+      subjectStoragePath = project.source_video_path;
       subjectVideoUrl = sourceUrl;
       subjectIsGreenScreen = true;
       await logStep(admin, renderId!, "matting", "Fast mód — kliens oldali zöld háttér");
