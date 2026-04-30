@@ -13,6 +13,7 @@ import {
   Upload, Play, Trash2, Download, Volume2, Sparkles, RefreshCw,
   Settings, Star, Save,
 } from "lucide-react";
+import AdminAiStudioVoiceCloning from "./AdminAiStudioVoiceCloning";
 
 // ======================================================================
 // AI Marketing Stúdió — VIDEÓ + HANG + HÁTTÉR (saját rendszer, GPU nélkül)
