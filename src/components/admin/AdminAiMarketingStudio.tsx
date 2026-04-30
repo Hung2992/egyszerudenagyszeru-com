@@ -179,11 +179,15 @@ export default function AdminAiMarketingStudio() {
 
   async function startRender() {
     if (!selected) return;
+    if (rendering || selected.status === "rendering") {
+      toast({ title: "Már fut egy render", description: "Várd meg amíg befejeződik." });
+      return;
+    }
     if (!selected.source_video_path) {
       toast({ title: "Először tölts fel forrás videót", variant: "destructive" });
       return;
     }
-    if (selected.background_type === "ai_text" && !selected.background_prompt) {
+    if (selected.background_type === "ai_text" && !selected.background_prompt?.trim()) {
       toast({ title: "Add meg a háttér leírását", variant: "destructive" });
       return;
     }
@@ -197,6 +201,11 @@ export default function AdminAiMarketingStudio() {
     }
     setRendering(true);
     try {
+      // Biztos mentés mielőtt rendert indítunk (ha a textarea még nem blur-elt)
+      await updateProject({
+        background_prompt: selected.background_prompt,
+        voice_text: selected.voice_text,
+      });
       const { data, error } = await supabase.functions.invoke("ai-studio-render", {
         body: { project_id: selected.id },
       });
@@ -205,7 +214,7 @@ export default function AdminAiMarketingStudio() {
       toast({
         title: "Nyersanyagok készen ✅",
         description:
-          "Háttér + mattolt videó + klónozott hang elkészült. A végső 4K kompozíciót a Stúdió fő felületén (AI Stúdió → Klip) tudod összeállítani.",
+          "Háttér + mattolt videó + klónozott hang elkészült és Storage-ba mentve. A végső 4K kompozíciót a Stúdió fő felületén (AI Stúdió → Klip) tudod összeállítani.",
       });
       await loadRenders(selected.id);
       const { data: refreshed } = await supabase
