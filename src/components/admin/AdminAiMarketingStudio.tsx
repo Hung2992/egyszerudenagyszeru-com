@@ -187,7 +187,11 @@ export default function AdminAiMarketingStudio() {
       toast({ title: "Add meg a háttér leírását", variant: "destructive" });
       return;
     }
-    if (selected.background_type !== "ai_text" && !selected.background_asset_path) {
+    if (selected.background_type === "ai_video" && !selected.background_asset_path) {
+      toast({ title: "Generáld le először az AI videó hátteret", variant: "destructive" });
+      return;
+    }
+    if ((selected.background_type === "image" || selected.background_type === "video") && !selected.background_asset_path) {
       toast({ title: "Tölts fel háttér képet/videót", variant: "destructive" });
       return;
     }
