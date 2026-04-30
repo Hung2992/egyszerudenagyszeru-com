@@ -223,6 +223,7 @@ Deno.serve(async (req) => {
 
     // ====== STEP 3: TTS ======
     let voiceAudioUrl: string | null = null;
+    let voiceStoragePath: string | null = null;
     if (project.voice_id && project.voice_text && ELEVENLABS_API_KEY) {
       await admin.from("ai_studio_renders").update({ status: "tts" }).eq("id", renderId!);
       await logStep(admin, renderId!, "tts", "ElevenLabs klónozott hang generálása");
@@ -254,12 +255,12 @@ Deno.serve(async (req) => {
           throw new Error(`TTS hiba [${ttsResp.status}]: ${t.slice(0, 300)}`);
         }
         const audioBuf = new Uint8Array(await ttsResp.arrayBuffer());
-        const audioPath = `projects/${project_id}/voice-${Date.now()}.mp3`;
-        const { error: aupErr } = await admin.storage.from("ai-studio-projects").upload(audioPath, audioBuf, {
+        voiceStoragePath = `projects/${project_id}/voice-${Date.now()}.mp3`;
+        const { error: aupErr } = await admin.storage.from("ai-studio-projects").upload(voiceStoragePath, audioBuf, {
           contentType: "audio/mpeg", upsert: true,
         });
         if (aupErr) throw new Error("Hang feltöltés hiba: " + aupErr.message);
-        voiceAudioUrl = await signedUrl(admin, audioPath);
+        voiceAudioUrl = await signedUrl(admin, voiceStoragePath);
         await logStep(admin, renderId!, "tts", "Klónozott hang sáv kész");
       }
     } else {
