@@ -245,11 +245,14 @@ Deno.serve(async (req) => {
             },
             body: JSON.stringify({
               text: project.voice_text,
+              // multilingual_v2 = legtisztább, leg-emberibb hang (magyar nyelv támogatás)
               model_id: "eleven_multilingual_v2",
               voice_settings: {
-                stability: vs.stability ?? 0.45,
-                similarity_boost: vs.similarity_boost ?? 0.85,
-                style: vs.style ?? 0.35,
+                // Alacsonyabb stability + magas similarity = természetes, emberi hangzás
+                // (nem robotos, nem túl AI-os)
+                stability: vs.stability ?? 0.40,
+                similarity_boost: vs.similarity_boost ?? 0.92,
+                style: vs.style ?? 0.30,
                 use_speaker_boost: true,
                 speed: vs.speed ?? 1.0,
               },
