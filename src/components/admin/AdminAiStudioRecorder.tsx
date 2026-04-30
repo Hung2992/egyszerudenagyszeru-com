@@ -867,12 +867,13 @@ const AdminAiStudioRecorder = () => {
       let lastMask: ImageBitmap | null = null;
       selfie.onResults((results: any) => {
         // results.segmentationMask = canvas/image
+        // FONTOS: a render canvas mérete renderW × renderH (supersampling esetén 2x), majd ha kell, downscale-eljük outCanvas-ra
         ctx.save();
-        ctx.clearRect(0, 0, W, H);
+        ctx.clearRect(0, 0, renderW, renderH);
 
-        // 1. háttér
+        // 1. háttér — center-crop, majd magas minőségű kétfázisú downscale ha kell
         const ar = bgImg.width / bgImg.height;
-        const targetAr = W / H;
+        const targetAr = renderW / renderH;
         let sx = 0, sy = 0, sw = bgImg.width, sh = bgImg.height;
         if (ar > targetAr) {
           sw = bgImg.height * targetAr;
@@ -881,27 +882,45 @@ const AdminAiStudioRecorder = () => {
           sh = bgImg.width / targetAr;
           sy = (bgImg.height - sh) / 2;
         }
-        ctx.drawImage(bgImg, sx, sy, sw, sh, 0, 0, W, H);
+        // Ha a háttér jelentősen nagyobb mint a render méret, kétfázisú downscale-t használunk
+        if (sw >= renderW * 2 && sh >= renderH * 2) {
+          // először kivágjuk a center-crop régiót egy temp canvasra, majd lépcsőzve csökkentjük
+          const cropC = document.createElement("canvas");
+          cropC.width = Math.round(sw); cropC.height = Math.round(sh);
+          const cropCtx = cropC.getContext("2d", { alpha: false })!;
+          cropCtx.imageSmoothingEnabled = true;
+          cropCtx.imageSmoothingQuality = "high";
+          cropCtx.drawImage(bgImg, sx, sy, sw, sh, 0, 0, sw, sh);
+          const downscaled = highQualityDownscale(cropC, Math.round(sw), Math.round(sh), renderW, renderH);
+          ctx.drawImage(downscaled, 0, 0);
+        } else {
+          ctx.drawImage(bgImg, sx, sy, sw, sh, 0, 0, renderW, renderH);
+        }
 
         // 2. személy maszkkal — élenlágyítással a természetes átmenethez
         ctx.globalCompositeOperation = "source-over";
         const tmp = document.createElement("canvas");
-        tmp.width = W; tmp.height = H;
+        tmp.width = renderW; tmp.height = renderH;
         const tctx = tmp.getContext("2d")!;
         tctx.imageSmoothingEnabled = true;
         tctx.imageSmoothingQuality = "high";
-        // Élenlágyítás: a beállítás alapján blur-t alkalmazunk a maszkra,
-        // így nem lesz szaggatott a kivágás bármilyen színes háttéren
-        const softnessPx = Math.round((settings?.edge_softness ?? 0.5) * 6);
+        // Élenlágyítás: a beállítás alapján blur-t alkalmazunk a maszkra (ss-hez skálázva)
+        const softnessPx = Math.round((settings?.edge_softness ?? 0.5) * 6 * ss);
         if (softnessPx > 0) {
           (tctx as any).filter = `blur(${softnessPx}px)`;
         }
-        tctx.drawImage(results.segmentationMask, 0, 0, W, H);
+        tctx.drawImage(results.segmentationMask, 0, 0, renderW, renderH);
         (tctx as any).filter = "none";
         tctx.globalCompositeOperation = "source-in";
-        tctx.drawImage(results.image, 0, 0, W, H);
+        tctx.drawImage(results.image, 0, 0, renderW, renderH);
         ctx.drawImage(tmp, 0, 0);
         ctx.restore();
+
+        // 3. Supersampling esetén magas minőségű downscale az output canvasra
+        if (ss > 1) {
+          // egyszerű high-quality downscale: 2x → 1x bicubic egy lépésben elég 2x ss-nél
+          outCtx.drawImage(canvas, 0, 0, renderW, renderH, 0, 0, W, H);
+        }
       });
 
       recorder.start();
