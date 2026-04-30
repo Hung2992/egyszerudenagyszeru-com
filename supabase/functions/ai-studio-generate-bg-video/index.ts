@@ -90,12 +90,15 @@ photorealistic, golden hour lighting, shallow depth of field, color graded.
 ABSOLUTELY NO people, no faces, no humans, no silhouettes — only environment and atmosphere.
 Empty stage, central area uncluttered for subject compositing later.`;
 
+    // LTX-Video: width/height pixelben (vertical 9:16 = 768x1344 vagy 704x1216)
+    const isVertical = (body?.aspect_ratio || "9:16") === "9:16";
     const videoUrl = await replicateRun(
       REPLICATE_VIDEO_MODEL,
       {
         prompt: fullPrompt,
         negative_prompt: "people, person, human, face, hand, body, silhouette, text, watermark, blurry, low quality",
-        aspect_ratio: body?.aspect_ratio || "9:16",
+        width: isVertical ? 704 : 1216,
+        height: isVertical ? 1216 : 704,
         num_frames: 121,
         cfg: 3,
         steps: 30,

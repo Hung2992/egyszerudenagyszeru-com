@@ -85,6 +85,30 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    // Auth + admin check (költségvédelem)
+    const authed = createClient(SUPABASE_URL, ANON_KEY, {
+      global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
+    });
+    const { data: userData } = await authed.auth.getUser();
+    if (!userData.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
+    const { data: roleRow } = await supabase
+      .from("user_roles").select("role")
+      .eq("user_id", userData.user.id).eq("role", "admin").maybeSingle();
+    if (!roleRow) {
+      return new Response(JSON.stringify({ error: "Admin only" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { prompt, title } = await req.json();
     if (!prompt || typeof prompt !== "string" || prompt.length < 3 || prompt.length > 1000) {
       return new Response(JSON.stringify({ error: "Háttér leírás 3-1000 karakter között kell legyen." }), {
@@ -98,11 +122,6 @@ Deno.serve(async (req) => {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
 
     // beállítások betöltése
     const { data: settings } = await supabase
