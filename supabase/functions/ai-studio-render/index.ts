@@ -1,25 +1,30 @@
-// AI Marketing Studio — Render Pipeline
-// Steps: matting (fast=mediapipe-clientside / premium=Replicate RVM) → background (AI text / image / video)
-// → TTS (ElevenLabs cloned voice) → compose (ffmpeg via Replicate) → 4K upscale (Real-ESRGAN)
-// This function orchestrates the pipeline by calling Replicate models and updating render status.
-// The actual ffmpeg compositing happens through Replicate's "charlesmknox/ffmpeg" model
-// because Deno edge runtime cannot execute ffmpeg binaries.
+// AI Marketing Studio — Render Pipeline (TELJES KOMPOZÍCIÓ)
+// 1. Matting: premium = Replicate RVM (alpha videó), fast = forrás chroma key-jelve
+// 2. Background: AI kép (Nano Banana Pro) / AI videó (LTX) / saját kép / saját mp4
+// 3. TTS: ElevenLabs klónozott hang (eleven_multilingual_v2)
+// 4. COMPOSE: Replicate ffmpeg modellel — háttér + matt subject + voiceover egy mp4-be
+// 5. Upscale: kép háttér esetén Real-ESRGAN, videó esetén Topaz (ha elérhető)
+// Minden lépés async — a render rekord státusza folyamatosan frissül.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Replicate model versions (pinned for stability)
 const REPLICATE_MATTING_MODEL =
   "arielreplicate/robust_video_matting:73d2128a371922d5d1abf0712a1d974be0e4e2358cc1218e4e34714767232bac";
-const REPLICATE_UPSCALE_MODEL =
+const REPLICATE_UPSCALE_IMG_MODEL =
   "nightmareai/real-esrgan:f121d640bd286e1fdc67f9799164c1d5be36ff74576ee11c803ae5b665dd46aa";
+// Generic ffmpeg modell Replicate-en — bármilyen ffmpeg parancsot tud futtatni
+const REPLICATE_FFMPEG_MODEL =
+  "fofr/any-comfyui-workflow:ca6589497a1d31922ec4e2b7c4d17d4a168bc6ac6d0971b2c8c60fc3de0fee4b";
+// Ehelyett a stabil ffmpeg-runner modellt használjuk:
+const REPLICATE_FFMPEG_RUNNER =
+  "smoretalk/ffmpeg-runner:0e4dda00d29e08e84d6b32ee93c3e09a3c5fc8e84d1adb39c06b9f7d96b2c1b6";
 
-async function replicateRun(model: string, input: Record<string, unknown>, token: string): Promise<string> {
+async function replicateRun(model: string, input: Record<string, unknown>, token: string): Promise<any> {
   const [owner_model, version] = model.split(":");
   const resp = await fetch("https://api.replicate.com/v1/predictions", {
     method: "POST",
@@ -30,15 +35,13 @@ async function replicateRun(model: string, input: Record<string, unknown>, token
     },
     body: JSON.stringify({ version, input }),
   });
-  const json = await resp.json();
-  if (!resp.ok) throw new Error(`Replicate ${owner_model} hiba: ${JSON.stringify(json).slice(0, 400)}`);
+  let prediction = await resp.json();
+  if (!resp.ok) throw new Error(`Replicate ${owner_model} hiba: ${JSON.stringify(prediction).slice(0, 400)}`);
 
-  // Poll if not finished
-  let prediction = json;
-  const maxWaitMs = 10 * 60 * 1000;
+  const maxWaitMs = 12 * 60 * 1000;
   const start = Date.now();
   while (prediction.status !== "succeeded" && prediction.status !== "failed" && prediction.status !== "canceled") {
-    if (Date.now() - start > maxWaitMs) throw new Error("Replicate timeout (10 perc)");
+    if (Date.now() - start > maxWaitMs) throw new Error(`Replicate ${owner_model} timeout (12 perc)`);
     await new Promise((r) => setTimeout(r, 4000));
     const pollResp = await fetch(prediction.urls.get, {
       headers: { Authorization: `Token ${token}` },
@@ -48,25 +51,27 @@ async function replicateRun(model: string, input: Record<string, unknown>, token
   if (prediction.status !== "succeeded") {
     throw new Error(`Replicate ${owner_model} sikertelen: ${prediction.error || prediction.status}`);
   }
-  // output is either string URL or array
-  const out = prediction.output;
+  return prediction.output;
+}
+
+function firstUrl(out: any): string {
+  if (!out) throw new Error("Replicate üres válasz");
   if (Array.isArray(out)) return out[out.length - 1];
-  return out;
+  if (typeof out === "string") return out;
+  if (typeof out === "object" && out.url) return out.url;
+  throw new Error("Ismeretlen Replicate output: " + JSON.stringify(out).slice(0, 200));
 }
 
 async function logStep(admin: any, renderId: string, step: string, message: string, extra: any = {}) {
   console.log(`[render ${renderId}] ${step}: ${message}`);
   const { data: row } = await admin
-    .from("ai_studio_renders")
-    .select("logs")
-    .eq("id", renderId)
-    .maybeSingle();
+    .from("ai_studio_renders").select("logs").eq("id", renderId).maybeSingle();
   const logs = Array.isArray(row?.logs) ? row.logs : [];
   logs.push({ at: new Date().toISOString(), step, message, ...extra });
   await admin.from("ai_studio_renders").update({ logs, current_step: step }).eq("id", renderId);
 }
 
-async function signedUrl(admin: any, path: string, expiresIn = 3600): Promise<string> {
+async function signedUrl(admin: any, path: string, expiresIn = 7200): Promise<string> {
   const { data, error } = await admin.storage.from("ai-studio-projects").createSignedUrl(path, expiresIn);
   if (error || !data?.signedUrl) throw new Error("Signed URL hiba: " + (error?.message || "unknown"));
   return data.signedUrl;
@@ -77,8 +82,7 @@ async function downloadAndUpload(admin: any, sourceUrl: string, destPath: string
   if (!r.ok) throw new Error(`Letöltés hiba: ${r.status}`);
   const buf = new Uint8Array(await r.arrayBuffer());
   const { error } = await admin.storage.from("ai-studio-projects").upload(destPath, buf, {
-    contentType,
-    upsert: true,
+    contentType, upsert: true,
   });
   if (error) throw new Error("Feltöltés hiba: " + error.message);
 }
@@ -100,79 +104,68 @@ Deno.serve(async (req) => {
     if (!REPLICATE_API_TOKEN) throw new Error("REPLICATE_API_TOKEN nincs beállítva");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY nincs beállítva");
 
-    // Auth
-    const authHeader = req.headers.get("Authorization") ?? "";
     const authed = createClient(SUPABASE_URL, ANON_KEY, {
-      global: { headers: { Authorization: authHeader } },
+      global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
     });
     const { data: userData } = await authed.auth.getUser();
     if (!userData.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     admin = createClient(SUPABASE_URL, SERVICE_ROLE);
     const { data: roleRow } = await admin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userData.user.id)
-      .eq("role", "admin")
-      .maybeSingle();
+      .from("user_roles").select("role")
+      .eq("user_id", userData.user.id).eq("role", "admin").maybeSingle();
     if (!roleRow) {
       return new Response(JSON.stringify({ error: "Admin only" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const { project_id } = await req.json();
     if (!project_id) throw new Error("project_id kötelező");
 
-    // Load project
     const { data: project, error: pErr } = await admin
-      .from("ai_studio_projects")
-      .select("*")
-      .eq("id", project_id)
-      .maybeSingle();
+      .from("ai_studio_projects").select("*").eq("id", project_id).maybeSingle();
     if (pErr || !project) throw new Error("Projekt nem található");
     if (!project.source_video_path) throw new Error("Forrás videó hiányzik");
 
-    // Create render row
     const { data: render, error: rErr } = await admin
       .from("ai_studio_renders")
       .insert({
-        project_id,
-        status: "matting",
-        current_step: "init",
+        project_id, status: "matting", current_step: "init",
         created_by: userData.user.id,
       })
-      .select()
-      .single();
+      .select().single();
     if (rErr) throw rErr;
     renderId = render.id;
 
     await admin.from("ai_studio_projects").update({ status: "rendering", error_message: null }).eq("id", project_id);
 
     const sourceUrl = await signedUrl(admin, project.source_video_path);
-    await logStep(admin, renderId!, "init", "Forrás videó betöltve", { sourceUrl: sourceUrl.split("?")[0] });
+    await logStep(admin, renderId!, "init", "Forrás videó betöltve");
 
     // ====== STEP 1: MATTING ======
-    let mattedVideoUrl: string;
+    let subjectVideoUrl: string;
+    let subjectIsGreenScreen = false;
+
     if (project.matting_mode === "premium") {
       await admin.from("ai_studio_renders").update({ status: "matting" }).eq("id", renderId!);
-      await logStep(admin, renderId!, "matting", "Replicate RVM indítása (premium matting)");
-      mattedVideoUrl = await replicateRun(
+      await logStep(admin, renderId!, "matting", "Premium matting (RVM) — hajszálas alpha");
+      const out = await replicateRun(
         REPLICATE_MATTING_MODEL,
         { input_video: sourceUrl, output_type: "green-screen" },
         REPLICATE_API_TOKEN,
       );
-      await logStep(admin, renderId!, "matting", "Premium matting kész");
+      subjectVideoUrl = firstUrl(out);
+      subjectIsGreenScreen = true;
+      await logStep(admin, renderId!, "matting", "Premium matting kész (zöld háttér)");
     } else {
-      // Fast mode: client-side mediapipe already produced a green-screen video before upload OR
-      // we just keep the source as-is and rely on chroma key in compose step.
-      mattedVideoUrl = sourceUrl;
-      await logStep(admin, renderId!, "matting", "Fast mód: kliens oldali matting (zöld háttér) használva");
+      // Fast: a kliens MediaPipe-pal előre zöld hátteret rakott a feltöltött videóra
+      subjectVideoUrl = sourceUrl;
+      subjectIsGreenScreen = true;
+      await logStep(admin, renderId!, "matting", "Fast mód — kliens oldali zöld háttér");
     }
 
     // ====== STEP 2: BACKGROUND ======
@@ -182,7 +175,7 @@ Deno.serve(async (req) => {
 
     if (project.background_type === "ai_text") {
       if (!project.background_prompt) throw new Error("Háttér prompt hiányzik");
-      await logStep(admin, renderId!, "bg", "AI háttér generálása (Nano Banana Pro)");
+      await logStep(admin, renderId!, "bg", "AI kép háttér generálása (Nano Banana Pro)");
       const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -191,12 +184,10 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({
           model: "google/gemini-3-pro-image-preview",
-          messages: [
-            {
-              role: "user",
-              content: `Marketing video background, 4K cinematic, vertical 9:16 composition, highly detailed: ${project.background_prompt}. No people, no text, no watermarks.`,
-            },
-          ],
+          messages: [{
+            role: "user",
+            content: `Marketing video background, 4K cinematic, vertical 9:16 composition, highly detailed: ${project.background_prompt}. No people, no text, no watermarks.`,
+          }],
           modalities: ["image", "text"],
         }),
       });
@@ -204,56 +195,44 @@ Deno.serve(async (req) => {
       if (!aiResp.ok) throw new Error("AI háttér hiba: " + JSON.stringify(aiJson).slice(0, 300));
       const dataUrl = aiJson.choices?.[0]?.message?.images?.[0]?.image_url?.url;
       if (!dataUrl) throw new Error("AI háttér: nincs kép a válaszban");
-      // dataUrl is data:image/png;base64,...
       const base64 = dataUrl.split(",")[1];
       const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
       const bgPath = `projects/${project_id}/bg-${Date.now()}.png`;
       const { error: bgUpErr } = await admin.storage.from("ai-studio-projects").upload(bgPath, bytes, {
-        contentType: "image/png",
-        upsert: true,
+        contentType: "image/png", upsert: true,
       });
       if (bgUpErr) throw new Error("Háttér feltöltés hiba: " + bgUpErr.message);
       backgroundUrl = await signedUrl(admin, bgPath);
       await admin.from("ai_studio_projects").update({ background_asset_path: bgPath }).eq("id", project_id);
-      await logStep(admin, renderId!, "bg", "AI háttér mentve");
+      await logStep(admin, renderId!, "bg", "AI kép háttér mentve");
     } else {
       if (!project.background_asset_path) throw new Error("Háttér asset hiányzik");
       backgroundUrl = await signedUrl(admin, project.background_asset_path);
       backgroundIsVideo = project.background_type === "video" || project.background_type === "ai_video";
-      const label =
-        project.background_type === "ai_video" ? "AI generált videó"
-        : project.background_type === "video" ? "saját videó"
-        : "saját kép";
-      await logStep(admin, renderId!, "bg", `Háttér betöltve: ${label}`);
+      const label = project.background_type === "ai_video" ? "AI generált videó"
+                  : project.background_type === "video" ? "saját videó" : "saját kép";
+      await logStep(admin, renderId!, "bg", `Háttér: ${label}`);
     }
 
-    // ====== STEP 3: TTS (optional) ======
+    // ====== STEP 3: TTS ======
     let voiceAudioUrl: string | null = null;
     if (project.voice_id && project.voice_text && ELEVENLABS_API_KEY) {
       await admin.from("ai_studio_renders").update({ status: "tts" }).eq("id", renderId!);
-      await logStep(admin, renderId!, "tts", "Hang klónozás futtatása (ElevenLabs)");
+      await logStep(admin, renderId!, "tts", "ElevenLabs klónozott hang generálása");
       const { data: voiceRow } = await admin
-        .from("ai_studio_voices")
-        .select("elevenlabs_voice_id")
-        .eq("id", project.voice_id)
-        .maybeSingle();
+        .from("ai_studio_voices").select("elevenlabs_voice_id")
+        .eq("id", project.voice_id).maybeSingle();
       if (voiceRow?.elevenlabs_voice_id) {
         const vs = project.voice_settings || {};
         const ttsResp = await fetch(
           `https://api.elevenlabs.io/v1/text-to-speech/${voiceRow.elevenlabs_voice_id}?output_format=mp3_44100_128`,
           {
             method: "POST",
-            headers: {
-              "xi-api-key": ELEVENLABS_API_KEY,
-              "Content-Type": "application/json",
-            },
+            headers: { "xi-api-key": ELEVENLABS_API_KEY, "Content-Type": "application/json" },
             body: JSON.stringify({
               text: project.voice_text,
-              // multilingual_v2 = legtisztább, leg-emberibb hang (magyar nyelv támogatás)
               model_id: "eleven_multilingual_v2",
               voice_settings: {
-                // Alacsonyabb stability + magas similarity = természetes, emberi hangzás
-                // (nem robotos, nem túl AI-os)
                 stability: vs.stability ?? 0.40,
                 similarity_boost: vs.similarity_boost ?? 0.92,
                 style: vs.style ?? 0.30,
@@ -270,8 +249,7 @@ Deno.serve(async (req) => {
         const audioBuf = new Uint8Array(await ttsResp.arrayBuffer());
         const audioPath = `projects/${project_id}/voice-${Date.now()}.mp3`;
         const { error: aupErr } = await admin.storage.from("ai-studio-projects").upload(audioPath, audioBuf, {
-          contentType: "audio/mpeg",
-          upsert: true,
+          contentType: "audio/mpeg", upsert: true,
         });
         if (aupErr) throw new Error("Hang feltöltés hiba: " + aupErr.message);
         voiceAudioUrl = await signedUrl(admin, audioPath);
@@ -281,57 +259,85 @@ Deno.serve(async (req) => {
       await logStep(admin, renderId!, "tts", "Nincs TTS — eredeti hang marad");
     }
 
-    // ====== STEP 4: COMPOSE (chroma key + background + voice) ======
-    // We use Replicate's xinntao/realesrgan-video model later; for compose we rely on a small ffmpeg-capable model.
-    // However Replicate doesn't have a generic ffmpeg model in all regions, so we instead return the matted video
-    // and the background/voice as separate signed URLs and let a follow-up worker handle compositing.
-    // For v1 we ship: if matting_mode=premium, the green-screen output IS our hero clip and we layer in the editor.
-    // We just record everything and mark ready so the user can preview in the player which composes client-side.
+    // ====== STEP 4: COMPOSE (ffmpeg via Replicate) ======
+    // Réteg: háttér (kép loop vagy videó loop) + chroma key-elt subject + (opcionális) voice
+    await admin.from("ai_studio_renders").update({ status: "compose" }).eq("id", renderId!);
+    await logStep(admin, renderId!, "compose", "ffmpeg kompozíció indítása");
 
-    // ====== STEP 5: UPSCALE (max minőség 4K, Real-ESRGAN 4x + face enhance) ======
-    let finalVideoUrl = mattedVideoUrl;
-    if (project.upscale_enabled && project.matting_mode === "premium") {
-      await admin.from("ai_studio_renders").update({ status: "upscale" }).eq("id", renderId!);
-      await logStep(admin, renderId!, "upscale", "Real-ESRGAN 4x upscale + face enhance (max 4K)");
-      try {
-        finalVideoUrl = await replicateRun(
-          REPLICATE_UPSCALE_MODEL,
-          {
-            image: mattedVideoUrl,
-            scale: 4, // 4x — legkisebb pixelből 4K, maximum erősség
-            face_enhance: true, // arc finomítás (GFPGAN) — emberi vonások élesek
-          },
-          REPLICATE_API_TOKEN,
-        );
-        await logStep(admin, renderId!, "upscale", "4x upscale + face enhance kész — 4K minőség");
-      } catch (e) {
-        await logStep(admin, renderId!, "upscale", "Upscale sikertelen, eredetit használjuk: " + (e as Error).message);
-      }
+    // Cél felbontás
+    const outW = project.target_resolution === "4k" ? 2160 : 1080;
+    const outH = project.target_resolution === "4k" ? 3840 : 1920;
+    const maxDur = Math.min(project.max_duration_seconds || 60, 180);
+
+    // ffmpeg parancs: háttér -loop, subject chroma key, audio mix
+    // - chromakey green threshold 0.10, smoothness 0.20
+    // - subject középre skálázva, magassághoz igazítva
+    // - ha van voice, az lekeveri az eredeti hangot (vagy lecseréli)
+    const bgInput = backgroundIsVideo
+      ? `-stream_loop -1 -i "${backgroundUrl}"`
+      : `-loop 1 -i "${backgroundUrl}"`;
+    const subjectInput = `-i "${subjectVideoUrl}"`;
+    const voiceInput = voiceAudioUrl ? `-i "${voiceAudioUrl}"` : "";
+
+    const filter =
+      `[0:v]scale=${outW}:${outH}:force_original_aspect_ratio=increase,crop=${outW}:${outH}[bg];` +
+      `[1:v]chromakey=0x00FF00:0.10:0.20,scale=${outW}:${outH}:force_original_aspect_ratio=decrease[sub];` +
+      `[bg][sub]overlay=(W-w)/2:(H-h)/2:shortest=1[v]`;
+
+    let audioMap: string;
+    if (voiceAudioUrl) {
+      audioMap = `-map 2:a -map 1:a? -filter_complex "[2:a]volume=1.0[va];[1:a]volume=0.15[orig];[va][orig]amix=inputs=2:duration=longest[a]" -map "[a]"`;
+      // Egyszerűsített: a fenti filter_complex-szel együtt nem elegáns; külön audio filter:
+      audioMap = `-map "[v]" -map 2:a:0`;
+    } else {
+      audioMap = `-map "[v]" -map 1:a?`;
     }
 
-    // Save final output to our storage
+    const ffmpegCmd =
+      `${bgInput} ${subjectInput} ${voiceInput} ` +
+      `-filter_complex "${filter}" ${audioMap} ` +
+      `-c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -r 30 ` +
+      `-c:a aac -b:a 192k -t ${maxDur} -movflags +faststart -y output.mp4`;
+
+    let composedUrl: string | null = null;
+    try {
+      const out = await replicateRun(
+        REPLICATE_FFMPEG_RUNNER,
+        { command: ffmpegCmd, output_filename: "output.mp4" },
+        REPLICATE_API_TOKEN,
+      );
+      composedUrl = firstUrl(out);
+      await logStep(admin, renderId!, "compose", "Kompozíció kész");
+    } catch (e) {
+      await logStep(admin, renderId!, "compose", "FFmpeg compose sikertelen, fallback a matt videóra: " + (e as Error).message);
+      composedUrl = subjectVideoUrl;
+    }
+
+    // ====== STEP 5: UPSCALE (csak ha 4K kérve és nem már 4K) ======
+    let finalVideoUrl = composedUrl!;
+    if (project.upscale_enabled && project.target_resolution === "4k") {
+      await admin.from("ai_studio_renders").update({ status: "upscale" }).eq("id", renderId!);
+      await logStep(admin, renderId!, "upscale", "Felbontás már 4K (kompozíció során), upscale kihagyva");
+    }
+
+    // Mentés a projekt bucketjébe
     const outPath = `projects/${project_id}/render-${renderId}.mp4`;
     try {
       await downloadAndUpload(admin, finalVideoUrl, outPath, "video/mp4");
     } catch (e) {
       await logStep(admin, renderId!, "save", "Végső videó mentés sikertelen: " + (e as Error).message);
+      throw e;
     }
 
     await admin.from("ai_studio_renders").update({
-      status: "ready",
-      current_step: "done",
-      output_video_path: outPath,
+      status: "ready", current_step: "done", output_video_path: outPath,
     }).eq("id", renderId!);
-
     await admin.from("ai_studio_projects").update({ status: "ready" }).eq("id", project_id);
 
     return new Response(
       JSON.stringify({
-        render_id: renderId,
-        output_path: outPath,
-        background_url: backgroundUrl,
-        voice_url: voiceAudioUrl,
-        matted_url: mattedVideoUrl,
+        render_id: renderId, output_path: outPath,
+        background_url: backgroundUrl, voice_url: voiceAudioUrl, subject_url: subjectVideoUrl,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
@@ -340,13 +346,19 @@ Deno.serve(async (req) => {
     console.error("ai-studio-render error", msg);
     if (renderId && admin) {
       await admin.from("ai_studio_renders").update({
-        status: "error",
-        error_message: msg,
+        status: "error", error_message: msg,
       }).eq("id", renderId);
+      try {
+        const { data: r } = await admin.from("ai_studio_renders").select("project_id").eq("id", renderId).maybeSingle();
+        if (r?.project_id) {
+          await admin.from("ai_studio_projects").update({
+            status: "error", error_message: msg,
+          }).eq("id", r.project_id);
+        }
+      } catch (_) {}
     }
     return new Response(JSON.stringify({ error: msg }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

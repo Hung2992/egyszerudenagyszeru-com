@@ -1,7 +1,7 @@
-// AI videó háttér generálás szövegből — Replicate (LTX-Video / Wan-2.1)
-// Bemenet: { prompt, project_id?, duration_seconds?, aspect_ratio? }
-// Kimenet: { ok, storage_path, signed_url } — feltölti a generált mp4-et a projekt buckedjába
-// Ha project_id meg van adva, beállítja a projekt background_asset_path + background_type = "video" mezőit
+// AI videó háttér generálás szövegből — Replicate (LTX-Video)
+// Bemenet: { prompt, project_id?, aspect_ratio? }
+// Kimenet: { ok, storage_path, signed_url }
+// Ha project_id meg van adva, beállítja a projekt background_asset_path + background_type = "ai_video" mezőit
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -10,7 +10,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// LTX-Video — gyors, kiváló minőség, max 5s @ 768x512 (felskálázható később)
 const REPLICATE_VIDEO_MODEL =
   "lightricks/ltx-video:8c47da666861d081eeb4d1261853087de23722b187d63be9fc8e5dabb29e8e6f";
 
@@ -59,7 +58,6 @@ Deno.serve(async (req) => {
   try {
     if (!REPLICATE_API_TOKEN) throw new Error("REPLICATE_API_TOKEN nincs beállítva");
 
-    // Auth + admin check
     const authed = createClient(SUPABASE_URL, ANON_KEY, {
       global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
     });
@@ -86,28 +84,25 @@ Deno.serve(async (req) => {
       throw new Error("Háttér leírás 5-1500 karakter között kell legyen.");
     }
 
-    // Strict prompt — NO humans, environment only, cinematic 4K-ready
     const fullPrompt = `Cinematic 4K marketing video background scene: ${prompt}.
 Vertical 9:16 composition, smooth camera motion (slow pan or push-in), professional cinematography,
 photorealistic, golden hour lighting, shallow depth of field, color graded.
 ABSOLUTELY NO people, no faces, no humans, no silhouettes — only environment and atmosphere.
 Empty stage, central area uncluttered for subject compositing later.`;
 
-    // Generate
     const videoUrl = await replicateRun(
       REPLICATE_VIDEO_MODEL,
       {
         prompt: fullPrompt,
         negative_prompt: "people, person, human, face, hand, body, silhouette, text, watermark, blurry, low quality",
         aspect_ratio: body?.aspect_ratio || "9:16",
-        num_frames: 121, // ~5s @ 24fps
+        num_frames: 121,
         cfg: 3,
         steps: 30,
       },
       REPLICATE_API_TOKEN,
     );
 
-    // Download + upload to our bucket
     const r = await fetch(videoUrl);
     if (!r.ok) throw new Error(`Videó letöltés hiba: ${r.status}`);
     const buf = new Uint8Array(await r.arrayBuffer());
@@ -120,10 +115,10 @@ Empty stage, central area uncluttered for subject compositing later.`;
     });
     if (up.error) throw new Error("Feltöltés hiba: " + up.error.message);
 
-    // If projectId given, link it as the project's background
+    // FIX: ai_video típust állítunk (nem video), hogy az UI helyesen ismerje fel
     if (projectId) {
       await admin.from("ai_studio_projects").update({
-        background_type: "video",
+        background_type: "ai_video",
         background_asset_path: path,
         background_prompt: prompt,
       }).eq("id", projectId);

@@ -341,10 +341,13 @@ export default function AdminAiMarketingStudio() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="fast">⚡ Gyors (kliens MediaPipe, ingyenes)</SelectItem>
-                      <SelectItem value="premium">🥇 Prémium (Robust Video Matting, hajszálas)</SelectItem>
+                      <SelectItem value="fast">⚡ Gyors (csak ha eredeti videód már zöld hátterű)</SelectItem>
+                      <SelectItem value="premium">🥇 Prémium — bármilyen háttér (Robust Video Matting, hajszálas) ⭐ AJÁNLOTT</SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Bármilyen háttérből (utca, szoba, természet) → válaszd a Prémium módot. Ez vágja ki tisztán a személyt.
+                  </p>
                 </section>
 
                 {/* Background source */}
