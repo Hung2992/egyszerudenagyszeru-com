@@ -1328,6 +1328,8 @@ export type Database = {
       }
       ai_studio_renders: {
         Row: {
+          background_is_video: boolean
+          background_storage_path: string | null
           cost_estimate: number | null
           created_at: string
           created_by: string
@@ -1337,14 +1339,20 @@ export type Database = {
           file_size_bytes: number | null
           id: string
           logs: Json
+          max_duration_snapshot: number | null
           output_video_path: string | null
           project_id: string
           replicate_matting_id: string | null
           replicate_upscale_id: string | null
           status: string
+          subject_storage_path: string | null
+          target_resolution_snapshot: string | null
           updated_at: string
+          voice_storage_path: string | null
         }
         Insert: {
+          background_is_video?: boolean
+          background_storage_path?: string | null
           cost_estimate?: number | null
           created_at?: string
           created_by: string
@@ -1354,14 +1362,20 @@ export type Database = {
           file_size_bytes?: number | null
           id?: string
           logs?: Json
+          max_duration_snapshot?: number | null
           output_video_path?: string | null
           project_id: string
           replicate_matting_id?: string | null
           replicate_upscale_id?: string | null
           status?: string
+          subject_storage_path?: string | null
+          target_resolution_snapshot?: string | null
           updated_at?: string
+          voice_storage_path?: string | null
         }
         Update: {
+          background_is_video?: boolean
+          background_storage_path?: string | null
           cost_estimate?: number | null
           created_at?: string
           created_by?: string
@@ -1371,12 +1385,16 @@ export type Database = {
           file_size_bytes?: number | null
           id?: string
           logs?: Json
+          max_duration_snapshot?: number | null
           output_video_path?: string | null
           project_id?: string
           replicate_matting_id?: string | null
           replicate_upscale_id?: string | null
           status?: string
+          subject_storage_path?: string | null
+          target_resolution_snapshot?: string | null
           updated_at?: string
+          voice_storage_path?: string | null
         }
         Relationships: [
           {

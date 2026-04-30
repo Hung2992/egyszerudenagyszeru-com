@@ -147,6 +147,7 @@ Deno.serve(async (req) => {
 
     // ====== STEP 1: MATTING ======
     let subjectVideoUrl: string;
+    let subjectStoragePath: string | null = null;
     let subjectIsGreenScreen = false;
 
     if (project.matting_mode === "premium") {
@@ -157,11 +158,16 @@ Deno.serve(async (req) => {
         { input_video: sourceUrl, output_type: "green-screen" },
         REPLICATE_API_TOKEN,
       );
-      subjectVideoUrl = firstUrl(out);
+      const remoteUrl = firstUrl(out);
+      // FONTOS: a Replicate signed URL néhány óra múlva lejár — letöltjük a saját Storage-ba.
+      subjectStoragePath = `projects/${project_id}/subject-${Date.now()}.mp4`;
+      await downloadAndUpload(admin, remoteUrl, subjectStoragePath, "video/mp4");
+      subjectVideoUrl = await signedUrl(admin, subjectStoragePath);
       subjectIsGreenScreen = true;
-      await logStep(admin, renderId!, "matting", "Premium matting kész (zöld háttér)");
+      await logStep(admin, renderId!, "matting", "Premium matting kész + Storage-ba mentve");
     } else {
-      // Fast: a kliens MediaPipe-pal előre zöld hátteret rakott a feltöltött videóra
+      // Fast: a kliens már zöld hátteret rakott a feltöltött videóra (vagy az eredeti)
+      subjectStoragePath = project.source_video_path;
       subjectVideoUrl = sourceUrl;
       subjectIsGreenScreen = true;
       await logStep(admin, renderId!, "matting", "Fast mód — kliens oldali zöld háttér");
@@ -170,6 +176,7 @@ Deno.serve(async (req) => {
     // ====== STEP 2: BACKGROUND ======
     await admin.from("ai_studio_renders").update({ status: "bg" }).eq("id", renderId!);
     let backgroundUrl: string;
+    let backgroundStoragePath: string | null = null;
     let backgroundIsVideo = false;
 
     if (project.background_type === "ai_text") {
@@ -196,17 +203,18 @@ Deno.serve(async (req) => {
       if (!dataUrl) throw new Error("AI háttér: nincs kép a válaszban");
       const base64 = dataUrl.split(",")[1];
       const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-      const bgPath = `projects/${project_id}/bg-${Date.now()}.png`;
-      const { error: bgUpErr } = await admin.storage.from("ai-studio-projects").upload(bgPath, bytes, {
+      backgroundStoragePath = `projects/${project_id}/bg-${Date.now()}.png`;
+      const { error: bgUpErr } = await admin.storage.from("ai-studio-projects").upload(backgroundStoragePath, bytes, {
         contentType: "image/png", upsert: true,
       });
       if (bgUpErr) throw new Error("Háttér feltöltés hiba: " + bgUpErr.message);
-      backgroundUrl = await signedUrl(admin, bgPath);
-      await admin.from("ai_studio_projects").update({ background_asset_path: bgPath }).eq("id", project_id);
+      backgroundUrl = await signedUrl(admin, backgroundStoragePath);
+      await admin.from("ai_studio_projects").update({ background_asset_path: backgroundStoragePath }).eq("id", project_id);
       await logStep(admin, renderId!, "bg", "AI kép háttér mentve");
     } else {
       if (!project.background_asset_path) throw new Error("Háttér asset hiányzik");
-      backgroundUrl = await signedUrl(admin, project.background_asset_path);
+      backgroundStoragePath = project.background_asset_path;
+      backgroundUrl = await signedUrl(admin, backgroundStoragePath);
       backgroundIsVideo = project.background_type === "video" || project.background_type === "ai_video";
       const label = project.background_type === "ai_video" ? "AI generált videó"
                   : project.background_type === "video" ? "saját videó" : "saját kép";
@@ -215,6 +223,7 @@ Deno.serve(async (req) => {
 
     // ====== STEP 3: TTS ======
     let voiceAudioUrl: string | null = null;
+    let voiceStoragePath: string | null = null;
     if (project.voice_id && project.voice_text && ELEVENLABS_API_KEY) {
       await admin.from("ai_studio_renders").update({ status: "tts" }).eq("id", renderId!);
       await logStep(admin, renderId!, "tts", "ElevenLabs klónozott hang generálása");
@@ -246,12 +255,12 @@ Deno.serve(async (req) => {
           throw new Error(`TTS hiba [${ttsResp.status}]: ${t.slice(0, 300)}`);
         }
         const audioBuf = new Uint8Array(await ttsResp.arrayBuffer());
-        const audioPath = `projects/${project_id}/voice-${Date.now()}.mp3`;
-        const { error: aupErr } = await admin.storage.from("ai-studio-projects").upload(audioPath, audioBuf, {
+        voiceStoragePath = `projects/${project_id}/voice-${Date.now()}.mp3`;
+        const { error: aupErr } = await admin.storage.from("ai-studio-projects").upload(voiceStoragePath, audioBuf, {
           contentType: "audio/mpeg", upsert: true,
         });
         if (aupErr) throw new Error("Hang feltöltés hiba: " + aupErr.message);
-        voiceAudioUrl = await signedUrl(admin, audioPath);
+        voiceAudioUrl = await signedUrl(admin, voiceStoragePath);
         await logStep(admin, renderId!, "tts", "Klónozott hang sáv kész");
       }
     } else {
@@ -260,19 +269,23 @@ Deno.serve(async (req) => {
 
     // ====== STEP 4: ASSETS READY ======
     // A render függvény eddig a pontig készíti elő a nyersanyagokat:
-    //   • subject_url    → mattolt (zöld hátterű) videó a klipped személyéről
-    //   • background_url → AI vagy saját háttér (kép vagy videó)
-    //   • voice_url      → ElevenLabs klónozott voiceover (vagy null, ha nincs)
+    //   • subject_storage_path    → mattolt (zöld hátterű) videó
+    //   • background_storage_path → AI vagy saját háttér (kép vagy videó)
+    //   • voice_storage_path      → ElevenLabs klónozott voiceover (vagy null)
     //
-    // A végső kompozíciót (overlay + chroma key + audio mux + 4K export) a
-    // kliensoldali MediaRecorder pipeline végzi (AdminAiStudioRecorder.tsx),
-    // mert ez ad nekünk pixel-pontos kontrollt és nem függ kisérletei Replicate
-    // ffmpeg modellektől, amelyek időnként eltűnnek vagy hash-t váltanak.
-    await admin.from("ai_studio_renders").update({ status: "assets_ready" }).eq("id", renderId!);
+    // Mindent Storage-ba mentünk, hogy később (új session, oldal újratöltés)
+    // is elérhető legyen — a kliens MediaRecorder kompozíciója ezekből dolgozik.
     await logStep(admin, renderId!, "assets_ready", "Nyersanyagok készen — kliens kompozícióhoz továbbítva");
 
     await admin.from("ai_studio_renders").update({
-      status: "assets_ready", current_step: "done",
+      status: "assets_ready",
+      current_step: "done",
+      subject_storage_path: subjectStoragePath,
+      background_storage_path: backgroundStoragePath,
+      background_is_video: backgroundIsVideo,
+      voice_storage_path: voiceStoragePath,
+      target_resolution_snapshot: project.target_resolution,
+      max_duration_snapshot: Math.min(project.max_duration_seconds || 60, 180),
     }).eq("id", renderId!);
     await admin.from("ai_studio_projects").update({ status: "assets_ready" }).eq("id", project_id);
 
@@ -281,10 +294,13 @@ Deno.serve(async (req) => {
         render_id: renderId,
         status: "assets_ready",
         background_url: backgroundUrl,
+        background_storage_path: backgroundStoragePath,
         background_is_video: backgroundIsVideo,
         subject_url: subjectVideoUrl,
+        subject_storage_path: subjectStoragePath,
         subject_is_green_screen: subjectIsGreenScreen,
         voice_url: voiceAudioUrl,
+        voice_storage_path: voiceStoragePath,
         target_resolution: project.target_resolution,
         max_duration_seconds: Math.min(project.max_duration_seconds || 60, 180),
       }),
