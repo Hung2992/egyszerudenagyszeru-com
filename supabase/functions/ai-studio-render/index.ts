@@ -277,6 +277,7 @@ Deno.serve(async (req) => {
     // is elérhető legyen — a kliens MediaRecorder kompozíciója ezekből dolgozik.
     await logStep(admin, renderId!, "assets_ready", "Nyersanyagok készen — kliens kompozícióhoz továbbítva");
 
+    const safeMaxDur = Math.min(Number(project.max_duration_seconds) || 60, 180);
     await admin.from("ai_studio_renders").update({
       status: "assets_ready",
       current_step: "done",
@@ -284,10 +285,10 @@ Deno.serve(async (req) => {
       background_storage_path: backgroundStoragePath,
       background_is_video: backgroundIsVideo,
       voice_storage_path: voiceStoragePath,
-      target_resolution_snapshot: project.target_resolution,
-      max_duration_snapshot: Math.min(project.max_duration_seconds || 60, 180),
+      target_resolution_snapshot: project.target_resolution || "4k",
+      max_duration_snapshot: safeMaxDur,
     }).eq("id", renderId!);
-    await admin.from("ai_studio_projects").update({ status: "assets_ready" }).eq("id", project_id);
+    await admin.from("ai_studio_projects").update({ status: "assets_ready", error_message: null }).eq("id", project_id);
 
     return new Response(
       JSON.stringify({
@@ -301,8 +302,8 @@ Deno.serve(async (req) => {
         subject_is_green_screen: subjectIsGreenScreen,
         voice_url: voiceAudioUrl,
         voice_storage_path: voiceStoragePath,
-        target_resolution: project.target_resolution,
-        max_duration_seconds: Math.min(project.max_duration_seconds || 60, 180),
+        target_resolution: project.target_resolution || "4k",
+        max_duration_seconds: safeMaxDur,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
