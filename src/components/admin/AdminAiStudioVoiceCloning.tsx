@@ -136,7 +136,20 @@ export default function AdminAiStudioVoiceCloning({
           model_id: "eleven_multilingual_v2",
         },
       });
-      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (error) {
+        let detail = error.message || "TTS hiba";
+        try {
+          const ctx: any = (error as any).context;
+          if (ctx?.response) {
+            const txt = await ctx.response.clone().text();
+            const j = JSON.parse(txt);
+            if (j?.error) detail = j.error;
+          }
+        } catch (_) { /* ignore */ }
+        throw new Error(detail);
+      }
+      if (!data?.audio_base64) throw new Error("Nem érkezett audio");
       const url = `data:${data.mime};base64,${data.audio_base64}`;
       if (audioRef.current) {
         audioRef.current.src = url;
