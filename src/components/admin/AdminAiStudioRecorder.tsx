@@ -1998,9 +1998,9 @@ const AdminAiStudioRecorder = () => {
                     </label>
                     <label className="text-xs">
                       Bitráta (Mbps)
-                      <input type="number" min={8} max={60} className="w-full p-1 border bg-background mt-1"
+                      <input type="number" min={8} max={120} className="w-full p-1 border bg-background mt-1"
                         value={settings.export_video_bitrate_mbps}
-                        onChange={(e) => setSettings({ ...settings, export_video_bitrate_mbps: parseInt(e.target.value) || 30 })} />
+                        onChange={(e) => setSettings({ ...settings, export_video_bitrate_mbps: Math.min(120, Math.max(8, parseInt(e.target.value) || 80)) })} />
                     </label>
                   </div>
                 )}
