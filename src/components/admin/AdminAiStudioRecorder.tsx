@@ -819,14 +819,14 @@ const AdminAiStudioRecorder = () => {
       canvas.width = renderW; canvas.height = renderH;
       // colorSpace: "display-p3" szélesebb színtartomány a támogatott böngészőkben
       const ctxOpts: any = { alpha: false, desynchronized: true, colorSpace: "display-p3" };
-      const ctx = canvas.getContext("2d", ctxOpts) || canvas.getContext("2d", { alpha: false })!;
+      const ctx = (canvas.getContext("2d", ctxOpts) || canvas.getContext("2d", { alpha: false })) as CanvasRenderingContext2D;
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
 
       // Külön output canvas a supersampling utáni downscale-hez
       const outCanvas = ss > 1 ? document.createElement("canvas") : canvas;
       if (ss > 1) { outCanvas.width = W; outCanvas.height = H; }
-      const outCtx = ss > 1 ? outCanvas.getContext("2d", { alpha: false })! : ctx;
+      const outCtx = (ss > 1 ? outCanvas.getContext("2d", { alpha: false }) : ctx) as CanvasRenderingContext2D;
       if (ss > 1) {
         outCtx.imageSmoothingEnabled = true;
         outCtx.imageSmoothingQuality = "high";
