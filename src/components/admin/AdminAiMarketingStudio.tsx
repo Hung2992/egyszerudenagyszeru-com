@@ -354,23 +354,63 @@ export default function AdminAiMarketingStudio() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ai_text">📝 Szövegből AI háttér (Prémium modell, 4K)</SelectItem>
-                      <SelectItem value="image">🖼️ Saját kép háttér</SelectItem>
-                      <SelectItem value="video">🎞️ Saját videó háttér</SelectItem>
+                      <SelectItem value="ai_text">📝 Szövegből AI kép háttér (4K, Nano Banana Pro)</SelectItem>
+                      <SelectItem value="ai_video">🎬 Szövegből AI videó háttér (LTX-Video, mozgó)</SelectItem>
+                      <SelectItem value="image">🖼️ Saját kép háttér (feltöltés)</SelectItem>
+                      <SelectItem value="video">🎞️ Saját videó háttér (mp4 feltöltés)</SelectItem>
                     </SelectContent>
                   </Select>
 
-                  {selected.background_type === "ai_text" && (
-                    <Textarea
-                      placeholder="Írd le milyen háttér kell (pl.: 'Modern minimalista streetwear stúdió, fekete-arany, neon visszfények, cinematic lighting, 4K')"
-                      value={selected.background_prompt || ""}
-                      onChange={(e) => setSelected({ ...selected, background_prompt: e.target.value })}
-                      onBlur={() => updateProject({ background_prompt: selected.background_prompt })}
-                      rows={3}
-                    />
+                  {(selected.background_type === "ai_text" || selected.background_type === "ai_video") && (
+                    <>
+                      <Textarea
+                        placeholder={
+                          selected.background_type === "ai_video"
+                            ? "Írd le milyen mozgó háttér kell (pl.: 'Lassan mozgó neon városi utca éjszaka, esőcseppek, cinematic, golden hour')"
+                            : "Írd le milyen háttér kell (pl.: 'Modern minimalista streetwear stúdió, fekete-arany, neon visszfények, cinematic lighting, 4K')"
+                        }
+                        value={selected.background_prompt || ""}
+                        onChange={(e) => setSelected({ ...selected, background_prompt: e.target.value })}
+                        onBlur={() => updateProject({ background_prompt: selected.background_prompt })}
+                        rows={3}
+                      />
+                      {selected.background_type === "ai_video" && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={uploading || !selected.background_prompt}
+                          onClick={async () => {
+                            if (!selected.background_prompt) return;
+                            setUploading(true);
+                            try {
+                              const { data, error } = await supabase.functions.invoke(
+                                "ai-studio-generate-bg-video",
+                                { body: { prompt: selected.background_prompt, project_id: selected.id } },
+                              );
+                              if (error) throw error;
+                              if (data?.error) throw new Error(data.error);
+                              toast({ title: "AI videó háttér kész", description: "Készen áll a renderhez." });
+                              const { data: refreshed } = await supabase
+                                .from("ai_studio_projects").select("*").eq("id", selected.id).single();
+                              if (refreshed) setSelected(refreshed as Project);
+                            } catch (e) {
+                              toast({ title: "Generálás hiba", description: (e as Error).message, variant: "destructive" });
+                            } finally {
+                              setUploading(false);
+                            }
+                          }}
+                        >
+                          {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                          AI videó háttér generálása (~1-3 perc)
+                        </Button>
+                      )}
+                      {selected.background_type === "ai_video" && selected.background_asset_path && (
+                        <Badge variant="outline">✓ AI videó háttér mentve</Badge>
+                      )}
+                    </>
                   )}
 
-                  {selected.background_type !== "ai_text" && (
+                  {(selected.background_type === "image" || selected.background_type === "video") && (
                     <div className="flex items-center gap-2">
                       <Input
                         type="file"
