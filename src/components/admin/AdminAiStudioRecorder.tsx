@@ -100,14 +100,63 @@ interface StudioSettings {
   preview_hd_enabled: boolean;
 }
 
-// Export presetek — TikTok, YouTube, egyedi
-export const EXPORT_PRESETS: Record<string, { label: string; orientation: "landscape" | "vertical"; width: number; height: number; bitrate_mbps: number; fps: number }> = {
-  tiktok_1080_vertical:   { label: "TikTok / Reels — 1080×1920 (függőleges, 30 fps)",  orientation: "vertical",  width: 1080, height: 1920, bitrate_mbps: 28, fps: 30 },
-  tiktok_4k_vertical:     { label: "TikTok 4K — 2160×3840 (függőleges, 30 fps)",        orientation: "vertical",  width: 2160, height: 3840, bitrate_mbps: 35, fps: 30 },
-  youtube_1080_landscape: { label: "YouTube 1080p — 1920×1080 (vízszintes, 30 fps)",    orientation: "landscape", width: 1920, height: 1080, bitrate_mbps: 16, fps: 30 },
-  youtube_4k_landscape:   { label: "YouTube 4K — 3840×2160 (vízszintes, 30 fps)",       orientation: "landscape", width: 3840, height: 2160, bitrate_mbps: 30, fps: 30 },
-  custom:                 { label: "Egyedi (kézi méret + bitráta)",                       orientation: "landscape", width: 3840, height: 2160, bitrate_mbps: 30, fps: 30 },
+// Export presetek — TikTok, YouTube, MAX MASTER, egyedi
+// Bitráták jelentősen emelve a "soha ne legyen pixeles" cél érdekében.
+// A MAX MASTER preset 60 fps + 120 Mbps + 2x supersampling — gyakorlatilag stúdió-master kimenet.
+export const EXPORT_PRESETS: Record<string, { label: string; orientation: "landscape" | "vertical"; width: number; height: number; bitrate_mbps: number; fps: number; supersample?: number }> = {
+  tiktok_1080_vertical:   { label: "TikTok / Reels — 1080×1920 (függőleges, 30 fps, 45 Mbps)",  orientation: "vertical",  width: 1080, height: 1920, bitrate_mbps: 45, fps: 30, supersample: 2 },
+  tiktok_4k_vertical:     { label: "TikTok 4K — 2160×3840 (függőleges, 60 fps, 80 Mbps)",        orientation: "vertical",  width: 2160, height: 3840, bitrate_mbps: 80, fps: 60, supersample: 1 },
+  youtube_1080_landscape: { label: "YouTube 1080p — 1920×1080 (vízszintes, 60 fps, 30 Mbps)",    orientation: "landscape", width: 1920, height: 1080, bitrate_mbps: 30, fps: 60, supersample: 2 },
+  youtube_4k_landscape:   { label: "YouTube 4K — 3840×2160 (vízszintes, 60 fps, 80 Mbps)",       orientation: "landscape", width: 3840, height: 2160, bitrate_mbps: 80, fps: 60, supersample: 1 },
+  master_4k_landscape:    { label: "🏆 MAX MASTER 4K — 3840×2160 @ 60 fps, 120 Mbps (stúdió)",   orientation: "landscape", width: 3840, height: 2160, bitrate_mbps: 120, fps: 60, supersample: 2 },
+  master_4k_vertical:     { label: "🏆 MAX MASTER 4K vertikális — 2160×3840 @ 60 fps, 120 Mbps", orientation: "vertical",  width: 2160, height: 3840, bitrate_mbps: 120, fps: 60, supersample: 2 },
+  custom:                 { label: "Egyedi (kézi méret + bitráta)",                                orientation: "landscape", width: 3840, height: 2160, bitrate_mbps: 80,  fps: 60, supersample: 1 },
 };
+
+// Magas minőségű kétfázisú downscale — élesebb mint a böngésző natív skálázása
+// (Lanczos-szerű hatás: ismételt 2x csökkentés bicubic-kal)
+function highQualityDownscale(source: HTMLCanvasElement | HTMLImageElement | ImageBitmap, srcW: number, srcH: number, dstW: number, dstH: number): HTMLCanvasElement {
+  let curW = srcW, curH = srcH;
+  let curCanvas: HTMLCanvasElement | null = null;
+  let curSource: any = source;
+  // Csak addig felezünk amíg legalább 2x nagyobb mint a célméret
+  while (curW >= dstW * 2 && curH >= dstH * 2) {
+    const nextW = Math.round(curW / 2);
+    const nextH = Math.round(curH / 2);
+    const c = document.createElement("canvas");
+    c.width = nextW; c.height = nextH;
+    const cx = c.getContext("2d", { alpha: false })!;
+    cx.imageSmoothingEnabled = true;
+    cx.imageSmoothingQuality = "high";
+    cx.drawImage(curSource, 0, 0, curW, curH, 0, 0, nextW, nextH);
+    curCanvas = c;
+    curSource = c;
+    curW = nextW; curH = nextH;
+  }
+  // Utolsó lépés a célméretre
+  const final = document.createElement("canvas");
+  final.width = dstW; final.height = dstH;
+  const fx = final.getContext("2d", { alpha: false })!;
+  fx.imageSmoothingEnabled = true;
+  fx.imageSmoothingQuality = "high";
+  fx.drawImage(curSource, 0, 0, curW, curH, 0, 0, dstW, dstH);
+  return final;
+}
+
+// A legjobb elérhető codec kiválasztása a böngészőtől — AV1 → VP9 → H.264 sorrendben
+function pickBestCodec(): string {
+  const candidates = [
+    "video/webm;codecs=av01.0.08M.08,opus",   // AV1 4K, ha támogatott (Chrome 116+)
+    "video/webm;codecs=vp9.2,opus",            // VP9 Profile 2 (10-bit)
+    "video/webm;codecs=vp9,opus",
+    "video/webm;codecs=vp8,opus",
+    "video/mp4;codecs=h264,aac",
+  ];
+  for (const c of candidates) {
+    if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(c)) return c;
+  }
+  return "video/webm";
+}
 
 const BG_CATEGORIES = [
   { value: "general", label: "Általános" },
