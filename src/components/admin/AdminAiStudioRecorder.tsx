@@ -100,14 +100,63 @@ interface StudioSettings {
   preview_hd_enabled: boolean;
 }
 
-// Export presetek — TikTok, YouTube, egyedi
-export const EXPORT_PRESETS: Record<string, { label: string; orientation: "landscape" | "vertical"; width: number; height: number; bitrate_mbps: number; fps: number }> = {
-  tiktok_1080_vertical:   { label: "TikTok / Reels — 1080×1920 (függőleges, 30 fps)",  orientation: "vertical",  width: 1080, height: 1920, bitrate_mbps: 28, fps: 30 },
-  tiktok_4k_vertical:     { label: "TikTok 4K — 2160×3840 (függőleges, 30 fps)",        orientation: "vertical",  width: 2160, height: 3840, bitrate_mbps: 35, fps: 30 },
-  youtube_1080_landscape: { label: "YouTube 1080p — 1920×1080 (vízszintes, 30 fps)",    orientation: "landscape", width: 1920, height: 1080, bitrate_mbps: 16, fps: 30 },
-  youtube_4k_landscape:   { label: "YouTube 4K — 3840×2160 (vízszintes, 30 fps)",       orientation: "landscape", width: 3840, height: 2160, bitrate_mbps: 30, fps: 30 },
-  custom:                 { label: "Egyedi (kézi méret + bitráta)",                       orientation: "landscape", width: 3840, height: 2160, bitrate_mbps: 30, fps: 30 },
+// Export presetek — TikTok, YouTube, MAX MASTER, egyedi
+// Bitráták jelentősen emelve a "soha ne legyen pixeles" cél érdekében.
+// A MAX MASTER preset 60 fps + 120 Mbps + 2x supersampling — gyakorlatilag stúdió-master kimenet.
+export const EXPORT_PRESETS: Record<string, { label: string; orientation: "landscape" | "vertical"; width: number; height: number; bitrate_mbps: number; fps: number; supersample?: number }> = {
+  tiktok_1080_vertical:   { label: "TikTok / Reels — 1080×1920 (függőleges, 30 fps, 45 Mbps)",  orientation: "vertical",  width: 1080, height: 1920, bitrate_mbps: 45, fps: 30, supersample: 2 },
+  tiktok_4k_vertical:     { label: "TikTok 4K — 2160×3840 (függőleges, 60 fps, 80 Mbps)",        orientation: "vertical",  width: 2160, height: 3840, bitrate_mbps: 80, fps: 60, supersample: 1 },
+  youtube_1080_landscape: { label: "YouTube 1080p — 1920×1080 (vízszintes, 60 fps, 30 Mbps)",    orientation: "landscape", width: 1920, height: 1080, bitrate_mbps: 30, fps: 60, supersample: 2 },
+  youtube_4k_landscape:   { label: "YouTube 4K — 3840×2160 (vízszintes, 60 fps, 80 Mbps)",       orientation: "landscape", width: 3840, height: 2160, bitrate_mbps: 80, fps: 60, supersample: 1 },
+  master_4k_landscape:    { label: "🏆 MAX MASTER 4K — 3840×2160 @ 60 fps, 120 Mbps (stúdió)",   orientation: "landscape", width: 3840, height: 2160, bitrate_mbps: 120, fps: 60, supersample: 2 },
+  master_4k_vertical:     { label: "🏆 MAX MASTER 4K vertikális — 2160×3840 @ 60 fps, 120 Mbps", orientation: "vertical",  width: 2160, height: 3840, bitrate_mbps: 120, fps: 60, supersample: 2 },
+  custom:                 { label: "Egyedi (kézi méret + bitráta)",                                orientation: "landscape", width: 3840, height: 2160, bitrate_mbps: 80,  fps: 60, supersample: 1 },
 };
+
+// Magas minőségű kétfázisú downscale — élesebb mint a böngésző natív skálázása
+// (Lanczos-szerű hatás: ismételt 2x csökkentés bicubic-kal)
+function highQualityDownscale(source: HTMLCanvasElement | HTMLImageElement | ImageBitmap, srcW: number, srcH: number, dstW: number, dstH: number): HTMLCanvasElement {
+  let curW = srcW, curH = srcH;
+  let curCanvas: HTMLCanvasElement | null = null;
+  let curSource: any = source;
+  // Csak addig felezünk amíg legalább 2x nagyobb mint a célméret
+  while (curW >= dstW * 2 && curH >= dstH * 2) {
+    const nextW = Math.round(curW / 2);
+    const nextH = Math.round(curH / 2);
+    const c = document.createElement("canvas");
+    c.width = nextW; c.height = nextH;
+    const cx = c.getContext("2d", { alpha: false })!;
+    cx.imageSmoothingEnabled = true;
+    cx.imageSmoothingQuality = "high";
+    cx.drawImage(curSource, 0, 0, curW, curH, 0, 0, nextW, nextH);
+    curCanvas = c;
+    curSource = c;
+    curW = nextW; curH = nextH;
+  }
+  // Utolsó lépés a célméretre
+  const final = document.createElement("canvas");
+  final.width = dstW; final.height = dstH;
+  const fx = final.getContext("2d", { alpha: false })!;
+  fx.imageSmoothingEnabled = true;
+  fx.imageSmoothingQuality = "high";
+  fx.drawImage(curSource, 0, 0, curW, curH, 0, 0, dstW, dstH);
+  return final;
+}
+
+// A legjobb elérhető codec kiválasztása a böngészőtől — AV1 → VP9 → H.264 sorrendben
+function pickBestCodec(): string {
+  const candidates = [
+    "video/webm;codecs=av01.0.08M.08,opus",   // AV1 4K, ha támogatott (Chrome 116+)
+    "video/webm;codecs=vp9.2,opus",            // VP9 Profile 2 (10-bit)
+    "video/webm;codecs=vp9,opus",
+    "video/webm;codecs=vp8,opus",
+    "video/mp4;codecs=h264,aac",
+  ];
+  for (const c of candidates) {
+    if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(c)) return c;
+  }
+  return "video/webm";
+}
 
 const BG_CATEGORIES = [
   { value: "general", label: "Általános" },
@@ -760,14 +809,31 @@ const AdminAiStudioRecorder = () => {
       if (Math.abs(srcAr - dstAr) > 0.15) {
         logWarnings.push(`A forrás (${srcAr.toFixed(2)}) és export (${dstAr.toFixed(2)}) képarány eltér — fekete sávok vagy vágás keletkezhet.`);
       }
+      // SUPERSAMPLING: ha a preset supersample=2, akkor 2x méretben renderelünk és magas-minőségű
+      // downscale-lel csökkentjük a célméretre. Így MSAA-szerű élsimítást kapunk és élesebb lesz a kép
+      // a kompresszió után is. 4K-nál (3840×2160) supersample=1 mert már 2x-es az 8K, ami túl lassú.
+      const ss = (preset as any).supersample || 1;
+      const renderW = W * ss;
+      const renderH = H * ss;
       const canvas = document.createElement("canvas");
-      canvas.width = W; canvas.height = H;
-      const ctx = canvas.getContext("2d", { alpha: false })!;
+      canvas.width = renderW; canvas.height = renderH;
+      // colorSpace: "display-p3" szélesebb színtartomány a támogatott böngészőkben
+      const ctxOpts: any = { alpha: false, desynchronized: true, colorSpace: "display-p3" };
+      const ctx = (canvas.getContext("2d", ctxOpts) || canvas.getContext("2d", { alpha: false })) as CanvasRenderingContext2D;
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
 
+      // Külön output canvas a supersampling utáni downscale-hez
+      const outCanvas = ss > 1 ? document.createElement("canvas") : canvas;
+      if (ss > 1) { outCanvas.width = W; outCanvas.height = H; }
+      const outCtx = (ss > 1 ? outCanvas.getContext("2d", { alpha: false }) : ctx) as CanvasRenderingContext2D;
+      if (ss > 1) {
+        outCtx.imageSmoothingEnabled = true;
+        outCtx.imageSmoothingQuality = "high";
+      }
+
       // ===== AUDIO MIXING =====
-      const videoStream = canvas.captureStream(fps);
+      const videoStream = outCanvas.captureStream(fps);
       let audioCtx: AudioContext | null = null;
       let audioDest: MediaStreamAudioDestinationNode | null = null;
 
@@ -777,24 +843,21 @@ const AdminAiStudioRecorder = () => {
           audioDest = audioCtx.createMediaStreamDestination();
           const srcNode = audioCtx.createMediaElementSource(vEl);
           srcNode.connect(audioDest);
-          // halk monitor visszacsatolás (opcionális, hogy ne legyen visszhang)
-          // srcNode.connect(audioCtx.destination);
           audioDest.stream.getAudioTracks().forEach((t) => videoStream.addTrack(t));
         } catch (e) { console.warn("audio mix hiba", e); }
       } else if (audioSource === "tts" && scriptText.trim()) {
-        // TTS-t a render alatt elindítjuk; a böngésző hangját nem tudjuk közvetlenül elkapni,
-        // ezért MediaRecorder-rel rögzítjük a default audio outputot egy AudioContext-en keresztül.
-        // Mivel SpeechSynthesis nem captureálható, beállítjuk hogy a felhasználó hallja, és a klip végén külön TTS-t generálunk.
-        // Itt csak elindítjuk visszajátszáshoz; a TTS audio sávot a kliphez későbbi lépésben fűzzük (jelenleg only video + UI-ban hallható).
+        // (TTS path változatlan)
       }
 
       // Bitráta: preset alapján (custom esetén az admin érték), Mbps -> bps
-      const presetBitrate = useCustom ? (settings?.export_video_bitrate_mbps || 30) : preset.bitrate_mbps;
-      const videoBps = Math.max(8, Math.min(60, presetBitrate)) * 1_000_000;
-      logVBps = Math.max(8, Math.min(60, presetBitrate));
-      const audioBps = (settings?.audio_bitrate_kbps ?? 256) * 1000;
+      // PLAFON 120 Mbps-ra emelve a "stúdió master" minőség miatt
+      const presetBitrate = useCustom ? (settings?.export_video_bitrate_mbps || 80) : preset.bitrate_mbps;
+      const videoBps = Math.max(8, Math.min(120, presetBitrate)) * 1_000_000;
+      logVBps = Math.max(8, Math.min(120, presetBitrate));
+      const audioBps = (settings?.audio_bitrate_kbps ?? 320) * 1000;
+      const bestMime = pickBestCodec();
       const recorder = new MediaRecorder(videoStream, {
-        mimeType: "video/webm;codecs=vp9,opus",
+        mimeType: bestMime,
         videoBitsPerSecond: videoBps,
         audioBitsPerSecond: audioBps,
       });
@@ -804,12 +867,13 @@ const AdminAiStudioRecorder = () => {
       let lastMask: ImageBitmap | null = null;
       selfie.onResults((results: any) => {
         // results.segmentationMask = canvas/image
+        // FONTOS: a render canvas mérete renderW × renderH (supersampling esetén 2x), majd ha kell, downscale-eljük outCanvas-ra
         ctx.save();
-        ctx.clearRect(0, 0, W, H);
+        ctx.clearRect(0, 0, renderW, renderH);
 
-        // 1. háttér
+        // 1. háttér — center-crop, majd magas minőségű kétfázisú downscale ha kell
         const ar = bgImg.width / bgImg.height;
-        const targetAr = W / H;
+        const targetAr = renderW / renderH;
         let sx = 0, sy = 0, sw = bgImg.width, sh = bgImg.height;
         if (ar > targetAr) {
           sw = bgImg.height * targetAr;
@@ -818,27 +882,45 @@ const AdminAiStudioRecorder = () => {
           sh = bgImg.width / targetAr;
           sy = (bgImg.height - sh) / 2;
         }
-        ctx.drawImage(bgImg, sx, sy, sw, sh, 0, 0, W, H);
+        // Ha a háttér jelentősen nagyobb mint a render méret, kétfázisú downscale-t használunk
+        if (sw >= renderW * 2 && sh >= renderH * 2) {
+          // először kivágjuk a center-crop régiót egy temp canvasra, majd lépcsőzve csökkentjük
+          const cropC = document.createElement("canvas");
+          cropC.width = Math.round(sw); cropC.height = Math.round(sh);
+          const cropCtx = cropC.getContext("2d", { alpha: false })!;
+          cropCtx.imageSmoothingEnabled = true;
+          cropCtx.imageSmoothingQuality = "high";
+          cropCtx.drawImage(bgImg, sx, sy, sw, sh, 0, 0, sw, sh);
+          const downscaled = highQualityDownscale(cropC, Math.round(sw), Math.round(sh), renderW, renderH);
+          ctx.drawImage(downscaled, 0, 0);
+        } else {
+          ctx.drawImage(bgImg, sx, sy, sw, sh, 0, 0, renderW, renderH);
+        }
 
         // 2. személy maszkkal — élenlágyítással a természetes átmenethez
         ctx.globalCompositeOperation = "source-over";
         const tmp = document.createElement("canvas");
-        tmp.width = W; tmp.height = H;
+        tmp.width = renderW; tmp.height = renderH;
         const tctx = tmp.getContext("2d")!;
         tctx.imageSmoothingEnabled = true;
         tctx.imageSmoothingQuality = "high";
-        // Élenlágyítás: a beállítás alapján blur-t alkalmazunk a maszkra,
-        // így nem lesz szaggatott a kivágás bármilyen színes háttéren
-        const softnessPx = Math.round((settings?.edge_softness ?? 0.5) * 6);
+        // Élenlágyítás: a beállítás alapján blur-t alkalmazunk a maszkra (ss-hez skálázva)
+        const softnessPx = Math.round((settings?.edge_softness ?? 0.5) * 6 * ss);
         if (softnessPx > 0) {
           (tctx as any).filter = `blur(${softnessPx}px)`;
         }
-        tctx.drawImage(results.segmentationMask, 0, 0, W, H);
+        tctx.drawImage(results.segmentationMask, 0, 0, renderW, renderH);
         (tctx as any).filter = "none";
         tctx.globalCompositeOperation = "source-in";
-        tctx.drawImage(results.image, 0, 0, W, H);
+        tctx.drawImage(results.image, 0, 0, renderW, renderH);
         ctx.drawImage(tmp, 0, 0);
         ctx.restore();
+
+        // 3. Supersampling esetén magas minőségű downscale az output canvasra
+        if (ss > 1) {
+          // egyszerű high-quality downscale: 2x → 1x bicubic egy lépésben elég 2x ss-nél
+          outCtx.drawImage(canvas, 0, 0, renderW, renderH, 0, 0, W, H);
+        }
       });
 
       recorder.start();
@@ -1916,9 +1998,9 @@ const AdminAiStudioRecorder = () => {
                     </label>
                     <label className="text-xs">
                       Bitráta (Mbps)
-                      <input type="number" min={8} max={60} className="w-full p-1 border bg-background mt-1"
+                      <input type="number" min={8} max={120} className="w-full p-1 border bg-background mt-1"
                         value={settings.export_video_bitrate_mbps}
-                        onChange={(e) => setSettings({ ...settings, export_video_bitrate_mbps: parseInt(e.target.value) || 30 })} />
+                        onChange={(e) => setSettings({ ...settings, export_video_bitrate_mbps: Math.min(120, Math.max(8, parseInt(e.target.value) || 80)) })} />
                     </label>
                   </div>
                 )}
