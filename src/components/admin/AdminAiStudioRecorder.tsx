@@ -809,14 +809,31 @@ const AdminAiStudioRecorder = () => {
       if (Math.abs(srcAr - dstAr) > 0.15) {
         logWarnings.push(`A forrás (${srcAr.toFixed(2)}) és export (${dstAr.toFixed(2)}) képarány eltér — fekete sávok vagy vágás keletkezhet.`);
       }
+      // SUPERSAMPLING: ha a preset supersample=2, akkor 2x méretben renderelünk és magas-minőségű
+      // downscale-lel csökkentjük a célméretre. Így MSAA-szerű élsimítást kapunk és élesebb lesz a kép
+      // a kompresszió után is. 4K-nál (3840×2160) supersample=1 mert már 2x-es az 8K, ami túl lassú.
+      const ss = (preset as any).supersample || 1;
+      const renderW = W * ss;
+      const renderH = H * ss;
       const canvas = document.createElement("canvas");
-      canvas.width = W; canvas.height = H;
-      const ctx = canvas.getContext("2d", { alpha: false })!;
+      canvas.width = renderW; canvas.height = renderH;
+      // colorSpace: "display-p3" szélesebb színtartomány a támogatott böngészőkben
+      const ctxOpts: any = { alpha: false, desynchronized: true, colorSpace: "display-p3" };
+      const ctx = canvas.getContext("2d", ctxOpts) || canvas.getContext("2d", { alpha: false })!;
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
 
+      // Külön output canvas a supersampling utáni downscale-hez
+      const outCanvas = ss > 1 ? document.createElement("canvas") : canvas;
+      if (ss > 1) { outCanvas.width = W; outCanvas.height = H; }
+      const outCtx = ss > 1 ? outCanvas.getContext("2d", { alpha: false })! : ctx;
+      if (ss > 1) {
+        outCtx.imageSmoothingEnabled = true;
+        outCtx.imageSmoothingQuality = "high";
+      }
+
       // ===== AUDIO MIXING =====
-      const videoStream = canvas.captureStream(fps);
+      const videoStream = outCanvas.captureStream(fps);
       let audioCtx: AudioContext | null = null;
       let audioDest: MediaStreamAudioDestinationNode | null = null;
 
@@ -826,24 +843,21 @@ const AdminAiStudioRecorder = () => {
           audioDest = audioCtx.createMediaStreamDestination();
           const srcNode = audioCtx.createMediaElementSource(vEl);
           srcNode.connect(audioDest);
-          // halk monitor visszacsatolás (opcionális, hogy ne legyen visszhang)
-          // srcNode.connect(audioCtx.destination);
           audioDest.stream.getAudioTracks().forEach((t) => videoStream.addTrack(t));
         } catch (e) { console.warn("audio mix hiba", e); }
       } else if (audioSource === "tts" && scriptText.trim()) {
-        // TTS-t a render alatt elindítjuk; a böngésző hangját nem tudjuk közvetlenül elkapni,
-        // ezért MediaRecorder-rel rögzítjük a default audio outputot egy AudioContext-en keresztül.
-        // Mivel SpeechSynthesis nem captureálható, beállítjuk hogy a felhasználó hallja, és a klip végén külön TTS-t generálunk.
-        // Itt csak elindítjuk visszajátszáshoz; a TTS audio sávot a kliphez későbbi lépésben fűzzük (jelenleg only video + UI-ban hallható).
+        // (TTS path változatlan)
       }
 
       // Bitráta: preset alapján (custom esetén az admin érték), Mbps -> bps
-      const presetBitrate = useCustom ? (settings?.export_video_bitrate_mbps || 30) : preset.bitrate_mbps;
-      const videoBps = Math.max(8, Math.min(60, presetBitrate)) * 1_000_000;
-      logVBps = Math.max(8, Math.min(60, presetBitrate));
-      const audioBps = (settings?.audio_bitrate_kbps ?? 256) * 1000;
+      // PLAFON 120 Mbps-ra emelve a "stúdió master" minőség miatt
+      const presetBitrate = useCustom ? (settings?.export_video_bitrate_mbps || 80) : preset.bitrate_mbps;
+      const videoBps = Math.max(8, Math.min(120, presetBitrate)) * 1_000_000;
+      logVBps = Math.max(8, Math.min(120, presetBitrate));
+      const audioBps = (settings?.audio_bitrate_kbps ?? 320) * 1000;
+      const bestMime = pickBestCodec();
       const recorder = new MediaRecorder(videoStream, {
-        mimeType: "video/webm;codecs=vp9,opus",
+        mimeType: bestMime,
         videoBitsPerSecond: videoBps,
         audioBitsPerSecond: audioBps,
       });
