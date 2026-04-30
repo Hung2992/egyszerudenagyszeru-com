@@ -176,6 +176,7 @@ Deno.serve(async (req) => {
     // ====== STEP 2: BACKGROUND ======
     await admin.from("ai_studio_renders").update({ status: "bg" }).eq("id", renderId!);
     let backgroundUrl: string;
+    let backgroundStoragePath: string | null = null;
     let backgroundIsVideo = false;
 
     if (project.background_type === "ai_text") {
@@ -202,17 +203,18 @@ Deno.serve(async (req) => {
       if (!dataUrl) throw new Error("AI háttér: nincs kép a válaszban");
       const base64 = dataUrl.split(",")[1];
       const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-      const bgPath = `projects/${project_id}/bg-${Date.now()}.png`;
-      const { error: bgUpErr } = await admin.storage.from("ai-studio-projects").upload(bgPath, bytes, {
+      backgroundStoragePath = `projects/${project_id}/bg-${Date.now()}.png`;
+      const { error: bgUpErr } = await admin.storage.from("ai-studio-projects").upload(backgroundStoragePath, bytes, {
         contentType: "image/png", upsert: true,
       });
       if (bgUpErr) throw new Error("Háttér feltöltés hiba: " + bgUpErr.message);
-      backgroundUrl = await signedUrl(admin, bgPath);
-      await admin.from("ai_studio_projects").update({ background_asset_path: bgPath }).eq("id", project_id);
+      backgroundUrl = await signedUrl(admin, backgroundStoragePath);
+      await admin.from("ai_studio_projects").update({ background_asset_path: backgroundStoragePath }).eq("id", project_id);
       await logStep(admin, renderId!, "bg", "AI kép háttér mentve");
     } else {
       if (!project.background_asset_path) throw new Error("Háttér asset hiányzik");
-      backgroundUrl = await signedUrl(admin, project.background_asset_path);
+      backgroundStoragePath = project.background_asset_path;
+      backgroundUrl = await signedUrl(admin, backgroundStoragePath);
       backgroundIsVideo = project.background_type === "video" || project.background_type === "ai_video";
       const label = project.background_type === "ai_video" ? "AI generált videó"
                   : project.background_type === "video" ? "saját videó" : "saját kép";
