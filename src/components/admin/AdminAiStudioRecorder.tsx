@@ -13,6 +13,7 @@ import {
   Upload, Play, Trash2, Download, Volume2, Sparkles, RefreshCw,
   Settings, Star, Save,
 } from "lucide-react";
+import AdminAiStudioVoiceCloning from "./AdminAiStudioVoiceCloning";
 
 // ======================================================================
 // AI Marketing Stúdió — VIDEÓ + HANG + HÁTTÉR (saját rendszer, GPU nélkül)
@@ -1082,14 +1083,19 @@ const AdminAiStudioRecorder = () => {
       </div>
 
       <Tabs defaultValue="upload">
-        <TabsList className="grid grid-cols-6 w-full">
+        <TabsList className="grid grid-cols-7 w-full">
           <TabsTrigger value="upload">📤 Feltöltés</TabsTrigger>
+          <TabsTrigger value="voice">🗣️ Saját hang</TabsTrigger>
           <TabsTrigger value="compose">🎬 Klip</TabsTrigger>
           <TabsTrigger value="library">📚 Könyvtár</TabsTrigger>
           <TabsTrigger value="clips">🎞️ Kész ({clips.length})</TabsTrigger>
           <TabsTrigger value="logs">📊 Export log</TabsTrigger>
           <TabsTrigger value="settings">⚙️ Beállítások</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="voice" className="mt-4">
+          <AdminAiStudioVoiceCloning />
+        </TabsContent>
 
         {/* ============== FELTÖLTÉS ============== */}
         <TabsContent value="upload" className="space-y-4 mt-4">
