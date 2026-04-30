@@ -1252,6 +1252,142 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_studio_projects: {
+        Row: {
+          background_asset_path: string | null
+          background_prompt: string | null
+          background_type: string
+          created_at: string
+          created_by: string
+          description: string | null
+          error_message: string | null
+          id: string
+          matting_mode: string
+          max_duration_seconds: number
+          name: string
+          source_video_path: string | null
+          status: string
+          target_resolution: string
+          updated_at: string
+          upscale_enabled: boolean
+          voice_id: string | null
+          voice_settings: Json
+          voice_text: string | null
+        }
+        Insert: {
+          background_asset_path?: string | null
+          background_prompt?: string | null
+          background_type?: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          error_message?: string | null
+          id?: string
+          matting_mode?: string
+          max_duration_seconds?: number
+          name: string
+          source_video_path?: string | null
+          status?: string
+          target_resolution?: string
+          updated_at?: string
+          upscale_enabled?: boolean
+          voice_id?: string | null
+          voice_settings?: Json
+          voice_text?: string | null
+        }
+        Update: {
+          background_asset_path?: string | null
+          background_prompt?: string | null
+          background_type?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          error_message?: string | null
+          id?: string
+          matting_mode?: string
+          max_duration_seconds?: number
+          name?: string
+          source_video_path?: string | null
+          status?: string
+          target_resolution?: string
+          updated_at?: string
+          upscale_enabled?: boolean
+          voice_id?: string | null
+          voice_settings?: Json
+          voice_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_studio_projects_voice_id_fkey"
+            columns: ["voice_id"]
+            isOneToOne: false
+            referencedRelation: "ai_studio_voices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_studio_renders: {
+        Row: {
+          cost_estimate: number | null
+          created_at: string
+          created_by: string
+          current_step: string | null
+          duration_seconds: number | null
+          error_message: string | null
+          file_size_bytes: number | null
+          id: string
+          logs: Json
+          output_video_path: string | null
+          project_id: string
+          replicate_matting_id: string | null
+          replicate_upscale_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cost_estimate?: number | null
+          created_at?: string
+          created_by: string
+          current_step?: string | null
+          duration_seconds?: number | null
+          error_message?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          logs?: Json
+          output_video_path?: string | null
+          project_id: string
+          replicate_matting_id?: string | null
+          replicate_upscale_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cost_estimate?: number | null
+          created_at?: string
+          created_by?: string
+          current_step?: string | null
+          duration_seconds?: number | null
+          error_message?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          logs?: Json
+          output_video_path?: string | null
+          project_id?: string
+          replicate_matting_id?: string | null
+          replicate_upscale_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_studio_renders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "ai_studio_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_studio_settings: {
         Row: {
           ai_prompt_template: string | null
