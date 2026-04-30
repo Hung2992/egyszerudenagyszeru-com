@@ -14,6 +14,7 @@ import {
   Settings, Star, Save,
 } from "lucide-react";
 import AdminAiStudioVoiceCloning from "./AdminAiStudioVoiceCloning";
+import AdminAiMarketingStudio from "./AdminAiMarketingStudio";
 
 // ======================================================================
 // AI Marketing Stúdió — VIDEÓ + HANG + HÁTTÉR (saját rendszer, GPU nélkül)
