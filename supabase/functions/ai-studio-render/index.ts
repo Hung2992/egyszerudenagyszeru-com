@@ -269,19 +269,23 @@ Deno.serve(async (req) => {
 
     // ====== STEP 4: ASSETS READY ======
     // A render függvény eddig a pontig készíti elő a nyersanyagokat:
-    //   • subject_url    → mattolt (zöld hátterű) videó a klipped személyéről
-    //   • background_url → AI vagy saját háttér (kép vagy videó)
-    //   • voice_url      → ElevenLabs klónozott voiceover (vagy null, ha nincs)
+    //   • subject_storage_path    → mattolt (zöld hátterű) videó
+    //   • background_storage_path → AI vagy saját háttér (kép vagy videó)
+    //   • voice_storage_path      → ElevenLabs klónozott voiceover (vagy null)
     //
-    // A végső kompozíciót (overlay + chroma key + audio mux + 4K export) a
-    // kliensoldali MediaRecorder pipeline végzi (AdminAiStudioRecorder.tsx),
-    // mert ez ad nekünk pixel-pontos kontrollt és nem függ kisérletei Replicate
-    // ffmpeg modellektől, amelyek időnként eltűnnek vagy hash-t váltanak.
-    await admin.from("ai_studio_renders").update({ status: "assets_ready" }).eq("id", renderId!);
+    // Mindent Storage-ba mentünk, hogy később (új session, oldal újratöltés)
+    // is elérhető legyen — a kliens MediaRecorder kompozíciója ezekből dolgozik.
     await logStep(admin, renderId!, "assets_ready", "Nyersanyagok készen — kliens kompozícióhoz továbbítva");
 
     await admin.from("ai_studio_renders").update({
-      status: "assets_ready", current_step: "done",
+      status: "assets_ready",
+      current_step: "done",
+      subject_storage_path: subjectStoragePath,
+      background_storage_path: backgroundStoragePath,
+      background_is_video: backgroundIsVideo,
+      voice_storage_path: voiceStoragePath,
+      target_resolution_snapshot: project.target_resolution,
+      max_duration_snapshot: Math.min(project.max_duration_seconds || 60, 180),
     }).eq("id", renderId!);
     await admin.from("ai_studio_projects").update({ status: "assets_ready" }).eq("id", project_id);
 
@@ -290,10 +294,13 @@ Deno.serve(async (req) => {
         render_id: renderId,
         status: "assets_ready",
         background_url: backgroundUrl,
+        background_storage_path: backgroundStoragePath,
         background_is_video: backgroundIsVideo,
         subject_url: subjectVideoUrl,
+        subject_storage_path: subjectStoragePath,
         subject_is_green_screen: subjectIsGreenScreen,
         voice_url: voiceAudioUrl,
+        voice_storage_path: voiceStoragePath,
         target_resolution: project.target_resolution,
         max_duration_seconds: Math.min(project.max_duration_seconds || 60, 180),
       }),
