@@ -48,17 +48,34 @@ Deno.serve(async (req) => {
     const file = form.get("file") as File | null;
     const name = (form.get("name") as string) || "Saját hang";
     const description = (form.get("description") as string) || "Egyedi klónozott hang";
-    if (!file) throw new Error("Hangminta (mp3/wav) kötelező");
+    if (!file) throw new Error("Hangminta (mp3/wav/m4a) kötelező");
     if (file.size > 25 * 1024 * 1024) throw new Error("A fájl max 25MB lehet");
+    if (file.size < 10 * 1024) throw new Error("A fájl túl kicsi (min 10KB) — tölts fel hosszabb mintát");
 
-    // Upload sample to storage
-    const ext = file.name.split(".").pop()?.toLowerCase() || "mp3";
-    const samplePath = `samples/${userData.user.id}/${Date.now()}.${ext}`;
+    // Normalize extension & MIME (ElevenLabs supports mp3/wav/m4a/flac/ogg/webm)
+    const rawExt = (file.name.split(".").pop() || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const allowedExts = ["mp3", "wav", "m4a", "mp4", "flac", "ogg", "webm", "aac"];
+    const ext = allowedExts.includes(rawExt) ? rawExt : "mp3";
+    const mimeMap: Record<string, string> = {
+      mp3: "audio/mpeg",
+      wav: "audio/wav",
+      m4a: "audio/mp4",
+      mp4: "audio/mp4",
+      aac: "audio/aac",
+      flac: "audio/flac",
+      ogg: "audio/ogg",
+      webm: "audio/webm",
+    };
+    const mime = mimeMap[ext] || file.type || "audio/mpeg";
+
     const buf = new Uint8Array(await file.arrayBuffer());
+    const samplePath = `samples/${userData.user.id}/${Date.now()}.${ext}`;
     const { error: upErr } = await admin.storage
       .from("ai-studio-voices")
-      .upload(samplePath, buf, { contentType: file.type || "audio/mpeg", upsert: false });
+      .upload(samplePath, buf, { contentType: mime, upsert: false });
     if (upErr) throw new Error("Storage hiba: " + upErr.message);
+
+    console.log("[clone-voice]", { user: userData.user.id, name, ext, mime, size: file.size });
 
     // Insert pending row
     const { data: voiceRow, error: insErr } = await admin
