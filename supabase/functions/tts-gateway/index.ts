@@ -106,8 +106,25 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (vErr || !voice) throw new Error("Hang nem található");
     if (voice.status !== "ready") throw new Error(`Hang nem kész: ${voice.status}`);
-    const model = (voice as any).model;
+    let model = (voice as any).model;
     if (!model) throw new Error("Modell nincs hozzárendelve a hanghoz");
+
+    // Globális kill switch: custom_gpu felülbírálás
+    const { data: ttsSettings } = await admin.from("tts_settings").select("*").eq("id", 1).maybeSingle();
+    if (ttsSettings?.use_custom_gpu && ttsSettings?.custom_gpu_endpoint) {
+      // Kényszerítjük custom_gpu provider-re az endpointot a settings-ből
+      model = {
+        ...model,
+        provider: "custom_gpu",
+        config: {
+          ...(model.config || {}),
+          endpoint: ttsSettings.custom_gpu_endpoint,
+          api_key_secret: ttsSettings.custom_gpu_secret_name || "CUSTOM_GPU_TTS_TOKEN",
+          original_provider: model.provider,
+          original_slug: model.slug,
+        },
+      };
+    }
 
     // Generation rekord létrehozása
     const { data: genRow } = await admin.from("tts_generations_v2").insert({
