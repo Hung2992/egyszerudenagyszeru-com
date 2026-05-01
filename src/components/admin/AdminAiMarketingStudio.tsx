@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Upload, Sparkles, Play, Trash2, RefreshCw } from "lucide-react";
+import AdminAiStudioHealthCheck from "./AdminAiStudioHealthCheck";
 
 interface Voice {
   id: string;
@@ -247,6 +248,9 @@ export default function AdminAiMarketingStudio() {
           Saját videó + AI háttér + klónozott hang → 4K marketing klip egy felületen.
         </p>
       </div>
+
+      {/* Health check panel - mindig elérhető a hibák gyors azonosításához */}
+      <AdminAiStudioHealthCheck />
 
       {/* Create new project */}
       <Card>
