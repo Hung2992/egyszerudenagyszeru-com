@@ -106,8 +106,25 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (vErr || !voice) throw new Error("Hang nem található");
     if (voice.status !== "ready") throw new Error(`Hang nem kész: ${voice.status}`);
-    const model = (voice as any).model;
+    let model = (voice as any).model;
     if (!model) throw new Error("Modell nincs hozzárendelve a hanghoz");
+
+    // Globális kill switch: custom_gpu felülbírálás
+    const { data: ttsSettings } = await admin.from("tts_settings").select("*").eq("id", 1).maybeSingle();
+    if (ttsSettings?.use_custom_gpu && ttsSettings?.custom_gpu_endpoint) {
+      // Kényszerítjük custom_gpu provider-re az endpointot a settings-ből
+      model = {
+        ...model,
+        provider: "custom_gpu",
+        config: {
+          ...(model.config || {}),
+          endpoint: ttsSettings.custom_gpu_endpoint,
+          api_key_secret: ttsSettings.custom_gpu_secret_name || "CUSTOM_GPU_TTS_TOKEN",
+          original_provider: model.provider,
+          original_slug: model.slug,
+        },
+      };
+    }
 
     // Generation rekord létrehozása
     const { data: genRow } = await admin.from("tts_generations_v2").insert({
@@ -195,9 +212,21 @@ Deno.serve(async (req) => {
     } else if (model.provider === "custom_gpu") {
       // Saját GPU szerver hívása — endpoint a model.config-ból
       const endpoint = model.config.endpoint;
-      const apiKey = Deno.env.get(model.config.api_key_secret || "CUSTOM_GPU_API_KEY");
+      const apiKey = Deno.env.get(model.config.api_key_secret || "CUSTOM_GPU_TTS_TOKEN");
       if (!endpoint) throw new Error("custom_gpu modellnek endpoint kötelező");
 
+      // Speaker URL ha van minta
+      let speakerUrl: string | null = null;
+      if (voice.sample_storage_path) {
+        const { data: signed } = await admin.storage
+          .from("tts-voices-v2")
+          .createSignedUrl(voice.sample_storage_path, 60 * 60);
+        speakerUrl = signed?.signedUrl || null;
+      }
+
+      // Standard kontraktus a saját GPU endpointodhoz:
+      // POST /tts JSON: { text, voice_id, speaker_url, language, params }
+      // Válasz: vagy audio/wav|mpeg binary, vagy { audio_base64, mime } JSON
       const resp = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -207,11 +236,30 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           text,
           voice_id: voice.provider_voice_id,
-          ...voice_settings,
+          speaker_url: speakerUrl,
+          model_slug: model.config?.original_slug || model.slug,
+          language: voice_settings.language || "hu",
+          params: voice_settings,
         }),
       });
       if (!resp.ok) throw new Error(`Custom GPU HTTP ${resp.status}: ${(await resp.text()).slice(0, 200)}`);
-      audioBuf = new Uint8Array(await resp.arrayBuffer());
+
+      const ct = resp.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        const j = await resp.json();
+        if (j.audio_base64) {
+          const bin = atob(j.audio_base64);
+          audioBuf = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) audioBuf[i] = bin.charCodeAt(i);
+        } else if (j.audio_url) {
+          const r2 = await fetch(j.audio_url);
+          audioBuf = new Uint8Array(await r2.arrayBuffer());
+        } else {
+          throw new Error("Custom GPU JSON válaszban nincs audio_base64 vagy audio_url");
+        }
+      } else {
+        audioBuf = new Uint8Array(await resp.arrayBuffer());
+      }
     } else {
       throw new Error(`Ismeretlen provider: ${model.provider}`);
     }
