@@ -4382,10 +4382,13 @@ export type Database = {
           created_by: string
           duration_seconds: number | null
           error_message: string | null
+          expires_at: string | null
           generation_time_ms: number | null
           id: string
           model_id: string | null
+          progress_percent: number | null
           provider: string | null
+          provider_prediction_id: string | null
           status: string
           text: string
           voice_id: string | null
@@ -4398,10 +4401,13 @@ export type Database = {
           created_by: string
           duration_seconds?: number | null
           error_message?: string | null
+          expires_at?: string | null
           generation_time_ms?: number | null
           id?: string
           model_id?: string | null
+          progress_percent?: number | null
           provider?: string | null
+          provider_prediction_id?: string | null
           status?: string
           text: string
           voice_id?: string | null
@@ -4414,10 +4420,13 @@ export type Database = {
           created_by?: string
           duration_seconds?: number | null
           error_message?: string | null
+          expires_at?: string | null
           generation_time_ms?: number | null
           id?: string
           model_id?: string | null
+          progress_percent?: number | null
           provider?: string | null
+          provider_prediction_id?: string | null
           status?: string
           text?: string
           voice_id?: string | null
@@ -4485,57 +4494,180 @@ export type Database = {
         }
         Relationships: []
       }
+      tts_settings: {
+        Row: {
+          allowed_mime_types: string[]
+          clamav_endpoint: string | null
+          created_at: string
+          custom_gpu_endpoint: string | null
+          custom_gpu_secret_name: string | null
+          enable_ai_moderation: boolean
+          enable_clamav_scan: boolean
+          enable_size_check: boolean
+          generation_ttl_days: number
+          id: number
+          max_sample_duration_sec: number
+          max_sample_size_mb: number
+          sample_ttl_days: number
+          updated_at: string
+          use_custom_gpu: boolean
+        }
+        Insert: {
+          allowed_mime_types?: string[]
+          clamav_endpoint?: string | null
+          created_at?: string
+          custom_gpu_endpoint?: string | null
+          custom_gpu_secret_name?: string | null
+          enable_ai_moderation?: boolean
+          enable_clamav_scan?: boolean
+          enable_size_check?: boolean
+          generation_ttl_days?: number
+          id?: number
+          max_sample_duration_sec?: number
+          max_sample_size_mb?: number
+          sample_ttl_days?: number
+          updated_at?: string
+          use_custom_gpu?: boolean
+        }
+        Update: {
+          allowed_mime_types?: string[]
+          clamav_endpoint?: string | null
+          created_at?: string
+          custom_gpu_endpoint?: string | null
+          custom_gpu_secret_name?: string | null
+          enable_ai_moderation?: boolean
+          enable_clamav_scan?: boolean
+          enable_size_check?: boolean
+          generation_ttl_days?: number
+          id?: number
+          max_sample_duration_sec?: number
+          max_sample_size_mb?: number
+          sample_ttl_days?: number
+          updated_at?: string
+          use_custom_gpu?: boolean
+        }
+        Relationships: []
+      }
+      tts_voice_presets: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean
+          is_system: boolean
+          name: string
+          parameters: Json
+          recommended_models: string[] | null
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          name: string
+          parameters?: Json
+          recommended_models?: string[] | null
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          name?: string
+          parameters?: Json
+          recommended_models?: string[] | null
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tts_voices_v2: {
         Row: {
           attempts: number
+          audio_duration_seconds: number | null
           created_at: string
           created_by: string
           description: string | null
           error_message: string | null
+          expires_at: string | null
+          file_size_bytes: number | null
           id: string
           is_default: boolean
           is_public: boolean
           model_id: string | null
+          moderation_notes: string | null
+          moderation_status: string | null
           name: string
           provider_metadata: Json
           provider_voice_id: string | null
           sample_storage_path: string | null
           status: string
           updated_at: string
+          virus_scan_status: string | null
         }
         Insert: {
           attempts?: number
+          audio_duration_seconds?: number | null
           created_at?: string
           created_by: string
           description?: string | null
           error_message?: string | null
+          expires_at?: string | null
+          file_size_bytes?: number | null
           id?: string
           is_default?: boolean
           is_public?: boolean
           model_id?: string | null
+          moderation_notes?: string | null
+          moderation_status?: string | null
           name: string
           provider_metadata?: Json
           provider_voice_id?: string | null
           sample_storage_path?: string | null
           status?: string
           updated_at?: string
+          virus_scan_status?: string | null
         }
         Update: {
           attempts?: number
+          audio_duration_seconds?: number | null
           created_at?: string
           created_by?: string
           description?: string | null
           error_message?: string | null
+          expires_at?: string | null
+          file_size_bytes?: number | null
           id?: string
           is_default?: boolean
           is_public?: boolean
           model_id?: string | null
+          moderation_notes?: string | null
+          moderation_status?: string | null
           name?: string
           provider_metadata?: Json
           provider_voice_id?: string | null
           sample_storage_path?: string | null
           status?: string
           updated_at?: string
+          virus_scan_status?: string | null
         }
         Relationships: [
           {
@@ -5331,6 +5463,7 @@ export type Database = {
         Args: { _password: string }
         Returns: boolean
       }
+      tts_cleanup_expired: { Args: never; Returns: Json }
       update_strategy_stats: {
         Args: { _strategy_id: string }
         Returns: undefined
