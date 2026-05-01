@@ -4374,6 +4374,179 @@ export type Database = {
         }
         Relationships: []
       }
+      tts_generations_v2: {
+        Row: {
+          audio_storage_path: string | null
+          cost_usd: number | null
+          created_at: string
+          created_by: string
+          duration_seconds: number | null
+          error_message: string | null
+          generation_time_ms: number | null
+          id: string
+          model_id: string | null
+          provider: string | null
+          status: string
+          text: string
+          voice_id: string | null
+          voice_settings: Json
+        }
+        Insert: {
+          audio_storage_path?: string | null
+          cost_usd?: number | null
+          created_at?: string
+          created_by: string
+          duration_seconds?: number | null
+          error_message?: string | null
+          generation_time_ms?: number | null
+          id?: string
+          model_id?: string | null
+          provider?: string | null
+          status?: string
+          text: string
+          voice_id?: string | null
+          voice_settings?: Json
+        }
+        Update: {
+          audio_storage_path?: string | null
+          cost_usd?: number | null
+          created_at?: string
+          created_by?: string
+          duration_seconds?: number | null
+          error_message?: string | null
+          generation_time_ms?: number | null
+          id?: string
+          model_id?: string | null
+          provider?: string | null
+          status?: string
+          text?: string
+          voice_id?: string | null
+          voice_settings?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tts_generations_v2_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "tts_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tts_generations_v2_voice_id_fkey"
+            columns: ["voice_id"]
+            isOneToOne: false
+            referencedRelation: "tts_voices_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tts_models: {
+        Row: {
+          config: Json
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          priority: number
+          provider: string
+          slug: string
+          supports_cloning: boolean
+          supports_hungarian: boolean
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          priority?: number
+          provider: string
+          slug: string
+          supports_cloning?: boolean
+          supports_hungarian?: boolean
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          priority?: number
+          provider?: string
+          slug?: string
+          supports_cloning?: boolean
+          supports_hungarian?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tts_voices_v2: {
+        Row: {
+          attempts: number
+          created_at: string
+          created_by: string
+          description: string | null
+          error_message: string | null
+          id: string
+          is_default: boolean
+          is_public: boolean
+          model_id: string | null
+          name: string
+          provider_metadata: Json
+          provider_voice_id: string | null
+          sample_storage_path: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          created_by: string
+          description?: string | null
+          error_message?: string | null
+          id?: string
+          is_default?: boolean
+          is_public?: boolean
+          model_id?: string | null
+          name: string
+          provider_metadata?: Json
+          provider_voice_id?: string | null
+          sample_storage_path?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          error_message?: string | null
+          id?: string
+          is_default?: boolean
+          is_public?: boolean
+          model_id?: string | null
+          name?: string
+          provider_metadata?: Json
+          provider_voice_id?: string | null
+          sample_storage_path?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tts_voices_v2_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "tts_models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
