@@ -48,17 +48,34 @@ Deno.serve(async (req) => {
     const file = form.get("file") as File | null;
     const name = (form.get("name") as string) || "Saját hang";
     const description = (form.get("description") as string) || "Egyedi klónozott hang";
-    if (!file) throw new Error("Hangminta (mp3/wav) kötelező");
+    if (!file) throw new Error("Hangminta (mp3/wav/m4a) kötelező");
     if (file.size > 25 * 1024 * 1024) throw new Error("A fájl max 25MB lehet");
+    if (file.size < 10 * 1024) throw new Error("A fájl túl kicsi (min 10KB) — tölts fel hosszabb mintát");
 
-    // Upload sample to storage
-    const ext = file.name.split(".").pop()?.toLowerCase() || "mp3";
-    const samplePath = `samples/${userData.user.id}/${Date.now()}.${ext}`;
+    // Normalize extension & MIME (ElevenLabs supports mp3/wav/m4a/flac/ogg/webm)
+    const rawExt = (file.name.split(".").pop() || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const allowedExts = ["mp3", "wav", "m4a", "mp4", "flac", "ogg", "webm", "aac"];
+    const ext = allowedExts.includes(rawExt) ? rawExt : "mp3";
+    const mimeMap: Record<string, string> = {
+      mp3: "audio/mpeg",
+      wav: "audio/wav",
+      m4a: "audio/mp4",
+      mp4: "audio/mp4",
+      aac: "audio/aac",
+      flac: "audio/flac",
+      ogg: "audio/ogg",
+      webm: "audio/webm",
+    };
+    const mime = mimeMap[ext] || file.type || "audio/mpeg";
+
     const buf = new Uint8Array(await file.arrayBuffer());
+    const samplePath = `samples/${userData.user.id}/${Date.now()}.${ext}`;
     const { error: upErr } = await admin.storage
       .from("ai-studio-voices")
-      .upload(samplePath, buf, { contentType: file.type || "audio/mpeg", upsert: false });
+      .upload(samplePath, buf, { contentType: mime, upsert: false });
     if (upErr) throw new Error("Storage hiba: " + upErr.message);
+
+    console.log("[clone-voice]", { user: userData.user.id, name, ext, mime, size: file.size });
 
     // Insert pending row
     const { data: voiceRow, error: insErr } = await admin
@@ -75,24 +92,37 @@ Deno.serve(async (req) => {
     if (insErr) throw insErr;
 
     // Send to ElevenLabs Instant Voice Clone
+    // Use normalized filename + MIME so iOS .m4a recordings are accepted
+    const safeFileName = `sample.${ext}`;
     const elFd = new FormData();
     elFd.append("name", name);
     elFd.append("description", description);
     elFd.append("remove_background_noise", "true");
-    elFd.append("files", new Blob([buf], { type: file.type || "audio/mpeg" }), file.name);
+    elFd.append("files", new Blob([buf], { type: mime }), safeFileName);
 
     const elResp = await fetch("https://api.elevenlabs.io/v1/voices/add", {
       method: "POST",
-      headers: { "xi-api-key": ELEVENLABS_API_KEY },
+      headers: { "xi-api-key": ELEVENLABS_API_KEY, "Accept": "application/json" },
       body: elFd,
     });
-    const elJson = await elResp.json().catch(() => ({}));
+    const elText = await elResp.text();
+    let elJson: any = {};
+    try { elJson = JSON.parse(elText); } catch { elJson = { raw: elText }; }
+    console.log("[clone-voice] ElevenLabs response", elResp.status, elText.slice(0, 500));
+
     if (!elResp.ok) {
+      const detail =
+        elJson?.detail?.message ||
+        elJson?.detail?.[0]?.msg ||
+        (typeof elJson?.detail === "string" ? elJson.detail : null) ||
+        elJson?.message ||
+        elJson?.raw ||
+        `HTTP ${elResp.status}`;
       await admin.from("ai_studio_voices").update({
         status: "error",
-        error_message: JSON.stringify(elJson).slice(0, 500),
+        error_message: String(detail).slice(0, 500),
       }).eq("id", voiceRow.id);
-      throw new Error("ElevenLabs hiba: " + (elJson?.detail?.message || elResp.status));
+      throw new Error("ElevenLabs: " + detail);
     }
 
     const elevenVoiceId = elJson.voice_id;
