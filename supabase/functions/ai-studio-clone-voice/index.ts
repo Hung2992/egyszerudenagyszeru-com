@@ -92,24 +92,37 @@ Deno.serve(async (req) => {
     if (insErr) throw insErr;
 
     // Send to ElevenLabs Instant Voice Clone
+    // Use normalized filename + MIME so iOS .m4a recordings are accepted
+    const safeFileName = `sample.${ext}`;
     const elFd = new FormData();
     elFd.append("name", name);
     elFd.append("description", description);
     elFd.append("remove_background_noise", "true");
-    elFd.append("files", new Blob([buf], { type: file.type || "audio/mpeg" }), file.name);
+    elFd.append("files", new Blob([buf], { type: mime }), safeFileName);
 
     const elResp = await fetch("https://api.elevenlabs.io/v1/voices/add", {
       method: "POST",
-      headers: { "xi-api-key": ELEVENLABS_API_KEY },
+      headers: { "xi-api-key": ELEVENLABS_API_KEY, "Accept": "application/json" },
       body: elFd,
     });
-    const elJson = await elResp.json().catch(() => ({}));
+    const elText = await elResp.text();
+    let elJson: any = {};
+    try { elJson = JSON.parse(elText); } catch { elJson = { raw: elText }; }
+    console.log("[clone-voice] ElevenLabs response", elResp.status, elText.slice(0, 500));
+
     if (!elResp.ok) {
+      const detail =
+        elJson?.detail?.message ||
+        elJson?.detail?.[0]?.msg ||
+        (typeof elJson?.detail === "string" ? elJson.detail : null) ||
+        elJson?.message ||
+        elJson?.raw ||
+        `HTTP ${elResp.status}`;
       await admin.from("ai_studio_voices").update({
         status: "error",
-        error_message: JSON.stringify(elJson).slice(0, 500),
+        error_message: String(detail).slice(0, 500),
       }).eq("id", voiceRow.id);
-      throw new Error("ElevenLabs hiba: " + (elJson?.detail?.message || elResp.status));
+      throw new Error("ElevenLabs: " + detail);
     }
 
     const elevenVoiceId = elJson.voice_id;
