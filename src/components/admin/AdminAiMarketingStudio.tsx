@@ -18,6 +18,7 @@ import { Slider } from "@/components/ui/slider";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Upload, Sparkles, Play, Trash2, RefreshCw } from "lucide-react";
 import AdminAiStudioHealthCheck from "./AdminAiStudioHealthCheck";
+import AdminTtsStudioV2 from "./AdminTtsStudioV2";
 
 interface Voice {
   id: string;
@@ -251,6 +252,9 @@ export default function AdminAiMarketingStudio() {
 
       {/* Health check panel - mindig elérhető a hibák gyors azonosításához */}
       <AdminAiStudioHealthCheck />
+
+      {/* Saját multi-provider TTS rendszer (XTTS-v2 / F5-TTS / Chatterbox / ElevenLabs) */}
+      <AdminTtsStudioV2 />
 
       {/* Create new project */}
       <Card>
