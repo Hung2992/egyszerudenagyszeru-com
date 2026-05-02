@@ -14,8 +14,9 @@ import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Loader2, Mic, Upload, Play, Trash2, Sparkles, History, Cpu,
+  Loader2, Mic, Upload, Play, Pause, Trash2, Sparkles, History, Cpu,
   Settings, Shield, Clock, Zap, BookOpen, Megaphone, Smile, Heart, Moon,
+  Download, RefreshCw, SkipForward, ListMusic,
 } from "lucide-react";
 
 interface TtsModel {
@@ -84,6 +85,12 @@ export default function AdminTtsStudioV2() {
   const [speed, setSpeed] = useState(1.0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Lejátszási sor
+  const [playlist, setPlaylist] = useState<TtsGeneration[]>([]);
+  const [playingIdx, setPlayingIdx] = useState<number>(-1);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [lastGeneratedAudioUrl, setLastGeneratedAudioUrl] = useState<string | null>(null);
+
   const load = async () => {
     setLoading(true);
     const [m, v, g, p, s] = await Promise.all([
@@ -103,7 +110,7 @@ export default function AdminTtsStudioV2() {
 
   useEffect(() => { load(); }, []);
 
-  // ============ REALTIME FELIRATKOZÁS ============
+  // REALTIME
   useEffect(() => {
     const channel = supabase
       .channel("tts-realtime")
@@ -201,9 +208,11 @@ export default function AdminTtsStudioV2() {
       }
       if (!data?.audio_base64) throw new Error("Nem érkezett audio");
       const url = `data:${data.mime};base64,${data.audio_base64}`;
+      setLastGeneratedAudioUrl(url);
       if (audioRef.current) {
         audioRef.current.src = url;
         await audioRef.current.play();
+        setIsPlaying(true);
       }
       toast({
         title: `✓ Generálva (${data.model_slug})`,
@@ -216,16 +225,100 @@ export default function AdminTtsStudioV2() {
     }
   };
 
+  const regenerate = () => {
+    generate();
+  };
+
+  const downloadAudio = (url: string, filename: string) => {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+  };
+
+  const downloadLastGenerated = () => {
+    if (!lastGeneratedAudioUrl) return;
+    downloadAudio(lastGeneratedAudioUrl, `tts-${Date.now()}.wav`);
+  };
+
   const remove = async (id: string) => {
     if (!confirm("Biztosan törlöd?")) return;
     await supabase.from("tts_voices_v2").delete().eq("id", id);
   };
 
-  const playGen = async (path: string) => {
-    const { data } = await supabase.storage.from("tts-voices-v2").createSignedUrl(path, 3600);
+  const playGen = async (gen: TtsGeneration) => {
+    if (!gen.audio_storage_path) return;
+    const { data } = await supabase.storage.from("tts-voices-v2").createSignedUrl(gen.audio_storage_path, 3600);
     if (data?.signedUrl && audioRef.current) {
       audioRef.current.src = data.signedUrl;
       await audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const downloadGen = async (gen: TtsGeneration) => {
+    if (!gen.audio_storage_path) return;
+    const { data } = await supabase.storage.from("tts-voices-v2").createSignedUrl(gen.audio_storage_path, 3600);
+    if (data?.signedUrl) {
+      downloadAudio(data.signedUrl, `tts-${gen.id.slice(0, 8)}.wav`);
+    }
+  };
+
+  // Lejátszási sor kezelés
+  const addToPlaylist = (gen: TtsGeneration) => {
+    if (playlist.find(g => g.id === gen.id)) return;
+    setPlaylist(prev => [...prev, gen]);
+    toast({ title: "Hozzáadva a lejátszási sorhoz" });
+  };
+
+  const removeFromPlaylist = (id: string) => {
+    setPlaylist(prev => prev.filter(g => g.id !== id));
+  };
+
+  const playPlaylist = async (startIdx = 0) => {
+    if (playlist.length === 0) return;
+    setPlayingIdx(startIdx);
+    const gen = playlist[startIdx];
+    if (gen.audio_storage_path) {
+      const { data } = await supabase.storage.from("tts-voices-v2").createSignedUrl(gen.audio_storage_path, 3600);
+      if (data?.signedUrl && audioRef.current) {
+        audioRef.current.src = data.signedUrl;
+        await audioRef.current.play();
+        setIsPlaying(true);
+      }
+    }
+  };
+
+  const skipToNext = () => {
+    if (playingIdx >= 0 && playingIdx < playlist.length - 1) {
+      playPlaylist(playingIdx + 1);
+    }
+  };
+
+  // Auto-advance playlist
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const onEnded = () => {
+      setIsPlaying(false);
+      if (playingIdx >= 0 && playingIdx < playlist.length - 1) {
+        playPlaylist(playingIdx + 1);
+      } else {
+        setPlayingIdx(-1);
+      }
+    };
+    audio.addEventListener("ended", onEnded);
+    return () => audio.removeEventListener("ended", onEnded);
+  }, [playingIdx, playlist]);
+
+  const togglePlayPause = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play();
+      setIsPlaying(true);
     }
   };
 
@@ -253,6 +346,7 @@ export default function AdminTtsStudioV2() {
 
   const activeModel = models.find((m) => m.slug === cloneModelSlug);
   const pendingGens = generations.filter((g) => g.status === "running" || g.status === "pending");
+  const completedGens = generations.filter((g) => g.status === "completed" && g.audio_storage_path);
 
   return (
     <Card className="p-4 space-y-6 bg-card border-border">
@@ -344,9 +438,6 @@ export default function AdminTtsStudioV2() {
               onChange={(e) => setSettings({ ...settings, custom_gpu_endpoint: e.target.value })} />
             <Input placeholder="Secret név (alap: CUSTOM_GPU_TTS_TOKEN)" value={settings.custom_gpu_secret_name || ""}
               onChange={(e) => setSettings({ ...settings, custom_gpu_secret_name: e.target.value })} />
-            <p className="text-[10px] text-muted-foreground">
-              Kontraktus: POST JSON {`{text, voice_id, speaker_url, language, params}`} → audio binary VAGY {`{audio_base64, mime}`}
-            </p>
           </div>
 
           <div className="flex gap-2">
@@ -526,10 +617,18 @@ export default function AdminTtsStudioV2() {
           </div>
         </div>
 
-        <Button onClick={generate} disabled={!activeVoice || generating} className="w-full uppercase font-black">
-          {generating ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generálás...</>
-            : <><Play className="h-4 w-4 mr-2" /> Hang generálása</>}
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={generate} disabled={!activeVoice || generating} className="flex-1 uppercase font-black">
+            {generating ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generálás...</>
+              : <><Play className="h-4 w-4 mr-2" /> Generálás</>}
+          </Button>
+          <Button onClick={regenerate} disabled={!activeVoice || generating} variant="outline" title="Újragenerálás">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Button onClick={downloadLastGenerated} disabled={!lastGeneratedAudioUrl} variant="outline" title="Utolsó letöltése">
+            <Download className="h-4 w-4" />
+          </Button>
+        </div>
 
         {/* REALTIME PROGRESS */}
         {pendingGens.length > 0 && (
@@ -546,8 +645,43 @@ export default function AdminTtsStudioV2() {
           </div>
         )}
 
-        <audio ref={audioRef} controls className="w-full" />
+        {/* Mini player */}
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="ghost" onClick={togglePlayPause} disabled={!audioRef.current?.src}>
+            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+          </Button>
+          <audio ref={audioRef} controls className="flex-1 h-8" onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)} />
+        </div>
       </div>
+
+      {/* === LEJÁTSZÁSI SOR === */}
+      {playlist.length > 0 && (
+        <div className="border border-primary/30 p-3 space-y-2 bg-primary/5">
+          <div className="flex items-center gap-2">
+            <ListMusic className="h-4 w-4 text-primary" />
+            <Label className="text-xs uppercase font-bold">Lejátszási sor ({playlist.length})</Label>
+            <Button size="sm" variant="ghost" className="ml-auto" onClick={() => playPlaylist(0)}>
+              <Play className="h-3 w-3 mr-1" /> Mind
+            </Button>
+            <Button size="sm" variant="ghost" onClick={skipToNext} disabled={playingIdx < 0 || playingIdx >= playlist.length - 1}>
+              <SkipForward className="h-3 w-3" />
+            </Button>
+          </div>
+          {playlist.map((g, idx) => (
+            <div key={g.id} className={`flex items-center gap-2 text-xs p-1 ${
+              playingIdx === idx ? "bg-primary/20 border border-primary/40" : "border border-transparent"
+            }`}>
+              <button onClick={() => playPlaylist(idx)} className="shrink-0">
+                <Play className="h-3 w-3" />
+              </button>
+              <span className="flex-1 truncate">{g.text.slice(0, 60)}</span>
+              <button onClick={() => removeFromPlaylist(g.id)} className="text-destructive shrink-0">
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* === ELŐZMÉNYEK === */}
       <div className="space-y-2">
@@ -576,9 +710,17 @@ export default function AdminTtsStudioV2() {
                   </div>
                 </div>
                 {g.audio_storage_path && (
-                  <Button size="sm" variant="ghost" onClick={() => playGen(g.audio_storage_path!)}>
-                    <Play className="h-3 w-3" />
-                  </Button>
+                  <div className="flex gap-1 shrink-0">
+                    <Button size="sm" variant="ghost" onClick={() => playGen(g)} title="Lejátszás">
+                      <Play className="h-3 w-3" />
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => downloadGen(g)} title="Letöltés">
+                      <Download className="h-3 w-3" />
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => addToPlaylist(g)} title="Sorba">
+                      <ListMusic className="h-3 w-3" />
+                    </Button>
+                  </div>
                 )}
               </div>
             ))}
