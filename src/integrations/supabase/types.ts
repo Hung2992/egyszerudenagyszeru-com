@@ -59,6 +59,36 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_notifications: {
+        Row: {
+          created_at: string | null
+          data: Json | null
+          id: string
+          is_read: boolean | null
+          message: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          is_read?: boolean | null
+          message?: string | null
+          title: string
+          type?: string
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          is_read?: boolean | null
+          message?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
       admin_procurement_orders: {
         Row: {
           actual_arrival: string | null
@@ -2485,10 +2515,12 @@ export type Database = {
           created_at: string
           customer_email: string
           discount_amount: number | null
+          failure_reason: string | null
           id: string
           items: Json | null
           notes: string | null
           payment_method: string | null
+          payment_verified_at: string | null
           procurement_status: string | null
           shipping_address: string | null
           shipping_city: string | null
@@ -2496,6 +2528,7 @@ export type Database = {
           shipping_phone: string | null
           shipping_zip: string | null
           status: string
+          stripe_session_id: string | null
           total_amount: number
           user_id: string | null
         }
@@ -2504,10 +2537,12 @@ export type Database = {
           created_at?: string
           customer_email: string
           discount_amount?: number | null
+          failure_reason?: string | null
           id?: string
           items?: Json | null
           notes?: string | null
           payment_method?: string | null
+          payment_verified_at?: string | null
           procurement_status?: string | null
           shipping_address?: string | null
           shipping_city?: string | null
@@ -2515,6 +2550,7 @@ export type Database = {
           shipping_phone?: string | null
           shipping_zip?: string | null
           status?: string
+          stripe_session_id?: string | null
           total_amount?: number
           user_id?: string | null
         }
@@ -2523,10 +2559,12 @@ export type Database = {
           created_at?: string
           customer_email?: string
           discount_amount?: number | null
+          failure_reason?: string | null
           id?: string
           items?: Json | null
           notes?: string | null
           payment_method?: string | null
+          payment_verified_at?: string | null
           procurement_status?: string | null
           shipping_address?: string | null
           shipping_city?: string | null
@@ -2534,6 +2572,7 @@ export type Database = {
           shipping_phone?: string | null
           shipping_zip?: string | null
           status?: string
+          stripe_session_id?: string | null
           total_amount?: number
           user_id?: string | null
         }

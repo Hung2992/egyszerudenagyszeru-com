@@ -38,16 +38,39 @@ async function sendPaymentConfirmationEmail({
     },
   });
 
-  if (error) {
-    throw new Error(error.message || "Payment confirmation invoke failed");
-  }
-
-  if (data?.error) {
-    throw new Error(data.error);
-  }
-
+  if (error) throw new Error(error.message || "Payment confirmation invoke failed");
+  if (data?.error) throw new Error(data.error);
   if (data?.success === false && data?.reason !== "email_suppressed") {
     throw new Error(data?.reason || "Payment confirmation failed");
+  }
+}
+
+async function notifyAdminNewOrder(orderId: string, totalAmount: number, customerName: string | null) {
+  try {
+    // Insert admin notification
+    await supabase.from("admin_notifications" as any).insert({
+      type: "new_order",
+      title: `Új rendelés: #${orderId.slice(0, 8)}`,
+      message: `${customerName || "Vendég"} — ${totalAmount.toLocaleString()} Ft`,
+      data: { order_id: orderId, total_amount: totalAmount },
+      is_read: false,
+    });
+  } catch (e) {
+    console.error("Admin notification insert failed:", e);
+  }
+}
+
+async function notifyAdminPaymentIssue(orderId: string, reason: string) {
+  try {
+    await supabase.from("admin_notifications" as any).insert({
+      type: "payment_issue",
+      title: `Fizetési probléma: #${orderId.slice(0, 8)}`,
+      message: reason,
+      data: { order_id: orderId, failure_reason: reason },
+      is_read: false,
+    });
+  } catch (e) {
+    console.error("Admin payment issue notification failed:", e);
   }
 }
 
@@ -84,11 +107,17 @@ serve(async (req) => {
             break;
           }
 
+          // Only update if webhook confirms - this IS the security gate
           if (existingOrder.status !== "confirmed") {
             await supabase.from("orders").update({
               status: "confirmed",
               payment_method: "card",
+              payment_verified_at: new Date().toISOString(),
+              stripe_session_id: session.id,
             }).eq("id", orderId);
+
+            // Notify admin about new confirmed order
+            await notifyAdminNewOrder(orderId, existingOrder.total_amount, existingOrder.shipping_name);
 
             const recipientEmail =
               session.customer_details?.email ||
@@ -123,21 +152,52 @@ serve(async (req) => {
             }
           }
 
-          console.log(`Order ${orderId} confirmed via Stripe`);
+          console.log(`Order ${orderId} confirmed via Stripe webhook`);
         }
         break;
       }
+
       case "checkout.session.expired": {
         const session = event.data.object;
         const orderId = session.metadata?.order_id;
         if (orderId) {
           await supabase.from("orders").update({
             status: "cancelled",
+            failure_reason: "Fizetési munkamenet lejárt",
           }).eq("id", orderId);
+
+          await notifyAdminPaymentIssue(orderId, "Fizetési munkamenet lejárt — a vásárló nem fejezte be a fizetést");
           console.log(`Order ${orderId} cancelled - payment expired`);
         }
         break;
       }
+
+      case "checkout.session.async_payment_failed": {
+        const session = event.data.object;
+        const orderId = session.metadata?.order_id;
+        if (orderId) {
+          const failureMsg = session.payment_intent?.last_payment_error?.message || "Fizetés sikertelen";
+          await supabase.from("orders").update({
+            status: "awaiting_payment",
+            failure_reason: failureMsg,
+          }).eq("id", orderId);
+
+          await notifyAdminPaymentIssue(orderId, failureMsg);
+          console.log(`Order ${orderId} payment failed: ${failureMsg}`);
+        }
+        break;
+      }
+
+      case "charge.dispute.created": {
+        const dispute = event.data.object;
+        const reason = dispute.reason || "Visszaterhelés";
+        await notifyAdminPaymentIssue(
+          dispute.metadata?.order_id || dispute.payment_intent || "unknown",
+          `Visszaterhelés (dispute): ${reason} — ${(dispute.amount / 100).toLocaleString()} ${dispute.currency?.toUpperCase()}`
+        );
+        break;
+      }
+
       default:
         console.log("Unhandled event:", event.type);
     }
