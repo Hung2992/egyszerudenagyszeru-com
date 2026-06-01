@@ -28,6 +28,11 @@ interface Product {
   is_active: boolean;
   stock: number;
   preorder_enabled?: boolean;
+  material?: string | null;
+  care_instructions?: string | null;
+  origin_country?: string | null;
+  manufacturer?: string | null;
+  weight_grams?: number | null;
 }
 
 interface ProductImage {
