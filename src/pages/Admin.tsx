@@ -1122,6 +1122,11 @@ const Admin = () => {
       teaser_description: editProduct.teaser_description?.trim() || null,
       teaser_image_url: editProduct.teaser_image_url?.trim() || null,
       is_sneak_peek: editProduct.is_sneak_peek ?? false,
+      material: editProduct.material?.trim() || null,
+      care_instructions: editProduct.care_instructions?.trim() || null,
+      origin_country: editProduct.origin_country?.trim() || null,
+      manufacturer: editProduct.manufacturer?.trim() || null,
+      weight_grams: editProduct.weight_grams === null || editProduct.weight_grams === undefined || String(editProduct.weight_grams).trim() === "" ? null : Number(editProduct.weight_grams),
     };
 
     setSavingProduct(true);
