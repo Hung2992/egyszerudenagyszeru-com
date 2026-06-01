@@ -120,6 +120,7 @@ import AdminProductRecallTab from "@/components/admin/AdminProductRecallTab";
 import AdminLoyaltyPointsRulesTab from "@/components/admin/AdminLoyaltyPointsRulesTab";
 import AdminProductCompareTab from "@/components/admin/AdminProductCompareTab";
 import AdminCouponRulesTab from "@/components/admin/AdminCouponRulesTab";
+import AdminCouponsManagerTab from "@/components/admin/AdminCouponsManagerTab";
 import AdminStockAlertAutoTab from "@/components/admin/AdminStockAlertAutoTab";
 import AdminCrosssellUpsellTab from "@/components/admin/AdminCrosssellUpsellTab";
 import AdminCustomerSurveysTab from "@/components/admin/AdminCustomerSurveysTab";
