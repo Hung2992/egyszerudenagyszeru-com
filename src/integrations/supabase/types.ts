@@ -1943,9 +1943,42 @@ export type Database = {
         }
         Relationships: []
       }
+      coupon_redemptions: {
+        Row: {
+          coupon_id: string
+          id: string
+          order_id: string | null
+          redeemed_at: string
+          user_id: string | null
+        }
+        Insert: {
+          coupon_id: string
+          id?: string
+          order_id?: string | null
+          redeemed_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          coupon_id?: string
+          id?: string
+          order_id?: string | null
+          redeemed_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_redemptions_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coupons: {
         Row: {
           code: string
+          coupon_type: string
           created_at: string
           description: string | null
           discount_amount: number | null
@@ -1953,12 +1986,18 @@ export type Database = {
           id: string
           is_active: boolean
           max_uses: number | null
+          notes: string | null
+          partner_commission_percent: number | null
+          partner_email: string | null
+          partner_name: string | null
+          single_use: boolean
           used_count: number
           valid_from: string | null
           valid_until: string | null
         }
         Insert: {
           code: string
+          coupon_type?: string
           created_at?: string
           description?: string | null
           discount_amount?: number | null
@@ -1966,12 +2005,18 @@ export type Database = {
           id?: string
           is_active?: boolean
           max_uses?: number | null
+          notes?: string | null
+          partner_commission_percent?: number | null
+          partner_email?: string | null
+          partner_name?: string | null
+          single_use?: boolean
           used_count?: number
           valid_from?: string | null
           valid_until?: string | null
         }
         Update: {
           code?: string
+          coupon_type?: string
           created_at?: string
           description?: string | null
           discount_amount?: number | null
@@ -1979,6 +2024,11 @@ export type Database = {
           id?: string
           is_active?: boolean
           max_uses?: number | null
+          notes?: string | null
+          partner_commission_percent?: number | null
+          partner_email?: string | null
+          partner_name?: string | null
+          single_use?: boolean
           used_count?: number
           valid_from?: string | null
           valid_until?: string | null
