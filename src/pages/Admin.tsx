@@ -179,6 +179,11 @@ interface ShopProduct {
   teaser_description?: string | null;
   teaser_image_url?: string | null;
   is_sneak_peek?: boolean;
+  material?: string | null;
+  care_instructions?: string | null;
+  origin_country?: string | null;
+  manufacturer?: string | null;
+  weight_grams?: number | null;
 }
 
 const createEmptyProductDraft = (): Partial<ShopProduct> => ({
@@ -200,6 +205,11 @@ const createEmptyProductDraft = (): Partial<ShopProduct> => ({
   teaser_description: null,
   teaser_image_url: null,
   is_sneak_peek: false,
+  material: "",
+  care_instructions: "",
+  origin_country: "",
+  manufacturer: "",
+  weight_grams: null,
 });
 
 interface Order {
@@ -1112,6 +1122,11 @@ const Admin = () => {
       teaser_description: editProduct.teaser_description?.trim() || null,
       teaser_image_url: editProduct.teaser_image_url?.trim() || null,
       is_sneak_peek: editProduct.is_sneak_peek ?? false,
+      material: editProduct.material?.trim() || null,
+      care_instructions: editProduct.care_instructions?.trim() || null,
+      origin_country: editProduct.origin_country?.trim() || null,
+      manufacturer: editProduct.manufacturer?.trim() || null,
+      weight_grams: editProduct.weight_grams === null || editProduct.weight_grams === undefined || String(editProduct.weight_grams).trim() === "" ? null : Number(editProduct.weight_grams),
     };
 
     setSavingProduct(true);
@@ -2085,6 +2100,55 @@ const Admin = () => {
                       className="mt-1 flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     />
                   </div>
+                </div>
+
+                {/* Termék összetétel — Miből van */}
+                <div className="border-t pt-4 space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-accent">
+                    📦 Termék összetétel — Miből van
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="md:col-span-2">
+                      <Label className="text-xs uppercase tracking-wider text-muted-foreground">Anyag / Összetétel</Label>
+                      <textarea
+                        value={editProduct.material || ""}
+                        onChange={e => setEditProduct({ ...editProduct, material: e.target.value })}
+                        placeholder="Pl. 95% pamut, 5% elasztán"
+                        className="mt-1 flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label className="text-xs uppercase tracking-wider text-muted-foreground">Mosási / ápolási útmutató</Label>
+                      <textarea
+                        value={editProduct.care_instructions || ""}
+                        onChange={e => setEditProduct({ ...editProduct, care_instructions: e.target.value })}
+                        placeholder="Pl. 30°C-on mosható, ne centrifugázd, vasalás közepes hőfokon"
+                        className="mt-1 flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs uppercase tracking-wider text-muted-foreground">Származási ország</Label>
+                      <Input value={editProduct.origin_country || ""} onChange={e => setEditProduct({ ...editProduct, origin_country: e.target.value })} placeholder="Pl. Magyarország" className="mt-1 h-9 text-xs" />
+                    </div>
+                    <div>
+                      <Label className="text-xs uppercase tracking-wider text-muted-foreground">Gyártó</Label>
+                      <Input value={editProduct.manufacturer || ""} onChange={e => setEditProduct({ ...editProduct, manufacturer: e.target.value })} placeholder="Pl. Egyszerű de Nagyszerű Műhely" className="mt-1 h-9 text-xs" />
+                    </div>
+                    <div>
+                      <Label className="text-xs uppercase tracking-wider text-muted-foreground">Tömeg (gramm)</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={editProduct.weight_grams ?? ""}
+                        onChange={e => setEditProduct({ ...editProduct, weight_grams: e.target.value === "" ? null : Number(e.target.value) })}
+                        placeholder="Pl. 220"
+                        className="mt-1 h-9 text-xs"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    💡 Ezek a mezők megjelennek a webshop termék oldalán is, hogy a vásárlók tudják, miből van a termék.
+                  </p>
                 </div>
                 {/* Launch / Pre-order állapot */}
                 <div className="border-t pt-4 space-y-3">

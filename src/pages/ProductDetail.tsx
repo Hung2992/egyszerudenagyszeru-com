@@ -28,6 +28,11 @@ interface Product {
   is_active: boolean;
   stock: number;
   preorder_enabled?: boolean;
+  material?: string | null;
+  care_instructions?: string | null;
+  origin_country?: string | null;
+  manufacturer?: string | null;
+  weight_grams?: number | null;
 }
 
 interface ProductImage {
@@ -637,6 +642,45 @@ const ProductDetail = () => {
 
             {product.description && (
               <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
+            )}
+
+            {/* Termék összetétel — Miből van */}
+            {(product.material || product.care_instructions || product.origin_country || product.manufacturer || product.weight_grams) && (
+              <div className="border border-border bg-card/50 p-4 space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-accent">📦 Miből van</p>
+                <dl className="grid grid-cols-1 gap-1.5 text-xs">
+                  {product.material && (
+                    <div className="flex gap-2">
+                      <dt className="font-semibold text-foreground min-w-[110px] uppercase tracking-wider text-[10px]">Anyag</dt>
+                      <dd className="text-muted-foreground">{product.material}</dd>
+                    </div>
+                  )}
+                  {product.care_instructions && (
+                    <div className="flex gap-2">
+                      <dt className="font-semibold text-foreground min-w-[110px] uppercase tracking-wider text-[10px]">Ápolás</dt>
+                      <dd className="text-muted-foreground">{product.care_instructions}</dd>
+                    </div>
+                  )}
+                  {product.origin_country && (
+                    <div className="flex gap-2">
+                      <dt className="font-semibold text-foreground min-w-[110px] uppercase tracking-wider text-[10px]">Származás</dt>
+                      <dd className="text-muted-foreground">{product.origin_country}</dd>
+                    </div>
+                  )}
+                  {product.manufacturer && (
+                    <div className="flex gap-2">
+                      <dt className="font-semibold text-foreground min-w-[110px] uppercase tracking-wider text-[10px]">Gyártó</dt>
+                      <dd className="text-muted-foreground">{product.manufacturer}</dd>
+                    </div>
+                  )}
+                  {product.weight_grams ? (
+                    <div className="flex gap-2">
+                      <dt className="font-semibold text-foreground min-w-[110px] uppercase tracking-wider text-[10px]">Tömeg</dt>
+                      <dd className="text-muted-foreground">{product.weight_grams} g</dd>
+                    </div>
+                  ) : null}
+                </dl>
+              </div>
             )}
 
             {/* Size selector */}
