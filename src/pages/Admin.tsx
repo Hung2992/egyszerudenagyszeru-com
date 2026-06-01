@@ -179,6 +179,11 @@ interface ShopProduct {
   teaser_description?: string | null;
   teaser_image_url?: string | null;
   is_sneak_peek?: boolean;
+  material?: string | null;
+  care_instructions?: string | null;
+  origin_country?: string | null;
+  manufacturer?: string | null;
+  weight_grams?: number | null;
 }
 
 const createEmptyProductDraft = (): Partial<ShopProduct> => ({
@@ -200,6 +205,11 @@ const createEmptyProductDraft = (): Partial<ShopProduct> => ({
   teaser_description: null,
   teaser_image_url: null,
   is_sneak_peek: false,
+  material: "",
+  care_instructions: "",
+  origin_country: "",
+  manufacturer: "",
+  weight_grams: null,
 });
 
 interface Order {
