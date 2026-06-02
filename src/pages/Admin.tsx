@@ -3546,6 +3546,7 @@ const Admin = () => {
         {tab === "product_compare" && <AdminProductCompareTab />}
         {tab === "coupon_rules" && <AdminCouponRulesTab />}
         {tab === "coupons_manager" && <AdminCouponsManagerTab />}
+        {tab === "partners" && <AdminPartnersTab />}
         {tab === "stock_alert_auto" && <AdminStockAlertAutoTab />}
         {tab === "crosssell_upsell" && <AdminCrosssellUpsellTab />}
         {tab === "customer_surveys" && <AdminCustomerSurveysTab />}
