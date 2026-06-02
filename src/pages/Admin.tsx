@@ -1487,6 +1487,7 @@ const Admin = () => {
     { key: "product_compare", label: "Összehasonlító", icon: SlidersHorizontal },
     { key: "coupon_rules", label: "Kupon szabályok", icon: Ticket },
     { key: "coupons_manager", label: "Kuponok (mód & partner)", icon: Ticket },
+    { key: "partners", label: "Partnerek (profil)", icon: Users },
     { key: "stock_alert_auto", label: "Készlet riaszt.", icon: Bell },
     { key: "crosssell_upsell", label: "Cross/Upsell", icon: TrendingUp },
     { key: "customer_surveys", label: "Kérdőívek", icon: ListChecks },
