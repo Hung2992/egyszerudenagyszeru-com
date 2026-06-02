@@ -1989,6 +1989,7 @@ export type Database = {
           notes: string | null
           partner_commission_percent: number | null
           partner_email: string | null
+          partner_id: string | null
           partner_name: string | null
           single_use: boolean
           used_count: number
@@ -2008,6 +2009,7 @@ export type Database = {
           notes?: string | null
           partner_commission_percent?: number | null
           partner_email?: string | null
+          partner_id?: string | null
           partner_name?: string | null
           single_use?: boolean
           used_count?: number
@@ -2027,13 +2029,22 @@ export type Database = {
           notes?: string | null
           partner_commission_percent?: number | null
           partner_email?: string | null
+          partner_id?: string | null
           partner_name?: string | null
           single_use?: boolean
           used_count?: number
           valid_from?: string | null
           valid_until?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "coupons_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       early_access_codes: {
         Row: {
@@ -2661,6 +2672,78 @@ export type Database = {
           session_id?: string | null
           user_agent?: string | null
           visitor_id?: string | null
+        }
+        Relationships: []
+      }
+      partners: {
+        Row: {
+          address: string | null
+          card_holder_name: string | null
+          card_last4: string | null
+          company_name: string | null
+          created_at: string
+          default_commission_percent: number | null
+          email: string | null
+          full_name: string
+          iban: string | null
+          id: string
+          id_document_number: string | null
+          id_document_type: string | null
+          is_active: boolean
+          notes: string | null
+          partner_type: string
+          phone: string | null
+          registry_number: string | null
+          tax_number: string | null
+          updated_at: string
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          address?: string | null
+          card_holder_name?: string | null
+          card_last4?: string | null
+          company_name?: string | null
+          created_at?: string
+          default_commission_percent?: number | null
+          email?: string | null
+          full_name: string
+          iban?: string | null
+          id?: string
+          id_document_number?: string | null
+          id_document_type?: string | null
+          is_active?: boolean
+          notes?: string | null
+          partner_type?: string
+          phone?: string | null
+          registry_number?: string | null
+          tax_number?: string | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          address?: string | null
+          card_holder_name?: string | null
+          card_last4?: string | null
+          company_name?: string | null
+          created_at?: string
+          default_commission_percent?: number | null
+          email?: string | null
+          full_name?: string
+          iban?: string | null
+          id?: string
+          id_document_number?: string | null
+          id_document_type?: string | null
+          is_active?: boolean
+          notes?: string | null
+          partner_type?: string
+          phone?: string | null
+          registry_number?: string | null
+          tax_number?: string | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
         }
         Relationships: []
       }
