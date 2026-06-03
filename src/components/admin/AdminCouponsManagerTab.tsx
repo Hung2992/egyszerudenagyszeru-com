@@ -44,7 +44,43 @@ interface Partner {
   is_active: boolean;
 }
 
-const empty = {
+type CouponForm = {
+  code: string;
+  description: string;
+  discount_percent: number;
+  discount_amount: number;
+  is_active: boolean;
+  coupon_type: "normal" | "single_use" | "partner";
+  single_use: boolean;
+  partner_id: string;
+  partner_name: string;
+  partner_email: string;
+  partner_commission_percent: number;
+  max_uses: number;
+  valid_from: string;
+  valid_until: string;
+  notes: string;
+};
+
+type CouponPayload = {
+  code: string;
+  description: string | null;
+  discount_percent: number | null;
+  discount_amount: number | null;
+  is_active: boolean;
+  coupon_type: CouponForm["coupon_type"];
+  single_use: boolean;
+  partner_id: string | null;
+  partner_name: string | null;
+  partner_email: string | null;
+  partner_commission_percent: number | null;
+  max_uses: number | null;
+  valid_from: string | null;
+  valid_until: string | null;
+  notes: string | null;
+};
+
+const empty: CouponForm = {
   code: "",
   description: "",
   discount_percent: 10,
@@ -78,7 +114,7 @@ const AdminCouponsManagerTab = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState<any>(empty);
+  const [form, setForm] = useState<CouponForm>(empty);
   const [editId, setEditId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState("");
@@ -187,7 +223,7 @@ const AdminCouponsManagerTab = () => {
     }
 
     setSaving(true);
-    const payload: any = {
+    const payload: CouponPayload = {
       code: form.code.trim().toUpperCase(),
       description: form.description || null,
       discount_percent: Number(form.discount_percent || 0) > 0 ? Number(form.discount_percent) : null,
