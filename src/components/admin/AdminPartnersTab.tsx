@@ -33,7 +33,28 @@ interface Partner {
   notes: string | null;
 }
 
-const empty: any = {
+type PartnerForm = {
+  partner_type: "person" | "company";
+  full_name: string;
+  company_name: string;
+  tax_number: string;
+  registry_number: string;
+  id_document_type: string;
+  id_document_number: string;
+  email: string;
+  phone: string;
+  address: string;
+  iban: string;
+  card_holder_name: string;
+  card_last4: string;
+  default_commission_percent: number;
+  valid_from: string;
+  valid_until: string;
+  is_active: boolean;
+  notes: string;
+};
+
+const empty: PartnerForm = {
   partner_type: "person",
   full_name: "",
   company_name: "",
@@ -87,7 +108,7 @@ const AdminPartnersTab = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState<any>(empty);
+  const [form, setForm] = useState<PartnerForm>(empty);
   const [editId, setEditId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [couponCounts, setCouponCounts] = useState<Record<string, number>>({});
@@ -105,7 +126,7 @@ const AdminPartnersTab = () => {
 
     const { data: cps } = await supabase.from("coupons").select("partner_id");
     const map: Record<string, number> = {};
-    (cps ?? []).forEach((r: any) => { if (r.partner_id) map[r.partner_id] = (map[r.partner_id] ?? 0) + 1; });
+    (cps ?? []).forEach((r: { partner_id?: string | null }) => { if (r.partner_id) map[r.partner_id] = (map[r.partner_id] ?? 0) + 1; });
     setCouponCounts(map);
     setLoading(false);
   };
@@ -140,10 +161,24 @@ const AdminPartnersTab = () => {
   const startEdit = (p: Partner) => {
     setEditId(p.id);
     setForm({
-      ...empty,
-      ...p,
+      partner_type: p.partner_type,
+      full_name: p.full_name,
+      company_name: p.company_name || "",
+      tax_number: p.tax_number || "",
+      registry_number: p.registry_number || "",
+      id_document_type: p.id_document_type || "szig",
+      id_document_number: p.id_document_number || "",
+      email: p.email || "",
+      phone: p.phone || "",
+      address: p.address || "",
+      iban: p.iban || "",
+      card_holder_name: p.card_holder_name || "",
+      card_last4: p.card_last4 || "",
+      default_commission_percent: Number(p.default_commission_percent ?? 0),
       valid_from: toDtLocal(p.valid_from),
       valid_until: toDtLocal(p.valid_until),
+      is_active: p.is_active,
+      notes: p.notes || "",
     });
     setShowForm(true);
   };
