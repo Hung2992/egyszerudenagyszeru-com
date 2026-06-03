@@ -208,7 +208,7 @@ const AdminPartnersTab = () => {
     }
 
     setSaving(true);
-    const payload: any = {
+    const payload: Omit<Partner, "id"> = {
       partner_type: form.partner_type,
       full_name: form.full_name.trim(),
       company_name: form.partner_type === "company" ? form.company_name || null : null,
@@ -341,7 +341,7 @@ const AdminPartnersTab = () => {
           <div className="grid gap-4 md:grid-cols-3">
             <div>
               <Label className="text-xs uppercase tracking-wider">Profil típusa</Label>
-              <Select value={form.partner_type} onValueChange={(v) => setForm({ ...form, partner_type: v })}>
+              <Select value={form.partner_type} onValueChange={(v) => setForm({ ...form, partner_type: v as PartnerForm["partner_type"] })}>
                 <SelectTrigger className="rounded-none mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="person">Magánszemély</SelectItem>
