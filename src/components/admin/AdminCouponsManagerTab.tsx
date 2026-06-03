@@ -310,7 +310,10 @@ const AdminCouponsManagerTab = () => {
           <div className="grid gap-4 md:grid-cols-3">
             <div>
               <Label className="text-xs uppercase tracking-wider">Mód / típus</Label>
-              <Select value={form.coupon_type} onValueChange={(v) => setForm({ ...form, coupon_type: v, code: v === "partner" ? randomCode("PARTNER") : v === "single_use" ? randomCode("ONE") : form.code, max_uses: v === "single_use" ? 1 : form.max_uses })}>
+              <Select value={form.coupon_type} onValueChange={(v) => {
+                const couponType = v as CouponForm["coupon_type"];
+                setForm({ ...form, coupon_type: couponType, code: couponType === "partner" ? randomCode("PARTNER") : couponType === "single_use" ? randomCode("ONE") : form.code, max_uses: couponType === "single_use" ? 1 : form.max_uses });
+              }}>
                 <SelectTrigger className="rounded-none mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="normal">Normál (többször használható)</SelectItem>
