@@ -583,7 +583,7 @@ const CATEGORIES = ["Pólók", "Pulóverek", "Nadrágok", "Dzsekik", "Kiegészí
 
 const Admin = () => {
   const navigate = useNavigate();
-  const { isAdmin, loading } = useAdminCheck();
+  const { isAdmin, loading, userId } = useAdminCheck();
   const [tab, setTab] = useState<Tab>("ai_marketing_studio");
   const [marketingStudioTab, setMarketingStudioTab] = useState<Tab>("ai_studio_recorder");
   const [settingsSection, setSettingsSection] = useState<SettingsSection>("store");
@@ -663,10 +663,15 @@ const Admin = () => {
 
   useEffect(() => {
     if (!loading && !isAdmin) {
-      navigate("/");
-      toast({ title: "Hozzáférés megtagadva", description: "Nincs admin jogosultságod.", variant: "destructive" });
+      const isLoggedIn = Boolean(userId);
+      navigate(isLoggedIn ? "/" : "/auth?redirect=/admin", { replace: true });
+      toast({
+        title: isLoggedIn ? "Hozzáférés megtagadva" : "Admin belépés szükséges",
+        description: isLoggedIn ? "Nincs admin jogosultságod." : "Jelentkezz be, utána visszaviszünk az admin felületre.",
+        variant: "destructive",
+      });
     }
-  }, [loading, isAdmin]);
+  }, [loading, isAdmin, userId, navigate]);
 
   useEffect(() => {
     if (isAdmin) {

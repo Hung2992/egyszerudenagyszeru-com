@@ -72,7 +72,7 @@ const App = () => (
             <GiveawayPopup />
             <CookieConsentBanner />
           </Suspense>
-          <Suspense fallback={null}>
+          <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-background text-foreground"><div className="h-6 w-6 animate-spin rounded-none border-2 border-foreground border-t-transparent" /></div>}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />

@@ -12,25 +12,25 @@ const AbandonedCartReminder = () => {
   const location = useLocation();
   const { items, totalPrice, setIsCartOpen } = useCart();
   const [show, setShow] = useState(false);
-  const isAdminRoute = location.pathname.startsWith("/admin");
+  const isBlockedRoute = location.pathname.startsWith("/admin") || location.pathname.startsWith("/auth");
 
   useEffect(() => {
-    if (items.length === 0 || isAdminRoute) { setShow(false); return; }
+    if (items.length === 0 || isBlockedRoute) { setShow(false); return; }
 
     const dismissed = sessionStorage.getItem(REMINDER_KEY);
     if (dismissed) return;
 
     const timer = setTimeout(() => {
       // Only show if user is NOT on checkout page
-      if (!window.location.pathname.includes("checkout") && !window.location.pathname.startsWith("/admin")) {
+      if (!window.location.pathname.includes("checkout") && !window.location.pathname.startsWith("/admin") && !window.location.pathname.startsWith("/auth")) {
         setShow(true);
       }
     }, REMINDER_DELAY);
 
     return () => clearTimeout(timer);
-  }, [isAdminRoute, items.length]);
+  }, [isBlockedRoute, items.length]);
 
-  if (!show || items.length === 0 || isAdminRoute) return null;
+  if (!show || items.length === 0 || isBlockedRoute) return null;
 
   const dismiss = () => {
     setShow(false);

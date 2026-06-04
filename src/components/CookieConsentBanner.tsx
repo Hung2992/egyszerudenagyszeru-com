@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Cookie, X, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -39,11 +39,17 @@ export const openCookieSettings = () => {
 
 const CookieConsentBanner = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isBlockedRoute = location.pathname.startsWith("/admin") || location.pathname.startsWith("/auth");
   const [visible, setVisible] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [prefs, setPrefs] = useState({ functional: true, analytics: true, marketing: false });
 
   useEffect(() => {
+    if (isBlockedRoute) {
+      setVisible(false);
+      return;
+    }
     const existing = getStoredConsent();
     if (!existing) {
       const t = setTimeout(() => setVisible(true), 600);
@@ -54,18 +60,20 @@ const CookieConsentBanner = () => {
       analytics: existing.analytics,
       marketing: existing.marketing,
     });
-  }, []);
+  }, [isBlockedRoute]);
 
   useEffect(() => {
     const handler = () => {
-      setShowSettings(true);
-      setVisible(true);
+      if (!isBlockedRoute) {
+        setShowSettings(true);
+        setVisible(true);
+      }
     };
     window.addEventListener("cookie-consent-open", handler);
     return () => window.removeEventListener("cookie-consent-open", handler);
-  }, []);
+  }, [isBlockedRoute]);
 
-  if (!visible) return null;
+  if (!visible || isBlockedRoute) return null;
 
   const persist = (p: { functional: boolean; analytics: boolean; marketing: boolean }) => {
     saveConsent({
