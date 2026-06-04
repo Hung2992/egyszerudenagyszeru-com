@@ -583,7 +583,7 @@ const CATEGORIES = ["Pólók", "Pulóverek", "Nadrágok", "Dzsekik", "Kiegészí
 
 const Admin = () => {
   const navigate = useNavigate();
-  const { isAdmin, loading } = useAdminCheck();
+  const { isAdmin, loading, userId } = useAdminCheck();
   const [tab, setTab] = useState<Tab>("ai_marketing_studio");
   const [marketingStudioTab, setMarketingStudioTab] = useState<Tab>("ai_studio_recorder");
   const [settingsSection, setSettingsSection] = useState<SettingsSection>("store");
