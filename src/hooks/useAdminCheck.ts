@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/untyped-client";
 
+const withTimeout = async <T,>(promise: Promise<T>, ms = 5000): Promise<T | null> => {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<null>((resolve) => {
+    timeoutId = setTimeout(() => resolve(null), ms);
+  });
+  const result = await Promise.race([promise, timeout]);
+  if (timeoutId) clearTimeout(timeoutId);
+  return result;
+};
+
 export const useAdminCheck = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -8,10 +18,18 @@ export const useAdminCheck = () => {
 
   useEffect(() => {
     const checkAdmin = async (currentUserId: string) => {
-      const { data, error } = await supabase.rpc("has_role", {
+      const result = await withTimeout(supabase.rpc("has_role", {
         _user_id: currentUserId,
         _role: "admin",
-      });
+      }), 5000);
+
+      if (!result) {
+        console.error("Admin role check timed out");
+        setIsAdmin(false);
+        return;
+      }
+
+      const { data, error } = result;
 
       if (error) {
         console.error("Admin role check failed:", error);
@@ -36,9 +54,19 @@ export const useAdminCheck = () => {
     };
 
     const syncSession = async () => {
+      const result = await withTimeout(supabase.auth.getSession(), 5000);
+
+      if (!result) {
+        console.error("Auth session check timed out");
+        setUserId(null);
+        setIsAdmin(false);
+        setLoading(false);
+        return;
+      }
+
       const {
         data: { session },
-      } = await supabase.auth.getSession();
+      } = result;
 
       await applySession(session);
     };
