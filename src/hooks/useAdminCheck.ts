@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/untyped-client";
 
-const withTimeout = async <T,>(promise: Promise<T>, ms = 5000): Promise<T | null> => {
+const withTimeout = async <T,>(promiseLike: PromiseLike<T>, ms = 5000): Promise<T | null> => {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<null>((resolve) => {
     timeoutId = setTimeout(() => resolve(null), ms);
   });
-  const result = await Promise.race([promise, timeout]);
+  const result = await Promise.race([Promise.resolve(promiseLike), timeout]);
   if (timeoutId) clearTimeout(timeoutId);
   return result;
 };
