@@ -53,7 +53,7 @@ const Index = () => {
             sizes="100vw"
             alt="Streetwear stílus"
             className="h-full w-full object-cover"
-            fetchPriority="high"
+            {...({ fetchpriority: "high" } as any)}
             decoding="sync"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background/40" />
