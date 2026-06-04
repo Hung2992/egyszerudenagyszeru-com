@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useMemo } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,11 @@ const translateAuthError = (msg: string): string => {
 
 const Auth = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectPath = useMemo(() => {
+    const requested = searchParams.get("redirect") || "/";
+    return requested.startsWith("/") && !requested.startsWith("//") ? requested : "/";
+  }, [searchParams]);
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,7 +50,7 @@ const Auth = () => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) toast({ title: "Hiba", description: translateAuthError(error.message), variant: "destructive" });
-    else { toast({ title: "Sikeres bejelentkezés!" }); navigate("/"); }
+    else { toast({ title: "Sikeres bejelentkezés!" }); navigate(redirectPath, { replace: true }); }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -78,7 +84,7 @@ const Auth = () => {
         toast({ title: "Sikerült!", description: "Erősítsd meg az email címedet." });
       } else {
         toast({ title: "Sikeres regisztráció!" });
-        navigate("/");
+        navigate(redirectPath, { replace: true });
       }
     }
   };
