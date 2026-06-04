@@ -8,11 +8,11 @@ const GiveawayPopup = () => {
   const [visible, setVisible] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const isAdminRoute = location.pathname.startsWith("/admin");
+  const isBlockedRoute = location.pathname.startsWith("/admin") || location.pathname.startsWith("/auth");
   const { isActive, loading } = useGiveawayStatus();
 
   useEffect(() => {
-    if (isAdminRoute || loading || !isActive) {
+    if (isBlockedRoute || loading || !isActive) {
       setVisible(false);
       return;
     }
@@ -21,14 +21,14 @@ const GiveawayPopup = () => {
     if (dismissed) return;
     const timer = setTimeout(() => setVisible(true), 5000);
     return () => clearTimeout(timer);
-  }, [isAdminRoute, isActive, loading]);
+  }, [isBlockedRoute, isActive, loading]);
 
   const handleDismiss = () => {
     setVisible(false);
     sessionStorage.setItem("giveaway_popup_dismissed", "1");
   };
 
-  if (!visible || isAdminRoute || !isActive) return null;
+  if (!visible || isBlockedRoute || !isActive) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
