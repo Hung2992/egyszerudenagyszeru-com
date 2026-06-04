@@ -663,10 +663,15 @@ const Admin = () => {
 
   useEffect(() => {
     if (!loading && !isAdmin) {
-      navigate("/");
-      toast({ title: "Hozzáférés megtagadva", description: "Nincs admin jogosultságod.", variant: "destructive" });
+      const isLoggedIn = Boolean(userId);
+      navigate(isLoggedIn ? "/" : "/auth?redirect=/admin", { replace: true });
+      toast({
+        title: isLoggedIn ? "Hozzáférés megtagadva" : "Admin belépés szükséges",
+        description: isLoggedIn ? "Nincs admin jogosultságod." : "Jelentkezz be, utána visszaviszünk az admin felületre.",
+        variant: "destructive",
+      });
     }
-  }, [loading, isAdmin]);
+  }, [loading, isAdmin, userId, navigate]);
 
   useEffect(() => {
     if (isAdmin) {
