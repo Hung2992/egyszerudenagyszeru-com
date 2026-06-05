@@ -243,6 +243,7 @@ const AdminPartnersTab = () => {
   const toggle = async (id: string, v: boolean) => {
     const { error } = await supabase.from("partners").update({ is_active: v }).eq("id", id);
     if (error) toast({ title: "Hiba", description: error.message, variant: "destructive" });
+    else toast({ title: v ? "Partner aktiválva" : "Partner deaktiválva" });
     load();
   };
 
