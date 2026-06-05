@@ -234,7 +234,8 @@ const AdminPartnersTab = () => {
     setSaving(false);
     if (error) toast({ title: "Hiba", description: error.message, variant: "destructive" });
     else {
-      toast({ title: editId ? "Partner frissítve" : "Partner létrehozva", description: displayName({ ...payload, id: editId || "" } as Partner) });
+      const name = form.partner_type === "company" ? (form.company_name || form.full_name) : form.full_name;
+      toast({ title: editId ? "Partner frissítve" : "Partner létrehozva", description: name });
       reset();
       load();
     }
