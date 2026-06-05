@@ -295,7 +295,7 @@ const AdminCouponsManagerTab = () => {
       </div>
 
       {showForm && (
-        <div className="border p-4 space-y-4">
+        <div className="border border-accent/40 bg-card text-card-foreground shadow-lg p-4 space-y-4">
           <div className="flex items-center justify-between gap-3 border-b pb-3">
             <div>
               <p className="text-xs font-bold uppercase tracking-widest">{editId ? "Kupon szerkesztése" : "Új kupon létrehozása"}</p>
