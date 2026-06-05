@@ -167,10 +167,13 @@ const AdminCouponsManagerTab = () => {
   const startEdit = (coupon: Coupon) => {
     setEditId(coupon.id);
     setForm({
-      ...empty,
-      ...coupon,
+      code: coupon.code || "",
+      description: coupon.description || "",
       discount_percent: coupon.discount_percent ?? 0,
       discount_amount: coupon.discount_amount ?? 0,
+      is_active: coupon.is_active,
+      coupon_type: coupon.coupon_type,
+      single_use: coupon.single_use,
       partner_id: coupon.partner_id || "manual",
       partner_name: coupon.partner_name || "",
       partner_email: coupon.partner_email || "",
@@ -179,7 +182,6 @@ const AdminCouponsManagerTab = () => {
       valid_from: toDtLocal(coupon.valid_from),
       valid_until: toDtLocal(coupon.valid_until),
       notes: coupon.notes || "",
-      description: coupon.description || "",
     });
     setShowForm(true);
   };
