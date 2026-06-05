@@ -257,6 +257,7 @@ const AdminCouponsManagerTab = () => {
   const toggle = async (id: string, v: boolean) => {
     const { error } = await supabase.from("coupons").update({ is_active: v }).eq("id", id);
     if (error) toast({ title: "Hiba", description: error.message, variant: "destructive" });
+    else toast({ title: v ? "Kupon aktiválva" : "Kupon deaktiválva" });
     load();
   };
 
