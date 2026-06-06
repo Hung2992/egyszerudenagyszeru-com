@@ -395,16 +395,7 @@ const AdminLegalCenterTab = () => {
         </div>
       </div>
 
-        <div>
-          <Label className="text-xs uppercase tracking-wider">Hatálybalépés dátuma</Label>
-          <Input
-            type="date"
-            value={settings.legal_effective_date || ""}
-            onChange={(e) => update({ legal_effective_date: e.target.value })}
-            className="rounded-none mt-1"
-          />
-        </div>
-      </div>
+
 
       {/* Dokumentum választó grid */}
       <div>
