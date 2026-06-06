@@ -3764,11 +3764,21 @@ export type Database = {
           lang_auto_detect: boolean | null
           lang_available: string[] | null
           lang_default: string | null
+          legal_bank_name: string | null
+          legal_customer_hours: string | null
           legal_disclaimer: string | null
           legal_effective_date: string | null
+          legal_eu_vat_number: string | null
+          legal_invoice_email: string | null
+          legal_mailing_address: string | null
+          legal_owner_name: string | null
+          legal_phone: string | null
+          legal_privacy_email: string | null
+          legal_registry_number: string | null
           legal_require_consent_checkout: boolean
           legal_require_consent_register: boolean
           legal_show_in_footer: boolean
+          legal_vat_status: string | null
           legal_version: string | null
           logo_url: string | null
           low_stock_threshold: number | null
@@ -4027,11 +4037,21 @@ export type Database = {
           lang_auto_detect?: boolean | null
           lang_available?: string[] | null
           lang_default?: string | null
+          legal_bank_name?: string | null
+          legal_customer_hours?: string | null
           legal_disclaimer?: string | null
           legal_effective_date?: string | null
+          legal_eu_vat_number?: string | null
+          legal_invoice_email?: string | null
+          legal_mailing_address?: string | null
+          legal_owner_name?: string | null
+          legal_phone?: string | null
+          legal_privacy_email?: string | null
+          legal_registry_number?: string | null
           legal_require_consent_checkout?: boolean
           legal_require_consent_register?: boolean
           legal_show_in_footer?: boolean
+          legal_vat_status?: string | null
           legal_version?: string | null
           logo_url?: string | null
           low_stock_threshold?: number | null
@@ -4290,11 +4310,21 @@ export type Database = {
           lang_auto_detect?: boolean | null
           lang_available?: string[] | null
           lang_default?: string | null
+          legal_bank_name?: string | null
+          legal_customer_hours?: string | null
           legal_disclaimer?: string | null
           legal_effective_date?: string | null
+          legal_eu_vat_number?: string | null
+          legal_invoice_email?: string | null
+          legal_mailing_address?: string | null
+          legal_owner_name?: string | null
+          legal_phone?: string | null
+          legal_privacy_email?: string | null
+          legal_registry_number?: string | null
           legal_require_consent_checkout?: boolean
           legal_require_consent_register?: boolean
           legal_show_in_footer?: boolean
+          legal_vat_status?: string | null
           legal_version?: string | null
           logo_url?: string | null
           low_stock_threshold?: number | null
@@ -5369,6 +5399,7 @@ export type Database = {
           vote_count: number
         }[]
       }
+      get_public_legal_info: { Args: never; Returns: Json }
       get_public_store_settings: {
         Args: never
         Returns: {
