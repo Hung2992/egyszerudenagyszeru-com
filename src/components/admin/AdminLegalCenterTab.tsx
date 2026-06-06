@@ -321,7 +321,69 @@ const AdminLegalCenterTab = () => {
             className="rounded-none mt-1"
             placeholder="1.0"
           />
+      </div>
+
+      {/* Cégadatok — impresszum / NAV megfelelőség */}
+      <div className="border-2 border-accent/60 p-5 space-y-4">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h3 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-accent" /> Cégadatok / Impresszum
+            </h3>
+            <p className="text-[11px] text-muted-foreground mt-1 max-w-xl">
+              Ezek az adatok jelennek meg élesben az <strong>/legal/impresszum</strong> oldalon,
+              és a kibocsátott számlákon. EV-regisztráció (NAV Webes Ügysegéd) után töltsd ki.
+            </p>
+          </div>
+          <Badge variant="outline" className="rounded-none text-[10px] uppercase">
+            Jogszabály alapján publikus
+          </Badge>
         </div>
+
+        <div className="grid gap-3 md:grid-cols-2">
+          {[
+            { k: "legal_owner_name",       label: "Tulajdonos teljes neve",       ph: "pl. Horváth Zoltán" },
+            { k: "invoice_company_name",   label: "Vállalkozás neve",             ph: "pl. Horváth Zoltán e.v." },
+            { k: "invoice_tax_number",     label: "Adószám",                      ph: "12345678-1-42" },
+            { k: "legal_eu_vat_number",    label: "Közösségi adószám (opcionális)", ph: "HU12345678" },
+            { k: "legal_registry_number",  label: "Nyilvántartási szám (EV szám)", ph: "12345678" },
+            { k: "legal_vat_status",       label: "ÁFA-státusz",                  ph: "Alanyi adómentes / 27% ÁFA-s" },
+            { k: "invoice_address",        label: "Székhely (teljes cím)",        ph: "1234 Budapest, Példa utca 1." },
+            { k: "legal_mailing_address",  label: "Levelezési cím (ha eltér)",    ph: "ugyanaz, vagy: 1234 Budapest, Pf. 12." },
+            { k: "contact_email",          label: "Általános e-mail",             ph: "info@egyszerudenagyszeru.com" },
+            { k: "legal_invoice_email",    label: "Jogi/számlázási e-mail",       ph: "jog@egyszerudenagyszeru.com" },
+            { k: "legal_privacy_email",    label: "Adatvédelmi e-mail",           ph: "adatvedelem@egyszerudenagyszeru.com" },
+            { k: "legal_phone",            label: "Ügyfélszolgálati telefon",     ph: "+36 30 123 4567" },
+            { k: "legal_customer_hours",   label: "Ügyfélszolgálat ideje",        ph: "Munkanapokon 9:00–17:00" },
+            { k: "legal_bank_name",        label: "Bank neve",                    ph: "pl. OTP Bank" },
+            { k: "invoice_bank_account",   label: "Bankszámlaszám",               ph: "12345678-12345678-12345678" },
+          ].map((f) => (
+            <div key={f.k}>
+              <Label className="text-[11px] uppercase tracking-wider">{f.label}</Label>
+              <Input
+                value={settings[f.k] || ""}
+                onChange={(e) => update({ [f.k]: e.target.value })}
+                className="rounded-none mt-1"
+                placeholder={f.ph}
+              />
+            </div>
+          ))}
+        </div>
+
+        <div className="border-t border-border pt-3 text-[11px] text-muted-foreground space-y-1">
+          <p>
+            <strong className="text-foreground">NAV Online Számla:</strong> a számlák
+            automatikus bejelentéséhez (technikai felhasználó adatok) külön titkos
+            kulcsokat kell beállítani, amint megkapod az adószámot — szólj és
+            előkészítem az integrációt.
+          </p>
+          <p>
+            <strong className="text-foreground">Adatváltozás után:</strong> kattints a fenti
+            „Mentés" gombra. Az új adatok azonnal frissülnek az impresszum oldalon.
+          </p>
+        </div>
+      </div>
+
         <div>
           <Label className="text-xs uppercase tracking-wider">Hatálybalépés dátuma</Label>
           <Input
