@@ -321,7 +321,18 @@ const AdminLegalCenterTab = () => {
             className="rounded-none mt-1"
             placeholder="1.0"
           />
+        </div>
+        <div>
+          <Label className="text-xs uppercase tracking-wider">Hatálybalépés dátuma</Label>
+          <Input
+            type="date"
+            value={settings.legal_effective_date || ""}
+            onChange={(e) => update({ legal_effective_date: e.target.value })}
+            className="rounded-none mt-1"
+          />
+        </div>
       </div>
+
 
       {/* Cégadatok — impresszum / NAV megfelelőség */}
       <div className="border-2 border-accent/60 p-5 space-y-4">
