@@ -148,6 +148,16 @@ const AdminLegalCenterTab = () => {
     payload.legal_version = settings.legal_version || "1.0";
     payload.legal_effective_date = settings.legal_effective_date || null;
 
+    // Cégadatok (impresszum / NAV-megfelelőség)
+    const companyFields = [
+      "legal_owner_name", "legal_registry_number", "legal_vat_status",
+      "legal_eu_vat_number", "legal_invoice_email", "legal_privacy_email",
+      "legal_phone", "legal_customer_hours", "legal_mailing_address",
+      "legal_bank_name", "invoice_company_name", "invoice_tax_number",
+      "invoice_address", "invoice_bank_account", "contact_email", "contact_phone",
+    ];
+    companyFields.forEach((f) => { payload[f] = settings[f] ?? null; });
+
     const { error } = await supabase
       .from("store_settings")
       .update(payload)
