@@ -54,4 +54,4 @@ export const LEGAL_INFO = {
   version: "1.0",
   effectiveDate: "2026.01.01.",
   lastUpdated: "2026.04.24.",
-} as const;
+} satisfies Record<string, string>;
