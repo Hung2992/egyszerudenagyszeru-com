@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      accountant_access_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          metadata: Json
+          resource: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          resource?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          resource?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       admin_bank_cards: {
         Row: {
           bank_name: string | null
@@ -2851,6 +2878,36 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_accountant_invites: {
+        Row: {
+          accepted_at: string | null
+          accepted_user_id: string | null
+          email: string
+          id: string
+          invited_at: string
+          invited_by: string | null
+          notes: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_user_id?: string | null
+          email: string
+          id?: string
+          invited_at?: string
+          invited_by?: string | null
+          notes?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_user_id?: string | null
+          email?: string
+          id?: string
+          invited_at?: string
+          invited_by?: string | null
+          notes?: string | null
+        }
+        Relationships: []
+      }
       product_categories: {
         Row: {
           id: string
@@ -5368,6 +5425,7 @@ export type Database = {
         Returns: number
       }
       generate_invoice_number: { Args: never; Returns: string }
+      get_accountant_legal_info: { Args: never; Returns: Json }
       get_active_principles: {
         Args: { _context?: string; _limit?: number }
         Returns: {
@@ -5576,6 +5634,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin_or_accountant: { Args: { _user_id: string }; Returns: boolean }
+      list_accountants: {
+        Args: never
+        Returns: {
+          email: string
+          granted_at: string
+          user_id: string
+        }[]
+      }
       log_meta_run_audit: {
         Args: {
           _event_type: string
@@ -5652,6 +5719,7 @@ export type Database = {
         Returns: undefined
       }
       revert_meta_action: { Args: { _action_id: string }; Returns: Json }
+      revoke_accountant: { Args: { _user_id: string }; Returns: boolean }
       rollback_ai_knowledge: { Args: { _doc_id: string }; Returns: boolean }
       rollback_meta_principle: {
         Args: { _version_id: string }
