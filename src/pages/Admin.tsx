@@ -3480,6 +3480,7 @@ const Admin = () => {
         {tab === "review_settings" && <AdminReviewSettingsTab />}
         {tab === "tax_invoice" && <AdminTaxInvoiceTab />}
         {tab === "legal_center" && <AdminLegalCenterTab />}
+        {tab === "accountant_access" && <AdminAccountantAccessTab />}
         {tab === "affiliate" && <AdminAffiliateTab />}
         {tab === "conversion" && <AdminConversionTab />}
         {tab === "currency" && <AdminCurrencyTab />}
