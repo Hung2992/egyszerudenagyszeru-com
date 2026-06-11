@@ -85,7 +85,7 @@ const AccountantPortal = () => {
     const net = invoices.reduce((s, i) => s + Number(i.subtotal ?? 0), 0);
     const vat = invoices.reduce((s, i) => s + Number(i.tax_amount ?? 0), 0);
     const refundSum = refunds.reduce((s, r) => s + Number(r.amount ?? 0), 0);
-    const costSum = procurement.reduce((s, p) => s + Number(p.total_cost ?? (p.unit_cost * p.quantity) ?? 0), 0);
+    const costSum = procurement.reduce((s, p) => s + Number(p.total_cost ?? (p.unit_cost * p.quantity)), 0);
     return { gross, net, vat, refundSum, costSum, payableVat: vat - 0 };
   }, [invoices, refunds, procurement]);
 
