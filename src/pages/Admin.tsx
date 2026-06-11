@@ -1518,6 +1518,7 @@ const Admin = () => {
     { key: "personalized_recommendations", label: "Ajánlások", icon: Heart },
     { key: "subscribers", label: "Feliratkozók", icon: Bell },
     { key: "legal_center", label: "Jogi központ", icon: Shield },
+    { key: "accountant_access" as Tab, label: "Könyvelő hozzáférés", icon: Calculator },
     { key: "settings", label: "Beállítások", icon: Settings },
   ];
 
