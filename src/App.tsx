@@ -23,6 +23,7 @@ const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 // Lazy-loaded pages to reduce initial bundle size
 const Profile = lazy(() => import("./pages/Profile.tsx"));
 const Admin = lazy(() => import("./pages/Admin.tsx"));
+const AccountantPortal = lazy(() => import("./pages/AccountantPortal.tsx"));
 const Shop = lazy(() => import("./pages/Shop.tsx"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail.tsx"));
 const Checkout = lazy(() => import("./pages/Checkout.tsx"));
@@ -79,6 +80,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/konyvelo" element={<AccountantPortal />} />
             <Route path="/shop" element={<Shop />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/checkout" element={<Checkout />} />
