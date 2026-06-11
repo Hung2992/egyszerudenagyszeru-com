@@ -23,6 +23,7 @@ const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 // Lazy-loaded pages to reduce initial bundle size
 const Profile = lazy(() => import("./pages/Profile.tsx"));
 const Admin = lazy(() => import("./pages/Admin.tsx"));
+const AccountantPortal = lazy(() => import("./pages/AccountantPortal.tsx"));
 const Shop = lazy(() => import("./pages/Shop.tsx"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail.tsx"));
 const Checkout = lazy(() => import("./pages/Checkout.tsx"));
