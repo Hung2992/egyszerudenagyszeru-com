@@ -312,12 +312,19 @@ const AdminPartnersTab = () => {
             <p className="text-xs text-muted-foreground">Szerződés, igazolás, jutalék és partnerkupon egy helyen.</p>
           </div>
         </div>
-        <Button size="sm" className="rounded-none uppercase tracking-wider text-xs" onClick={() => { reset(); setShowForm(true); }}>
-          <Plus className="w-4 h-4 mr-1" /> Új partner profil
-        </Button>
+        <div className="flex gap-2">
+          <AdminPartnerInviteDialog onInvited={load} />
+          <Button size="sm" variant="outline" className="rounded-none uppercase tracking-wider text-xs" onClick={() => { reset(); setShowForm(true); }}>
+            <Plus className="w-4 h-4 mr-1" /> Új partner profil
+          </Button>
+        </div>
       </div>
 
       <AdminPartnerTopStats />
+      <AdminPartnerPayouts />
+      <AdminPartnerMarketingAssets />
+
+
 
 
       <div className="grid gap-3 md:grid-cols-5">
