@@ -4355,6 +4355,7 @@ export type Database = {
           vat_rate: number
           warranty_info: string | null
           warranty_policy: string | null
+          welcome20_cron_token: string | null
           withdrawal_policy: string | null
         }
         Insert: {
@@ -4628,6 +4629,7 @@ export type Database = {
           vat_rate?: number
           warranty_info?: string | null
           warranty_policy?: string | null
+          welcome20_cron_token?: string | null
           withdrawal_policy?: string | null
         }
         Update: {
@@ -4901,6 +4903,7 @@ export type Database = {
           vat_rate?: number
           warranty_info?: string | null
           warranty_policy?: string | null
+          welcome20_cron_token?: string | null
           withdrawal_policy?: string | null
         }
         Relationships: []
