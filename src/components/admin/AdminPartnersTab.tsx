@@ -119,6 +119,7 @@ const AdminPartnersTab = () => {
   const [couponCounts, setCouponCounts] = useState<Record<string, number>>({});
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive" | "expired" | "incomplete">("all");
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
