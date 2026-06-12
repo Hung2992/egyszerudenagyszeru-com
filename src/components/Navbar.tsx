@@ -30,6 +30,23 @@ const Navbar = () => {
   const { isAdmin, loading: adminLoading } = useAdminCheck();
   const { partner, loading: partnerLoading } = usePartnerCheck();
   const isPartner = !partnerLoading && partner?.status === "active";
+
+  // Naplózzuk, hogy a partner menü megjelent a felhasználónak (session-enként egyszer).
+  useEffect(() => {
+    if (!isPartner || !partner?.id) return;
+    const key = `partner_menu_logged_${partner.id}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase.from("partner_access_log").insert({
+        event_type: "menu_shown",
+        partner_id: partner.id,
+        user_id: user.id,
+      });
+    });
+  }, [isPartner, partner?.id]);
+
   const [user, setUser] = useState<SupaUser | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
