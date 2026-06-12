@@ -414,7 +414,29 @@ const ProfilePage = () => {
           <div className="text-center">
             <h1 className="text-lg font-bold uppercase tracking-wider text-foreground">Fiókom</h1>
             <p className="text-xs text-muted-foreground mt-0.5">{user?.email}</p>
-          </div>
+        </div>
+
+        {/* Accountant portal access */}
+        {isAccountant && (
+          <button
+            onClick={() => navigate("/konyvelo")}
+            className="w-full mb-6 flex items-center justify-between gap-3 border border-accent bg-accent/10 px-4 py-3 hover:bg-accent/20 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <FileText className="h-5 w-5 text-accent" />
+              <div className="text-left">
+                <div className="text-xs font-bold uppercase tracking-widest text-foreground">
+                  Könyvelői felület
+                </div>
+                <div className="text-[10px] text-muted-foreground">
+                  {accountantRole === "admin" ? "Admin hozzáférés" : "Belépés a könyvelői panelre"}
+                </div>
+              </div>
+            </div>
+            <span className="text-xs font-bold uppercase tracking-wider text-accent">Belépés →</span>
+          </button>
+        )}
+
         </div>
 
         {/* Tabs */}
