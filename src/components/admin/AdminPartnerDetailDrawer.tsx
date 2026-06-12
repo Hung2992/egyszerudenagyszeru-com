@@ -23,6 +23,10 @@ interface Payout {
   id: string; amount: number; status: string;
   requested_at: string; paid_at: string | null;
 }
+interface StatusEvent {
+  id: string; referral_id: string; old_status: string | null; new_status: string;
+  changed_by: string | null; changed_by_role: string | null; note: string | null; created_at: string;
+}
 
 const fmt = (n: number) => `${Math.round(n).toLocaleString("hu-HU")} Ft`;
 const fmtDate = (d: string | null) => d ? new Date(d).toLocaleDateString("hu-HU") : "—";
