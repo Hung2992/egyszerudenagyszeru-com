@@ -239,6 +239,33 @@ const AdminPartnerDetailDrawer = ({ partnerId, onClose, onChanged }: Props) => {
 
 
             <div>
+              <h3 className="text-xs uppercase tracking-widest font-bold mb-2 flex items-center gap-1"><History className="w-3 h-3" /> Jutalék státusz idővonal</h3>
+              <div className="border max-h-64 overflow-y-auto">
+                {history.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-3">Még nincs státusz változás.</p>
+                ) : (
+                  <ul className="divide-y">
+                    {history.map((h) => (
+                      <li key={h.id} className="p-2 text-xs flex items-start gap-2">
+                        <span className="text-muted-foreground whitespace-nowrap w-32">{new Date(h.created_at).toLocaleString("hu-HU")}</span>
+                        <span className="flex-1">
+                          {h.old_status && <span className="text-muted-foreground">{h.old_status} → </span>}
+                          <strong className={
+                            h.new_status === "confirmed" ? "text-green-500" :
+                            h.new_status === "cancelled" ? "text-red-500" :
+                            h.new_status === "paid" ? "text-accent" : "text-yellow-500"
+                          }>{h.new_status}</strong>
+                          {h.note && <span className="text-muted-foreground"> — {h.note}</span>}
+                        </span>
+                        <Badge variant="outline" className="rounded-none text-[9px] uppercase">{h.changed_by_role || "system"}</Badge>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            <div>
               <h3 className="text-xs uppercase tracking-widest font-bold mb-2">Rendelések (utolsó 50)</h3>
               <div className="border overflow-x-auto">
                 <Table>
