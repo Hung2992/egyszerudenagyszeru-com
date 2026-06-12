@@ -102,17 +102,6 @@ Deno.serve(async (req) => {
     });
 
     return json({ ok: true, invite_link, expires_at: expiresAt, resend_count: resendCount, email_failed: emailFailed });
-
-    await admin.from("accountant_access_log").insert({
-      user_id: user.id,
-      action: isResend ? "invite_resent" : "invite_sent",
-      resource: email,
-      ip_address: req.headers.get("x-forwarded-for") ?? null,
-      user_agent: req.headers.get("user-agent") ?? null,
-      metadata: { expires_at: expiresAt, resend_count: resendCount },
-    });
-
-    return json({ ok: true, invite_link, expires_at: expiresAt, resend_count: resendCount });
   } catch (e) {
     return json({ ok: false, error: (e as Error).message }, 500);
   }
