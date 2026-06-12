@@ -155,8 +155,8 @@ const Navbar = () => {
                 )}
               </div>
             ) : (
-              <Button variant="ghost" className="rounded-none text-xs uppercase tracking-wider" onClick={() => navigate("/auth")}>
-                Belépés
+              <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate("/auth")} aria-label="Belépés">
+                <User className="h-4 w-4" />
               </Button>
             )}
           </div>
