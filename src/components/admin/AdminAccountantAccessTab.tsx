@@ -3,11 +3,11 @@ import { supabase } from "@/integrations/supabase/untyped-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { Calculator, Mail, Trash2, Loader2, Copy, ExternalLink } from "lucide-react";
+import { Calculator, Mail, Trash2, Loader2, Copy, ExternalLink, Send, Clock } from "lucide-react";
 import AdminAuditExportCard from "./AdminAuditExportCard";
 
 interface AccountantUser { user_id: string; email: string; granted_at: string; }
-interface PendingInvite { id: string; email: string; invited_at: string; accepted_at: string | null; }
+interface PendingInvite { id: string; email: string; invited_at: string; accepted_at: string | null; expires_at: string | null; resend_count: number | null; last_sent_at: string | null; }
 
 const AdminAccountantAccessTab = () => {
   const [email, setEmail] = useState("");
@@ -21,7 +21,7 @@ const AdminAccountantAccessTab = () => {
     setLoading(true);
     const [a, p] = await Promise.all([
       supabase.rpc("list_accountants"),
-      supabase.from("pending_accountant_invites").select("id,email,invited_at,accepted_at").order("invited_at", { ascending: false }),
+      supabase.from("pending_accountant_invites").select("id,email,invited_at,accepted_at,expires_at,resend_count,last_sent_at").order("invited_at", { ascending: false }),
     ]);
     setAccountants((a.data as AccountantUser[]) ?? []);
     setPending((p.data as PendingInvite[]) ?? []);
@@ -47,6 +47,17 @@ const AdminAccountantAccessTab = () => {
     setEmail("");
     if (data.invite_link) setLastInviteLink(data.invite_link);
     toast({ title: "Meghívás elküldve", description: `${clean} most már regisztrálhat könyvelőként.` });
+    await load();
+  };
+
+  const resendInvite = async (targetEmail: string) => {
+    const { data, error } = await supabase.functions.invoke("invite-accountant", { body: { email: targetEmail, resend: true } });
+    if (error || !data?.ok) {
+      toast({ title: "Sikertelen újraküldés", description: error?.message || data?.error, variant: "destructive" });
+      return;
+    }
+    if (data.invite_link) setLastInviteLink(data.invite_link);
+    toast({ title: "Meghívó újraküldve", description: `${targetEmail} — érvényes 7 napig` });
     await load();
   };
 
@@ -134,19 +145,39 @@ const AdminAccountantAccessTab = () => {
         {pending.length === 0 ? <p className="p-6 text-xs text-muted-foreground text-center">Nincs meghívás</p> : (
           <table className="w-full text-xs">
             <tbody>
-              {pending.map(p => (
-                <tr key={p.id} className="border-t border-border">
-                  <td className="p-3 font-bold">{p.email}</td>
-                  <td className="p-3 text-muted-foreground">
-                    {p.accepted_at
-                      ? <span className="text-accent">Elfogadva {new Date(p.accepted_at).toLocaleDateString("hu-HU")}</span>
-                      : <span>Küldve {new Date(p.invited_at).toLocaleDateString("hu-HU")} — még nem regisztrált</span>}
-                  </td>
-                  <td className="p-3 text-right">
-                    {!p.accepted_at && <Button size="sm" variant="ghost" onClick={() => deleteInvite(p.id)}><Trash2 className="h-3 w-3" /></Button>}
-                  </td>
-                </tr>
-              ))}
+              {pending.map(p => {
+                const expired = p.expires_at && new Date(p.expires_at) < new Date();
+                return (
+                  <tr key={p.id} className="border-t border-border">
+                    <td className="p-3 font-bold align-top">{p.email}</td>
+                    <td className="p-3 text-muted-foreground align-top">
+                      {p.accepted_at ? (
+                        <span className="text-accent">Elfogadva {new Date(p.accepted_at).toLocaleDateString("hu-HU")}</span>
+                      ) : (
+                        <div className="space-y-1">
+                          <div>Küldve {new Date(p.last_sent_at ?? p.invited_at).toLocaleDateString("hu-HU")}{(p.resend_count ?? 0) > 0 && <span className="ml-2 text-[10px] bg-secondary px-1.5 py-0.5">×{(p.resend_count ?? 0) + 1}</span>}</div>
+                          {p.expires_at && (
+                            <div className={`flex items-center gap-1 text-[10px] ${expired ? "text-destructive" : "text-muted-foreground"}`}>
+                              <Clock className="h-3 w-3" />
+                              {expired ? "LEJÁRT" : `Lejár: ${new Date(p.expires_at).toLocaleDateString("hu-HU")}`}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </td>
+                    <td className="p-3 text-right align-top">
+                      {!p.accepted_at && (
+                        <div className="flex gap-1 justify-end">
+                          <Button size="sm" variant="outline" onClick={() => resendInvite(p.email)}>
+                            <Send className="h-3 w-3 mr-1" /> Újraküldés
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => deleteInvite(p.id)}><Trash2 className="h-3 w-3" /></Button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

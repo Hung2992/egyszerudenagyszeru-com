@@ -10,8 +10,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import AccountantTotpGate from "@/components/accountant/AccountantTotpGate";
+import AccountantSecurityCard from "@/components/accountant/AccountantSecurityCard";
 
-type Tab = "overview" | "invoices" | "refunds" | "expenses" | "vat" | "export";
+type Tab = "overview" | "invoices" | "refunds" | "expenses" | "vat" | "export" | "settings";
 
 interface Legal {
   ownerName?: string; taxId?: string; euVatNumber?: string;
@@ -230,6 +231,7 @@ const AccountantPortal = () => {
             ["expenses", `Költségek (${procurement.length})`, ShoppingCart],
             ["vat", "ÁFA-összesítő", Receipt],
             ["export", "Export", FileSpreadsheet],
+            ["settings", "Biztonság", Calculator],
           ] as const).map(([k, l, Icon]) => (
             <button key={k} onClick={() => setTab(k as Tab)}
               className={`flex items-center gap-2 px-4 py-3 text-xs font-bold uppercase tracking-wider whitespace-nowrap border-b-2 -mb-px transition-colors ${
@@ -248,6 +250,7 @@ const AccountantPortal = () => {
             {tab === "expenses" && <ExpensesTable items={procurement} />}
             {tab === "vat" && <VatSummary kpi={kpi} legal={legal} invoices={invoices} />}
             {tab === "export" && <ExportPanel onCsv={exportCsv} onXlsx={exportXlsx} invoices={invoices} />}
+            {tab === "settings" && <AccountantSecurityCard />}
           </>
         )}
 

@@ -78,6 +78,21 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
 
+    if (action === "regenerate_backup") {
+      const { data: row } = await admin.from("accountant_totp_secrets").select("enabled").eq("user_id", user.id).maybeSingle();
+      if (!row?.enabled) return json({ ok: false, error: "Először aktiválni kell a TOTP-t" }, 400);
+      const backup = Array.from({ length: 8 }, () =>
+        Array.from(crypto.getRandomValues(new Uint8Array(5)))
+          .map((b) => "ABCDEFGHJKMNPQRSTUVWXYZ23456789"[b % 31]).join(""));
+      await admin.from("accountant_totp_secrets").update({ backup_codes: backup }).eq("user_id", user.id);
+      await admin.from("accountant_access_log").insert({
+        user_id: user.id, action: "totp_backup_regenerated", resource: "totp",
+        ip_address: req.headers.get("x-forwarded-for") ?? null,
+        user_agent: req.headers.get("user-agent") ?? null,
+      });
+      return json({ ok: true, backup_codes: backup });
+    }
+
     return json({ ok: false, error: "Ismeretlen művelet" }, 400);
   } catch (e) {
     return json({ ok: false, error: (e as Error).message }, 500);
