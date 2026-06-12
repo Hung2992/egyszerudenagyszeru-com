@@ -24,6 +24,7 @@ const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 const Profile = lazy(() => import("./pages/Profile.tsx"));
 const Admin = lazy(() => import("./pages/Admin.tsx"));
 const AccountantPortal = lazy(() => import("./pages/AccountantPortal.tsx"));
+const PartnerPortal = lazy(() => import("./pages/PartnerPortal.tsx"));
 const Shop = lazy(() => import("./pages/Shop.tsx"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail.tsx"));
 const Checkout = lazy(() => import("./pages/Checkout.tsx"));
@@ -81,6 +82,7 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/konyvelo" element={<AccountantPortal />} />
+            <Route path="/partner" element={<PartnerPortal />} />
             <Route path="/shop" element={<Shop />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/checkout" element={<Checkout />} />

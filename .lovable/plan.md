@@ -1,94 +1,114 @@
 ## Cél
 
-A könyvelőd külön fiókkal lépjen be, csak a pénzügyi/számviteli adatokat lássa (mindent mást NEM), és egy letisztult, NAV-konform felületen kapja meg, amire szüksége van: havi bontás, ÁFA-összesítő, számlák listája + tömeges letöltés, export NAV-bevalláshoz.
+Teljes partner program: te meghívsz valakit (influencer / B2B viszonteladó / márka együttműködő / egyszerű ajánló), kap egy saját kupont, minden vele érkezett rendelés után fix Ft jutalékot számolunk, ő látja a statisztikáit, kérhet kifizetést és letölthet marketing anyagokat. Te admin felületen kezelsz mindent.
 
-## 1. Új szerepkör: `accountant`
+## 1. Adatbázis (új migráció)
 
-- `app_role` enum bővítése: `admin`, `moderator`, `user`, **`accountant`**
-- `has_role()` változatlan, már működik
-- Új helper: `is_admin_or_accountant(uid)` — read-only access pénzügyi táblákhoz
-- RLS policy-k bővítése (read-only) a következő táblákon:
-  - `orders`, `order_events`
-  - `invoices`, `invoice_settings`
-  - `payment_attempts`, `refunds`, `refund_history`
-  - `admin_transactions`, `payouts`, `supplier_payments`
-  - `admin_procurement_orders` (költségoldal)
-  - `tax_rates`, `coupons` (kedvezmények hatása az adóalapra)
-  - `store_settings` → csak a `legal_*`, `invoice_*` mezők (új SECURITY DEFINER függvény)
-- Könyvelő **NEM látja**: termékárazás stratégia, AI, marketing, ügyfél PII azon kívül, ami a számlán szerepel (név, cím), készletmozgás belső jegyzetek.
+**Új enum**: `partner_type` = `influencer | reseller | brand | referrer`  
+**Új enum**: `partner_status` = `invited | active | paused | revoked`  
+**Új enum**: `payout_status` = `requested | approved | paid | rejected`  
+`app_role` **enum bővítés**: `+ partner`
 
-## 2. Könyvelő meghívása (admin oldal)
+**Új táblák** (mind RLS + GRANT a megfelelő szerepkörökhöz):
 
-Új panel a Super Adminban: **„Könyvelő hozzáférés"** (`AdminAccountantAccessTab.tsx`)
-- Email mező + „Meghívás" gomb
-- Edge function: `invite-accountant`
-  - magic link kiküldés (Supabase admin API)
-  - automatikus `user_roles` insert `accountant` szerepkörrel a regisztráció után (trigger az `auth.users` insert eseményre, ha az email szerepel egy `pending_accountant_invites` táblában)
-- Aktív könyvelők listája, „Hozzáférés visszavonása" gomb
+- `partners` — partner profil
+  - `user_id`, `type`, `status`, `display_name`, `company_name`, `tax_number`, `bank_account`, `commission_per_order` (Ft, fix), `coupon_id` (→ `coupons.id`), `notes`, időbélyegek
+- `pending_partner_invites` — meghívott e-mailek várnak regisztrációra (mint a könyvelőnél), `type`, `commission_per_order`, `coupon_code`, `expires_at`
+- `partner_referrals` — minden rendelés ami partnerhez köthető (kupon-egyezés alapján)
+  - `partner_id`, `order_id`, `coupon_code`, `order_total`, `commission_amount`, `status` (`pending | confirmed | cancelled` — rendelés státuszt követi), `confirmed_at`
+- `partner_payouts` — kifizetési kérelmek
+  - `partner_id`, `amount`, `status`, `requested_at`, `paid_at`, `payment_reference`, `notes`
+- `partner_marketing_assets` — letölthető bannerek / képek / linkek (storage bucket-ből)
+  - `title`, `description`, `asset_url`, `asset_type` (`banner | logo | photo | link_template`), `active`
 
-## 3. Könyvelői felület: `/konyvelo`
+**Új trigger**: rendelés `status = 'paid' / 'fulfilled'` → ha a `coupon_code` egy partner kuponja, automatikus `INSERT` a `partner_referrals`-be a `commission_per_order` értékkel. Visszamondott rendelésnél `status = 'cancelled'`.
 
-Külön route, NEM a `/admin` alatt — saját, minimalista, nyomtatható layout (Space Grotesk, fekete-arany, szögletes).
+**RLS** kulcsszabályok:
+
+- Partner csak a saját `partners`, `partner_referrals`, `partner_payouts` rekordjait látja (`auth.uid() = partners.user_id`)
+- `partner_marketing_assets` — minden bejelentkezett partner olvashatja
+- Admin mindent kezelhet (`has_role(uid,'admin')`)
+- Csak admin írhat `partners`-be (státusz, jutalék), partner csak `partner_payouts`-ba kérhet kifizetést
+
+## 2. Edge függvények
+
+- `invite-partner` — admin meghív egy e-mailt: létrehoz egy `pending_partner_invites` rekordot, generál egyedi kupont a `coupons` táblába (admin által megadott %/Ft kedvezménnyel a vásárlónak), e-mailben elküldi a meghívó linket (új tranzakciós e-mail sablon: `partner-invite.tsx`)
+- `partner-claim` — első bejelentkezéskor: ha az e-mail szerepel a `pending_partner_invites`-ban, létrejön a `partners` rekord, hozzáköti a kupont, beállítja a `partner` szerepkört a `user_roles`-ba, törli a meghívót
+- `partner-request-payout` — partner kéri a felhalmozott `confirmed` jutalék kifizetését (min. összeg ellenőrzés)
+- `partner-stats` — összegzett statisztika a partner dashboardhoz (összes elad., összes jutalék, ebből kifizetett, függő)
+
+## 3. Frontend: új útvonal `/partner`
+
+Külön minimalista layout (mint `/konyvelo`), NEM webshop nav:
+
+- **Áttekintés tab** — KPI kártyák: kupon kód (copy gomb), aktív állapot, összes rendelés, összes jutalék, függő jutalék, kifizetett jutalék, mini havi chart
+- **Rendelések tab** — `partner_referrals` lista: dátum, rendelésazonosító (csak utolsó 4), összeg, jutalék, státusz
+- **Kifizetések tab** — gomb "Kifizetés kérése" (csak ha van confirmed jutalék), korábbi kérések listája státusszal
+- **Marketing tab** — `partner_marketing_assets` rács, letöltés / link másolás gomb, kész szöveg-sablonok Instagram/TikTok posthoz
+- **Profil tab** — saját adatok (cégnév, adószám, bankszámla) szerkesztése
+
+Új fájlok:
+
+- `src/hooks/usePartnerCheck.ts`
+- `src/pages/PartnerPortal.tsx`
+- `src/components/partner/PartnerLayout.tsx`, `OverviewTab.tsx`, `ReferralsTab.tsx`, `PayoutsTab.tsx`, `MarketingTab.tsx`, `ProfileTab.tsx`
+
+`Profile.tsx`-ben új gomb (mint a könyvelői), csak partnernek látható: **"Partner felület"** → `/partner`.
+
+## 4. Admin felület (Super Admin új szekció)
+
+Új tab: **"Partnerek"** (`AdminPartnersTab.tsx`)
+
+- Meghívás form: e-mail + típus (4 választás) + fix Ft jutalék/rendelés + vásárlói kupon kedvezmény (%/Ft) → "Meghívás" gomb
+- Aktív partnerek táblázat: név, típus, kupon, össz forgalom, össz jutalék, állapot (pause/revoke gomb)
+- Kifizetési kérelmek lista: jóváhagyás / kifizetve jelölés / elutasítás (megjegyzéssel)
+- Marketing anyagok feltöltése (storage bucket: `partner-assets`)
+- Statisztikai összesítő (top partnerek, havi forgalom)
+
+## 5. E-mail sablonok
+
+- `partner-invite.tsx` — meghívó link + magyarázat
+- `partner-payout-approved.tsx` — kifizetés visszaigazolás
+- `partner-welcome.tsx` — első sikeres bejelentkezés után
+
+## 6. Biztonság
+
+- Kuponok admin által generáltak, garantáltan egyediek (`PARTNER-XXXX` formátum)
+- Jutalék csak `paid`/`fulfilled` rendelésre `confirmed`, `cancelled`/`refunded`-nél visszavonjuk
+- Bankszámla titkosított oszlop (pgcrypto opcionális, vagy csak admin által olvasható view)
+- Audit napló a kifizetésekről
+
+## Technikai részletek
 
 ```text
-┌─────────────────────────────────────────────────┐
-│ KÖNYVELŐ KÖZPONT          Horváth Zoltán EV     │
-│ 92115477-2-27 · 27% ÁFA havi bevalló            │
-├─────────────────────────────────────────────────┤
-│ [2026 Június ▼] [Előző] [Következő] [Export]    │
-├──────────────┬──────────────┬───────────────────┤
-│ BRUTTÓ       │ NETTÓ        │ FIZETENDŐ ÁFA     │
-│ 1 234 567 Ft │   972 100 Ft │   262 467 Ft      │
-├──────────────┴──────────────┴───────────────────┤
-│ Napi bontás (mini chart)                        │
-├─────────────────────────────────────────────────┤
-│ SZÁMLÁK (47 db)               [Mind letölt ZIP] │
-│  EDN-2026-00031  06.01  Kiss J.    12 990 Ft 📄 │
-│  EDN-2026-00032  06.01  Nagy P.     8 490 Ft 📄 │
-│  ...                                            │
-├─────────────────────────────────────────────────┤
-│ JÓVÁÍRÁSOK / VISSZATÉRÍTÉSEK (3 db)             │
-├─────────────────────────────────────────────────┤
-│ KÖLTSÉGEK / BESZERZÉSEK (12 db)                 │
-├─────────────────────────────────────────────────┤
-│ EXPORT:  [CSV] [SZAMLAZZ.HU XML] [NAV ANYK XML] │
-└─────────────────────────────────────────────────┘
+USER FLOW
+─────────────────────────────────────────────
+Admin → "Partnerek" tab → Meghívás (email, típus, 1000 Ft/rendelés)
+         ↓
+       invite-partner edge fn
+         ↓
+       pending_partner_invites + új kupon "PARTNER-AB12" + email
+         ↓
+Partner regisztrál ugyanazzal az emaillel
+         ↓
+       partner-claim → partners + user_roles('partner') + welcome email
+         ↓
+Vásárló használja "PARTNER-AB12" kupont rendeléskor
+         ↓
+       order paid → trigger → partner_referrals (+1000 Ft pending)
+         ↓
+       order fulfilled → status = confirmed
+         ↓
+Partner /partner felületen látja → "Kifizetés kérése"
+         ↓
+       partner-payouts (requested) → admin jóváhagyja → paid
 ```
 
-Fülek:
-1. **Áttekintés** — havi KPI-k, napi forgalom chart
-2. **Számlák** — táblázat szűrőkkel (dátum, vevő, állapot), PDF letöltés egyenként vagy ZIP-ben
-3. **Visszatérítések** — refund_history
-4. **Költségek** — admin_procurement_orders + supplier_payments
-5. **ÁFA-összesítő** — adóalap × 27% bontás, közösségi ügyletek külön (HU92115477)
-6. **Export** — havi CSV (könyvelőprogramba), számla XML (NAV-kompatibilis)
+## Mit NEM csinálok most (későbbre hagyom)
 
-## 4. Védelem
+- Automatikus banki utalás (manuálisan utalsz, csak jelölöd "paid"-nek)
+- Lépcsős jutalék (most csak fix Ft)
+- Click tracking / referral link (most csak kupon-alapú attribúció)
+- Adóügyi automatizmus (1%-os kifizetési jelentés a NAV-nak — később ha kell)
 
-- `useAccountantCheck.ts` hook — `has_role(uid, 'accountant') OR has_role(uid, 'admin')`
-- `/konyvelo` útvonal védelme: ha nincs jogosultság → `/auth` redirect
-- Admin is láthatja (felügyelet végett)
-- Külön topbar „KILÉPÉS" gombbal, NINCS shop nav, NINCS kosár
-
-## 5. Audit napló
-
-Új tábla `accountant_access_log` (ki, mikor, mit nézett/exportált) — GDPR + belső biztonság.
-
-## Technikai fájlok
-
-- `supabase/migrations/<ts>_accountant_role.sql` — enum bővítés, RLS, függvények, audit tábla
-- `supabase/functions/invite-accountant/index.ts` — meghívó email
-- `supabase/functions/accountant-export/index.ts` — CSV/XML export szerveroldalon (RLS-szel)
-- `src/hooks/useAccountantCheck.ts`
-- `src/pages/AccountantPortal.tsx` (route entry)
-- `src/components/accountant/` — Layout, OverviewTab, InvoicesTab, RefundsTab, ExpensesTab, VatSummaryTab, ExportTab
-- `src/components/admin/AdminAccountantAccessTab.tsx` — meghívó panel
-- `src/App.tsx` — új route `/konyvelo`
-
-## Megerősítés előtt
-
-1. Az **email cím**, amit a könyvelőd használ → szükségem lesz rá a meghíváshoz (vagy meghívod te kézzel a felület építése után).
-2. **Számlázó program**: Számlázz.hu / Billingo / Saját NAV Online Számla? (ez dönti el az export formátumot — most mindhárom CSV-t és NAV XML-t építek alapból, később bővíthető)
-3. Engedélyezed, hogy a könyvelő lássa a vevők **számlázási nevét és címét** (ez kötelező a számlán, tehát igen — csak megerősítés)?
-
-Ha rábólintasz, megépítem.
+Megerősítés után megépítem a teljes rendszert egy menetben

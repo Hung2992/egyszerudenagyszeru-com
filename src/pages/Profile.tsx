@@ -37,6 +37,7 @@ import AiSizeRecommender from "@/components/AiSizeRecommender";
 import type { User as SupaUser } from "@supabase/supabase-js";
 import { sendAppEmail } from "@/lib/app-email";
 import { useAccountantCheck } from "@/hooks/useAccountantCheck";
+import PartnerAccessButton from "@/components/PartnerAccessButton";
 
 interface ProfileData {
   display_name: string;
@@ -437,6 +438,10 @@ const ProfilePage = () => {
             <span className="text-xs font-bold uppercase tracking-wider text-accent">Belépés →</span>
           </button>
         )}
+
+        <PartnerAccessButton />
+
+
 
 
         {/* Tabs */}
