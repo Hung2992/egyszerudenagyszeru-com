@@ -42,6 +42,7 @@ const monthRange = (y: number, m: number) => {
 const AccountantPortal = () => {
   const navigate = useNavigate();
   const { allowed, loading: authLoading, role, email } = useAccountantCheck();
+  const [totpPassed, setTotpPassed] = useState(false);
   const [tab, setTab] = useState<Tab>("overview");
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
