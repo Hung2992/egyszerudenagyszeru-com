@@ -78,17 +78,33 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
 
-    if (action === "regenerate_backup") {
-      const { data: row } = await admin.from("accountant_totp_secrets").select("enabled").eq("user_id", user.id).maybeSingle();
-      if (!row?.enabled) return json({ ok: false, error: "Először aktiválni kell a TOTP-t" }, 400);
-      const backup = Array.from({ length: 8 }, () =>
-        Array.from(crypto.getRandomValues(new Uint8Array(5)))
-          .map((b) => "ABCDEFGHJKMNPQRSTUVWXYZ23456789"[b % 31]).join(""));
-      await admin.from("accountant_totp_secrets").update({ backup_codes: backup }).eq("user_id", user.id);
+    if (action === "regenerate_backup" || action === "view_backup") {
+      const code = String(body.code || "").replace(/\s/g, "");
+      if (!/^\d{6}$/.test(code)) return json({ ok: false, error: "6 jegyű TOTP kód szükséges" }, 400);
+      const { data: row } = await admin.from("accountant_totp_secrets").select("secret,enabled,backup_codes").eq("user_id", user.id).maybeSingle();
+      if (!row?.enabled || !row?.secret) return json({ ok: false, error: "Először aktiválni kell a TOTP-t" }, 400);
+      if (!authenticator.check(code, row.secret)) {
+        await admin.from("accountant_access_log").insert({
+          user_id: user.id, action: "totp_backup_access_denied", resource: action,
+          ip_address: req.headers.get("x-forwarded-for") ?? null,
+          user_agent: req.headers.get("user-agent") ?? null,
+        });
+        return json({ ok: false, error: "Érvénytelen TOTP kód" }, 401);
+      }
+      let backup = (row.backup_codes as string[]) ?? [];
+      if (action === "regenerate_backup") {
+        backup = Array.from({ length: 8 }, () =>
+          Array.from(crypto.getRandomValues(new Uint8Array(5)))
+            .map((b) => "ABCDEFGHJKMNPQRSTUVWXYZ23456789"[b % 31]).join(""));
+        await admin.from("accountant_totp_secrets").update({ backup_codes: backup }).eq("user_id", user.id);
+      }
       await admin.from("accountant_access_log").insert({
-        user_id: user.id, action: "totp_backup_regenerated", resource: "totp",
+        user_id: user.id,
+        action: action === "regenerate_backup" ? "totp_backup_regenerated" : "totp_backup_viewed",
+        resource: "totp",
         ip_address: req.headers.get("x-forwarded-for") ?? null,
         user_agent: req.headers.get("user-agent") ?? null,
+        metadata: { remaining: backup.length },
       });
       return json({ ok: true, backup_codes: backup });
     }
