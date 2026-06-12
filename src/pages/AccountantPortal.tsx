@@ -404,12 +404,17 @@ const VatSummary = ({ kpi, legal, invoices }: { kpi: any; legal: Legal; invoices
   );
 };
 
-const ExportPanel = ({ onCsv, invoices }: { onCsv: () => void; invoices: Invoice[] }) => (
+const ExportPanel = ({ onCsv, onXlsx, invoices }: { onCsv: () => void; onXlsx: () => void; invoices: Invoice[] }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
     <button onClick={onCsv} disabled={!invoices.length} className="border border-border p-6 text-left hover:border-accent transition-colors disabled:opacity-50">
       <FileSpreadsheet className="h-7 w-7 text-accent mb-3" />
       <p className="font-bold uppercase tracking-wide text-sm">Havi CSV</p>
       <p className="text-xs text-muted-foreground mt-1">Excel/könyvelőprogramba (UTF-8 BOM, pontosvessző)</p>
+    </button>
+    <button onClick={onXlsx} disabled={!invoices.length} className="border border-border p-6 text-left hover:border-accent transition-colors disabled:opacity-50">
+      <FileSpreadsheet className="h-7 w-7 text-accent mb-3" />
+      <p className="font-bold uppercase tracking-wide text-sm">NAV XLSX (4 lap)</p>
+      <p className="text-xs text-muted-foreground mt-1">Számlák + ÁFA-összesítő + visszatérítések + költségek</p>
     </button>
     <div className="border border-border p-6 opacity-60 cursor-not-allowed">
       <FileText className="h-7 w-7 mb-3" />
