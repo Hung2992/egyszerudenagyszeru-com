@@ -247,7 +247,7 @@ const AccountantPortal = () => {
             {tab === "refunds" && <RefundsTable refunds={refunds} />}
             {tab === "expenses" && <ExpensesTable items={procurement} />}
             {tab === "vat" && <VatSummary kpi={kpi} legal={legal} invoices={invoices} />}
-            {tab === "export" && <ExportPanel onCsv={exportCsv} invoices={invoices} />}
+            {tab === "export" && <ExportPanel onCsv={exportCsv} onXlsx={exportXlsx} invoices={invoices} />}
           </>
         )}
 
