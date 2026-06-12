@@ -91,38 +91,55 @@ const AdminPartnerDetailDrawer = ({ partnerId, onClose, onChanged }: Props) => {
     return () => { supabase.removeChannel(channel); };
   }, [partnerId]);
 
-  useEffect(() => {
-    if (!partnerId) return;
-    (async () => {
-      setLoading(true);
-      const [pRes, rRes, poRes] = await Promise.all([
-        supabase.from("partners").select("*").eq("id", partnerId).maybeSingle(),
-        supabase.from("partner_referrals").select("*").eq("partner_id", partnerId).order("created_at", { ascending: false }).limit(50),
-        supabase.from("partner_payouts").select("*").eq("partner_id", partnerId).order("requested_at", { ascending: false }).limit(20),
-      ]);
-      setPartner(pRes.data);
-      setReferrals((rRes.data ?? []) as Referral[]);
-      setPayouts((poRes.data ?? []) as Payout[]);
-      if (pRes.data?.coupon_id) {
-        const { data: c } = await supabase.from("coupons").select("code").eq("id", pRes.data.coupon_id).maybeSingle();
-        setCouponCode(c?.code ?? null);
-      } else {
-        const { data: c } = await supabase.from("coupons").select("code").eq("partner_id", partnerId).maybeSingle();
-        setCouponCode(c?.code ?? null);
-      }
-      setLoading(false);
-    })();
-  }, [partnerId]);
-
   if (!partnerId) return null;
 
+  const sendActivationEmail = async () => {
+    if (!partner?.email) {
+      toast({ title: "Nincs email cím a partnerhez", variant: "destructive" });
+      return;
+    }
+    setActivating(true);
+    try {
+      const portalUrl = `${window.location.origin}/partner`;
+      const { error } = await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "partner-welcome",
+          recipientEmail: partner.email,
+          idempotencyKey: `partner-activate-${partnerId}-${Date.now()}`,
+          templateData: {
+            full_name: partner.full_name || "",
+            coupon_code: couponCode || "",
+            portal_url: portalUrl,
+          },
+        },
+      });
+      if (error) throw error;
+      // Audit log
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from("partner_access_log").insert({
+        event_type: "activation_email_sent",
+        partner_id: partnerId,
+        user_id: user?.id ?? null,
+        metadata: { recipient: partner.email, portal_url: portalUrl },
+      });
+      toast({ title: "Aktiváló email elküldve", description: partner.email });
+    } catch (e: any) {
+      toast({ title: "Email küldés sikertelen", description: e?.message || String(e), variant: "destructive" });
+    } finally {
+      setActivating(false);
+    }
+  };
+
   const changeStatus = async (status: "active" | "paused" | "revoked") => {
+    const wasInactive = partner?.status !== "active";
     const { error } = await supabase.from("partners").update({ status, is_active: status === "active" }).eq("id", partnerId);
-    if (error) toast({ title: "Hiba", description: error.message, variant: "destructive" });
-    else {
-      toast({ title: `Partner státusz: ${status}` });
-      setPartner({ ...partner, status });
-      onChanged?.();
+    if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
+    toast({ title: `Partner státusz: ${status}` });
+    setPartner({ ...partner, status });
+    onChanged?.();
+    // Aktiváláskor automatikusan üdvözlő emailt küldünk a partner felület linkjével.
+    if (status === "active" && wasInactive && partner?.email) {
+      await sendActivationEmail();
     }
   };
 
