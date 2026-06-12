@@ -115,6 +115,9 @@ const CartDrawer = () => {
               </div>
             )}
 
+            {/* WELCOME20 status */}
+            <div className="px-5 pb-2"><Welcome20StatusBanner compact /></div>
+
             {/* CART ITEMS */}
             <div className="flex-1 overflow-y-auto space-y-3 px-5 py-2">
               {items.map((item, idx) => {
