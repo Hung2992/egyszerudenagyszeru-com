@@ -63,6 +63,20 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Send branded invite email via transactional system (best-effort)
+    try {
+      const { data: settings } = await admin.from("store_settings").select("legal_owner_name,store_name").maybeSingle();
+      const inviterName = (settings as any)?.legal_owner_name || (settings as any)?.store_name || "Egyszerű de Nagyszerű";
+      await admin.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "accountant-invite",
+          recipientEmail: email,
+          idempotencyKey: `accountant-invite-${email}-${Date.now()}`,
+          templateData: { invite_link, inviter_name: inviterName },
+        },
+      });
+    } catch (_e) { /* email best-effort */ }
+
     return json({ ok: true, invite_link });
   } catch (e) {
     return json({ ok: false, error: (e as Error).message }, 500);

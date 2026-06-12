@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { useAccountantCheck } from "@/hooks/useAccountantCheck";
 import {
@@ -8,6 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import AccountantTotpGate from "@/components/accountant/AccountantTotpGate";
 
 type Tab = "overview" | "invoices" | "refunds" | "expenses" | "vat" | "export";
 
@@ -40,6 +42,7 @@ const monthRange = (y: number, m: number) => {
 const AccountantPortal = () => {
   const navigate = useNavigate();
   const { allowed, loading: authLoading, role, email } = useAccountantCheck();
+  const [totpPassed, setTotpPassed] = useState(false);
   const [tab, setTab] = useState<Tab>("overview");
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -54,6 +57,7 @@ const AccountantPortal = () => {
   useEffect(() => {
     if (authLoading) return;
     if (!allowed) { navigate("/auth"); return; }
+    if (!totpPassed) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
@@ -71,14 +75,16 @@ const AccountantPortal = () => {
       setProcurement((procRes.data as Procurement[]) ?? []);
       setLoading(false);
 
-      // Audit
+      const uid = (await supabase.auth.getUser()).data.user?.id;
       await supabase.from("accountant_access_log").insert({
-        user_id: (await supabase.auth.getUser()).data.user?.id,
-        action: "view_month", resource: range.label, metadata: { tab },
+        user_id: uid, action: "view_month", resource: range.label,
+        user_agent: navigator.userAgent, metadata: { tab },
       });
+      // Welcome email — fires once per invite
+      void supabase.functions.invoke("accountant-welcome");
     })();
     return () => { cancelled = true; };
-  }, [authLoading, allowed, year, month, tab, navigate]);
+  }, [authLoading, allowed, totpPassed, year, month, tab, navigate]);
 
   const kpi = useMemo(() => {
     const gross = invoices.reduce((s, i) => s + Number(i.total_amount ?? 0), 0);
@@ -116,12 +122,49 @@ const AccountantPortal = () => {
     const a = document.createElement("a");
     a.href = url; a.download = `szamlak_${year}_${String(month+1).padStart(2,"0")}.csv`;
     a.click(); URL.revokeObjectURL(url);
-    void supabase.from("accountant_access_log").insert({ user_id: null, action: "export_csv", resource: rangeLabel, metadata: { count: invoices.length } } as any);
+    void supabase.from("accountant_access_log").insert({ user_id: null, action: "export_csv", resource: rangeLabel, user_agent: navigator.userAgent, metadata: { count: invoices.length } } as any);
     toast({ title: "Export kész", description: `${invoices.length} számla letöltve` });
+  };
+
+  const exportXlsx = () => {
+    const wb = XLSX.utils.book_new();
+    const invSheet = XLSX.utils.json_to_sheet(invoices.map(i => ({
+      Számlaszám: i.invoice_number ?? "", Dátum: (i.paid_at ?? i.created_at)?.slice(0,10),
+      Vevő: i.customer_name ?? "", "Vevő adószám": i.customer_tax_number ?? "", Cím: i.customer_address ?? "",
+      Nettó: Number(i.subtotal ?? 0), "ÁFA kulcs (%)": Number(i.tax_rate ?? 27),
+      ÁFA: Number(i.tax_amount ?? 0), Bruttó: Number(i.total_amount ?? 0),
+      Pénznem: i.currency ?? "HUF", Állapot: i.status ?? "",
+    })));
+    XLSX.utils.book_append_sheet(wb, invSheet, "Számlák");
+    const byRate: Record<string, { net: number; vat: number; gross: number; count: number }> = {};
+    invoices.forEach(i => {
+      const r = String(i.tax_rate ?? 27);
+      byRate[r] = byRate[r] ?? { net: 0, vat: 0, gross: 0, count: 0 };
+      byRate[r].net += Number(i.subtotal ?? 0); byRate[r].vat += Number(i.tax_amount ?? 0);
+      byRate[r].gross += Number(i.total_amount ?? 0); byRate[r].count += 1;
+    });
+    const vatSheet = XLSX.utils.json_to_sheet(Object.entries(byRate).map(([rate, v]) => ({
+      "ÁFA kulcs (%)": rate, "Adóalap (nettó)": v.net, "Felszámított ÁFA": v.vat, Bruttó: v.gross, Tételszám: v.count,
+    })));
+    XLSX.utils.book_append_sheet(wb, vatSheet, "ÁFA-összesítő");
+    const refSheet = XLSX.utils.json_to_sheet(refunds.map(r => ({
+      Dátum: r.created_at?.slice(0,10), Tranzakció: r.transaction_id ?? "", Állapot: r.new_status ?? "", Összeg: Number(r.amount ?? 0),
+    })));
+    XLSX.utils.book_append_sheet(wb, refSheet, "Visszatérítések");
+    const procSheet = XLSX.utils.json_to_sheet(procurement.map(p => ({
+      Dátum: p.created_at?.slice(0,10), Termék: p.product_name, Beszállító: p.supplier_name ?? "",
+      Mennyiség: p.quantity, "Egységár": Number(p.unit_cost), Összesen: Number(p.total_cost ?? p.unit_cost * p.quantity),
+      Pénznem: p.currency ?? "HUF", Állapot: p.order_status ?? "",
+    })));
+    XLSX.utils.book_append_sheet(wb, procSheet, "Költségek");
+    XLSX.writeFile(wb, `nav_export_${year}_${String(month+1).padStart(2,"0")}.xlsx`);
+    void supabase.from("accountant_access_log").insert({ user_id: null, action: "export_xlsx", resource: rangeLabel, user_agent: navigator.userAgent, metadata: { count: invoices.length } } as any);
+    toast({ title: "XLSX letöltve", description: `${invoices.length} számla + ÁFA + költségek` });
   };
 
   if (authLoading) return <FullPageLoader />;
   if (!allowed) return null;
+  if (!totpPassed) return <AccountantTotpGate onPass={() => setTotpPassed(true)} />;
 
   const isMissingLegal = !legal.ownerName || !legal.taxId;
 
@@ -204,7 +247,7 @@ const AccountantPortal = () => {
             {tab === "refunds" && <RefundsTable refunds={refunds} />}
             {tab === "expenses" && <ExpensesTable items={procurement} />}
             {tab === "vat" && <VatSummary kpi={kpi} legal={legal} invoices={invoices} />}
-            {tab === "export" && <ExportPanel onCsv={exportCsv} invoices={invoices} />}
+            {tab === "export" && <ExportPanel onCsv={exportCsv} onXlsx={exportXlsx} invoices={invoices} />}
           </>
         )}
 
@@ -361,12 +404,17 @@ const VatSummary = ({ kpi, legal, invoices }: { kpi: any; legal: Legal; invoices
   );
 };
 
-const ExportPanel = ({ onCsv, invoices }: { onCsv: () => void; invoices: Invoice[] }) => (
+const ExportPanel = ({ onCsv, onXlsx, invoices }: { onCsv: () => void; onXlsx: () => void; invoices: Invoice[] }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
     <button onClick={onCsv} disabled={!invoices.length} className="border border-border p-6 text-left hover:border-accent transition-colors disabled:opacity-50">
       <FileSpreadsheet className="h-7 w-7 text-accent mb-3" />
       <p className="font-bold uppercase tracking-wide text-sm">Havi CSV</p>
       <p className="text-xs text-muted-foreground mt-1">Excel/könyvelőprogramba (UTF-8 BOM, pontosvessző)</p>
+    </button>
+    <button onClick={onXlsx} disabled={!invoices.length} className="border border-border p-6 text-left hover:border-accent transition-colors disabled:opacity-50">
+      <FileSpreadsheet className="h-7 w-7 text-accent mb-3" />
+      <p className="font-bold uppercase tracking-wide text-sm">NAV XLSX (4 lap)</p>
+      <p className="text-xs text-muted-foreground mt-1">Számlák + ÁFA-összesítő + visszatérítések + költségek</p>
     </button>
     <div className="border border-border p-6 opacity-60 cursor-not-allowed">
       <FileText className="h-7 w-7 mb-3" />

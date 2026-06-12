@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { Calculator, Mail, Trash2, Loader2, Copy, ExternalLink } from "lucide-react";
+import AdminAuditExportCard from "./AdminAuditExportCard";
 
 interface AccountantUser { user_id: string; email: string; granted_at: string; }
 interface PendingInvite { id: string; email: string; invited_at: string; accepted_at: string | null; }
@@ -151,15 +152,16 @@ const AdminAccountantAccessTab = () => {
         )}
       </div>
 
+      <AdminAuditExportCard />
+
       <div className="border border-border p-4 bg-secondary/20 text-xs text-muted-foreground">
         <p className="font-bold text-foreground mb-1">Mit lát a könyvelő?</p>
         <ul className="list-disc ml-5 space-y-1">
           <li>Számlák (havi bontás, vevő, nettó/ÁFA/bruttó, PDF letöltés)</li>
-          <li>Visszatérítések</li>
-          <li>Beszerzési költségek</li>
-          <li>ÁFA-összesítő kulcsonként</li>
+          <li>Visszatérítések, beszerzési költségek, ÁFA-összesítő</li>
           <li>Cégadatok (impresszum/számla fej)</li>
-          <li>CSV export könyvelőprogramba</li>
+          <li>CSV / XLSX export könyvelőprogramba</li>
+          <li>Kötelező TOTP kétlépcsős hitelesítés</li>
         </ul>
         <p className="mt-2 font-bold text-foreground">Mit NEM lát:</p>
         <ul className="list-disc ml-5 space-y-1">

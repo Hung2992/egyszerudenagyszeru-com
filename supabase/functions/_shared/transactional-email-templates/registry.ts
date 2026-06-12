@@ -22,6 +22,8 @@ import { template as profileUpdate } from './profile-update.tsx'
 import { template as passwordChanged } from './password-changed.tsx'
 import { template as returnRequest } from './return-request.tsx'
 import { template as contactReply } from './contact-reply.tsx'
+import { template as accountantInvite } from './accountant-invite.tsx'
+import { template as accountantWelcome } from './accountant-welcome.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'contact-confirmation': contactConfirmation,
@@ -37,4 +39,6 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'password-changed': passwordChanged,
   'return-request': returnRequest,
   'contact-reply': contactReply,
+  'accountant-invite': accountantInvite,
+  'accountant-welcome': accountantWelcome,
 }
