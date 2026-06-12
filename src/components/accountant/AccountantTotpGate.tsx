@@ -81,10 +81,21 @@ const AccountantTotpGate = ({ onPass }: { onPass: () => void }) => {
             <p className="text-xs text-muted-foreground">
               A pénzügyi adatok védelméhez először állítsd be a kétlépcsős hitelesítést. Szükséged lesz egy authenticator alkalmazásra (Google Authenticator, 1Password, Authy, Microsoft Authenticator).
             </p>
-            <Button className="w-full" onClick={startEnroll} disabled={busy}>
-              {busy ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Shield className="h-4 w-4 mr-1" />}
-              TOTP aktiválás indítása
-            </Button>
+            {busy && (
+              <div className="py-6 flex flex-col items-center gap-2">
+                <Loader2 className="h-5 w-5 animate-spin text-accent" />
+                <p className="text-xs text-muted-foreground">QR kód generálása…</p>
+              </div>
+            )}
+            {enrollError && (
+              <p className="text-xs text-destructive border border-destructive/40 bg-destructive/5 p-2">{enrollError}</p>
+            )}
+            {!busy && (
+              <Button className="w-full" onClick={startEnroll} disabled={busy}>
+                <Shield className="h-4 w-4 mr-1" />
+                {enrollError ? "Újrapróbálás — QR kód kérése" : "QR kód megjelenítése"}
+              </Button>
+            )}
           </>
         )}
 
