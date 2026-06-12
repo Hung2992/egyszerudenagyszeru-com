@@ -127,18 +127,35 @@ const AdminPartnerDetailDrawer = ({ partnerId, onClose, onChanged }: Props) => {
                 </div>
               </div>
               {couponCode && (
-                <div className="mt-3 border-t pt-2 flex items-center gap-2">
+                <div className="mt-3 border-t pt-2 flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] uppercase text-muted-foreground">Kupon kód:</span>
                   <code className="font-mono text-sm font-bold text-accent">{couponCode}</code>
-                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => { navigator.clipboard.writeText(couponCode); toast({ title: "Másolva" }); }}>
+                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => copyToClipboard(couponCode, "Kuponkód másolva", couponCode)}>
                     <Copy className="w-3 h-3" />
                   </Button>
-                  <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/?ref=${couponCode}`); toast({ title: "Referral link másolva" }); }}>
+                  <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => copyToClipboard(`${window.location.origin}/?ref=${couponCode}`, "Referral link másolva")}>
                     Link másolása
                   </Button>
                 </div>
               )}
             </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="border p-2"><p className="text-[10px] uppercase text-muted-foreground">Forgalom</p><p className="text-sm font-bold">{fmt(totals.revenue)}</p></div>
+              <div className="border p-2"><p className="text-[10px] uppercase text-muted-foreground">Megerősített jutalék</p><p className="text-sm font-bold text-accent">{fmt(totals.confirmed)}</p></div>
+              <div className="border p-2"><p className="text-[10px] uppercase text-muted-foreground">Függő</p><p className="text-sm font-bold text-yellow-500">{fmt(totals.pending)}</p></div>
+              <div className="border p-2"><p className="text-[10px] uppercase text-muted-foreground">Kifizetve</p><p className="text-sm font-bold text-green-500">{fmt(totals.paidOut)}</p></div>
+            </div>
+
+            {lastPaidPayout && (
+              <div className="border p-3 bg-green-500/5 border-green-500/30">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Legutóbbi kifizetés</p>
+                <div className="flex items-baseline justify-between mt-1">
+                  <p className="text-lg font-bold text-green-500">{fmt(Number(lastPaidPayout.amount))}</p>
+                  <p className="text-xs text-muted-foreground">{fmtDate(lastPaidPayout.paid_at)}</p>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-4 gap-2">
               <div className="border p-2"><p className="text-[10px] uppercase text-muted-foreground">Forgalom</p><p className="text-sm font-bold">{fmt(totals.revenue)}</p></div>
