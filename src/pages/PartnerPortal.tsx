@@ -219,15 +219,24 @@ const PartnerPortal = () => {
           <TabsContent value="overview" className="mt-6 space-y-6">
             <Card className="rounded-none border-foreground/20 p-6">
               <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">A te kuponkódod</p>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <code className="text-3xl font-bold tracking-widest text-accent">{partner.coupon_code || "—"}</code>
                 {partner.coupon_code && (
                   <Button size="sm" variant="outline" onClick={handleCopy} className="rounded-none">
-                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    {copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
+                    Kód
+                  </Button>
+                )}
+                {referralLink && (
+                  <Button size="sm" variant="outline" onClick={handleCopyReferral} className="rounded-none">
+                    <Link2 className="h-4 w-4 mr-1" /> Referral link
                   </Button>
                 )}
               </div>
               <p className="text-xs text-muted-foreground mt-2">Minden teljesített rendelés után <strong>{fmt(partner.commission_per_order_amount)}</strong> jutalék.</p>
+              {referralLink && (
+                <p className="text-[10px] text-muted-foreground mt-1 font-mono break-all">{referralLink}</p>
+              )}
             </Card>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card className="rounded-none border-foreground/20 p-4">
