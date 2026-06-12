@@ -1,6 +1,6 @@
 // Accountant TOTP 2FA: enroll / verify / status / disable
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { authenticator } from "https://esm.sh/otplib@12.0.1";
+import * as OTPAuth from "https://esm.sh/otpauth@9.3.4";
 import QRCode from "https://esm.sh/qrcode@1.5.3";
 
 const corsHeaders = {
@@ -9,9 +9,16 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-authenticator.options = { window: 1, step: 30 };
-
 const ISSUER = "Egyszerű de Nagyszerű";
+
+const makeTotp = (secret: string, label = "konyvelo") =>
+  new OTPAuth.TOTP({
+    issuer: ISSUER, label, algorithm: "SHA1", digits: 6, period: 30,
+    secret: OTPAuth.Secret.fromBase32(secret),
+  });
+
+const checkCode = (code: string, secret: string) =>
+  makeTotp(secret).validate({ token: code, window: 1 }) !== null;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -39,8 +46,8 @@ Deno.serve(async (req) => {
     }
 
     if (action === "enroll") {
-      const secret = authenticator.generateSecret();
-      const otpauth = authenticator.keyuri(user.email ?? "konyvelo", ISSUER, secret);
+      const secret = new OTPAuth.Secret({ size: 20 }).base32;
+      const otpauth = makeTotp(secret, user.email ?? "konyvelo").toString();
       const qr_data_url = await QRCode.toDataURL(otpauth, { margin: 1, width: 240 });
       const backup = Array.from({ length: 8 }, () =>
         Array.from(crypto.getRandomValues(new Uint8Array(5)))
@@ -56,7 +63,7 @@ Deno.serve(async (req) => {
       if (!/^\d{6}$/.test(code)) return json({ ok: false, error: "6 jegyű kód szükséges" }, 400);
       const { data: row } = await admin.from("accountant_totp_secrets").select("secret,enabled,backup_codes").eq("user_id", user.id).maybeSingle();
       if (!row?.secret) return json({ ok: false, error: "Nincs aktiválás folyamatban" }, 400);
-      const valid = authenticator.check(code, row.secret);
+      const valid = checkCode(code, row.secret);
       const backupHit = !valid && Array.isArray(row.backup_codes) && row.backup_codes.includes(code.toUpperCase());
       if (!valid && !backupHit) return json({ ok: false, error: "Érvénytelen kód" }, 400);
 
@@ -83,7 +90,7 @@ Deno.serve(async (req) => {
       if (!/^\d{6}$/.test(code)) return json({ ok: false, error: "6 jegyű TOTP kód szükséges" }, 400);
       const { data: row } = await admin.from("accountant_totp_secrets").select("secret,enabled,backup_codes").eq("user_id", user.id).maybeSingle();
       if (!row?.enabled || !row?.secret) return json({ ok: false, error: "Először aktiválni kell a TOTP-t" }, 400);
-      if (!authenticator.check(code, row.secret)) {
+      if (!checkCode(code, row.secret)) {
         await admin.from("accountant_access_log").insert({
           user_id: user.id, action: "totp_backup_access_denied", resource: action,
           ip_address: req.headers.get("x-forwarded-for") ?? null,
