@@ -36,9 +36,17 @@ const PartnerPortal = () => {
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileForm, setProfileForm] = useState({ phone: "", address: "", iban: "", tax_number: "", company_name: "" });
 
+  // Szűrők CSV exporthoz / rendelés listához
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterFrom, setFilterFrom] = useState<string>("");
+  const [filterTo, setFilterTo] = useState<string>("");
+
   useEffect(() => {
-    if (!loading && !partner && !isAdmin) {
-      // try auto-claim once if a pending invite exists for this user
+    if (loading) return;
+    // Hozzáférés szigorítva: csak aktív partner vagy admin léphet be.
+    // Paused / revoked / invited fiók NEM léphet be.
+    if (isAdmin) return;
+    if (!partner) {
       (async () => {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) { navigate("/auth"); return; }
@@ -50,6 +58,15 @@ const PartnerPortal = () => {
           navigate("/");
         }
       })();
+      return;
+    }
+    if (partner.status !== "active") {
+      toast({
+        title: partner.status === "paused" ? "Partner fiók szüneteltetve" : partner.status === "revoked" ? "Partner hozzáférés visszavonva" : "Partner fiók nem aktív",
+        description: "Lépj kapcsolatba az adminnal a hozzáférés visszaállításáért.",
+        variant: "destructive",
+      });
+      navigate("/");
     }
   }, [loading, partner, isAdmin]);
 
