@@ -11,6 +11,7 @@ import { Check, Tag, ShoppingBag, Gift, ArrowLeft } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
+import { getStoredReferralCode, clearStoredReferralCode } from "@/hooks/useReferralCapture";
 
 interface GiftWrapOption {
   id: string;
