@@ -212,6 +212,7 @@ const PasswordChangeSection = () => {
 
 const ProfilePage = () => {
   const navigate = useNavigate();
+  const { allowed: isAccountant, role: accountantRole } = useAccountantCheck();
   const [user, setUser] = useState<SupaUser | null>(null);
   const [tab, setTab] = useState<TabKey>("profile");
   const [loading, setLoading] = useState(true);
