@@ -185,7 +185,11 @@ const AdminAccountantAccessTab = () => {
         )}
       </div>
 
+      <AdminInviteMonitor />
+
       <AdminAuditExportCard />
+
+      <AdminNavMappingCard />
 
       <div className="border border-border p-4 bg-secondary/20 text-xs text-muted-foreground">
         <p className="font-bold text-foreground mb-1">Mit lát a könyvelő?</p>
