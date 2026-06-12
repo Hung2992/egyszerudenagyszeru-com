@@ -289,6 +289,10 @@ const AdminCouponsManagerTab = () => {
         </Button>
       </div>
 
+      <AdminWelcome20Blast />
+
+
+
       <div className="grid gap-3 md:grid-cols-5">
         <div className="border p-3"><p className="text-[10px] uppercase tracking-widest text-muted-foreground">Összes kupon</p><p className="text-2xl font-bold">{stats.total}</p></div>
         <div className="border p-3"><p className="text-[10px] uppercase tracking-widest text-muted-foreground">Aktív</p><p className="text-2xl font-bold text-accent">{stats.active}</p></div>
