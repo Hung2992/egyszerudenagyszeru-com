@@ -36,6 +36,7 @@ import LoyaltyRedemption from "@/components/LoyaltyRedemption";
 import AiSizeRecommender from "@/components/AiSizeRecommender";
 import type { User as SupaUser } from "@supabase/supabase-js";
 import { sendAppEmail } from "@/lib/app-email";
+import { useAccountantCheck } from "@/hooks/useAccountantCheck";
 
 interface ProfileData {
   display_name: string;
@@ -211,6 +212,7 @@ const PasswordChangeSection = () => {
 
 const ProfilePage = () => {
   const navigate = useNavigate();
+  const { allowed: isAccountant, role: accountantRole } = useAccountantCheck();
   const [user, setUser] = useState<SupaUser | null>(null);
   const [tab, setTab] = useState<TabKey>("profile");
   const [loading, setLoading] = useState(true);
@@ -414,6 +416,28 @@ const ProfilePage = () => {
             <p className="text-xs text-muted-foreground mt-0.5">{user?.email}</p>
           </div>
         </div>
+
+        {/* Accountant portal access */}
+        {isAccountant && (
+          <button
+            onClick={() => navigate("/konyvelo")}
+            className="w-full mb-6 flex items-center justify-between gap-3 border border-accent bg-accent/10 px-4 py-3 hover:bg-accent/20 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <FileText className="h-5 w-5 text-accent" />
+              <div className="text-left">
+                <div className="text-xs font-bold uppercase tracking-widest text-foreground">
+                  Könyvelői felület
+                </div>
+                <div className="text-[10px] text-muted-foreground">
+                  {accountantRole === "admin" ? "Admin hozzáférés" : "Belépés a könyvelői panelre"}
+                </div>
+              </div>
+            </div>
+            <span className="text-xs font-bold uppercase tracking-wider text-accent">Belépés →</span>
+          </button>
+        )}
+
 
         {/* Tabs */}
         <div className="flex border-b border-border mb-6 overflow-x-auto">
