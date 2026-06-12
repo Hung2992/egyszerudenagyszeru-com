@@ -109,12 +109,23 @@ Deno.serve(async (req) => {
 
     // --- 3) Cél címzettek ---
     let targets: Recipient[];
-    if (retryFailed && retryEmails.length > 0) {
+    if (retryAllFailed) {
+      // Minden olyan email, ahol volt 'failed' és nincs 'sent' bejegyzés
+      const { data: failedRows } = await supa
+        .from("welcome20_send_log")
+        .select("email,status")
+        .eq("coupon_code", COUPON_CODE);
+      const sentSet = new Set((failedRows || []).filter((r: any) => r.status === "sent").map((r: any) => String(r.email).toLowerCase()));
+      const failedSet = new Set((failedRows || []).filter((r: any) => r.status === "failed" && !sentSet.has(String(r.email).toLowerCase())).map((r: any) => String(r.email).toLowerCase()));
+      targets = recipients.filter((r) => failedSet.has(r.email.toLowerCase()) && r.status === "eligible");
+    } else if (retryFailed && retryEmails.length > 0) {
       const set = new Set(retryEmails);
       targets = recipients.filter((r) => set.has(r.email.toLowerCase()) && !sentEmails.has(r.email.toLowerCase()) && r.status === "eligible");
     } else {
+      // Default (incl. cron): minden eligible, akinek még nem ment ki sikeresen
       targets = recipients.filter((r) => r.status === "eligible");
     }
+
 
     let sent = 0, failed = 0;
     const errors: any[] = [];
