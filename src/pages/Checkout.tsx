@@ -11,6 +11,7 @@ import { Check, Tag, ShoppingBag, Gift, ArrowLeft } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
+import { getStoredReferralCode, clearStoredReferralCode } from "@/hooks/useReferralCapture";
 
 interface GiftWrapOption {
   id: string;
@@ -94,6 +95,7 @@ const Checkout = () => {
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [appliedCoupon, setAppliedCoupon] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
+  const [referralAutoApplied, setReferralAutoApplied] = useState(false);
 
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
@@ -159,10 +161,11 @@ const Checkout = () => {
     setAddress(addr.address);
   };
 
-  const applyCoupon = async () => {
-    if (!couponCode.trim()) return;
+  const applyCoupon = async (overrideCode?: string) => {
+    const sourceCode = overrideCode ?? couponCode;
+    if (!sourceCode.trim()) return;
     setCouponLoading(true);
-    const code = couponCode.toUpperCase();
+    const code = sourceCode.toUpperCase();
 
     // Server-side coupon validation (kód nem szivárog ki)
     const { data: result, error } = await supabase.rpc("validate_coupon", {
@@ -235,7 +238,19 @@ const Checkout = () => {
     setCouponDiscount(0);
     setAppliedCoupon("");
     setCouponCode("");
+    clearStoredReferralCode();
   };
+
+  // Auto-apply ?ref=PARTNER-XXXX captured referral code at checkout
+  useEffect(() => {
+    if (referralAutoApplied || appliedCoupon || items.length === 0 || totalPrice <= 0) return;
+    const refCode = getStoredReferralCode();
+    if (!refCode) return;
+    setReferralAutoApplied(true);
+    setCouponCode(refCode);
+    applyCoupon(refCode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items.length, totalPrice, appliedCoupon, referralAutoApplied]);
 
   const giftWrapPrice = selectedGiftWrap ? (giftWrapOptions.find(g => g.id === selectedGiftWrap)?.price || 0) : 0;
   const finalTotal = totalPrice - couponDiscount + giftWrapPrice;
@@ -342,6 +357,7 @@ const Checkout = () => {
       }
 
       clearCart();
+      if (appliedCoupon) clearStoredReferralCode();
       toast({ title: "Rendelés leadva! 🎉", description: "Hamarosan feldolgozzuk." });
       navigate("/orders");
     } catch (err: any) {
@@ -453,7 +469,7 @@ const Checkout = () => {
               <Button
                 variant="outline"
                 className="rounded-none uppercase tracking-wider text-xs shrink-0"
-                onClick={applyCoupon}
+                onClick={() => applyCoupon()}
                 disabled={couponLoading}
               >
                 Beváltás

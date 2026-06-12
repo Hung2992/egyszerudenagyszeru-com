@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertTriangle, Banknote, Building2, CalendarDays, Copy, Edit, Mail, Percent, Plus, Search, ShieldCheck, Ticket, Trash2, User, Users } from "lucide-react";
+import AdminPartnerTopStats from "./AdminPartnerTopStats";
 
 interface Partner {
   id: string;
@@ -310,6 +311,9 @@ const AdminPartnersTab = () => {
           <Plus className="w-4 h-4 mr-1" /> Új partner profil
         </Button>
       </div>
+
+      <AdminPartnerTopStats />
+
 
       <div className="grid gap-3 md:grid-cols-5">
         <div className="border p-3"><p className="text-[10px] uppercase tracking-widest text-muted-foreground">Összes partner</p><p className="text-2xl font-bold">{stats.total}</p></div>
