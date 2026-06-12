@@ -157,12 +157,7 @@ const AdminPartnerDetailDrawer = ({ partnerId, onClose, onChanged }: Props) => {
               </div>
             )}
 
-            <div className="grid grid-cols-4 gap-2">
-              <div className="border p-2"><p className="text-[10px] uppercase text-muted-foreground">Forgalom</p><p className="text-sm font-bold">{fmt(totals.revenue)}</p></div>
-              <div className="border p-2"><p className="text-[10px] uppercase text-muted-foreground">Megerősített jutalék</p><p className="text-sm font-bold text-accent">{fmt(totals.confirmed)}</p></div>
-              <div className="border p-2"><p className="text-[10px] uppercase text-muted-foreground">Függő</p><p className="text-sm font-bold text-yellow-500">{fmt(totals.pending)}</p></div>
-              <div className="border p-2"><p className="text-[10px] uppercase text-muted-foreground">Kifizetve</p><p className="text-sm font-bold text-green-500">{fmt(totals.paidOut)}</p></div>
-            </div>
+
 
             <div>
               <h3 className="text-xs uppercase tracking-widest font-bold mb-2">Rendelések (utolsó 50)</h3>
