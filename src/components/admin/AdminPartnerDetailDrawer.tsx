@@ -102,9 +102,9 @@ const AdminPartnerDetailDrawer = ({ partnerId, onClose, onChanged }: Props) => {
                   <h2 className="text-lg font-bold">{partner.company_name || partner.full_name}</h2>
                   {partner.company_name && <p className="text-xs text-muted-foreground">Kapcsolat: {partner.full_name}</p>}
                   <p className="text-xs text-muted-foreground">{partner.email || "—"} · {partner.phone || "—"}</p>
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex gap-2 mt-2 flex-wrap">
                     <Badge variant="outline" className="rounded-none text-[10px] uppercase">{partner.partner_type}</Badge>
-                    <Badge variant="outline" className="rounded-none text-[10px] uppercase">Státusz: {partner.status}</Badge>
+                    <Badge variant="outline" className={`rounded-none text-[10px] uppercase ${statusColor[partner.status] || ""}`}>Státusz: {partner.status}</Badge>
                     <Badge variant="outline" className="rounded-none text-[10px] uppercase">{fmt(Number(partner.commission_per_order_amount || 0))} / rendelés</Badge>
                   </div>
                 </div>
