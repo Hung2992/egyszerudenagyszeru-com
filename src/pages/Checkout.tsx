@@ -161,10 +161,11 @@ const Checkout = () => {
     setAddress(addr.address);
   };
 
-  const applyCoupon = async () => {
-    if (!couponCode.trim()) return;
+  const applyCoupon = async (overrideCode?: string) => {
+    const sourceCode = overrideCode ?? couponCode;
+    if (!sourceCode.trim()) return;
     setCouponLoading(true);
-    const code = couponCode.toUpperCase();
+    const code = sourceCode.toUpperCase();
 
     // Server-side coupon validation (kód nem szivárog ki)
     const { data: result, error } = await supabase.rpc("validate_coupon", {
