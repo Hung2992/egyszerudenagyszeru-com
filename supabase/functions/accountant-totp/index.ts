@@ -116,6 +116,36 @@ Deno.serve(async (req) => {
       return json({ ok: true, backup_codes: backup });
     }
 
+    if (action === "test_code") {
+      const code = String(body.code || "").replace(/\s/g, "");
+      if (!/^\d{6}$/.test(code)) return json({ ok: false, error: "6 jegyű kód szükséges" }, 400);
+      const { data: row } = await admin.from("accountant_totp_secrets").select("secret").eq("user_id", user.id).maybeSingle();
+      if (!row?.secret) return json({ ok: false, error: "Nincs aktiválás folyamatban" }, 400);
+      return json({ ok: checkCode(code, row.secret) });
+    }
+
+    if (action === "email_qr") {
+      const { data: row } = await admin.from("accountant_totp_secrets").select("secret,backup_codes").eq("user_id", user.id).maybeSingle();
+      if (!row?.secret) return json({ ok: false, error: "Először generálni kell a QR kódot" }, 400);
+      const otpauth = makeTotp(row.secret, user.email ?? "konyvelo").toString();
+      const qr_data_url = await QRCode.toDataURL(otpauth, { margin: 1, width: 240 });
+      const { error: mailErr } = await admin.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "accountant-totp-qr",
+          recipientEmail: user.email,
+          idempotencyKey: `accountant-totp-qr-${user.id}-${Date.now()}`,
+          templateData: { qr_data_url, secret: row.secret, backup_codes: row.backup_codes ?? [] },
+        },
+      });
+      if (mailErr) return json({ ok: false, error: mailErr.message }, 500);
+      await admin.from("accountant_access_log").insert({
+        user_id: user.id, action: "totp_qr_emailed", resource: "totp",
+        ip_address: req.headers.get("x-forwarded-for") ?? null,
+        user_agent: req.headers.get("user-agent") ?? null,
+      });
+      return json({ ok: true });
+    }
+
     return json({ ok: false, error: "Ismeretlen művelet" }, 400);
   } catch (e) {
     return json({ ok: false, error: (e as Error).message }, 500);
