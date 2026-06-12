@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { Megaphone, Send, Loader2, RefreshCw } from "lucide-react";
+import { Megaphone, Send, Loader2, RefreshCw, Download, RotateCw } from "lucide-react";
 
 interface Recipient {
   user_id: string;
