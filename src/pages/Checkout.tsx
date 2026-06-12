@@ -238,7 +238,19 @@ const Checkout = () => {
     setCouponDiscount(0);
     setAppliedCoupon("");
     setCouponCode("");
+    clearStoredReferralCode();
   };
+
+  // Auto-apply ?ref=PARTNER-XXXX captured referral code at checkout
+  useEffect(() => {
+    if (referralAutoApplied || appliedCoupon || items.length === 0 || totalPrice <= 0) return;
+    const refCode = getStoredReferralCode();
+    if (!refCode) return;
+    setReferralAutoApplied(true);
+    setCouponCode(refCode);
+    applyCoupon(refCode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items.length, totalPrice, appliedCoupon, referralAutoApplied]);
 
   const giftWrapPrice = selectedGiftWrap ? (giftWrapOptions.find(g => g.id === selectedGiftWrap)?.price || 0) : 0;
   const finalTotal = totalPrice - couponDiscount + giftWrapPrice;
