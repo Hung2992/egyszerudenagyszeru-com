@@ -20,24 +20,33 @@ const AccountantTotpGate = ({ onPass }: { onPass: () => void }) => {
   const [backup, setBackup] = useState<string[]>([]);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
+  const [enrollError, setEnrollError] = useState<string | null>(null);
+
+  const startEnroll = async () => {
+    setBusy(true); setEnrollError(null);
+    const { data, error } = await supabase.functions.invoke("accountant-totp", { body: { action: "enroll" } });
+    setBusy(false);
+    if (error || !data?.ok || !data?.qr_data_url) {
+      const msg = error?.message ?? data?.error ?? "A QR kód generálása nem sikerült. Próbáld újra.";
+      setEnrollError(msg);
+      toast({ title: "Hiba", description: msg, variant: "destructive" });
+      return;
+    }
+    setQr(data.qr_data_url); setSecret(data.secret); setBackup(data.backup_codes ?? []);
+  };
 
   useEffect(() => {
     if (sessionStorage.getItem(TOTP_SESSION_KEY) === "1") { setPhase("ok"); onPass(); return; }
     (async () => {
-      const { data } = await supabase.functions.invoke("accountant-totp", { body: { action: "status" } });
-      if (data?.enabled) setPhase("verify");
-      else setPhase("enroll");
+      const { data, error } = await supabase.functions.invoke("accountant-totp", { body: { action: "status" } });
+      if (error) { setPhase("enroll"); setEnrollError("Nem sikerült lekérni az állapotot. Próbáld újra."); return; }
+      if (data?.enabled) { setPhase("verify"); return; }
+      setPhase("enroll");
+      // Auto-start enrollment so the QR code appears immediately, no extra tap needed
+      startEnroll();
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const startEnroll = async () => {
-    setBusy(true);
-    const { data, error } = await supabase.functions.invoke("accountant-totp", { body: { action: "enroll" } });
-    setBusy(false);
-    if (error || !data?.ok) { toast({ title: "Hiba", description: error?.message ?? data?.error, variant: "destructive" }); return; }
-    setQr(data.qr_data_url); setSecret(data.secret); setBackup(data.backup_codes ?? []);
-  };
 
   const verify = async () => {
     if (!/^\d{6}$/.test(code)) { toast({ title: "6 jegyű kód szükséges", variant: "destructive" }); return; }
@@ -72,10 +81,21 @@ const AccountantTotpGate = ({ onPass }: { onPass: () => void }) => {
             <p className="text-xs text-muted-foreground">
               A pénzügyi adatok védelméhez először állítsd be a kétlépcsős hitelesítést. Szükséged lesz egy authenticator alkalmazásra (Google Authenticator, 1Password, Authy, Microsoft Authenticator).
             </p>
-            <Button className="w-full" onClick={startEnroll} disabled={busy}>
-              {busy ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Shield className="h-4 w-4 mr-1" />}
-              TOTP aktiválás indítása
-            </Button>
+            {busy && (
+              <div className="py-6 flex flex-col items-center gap-2">
+                <Loader2 className="h-5 w-5 animate-spin text-accent" />
+                <p className="text-xs text-muted-foreground">QR kód generálása…</p>
+              </div>
+            )}
+            {enrollError && (
+              <p className="text-xs text-destructive border border-destructive/40 bg-destructive/5 p-2">{enrollError}</p>
+            )}
+            {!busy && (
+              <Button className="w-full" onClick={startEnroll} disabled={busy}>
+                <Shield className="h-4 w-4 mr-1" />
+                {enrollError ? "Újrapróbálás — QR kód kérése" : "QR kód megjelenítése"}
+              </Button>
+            )}
           </>
         )}
 
