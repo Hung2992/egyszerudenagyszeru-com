@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pause, Play, Ban, Copy, Eye } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { copyToClipboard } from "@/lib/clipboard";
 
 interface Props {
   partnerId: string | null;
