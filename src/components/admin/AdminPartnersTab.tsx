@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertTriangle, Banknote, Building2, CalendarDays, Copy, Edit, Mail, Percent, Plus, Search, ShieldCheck, Ticket, Trash2, User, Users } from "lucide-react";
+import AdminPartnerTopStats from "./AdminPartnerTopStats";
 
 interface Partner {
   id: string;
