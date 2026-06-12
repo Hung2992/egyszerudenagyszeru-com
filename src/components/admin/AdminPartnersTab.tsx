@@ -9,8 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertTriangle, Banknote, Building2, CalendarDays, Copy, Edit, Mail, Percent, Plus, Search, ShieldCheck, Ticket, Trash2, User, Users } from "lucide-react";
+import { AlertTriangle, Banknote, Building2, CalendarDays, Copy, Edit, Eye, Mail, Percent, Plus, Search, ShieldCheck, Ticket, Trash2, User, Users } from "lucide-react";
 import AdminPartnerTopStats from "./AdminPartnerTopStats";
+import AdminPartnerInviteDialog from "./AdminPartnerInviteDialog";
+import AdminPartnerPayouts from "./AdminPartnerPayouts";
+import AdminPartnerDetailDrawer from "./AdminPartnerDetailDrawer";
+import AdminPartnerMarketingAssets from "./AdminPartnerMarketingAssets";
 
 interface Partner {
   id: string;
@@ -115,6 +119,7 @@ const AdminPartnersTab = () => {
   const [couponCounts, setCouponCounts] = useState<Record<string, number>>({});
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive" | "expired" | "incomplete">("all");
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -307,12 +312,19 @@ const AdminPartnersTab = () => {
             <p className="text-xs text-muted-foreground">Szerződés, igazolás, jutalék és partnerkupon egy helyen.</p>
           </div>
         </div>
-        <Button size="sm" className="rounded-none uppercase tracking-wider text-xs" onClick={() => { reset(); setShowForm(true); }}>
-          <Plus className="w-4 h-4 mr-1" /> Új partner profil
-        </Button>
+        <div className="flex gap-2">
+          <AdminPartnerInviteDialog onInvited={load} />
+          <Button size="sm" variant="outline" className="rounded-none uppercase tracking-wider text-xs" onClick={() => { reset(); setShowForm(true); }}>
+            <Plus className="w-4 h-4 mr-1" /> Új partner profil
+          </Button>
+        </div>
       </div>
 
       <AdminPartnerTopStats />
+      <AdminPartnerPayouts />
+      <AdminPartnerMarketingAssets />
+
+
 
 
       <div className="grid gap-3 md:grid-cols-5">
@@ -535,6 +547,9 @@ const AdminPartnersTab = () => {
                   <TableCell><Switch checked={p.is_active} onCheckedChange={(v) => toggle(p.id, v)} /></TableCell>
                   <TableCell>
                     <div className="flex gap-1">
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Részletek és statisztika" onClick={() => setDetailId(p.id)}>
+                        <Eye className="w-4 h-4 text-accent" />
+                      </Button>
                       <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Partner összefoglaló másolása" onClick={() => copyPartnerSummary(p)}>
                         <Copy className="w-4 h-4" />
                       </Button>
@@ -555,6 +570,8 @@ const AdminPartnersTab = () => {
           </TableBody>
         </Table>
       </div>
+
+      <AdminPartnerDetailDrawer partnerId={detailId} onClose={() => setDetailId(null)} onChanged={load} />
     </div>
   );
 };
