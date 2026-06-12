@@ -345,6 +345,7 @@ const Checkout = () => {
       }
 
       clearCart();
+      if (appliedCoupon) clearStoredReferralCode();
       toast({ title: "Rendelés leadva! 🎉", description: "Hamarosan feldolgozzuk." });
       navigate("/orders");
     } catch (err: any) {
