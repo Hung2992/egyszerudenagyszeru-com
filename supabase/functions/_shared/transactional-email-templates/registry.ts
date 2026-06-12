@@ -24,6 +24,7 @@ import { template as returnRequest } from './return-request.tsx'
 import { template as contactReply } from './contact-reply.tsx'
 import { template as accountantInvite } from './accountant-invite.tsx'
 import { template as accountantWelcome } from './accountant-welcome.tsx'
+import { template as accountantTotpQr } from './accountant-totp-qr.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'contact-confirmation': contactConfirmation,
@@ -41,4 +42,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'contact-reply': contactReply,
   'accountant-invite': accountantInvite,
   'accountant-welcome': accountantWelcome,
+  'accountant-totp-qr': accountantTotpQr,
 }
