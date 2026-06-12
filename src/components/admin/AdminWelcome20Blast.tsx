@@ -185,11 +185,14 @@ const AdminWelcome20Blast = () => {
       )}
 
       {log.length > 0 && (
-        <details className="border">
-          <summary className="cursor-pointer p-2 text-xs uppercase tracking-wider bg-muted/30">
-            Kiküldési napló ({log.length})
+        <details className="border" open>
+          <summary className="cursor-pointer p-2 text-xs uppercase tracking-wider bg-muted/30 flex items-center justify-between gap-2">
+            <span>Kiküldési napló ({log.length})</span>
+            <Button size="sm" variant="outline" className="rounded-none uppercase tracking-wider text-[10px] h-6" onClick={(e) => { e.preventDefault(); exportCsv(); }}>
+              <Download className="w-3 h-3 mr-1" /> CSV export
+            </Button>
           </summary>
-          <div className="max-h-64 overflow-auto">
+          <div className="max-h-80 overflow-auto">
             <Table>
               <TableHeader className="sticky top-0 bg-background">
                 <TableRow>
@@ -197,21 +200,37 @@ const AdminWelcome20Blast = () => {
                   <TableHead className="text-[10px] uppercase">Email</TableHead>
                   <TableHead className="text-[10px] uppercase">Státusz</TableHead>
                   <TableHead className="text-[10px] uppercase">Megjegyzés</TableHead>
+                  <TableHead className="text-[10px] uppercase text-right">Művelet</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {log.map((l) => (
-                  <TableRow key={l.id}>
-                    <TableCell className="text-[10px] font-mono">{new Date(l.created_at).toLocaleString("hu-HU")}</TableCell>
-                    <TableCell className="text-xs font-mono">{l.email}</TableCell>
-                    <TableCell>
-                      <Badge variant={l.status === "sent" ? "default" : l.status === "failed" ? "destructive" : "secondary"} className="text-[10px] rounded-none">
-                        {l.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-[10px] text-muted-foreground">{l.error || l.reason || "—"}</TableCell>
-                  </TableRow>
-                ))}
+                {(() => {
+                  const alreadySent = new Set(log.filter((x) => x.status === "sent").map((x) => x.email.toLowerCase()));
+                  return log.map((l) => {
+                    const canRetry = l.status === "failed" && !alreadySent.has(l.email.toLowerCase());
+                    return (
+                      <TableRow key={l.id}>
+                        <TableCell className="text-[10px] font-mono">{new Date(l.created_at).toLocaleString("hu-HU")}</TableCell>
+                        <TableCell className="text-xs font-mono">{l.email}</TableCell>
+                        <TableCell>
+                          <Badge variant={l.status === "sent" ? "default" : l.status === "failed" ? "destructive" : "secondary"} className="text-[10px] rounded-none">
+                            {l.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-[10px] text-muted-foreground">{l.error || l.reason || "—"}</TableCell>
+                        <TableCell className="text-right">
+                          {canRetry ? (
+                            <Button size="sm" variant="outline" className="rounded-none text-[10px] h-6" disabled={sending} onClick={() => resendFailed(l.email)}>
+                              <RotateCw className="w-3 h-3 mr-1" /> Újraküldés
+                            </Button>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  });
+                })()}
               </TableBody>
             </Table>
           </div>
