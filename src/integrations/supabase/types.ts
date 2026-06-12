@@ -2741,12 +2741,169 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_marketing_assets: {
+        Row: {
+          active: boolean
+          asset_type: string
+          asset_url: string | null
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          text_content: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          asset_type?: string
+          asset_url?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          text_content?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          asset_type?: string
+          asset_url?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          text_content?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      partner_payouts: {
+        Row: {
+          admin_notes: string | null
+          amount: number
+          approved_at: string | null
+          created_at: string
+          id: string
+          paid_at: string | null
+          partner_id: string
+          partner_notes: string | null
+          payment_reference: string | null
+          processed_by: string | null
+          rejected_at: string | null
+          requested_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          amount: number
+          approved_at?: string | null
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          partner_id: string
+          partner_notes?: string | null
+          payment_reference?: string | null
+          processed_by?: string | null
+          rejected_at?: string | null
+          requested_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          amount?: number
+          approved_at?: string | null
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          partner_id?: string
+          partner_notes?: string | null
+          payment_reference?: string | null
+          processed_by?: string | null
+          rejected_at?: string | null
+          requested_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_payouts_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_referrals: {
+        Row: {
+          commission_amount: number
+          confirmed_at: string | null
+          coupon_code: string
+          created_at: string
+          id: string
+          order_id: string
+          order_total: number
+          partner_id: string
+          payout_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          commission_amount?: number
+          confirmed_at?: string | null
+          coupon_code: string
+          created_at?: string
+          id?: string
+          order_id: string
+          order_total?: number
+          partner_id: string
+          payout_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          commission_amount?: number
+          confirmed_at?: string | null
+          coupon_code?: string
+          created_at?: string
+          id?: string
+          order_id?: string
+          order_total?: number
+          partner_id?: string
+          payout_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_referrals_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_referrals_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partners: {
         Row: {
           address: string | null
           card_holder_name: string | null
           card_last4: string | null
+          commission_per_order_amount: number
           company_name: string | null
+          coupon_id: string | null
           created_at: string
           default_commission_percent: number | null
           email: string | null
@@ -2760,8 +2917,10 @@ export type Database = {
           partner_type: string
           phone: string | null
           registry_number: string | null
+          status: string
           tax_number: string | null
           updated_at: string
+          user_id: string | null
           valid_from: string | null
           valid_until: string | null
         }
@@ -2769,7 +2928,9 @@ export type Database = {
           address?: string | null
           card_holder_name?: string | null
           card_last4?: string | null
+          commission_per_order_amount?: number
           company_name?: string | null
+          coupon_id?: string | null
           created_at?: string
           default_commission_percent?: number | null
           email?: string | null
@@ -2783,8 +2944,10 @@ export type Database = {
           partner_type?: string
           phone?: string | null
           registry_number?: string | null
+          status?: string
           tax_number?: string | null
           updated_at?: string
+          user_id?: string | null
           valid_from?: string | null
           valid_until?: string | null
         }
@@ -2792,7 +2955,9 @@ export type Database = {
           address?: string | null
           card_holder_name?: string | null
           card_last4?: string | null
+          commission_per_order_amount?: number
           company_name?: string | null
+          coupon_id?: string | null
           created_at?: string
           default_commission_percent?: number | null
           email?: string | null
@@ -2806,12 +2971,22 @@ export type Database = {
           partner_type?: string
           phone?: string | null
           registry_number?: string | null
+          status?: string
           tax_number?: string | null
           updated_at?: string
+          user_id?: string | null
           valid_from?: string | null
           valid_until?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "partners_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_attempts: {
         Row: {
@@ -2958,6 +3133,65 @@ export type Database = {
           welcomed_at?: string | null
         }
         Relationships: []
+      }
+      pending_partner_invites: {
+        Row: {
+          claimed_at: string | null
+          commission_per_order_amount: number
+          company_name: string | null
+          coupon_code: string
+          coupon_id: string | null
+          created_at: string
+          customer_discount_amount: number | null
+          customer_discount_percent: number | null
+          email: string
+          expires_at: string
+          full_name: string
+          id: string
+          invited_by: string | null
+          partner_type: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          commission_per_order_amount?: number
+          company_name?: string | null
+          coupon_code: string
+          coupon_id?: string | null
+          created_at?: string
+          customer_discount_amount?: number | null
+          customer_discount_percent?: number | null
+          email: string
+          expires_at?: string
+          full_name: string
+          id?: string
+          invited_by?: string | null
+          partner_type?: string
+        }
+        Update: {
+          claimed_at?: string | null
+          commission_per_order_amount?: number
+          company_name?: string | null
+          coupon_code?: string
+          coupon_id?: string | null
+          created_at?: string
+          customer_discount_amount?: number | null
+          customer_discount_percent?: number | null
+          email?: string
+          expires_at?: string
+          full_name?: string
+          id?: string
+          invited_by?: string | null
+          partner_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_partner_invites_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_categories: {
         Row: {
@@ -5500,6 +5734,7 @@ export type Database = {
           weight: number
         }[]
       }
+      get_partner_stats: { Args: { _partner_id: string }; Returns: Json }
       get_pending_ai_reviews: {
         Args: { _limit?: number }
         Returns: {
@@ -5783,6 +6018,10 @@ export type Database = {
         Args: { _principle_id: string; _reason: string }
         Returns: undefined
       }
+      request_partner_payout: {
+        Args: { _notes?: string; _partner_id: string }
+        Returns: string
+      }
       revert_meta_action: { Args: { _action_id: string }; Returns: Json }
       revoke_accountant: { Args: { _user_id: string }; Returns: boolean }
       rollback_ai_knowledge: { Args: { _doc_id: string }; Returns: boolean }
@@ -5824,7 +6063,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user" | "accountant"
+      app_role: "admin" | "moderator" | "user" | "accountant" | "partner"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -5952,7 +6191,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user", "accountant"],
+      app_role: ["admin", "moderator", "user", "accountant", "partner"],
     },
   },
 } as const
