@@ -547,6 +547,9 @@ const AdminPartnersTab = () => {
                   <TableCell><Switch checked={p.is_active} onCheckedChange={(v) => toggle(p.id, v)} /></TableCell>
                   <TableCell>
                     <div className="flex gap-1">
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Részletek és statisztika" onClick={() => setDetailId(p.id)}>
+                        <Eye className="w-4 h-4 text-accent" />
+                      </Button>
                       <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Partner összefoglaló másolása" onClick={() => copyPartnerSummary(p)}>
                         <Copy className="w-4 h-4" />
                       </Button>
@@ -567,6 +570,8 @@ const AdminPartnersTab = () => {
           </TableBody>
         </Table>
       </div>
+
+      <AdminPartnerDetailDrawer partnerId={detailId} onClose={() => setDetailId(null)} onChanged={load} />
     </div>
   );
 };
