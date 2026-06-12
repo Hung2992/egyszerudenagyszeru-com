@@ -40,6 +40,18 @@ const PartnerPortal = () => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterFrom, setFilterFrom] = useState<string>("");
   const [filterTo, setFilterTo] = useState<string>("");
+  const [exporting, setExporting] = useState(false);
+
+  // Audit napló a hozzáférési eseményekhez
+  const logAccess = async (event_type: "portal_entered" | "redirected", metadata: Record<string, any> = {}) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      await supabase.from("partner_access_log").insert({
+        event_type, partner_id: partner?.id ?? null, user_id: user.id, metadata,
+      });
+    } catch { /* csendes */ }
+  };
 
   useEffect(() => {
     if (loading) return;
