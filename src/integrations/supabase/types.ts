@@ -5327,6 +5327,39 @@ export type Database = {
         }
         Relationships: []
       }
+      welcome20_send_log: {
+        Row: {
+          coupon_code: string
+          created_at: string
+          email: string
+          error: string | null
+          id: string
+          reason: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          coupon_code?: string
+          created_at?: string
+          email: string
+          error?: string | null
+          id?: string
+          reason?: string | null
+          status: string
+          user_id?: string | null
+        }
+        Update: {
+          coupon_code?: string
+          created_at?: string
+          email?: string
+          error?: string | null
+          id?: string
+          reason?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       product_polls_public: {
@@ -6160,6 +6193,7 @@ export type Database = {
         Args: { _password: string }
         Returns: boolean
       }
+      welcome20_eligible: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "accountant" | "partner"

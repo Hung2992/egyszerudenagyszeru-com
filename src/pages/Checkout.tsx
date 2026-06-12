@@ -252,6 +252,22 @@ const Checkout = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items.length, totalPrice, appliedCoupon, referralAutoApplied]);
 
+  // Auto-apply WELCOME20 to eligible first-time buyers (server-validated)
+  const [welcome20Checked, setWelcome20Checked] = useState(false);
+  useEffect(() => {
+    if (welcome20Checked || appliedCoupon || !user?.id || items.length === 0 || totalPrice <= 0) return;
+    setWelcome20Checked(true);
+    (async () => {
+      const { data: eligible } = await supabase.rpc("welcome20_eligible" as any, { _user_id: user.id });
+      if (eligible === true) {
+        setCouponCode("WELCOME20");
+        applyCoupon("WELCOME20");
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, items.length, totalPrice, appliedCoupon, welcome20Checked]);
+
+
   const giftWrapPrice = selectedGiftWrap ? (giftWrapOptions.find(g => g.id === selectedGiftWrap)?.price || 0) : 0;
   const finalTotal = totalPrice - couponDiscount + giftWrapPrice;
 
