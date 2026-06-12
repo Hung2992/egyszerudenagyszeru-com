@@ -92,12 +92,59 @@ const PartnerPortal = () => {
     if (assetRes.data) setAssets(assetRes.data as MarketingAsset[]);
   };
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (!partner?.coupon_code) return;
-    navigator.clipboard.writeText(partner.coupon_code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-    toast({ title: "Másolva", description: partner.coupon_code });
+    const ok = await copyToClipboard(partner.coupon_code, "Kuponkód másolva", partner.coupon_code);
+    if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
+  };
+
+  const referralLink = partner?.coupon_code ? `${window.location.origin}/?ref=${partner.coupon_code}` : "";
+  const handleCopyReferral = async () => {
+    if (!referralLink) return;
+    await copyToClipboard(referralLink, "Referral link másolva", referralLink);
+  };
+
+  // Szűrt referrals
+  const filteredReferrals = useMemo(() => {
+    return referrals.filter((r) => {
+      if (filterStatus !== "all" && r.status !== filterStatus) return false;
+      const d = new Date(r.created_at).getTime();
+      if (filterFrom && d < new Date(filterFrom).getTime()) return false;
+      if (filterTo && d > new Date(filterTo).getTime() + 86_399_000) return false;
+      return true;
+    });
+  }, [referrals, filterStatus, filterFrom, filterTo]);
+
+  const exportCsv = () => {
+    const headers = [
+      "Datum",
+      "Rendeles_ID",
+      "Kupon_kod",
+      "Rendeles_osszeg_Ft",
+      "Jutalek_Ft",
+      "Statusz",
+    ];
+    const escape = (v: string) => `"${String(v).replace(/"/g, '""')}"`;
+    const rows = filteredReferrals.map((r) =>
+      [
+        new Date(r.created_at).toLocaleString("hu-HU"),
+        r.order_id,
+        r.coupon_code,
+        String(Math.round(Number(r.order_total))),
+        String(Math.round(Number(r.commission_amount))),
+        r.status,
+      ].map(escape).join(",")
+    );
+    const csv = "\uFEFF" + [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const today = new Date().toISOString().slice(0, 10);
+    a.download = `partner-tranzakciok-${today}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "CSV letöltve", description: `${filteredReferrals.length} tranzakció exportálva` });
   };
 
   const handlePayoutRequest = async () => {
