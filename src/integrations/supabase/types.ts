@@ -47,6 +47,39 @@ export type Database = {
         }
         Relationships: []
       }
+      accountant_totp_secrets: {
+        Row: {
+          backup_codes: string[] | null
+          created_at: string
+          enabled: boolean
+          last_used_at: string | null
+          secret: string
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          backup_codes?: string[] | null
+          created_at?: string
+          enabled?: boolean
+          last_used_at?: string | null
+          secret: string
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          backup_codes?: string[] | null
+          created_at?: string
+          enabled?: boolean
+          last_used_at?: string | null
+          secret?: string
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       admin_bank_cards: {
         Row: {
           bank_name: string | null
@@ -2893,6 +2926,7 @@ export type Database = {
           invited_at: string
           invited_by: string | null
           notes: string | null
+          welcomed_at: string | null
         }
         Insert: {
           accepted_at?: string | null
@@ -2902,6 +2936,7 @@ export type Database = {
           invited_at?: string
           invited_by?: string | null
           notes?: string | null
+          welcomed_at?: string | null
         }
         Update: {
           accepted_at?: string | null
@@ -2911,6 +2946,7 @@ export type Database = {
           invited_at?: string
           invited_by?: string | null
           notes?: string | null
+          welcomed_at?: string | null
         }
         Relationships: []
       }
@@ -5395,6 +5431,20 @@ export type Database = {
     }
     Functions: {
       admin_audit_coupon: { Args: { _code: string }; Returns: Json }
+      admin_export_accountant_audit: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: string
+          metadata: Json
+          resource: string
+          user_agent: string
+          user_email: string
+          user_id: string
+        }[]
+      }
       apply_meta_action: {
         Args: { _action_id: string; _user_id?: string }
         Returns: Json
