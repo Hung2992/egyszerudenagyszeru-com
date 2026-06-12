@@ -20,24 +20,33 @@ const AccountantTotpGate = ({ onPass }: { onPass: () => void }) => {
   const [backup, setBackup] = useState<string[]>([]);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
+  const [enrollError, setEnrollError] = useState<string | null>(null);
+
+  const startEnroll = async () => {
+    setBusy(true); setEnrollError(null);
+    const { data, error } = await supabase.functions.invoke("accountant-totp", { body: { action: "enroll" } });
+    setBusy(false);
+    if (error || !data?.ok || !data?.qr_data_url) {
+      const msg = error?.message ?? data?.error ?? "A QR kód generálása nem sikerült. Próbáld újra.";
+      setEnrollError(msg);
+      toast({ title: "Hiba", description: msg, variant: "destructive" });
+      return;
+    }
+    setQr(data.qr_data_url); setSecret(data.secret); setBackup(data.backup_codes ?? []);
+  };
 
   useEffect(() => {
     if (sessionStorage.getItem(TOTP_SESSION_KEY) === "1") { setPhase("ok"); onPass(); return; }
     (async () => {
-      const { data } = await supabase.functions.invoke("accountant-totp", { body: { action: "status" } });
-      if (data?.enabled) setPhase("verify");
-      else setPhase("enroll");
+      const { data, error } = await supabase.functions.invoke("accountant-totp", { body: { action: "status" } });
+      if (error) { setPhase("enroll"); setEnrollError("Nem sikerült lekérni az állapotot. Próbáld újra."); return; }
+      if (data?.enabled) { setPhase("verify"); return; }
+      setPhase("enroll");
+      // Auto-start enrollment so the QR code appears immediately, no extra tap needed
+      startEnroll();
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const startEnroll = async () => {
-    setBusy(true);
-    const { data, error } = await supabase.functions.invoke("accountant-totp", { body: { action: "enroll" } });
-    setBusy(false);
-    if (error || !data?.ok) { toast({ title: "Hiba", description: error?.message ?? data?.error, variant: "destructive" }); return; }
-    setQr(data.qr_data_url); setSecret(data.secret); setBackup(data.backup_codes ?? []);
-  };
 
   const verify = async () => {
     if (!/^\d{6}$/.test(code)) { toast({ title: "6 jegyű kód szükséges", variant: "destructive" }); return; }
