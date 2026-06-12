@@ -11,7 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { LogOut, Copy, Check, Download, Banknote, BarChart3, Megaphone, User as UserIcon, ListChecks, RefreshCw } from "lucide-react";
+import { LogOut, Copy, Check, Download, Banknote, BarChart3, Megaphone, User as UserIcon, ListChecks, RefreshCw, Link2, FileSpreadsheet } from "lucide-react";
+import { copyToClipboard } from "@/lib/clipboard";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Stats { pending_commission: number; available_commission: number; paid_total: number; total_orders: number; }
 interface Referral { id: string; created_at: string; order_id: string; coupon_code: string; order_total: number; commission_amount: number; status: string; }
