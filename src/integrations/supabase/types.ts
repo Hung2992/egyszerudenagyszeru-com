@@ -2741,6 +2741,41 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_access_log: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          partner_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          partner_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          partner_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_access_log_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_marketing_assets: {
         Row: {
           active: boolean
@@ -2835,6 +2870,57 @@ export type Database = {
             columns: ["partner_id"]
             isOneToOne: false
             referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_referral_status_history: {
+        Row: {
+          changed_by: string | null
+          changed_by_role: string | null
+          created_at: string
+          id: string
+          new_status: string
+          note: string | null
+          old_status: string | null
+          partner_id: string
+          referral_id: string
+        }
+        Insert: {
+          changed_by?: string | null
+          changed_by_role?: string | null
+          created_at?: string
+          id?: string
+          new_status: string
+          note?: string | null
+          old_status?: string | null
+          partner_id: string
+          referral_id: string
+        }
+        Update: {
+          changed_by?: string | null
+          changed_by_role?: string | null
+          created_at?: string
+          id?: string
+          new_status?: string
+          note?: string | null
+          old_status?: string | null
+          partner_id?: string
+          referral_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_referral_status_history_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_referral_status_history_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "partner_referrals"
             referencedColumns: ["id"]
           },
         ]

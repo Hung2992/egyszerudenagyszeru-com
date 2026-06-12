@@ -4,7 +4,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pause, Play, Ban, Copy, Eye } from "lucide-react";
+import { Pause, Play, Ban, Copy, Eye, Mail, History } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { copyToClipboard } from "@/lib/clipboard";
 
@@ -23,6 +23,10 @@ interface Payout {
   id: string; amount: number; status: string;
   requested_at: string; paid_at: string | null;
 }
+interface StatusEvent {
+  id: string; referral_id: string; old_status: string | null; new_status: string;
+  changed_by: string | null; changed_by_role: string | null; note: string | null; created_at: string;
+}
 
 const fmt = (n: number) => `${Math.round(n).toLocaleString("hu-HU")} Ft`;
 const fmtDate = (d: string | null) => d ? new Date(d).toLocaleDateString("hu-HU") : "—";
@@ -31,41 +35,111 @@ const AdminPartnerDetailDrawer = ({ partnerId, onClose, onChanged }: Props) => {
   const [partner, setPartner] = useState<any>(null);
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
+  const [history, setHistory] = useState<StatusEvent[]>([]);
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [activating, setActivating] = useState(false);
+
+  const loadAll = async (id: string) => {
+    const [pRes, rRes, poRes, hRes] = await Promise.all([
+      supabase.from("partners").select("*").eq("id", id).maybeSingle(),
+      supabase.from("partner_referrals").select("*").eq("partner_id", id).order("created_at", { ascending: false }).limit(50),
+      supabase.from("partner_payouts").select("*").eq("partner_id", id).order("requested_at", { ascending: false }).limit(20),
+      supabase.from("partner_referral_status_history").select("*").eq("partner_id", id).order("created_at", { ascending: false }).limit(100),
+    ]);
+    setPartner(pRes.data);
+    setReferrals((rRes.data ?? []) as Referral[]);
+    setPayouts((poRes.data ?? []) as Payout[]);
+    setHistory((hRes.data ?? []) as StatusEvent[]);
+    if (pRes.data?.coupon_id) {
+      const { data: c } = await supabase.from("coupons").select("code").eq("id", pRes.data.coupon_id).maybeSingle();
+      setCouponCode(c?.code ?? null);
+    } else {
+      const { data: c } = await supabase.from("coupons").select("code").eq("partner_id", id).maybeSingle();
+      setCouponCode(c?.code ?? null);
+    }
+  };
 
   useEffect(() => {
     if (!partnerId) return;
     (async () => {
       setLoading(true);
-      const [pRes, rRes, poRes] = await Promise.all([
-        supabase.from("partners").select("*").eq("id", partnerId).maybeSingle(),
-        supabase.from("partner_referrals").select("*").eq("partner_id", partnerId).order("created_at", { ascending: false }).limit(50),
-        supabase.from("partner_payouts").select("*").eq("partner_id", partnerId).order("requested_at", { ascending: false }).limit(20),
-      ]);
-      setPartner(pRes.data);
-      setReferrals((rRes.data ?? []) as Referral[]);
-      setPayouts((poRes.data ?? []) as Payout[]);
-      if (pRes.data?.coupon_id) {
-        const { data: c } = await supabase.from("coupons").select("code").eq("id", pRes.data.coupon_id).maybeSingle();
-        setCouponCode(c?.code ?? null);
-      } else {
-        const { data: c } = await supabase.from("coupons").select("code").eq("partner_id", partnerId).maybeSingle();
-        setCouponCode(c?.code ?? null);
-      }
+      await loadAll(partnerId);
       setLoading(false);
+      // Audit napló: admin megnyitotta a partner részleteket
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("partner_access_log").insert({
+          event_type: "drawer_opened",
+          partner_id: partnerId,
+          user_id: user.id,
+        });
+      }
     })();
+
+    // Realtime: új kifizetés / státusz változás → blokkok azonnal frissülnek
+    const channel = supabase
+      .channel(`partner-detail-${partnerId}`)
+      .on("postgres_changes",
+        { event: "*", schema: "public", table: "partner_payouts", filter: `partner_id=eq.${partnerId}` },
+        () => { void loadAll(partnerId); })
+      .on("postgres_changes",
+        { event: "*", schema: "public", table: "partner_referral_status_history", filter: `partner_id=eq.${partnerId}` },
+        () => { void loadAll(partnerId); })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [partnerId]);
 
   if (!partnerId) return null;
 
+  const sendActivationEmail = async () => {
+    if (!partner?.email) {
+      toast({ title: "Nincs email cím a partnerhez", variant: "destructive" });
+      return;
+    }
+    setActivating(true);
+    try {
+      const portalUrl = `${window.location.origin}/partner`;
+      const { error } = await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "partner-welcome",
+          recipientEmail: partner.email,
+          idempotencyKey: `partner-activate-${partnerId}-${Date.now()}`,
+          templateData: {
+            full_name: partner.full_name || "",
+            coupon_code: couponCode || "",
+            portal_url: portalUrl,
+          },
+        },
+      });
+      if (error) throw error;
+      // Audit log
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from("partner_access_log").insert({
+        event_type: "activation_email_sent",
+        partner_id: partnerId,
+        user_id: user?.id ?? null,
+        metadata: { recipient: partner.email, portal_url: portalUrl },
+      });
+      toast({ title: "Aktiváló email elküldve", description: partner.email });
+    } catch (e: any) {
+      toast({ title: "Email küldés sikertelen", description: e?.message || String(e), variant: "destructive" });
+    } finally {
+      setActivating(false);
+    }
+  };
+
   const changeStatus = async (status: "active" | "paused" | "revoked") => {
+    const wasInactive = partner?.status !== "active";
     const { error } = await supabase.from("partners").update({ status, is_active: status === "active" }).eq("id", partnerId);
-    if (error) toast({ title: "Hiba", description: error.message, variant: "destructive" });
-    else {
-      toast({ title: `Partner státusz: ${status}` });
-      setPartner({ ...partner, status });
-      onChanged?.();
+    if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
+    toast({ title: `Partner státusz: ${status}` });
+    setPartner({ ...partner, status });
+    onChanged?.();
+    // Aktiváláskor automatikusan üdvözlő emailt küldünk a partner felület linkjével.
+    if (status === "active" && wasInactive && partner?.email) {
+      await sendActivationEmail();
     }
   };
 
@@ -124,6 +198,11 @@ const AdminPartnerDetailDrawer = ({ partnerId, onClose, onChanged }: Props) => {
                       <Ban className="w-3 h-3 mr-1" /> Visszavon
                     </Button>
                   )}
+                  {partner.status === "active" && partner.email && (
+                    <Button size="sm" variant="outline" className="rounded-none h-7 text-[10px] uppercase" disabled={activating} onClick={sendActivationEmail}>
+                      <Mail className="w-3 h-3 mr-1" /> {activating ? "Küldés…" : "Aktiváló email"}
+                    </Button>
+                  )}
                 </div>
               </div>
               {couponCode && (
@@ -158,6 +237,33 @@ const AdminPartnerDetailDrawer = ({ partnerId, onClose, onChanged }: Props) => {
             )}
 
 
+
+            <div>
+              <h3 className="text-xs uppercase tracking-widest font-bold mb-2 flex items-center gap-1"><History className="w-3 h-3" /> Jutalék státusz idővonal</h3>
+              <div className="border max-h-64 overflow-y-auto">
+                {history.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-3">Még nincs státusz változás.</p>
+                ) : (
+                  <ul className="divide-y">
+                    {history.map((h) => (
+                      <li key={h.id} className="p-2 text-xs flex items-start gap-2">
+                        <span className="text-muted-foreground whitespace-nowrap w-32">{new Date(h.created_at).toLocaleString("hu-HU")}</span>
+                        <span className="flex-1">
+                          {h.old_status && <span className="text-muted-foreground">{h.old_status} → </span>}
+                          <strong className={
+                            h.new_status === "confirmed" ? "text-green-500" :
+                            h.new_status === "cancelled" ? "text-red-500" :
+                            h.new_status === "paid" ? "text-accent" : "text-yellow-500"
+                          }>{h.new_status}</strong>
+                          {h.note && <span className="text-muted-foreground"> — {h.note}</span>}
+                        </span>
+                        <Badge variant="outline" className="rounded-none text-[9px] uppercase">{h.changed_by_role || "system"}</Badge>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
 
             <div>
               <h3 className="text-xs uppercase tracking-widest font-bold mb-2">Rendelések (utolsó 50)</h3>
