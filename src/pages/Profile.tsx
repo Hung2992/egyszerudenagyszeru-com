@@ -438,6 +438,10 @@ const ProfilePage = () => {
           </button>
         )}
 
+        {/* Partner portal access */}
+        <PartnerPortalButton />
+
+
 
         {/* Tabs */}
         <div className="flex border-b border-border mb-6 overflow-x-auto">
