@@ -35,8 +35,61 @@ const AdminPartnerDetailDrawer = ({ partnerId, onClose, onChanged }: Props) => {
   const [partner, setPartner] = useState<any>(null);
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
+  const [history, setHistory] = useState<StatusEvent[]>([]);
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [activating, setActivating] = useState(false);
+
+  const loadAll = async (id: string) => {
+    const [pRes, rRes, poRes, hRes] = await Promise.all([
+      supabase.from("partners").select("*").eq("id", id).maybeSingle(),
+      supabase.from("partner_referrals").select("*").eq("partner_id", id).order("created_at", { ascending: false }).limit(50),
+      supabase.from("partner_payouts").select("*").eq("partner_id", id).order("requested_at", { ascending: false }).limit(20),
+      supabase.from("partner_referral_status_history").select("*").eq("partner_id", id).order("created_at", { ascending: false }).limit(100),
+    ]);
+    setPartner(pRes.data);
+    setReferrals((rRes.data ?? []) as Referral[]);
+    setPayouts((poRes.data ?? []) as Payout[]);
+    setHistory((hRes.data ?? []) as StatusEvent[]);
+    if (pRes.data?.coupon_id) {
+      const { data: c } = await supabase.from("coupons").select("code").eq("id", pRes.data.coupon_id).maybeSingle();
+      setCouponCode(c?.code ?? null);
+    } else {
+      const { data: c } = await supabase.from("coupons").select("code").eq("partner_id", id).maybeSingle();
+      setCouponCode(c?.code ?? null);
+    }
+  };
+
+  useEffect(() => {
+    if (!partnerId) return;
+    (async () => {
+      setLoading(true);
+      await loadAll(partnerId);
+      setLoading(false);
+      // Audit napló: admin megnyitotta a partner részleteket
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("partner_access_log").insert({
+          event_type: "drawer_opened",
+          partner_id: partnerId,
+          user_id: user.id,
+        });
+      }
+    })();
+
+    // Realtime: új kifizetés / státusz változás → blokkok azonnal frissülnek
+    const channel = supabase
+      .channel(`partner-detail-${partnerId}`)
+      .on("postgres_changes",
+        { event: "*", schema: "public", table: "partner_payouts", filter: `partner_id=eq.${partnerId}` },
+        () => { void loadAll(partnerId); })
+      .on("postgres_changes",
+        { event: "*", schema: "public", table: "partner_referral_status_history", filter: `partner_id=eq.${partnerId}` },
+        () => { void loadAll(partnerId); })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [partnerId]);
 
   useEffect(() => {
     if (!partnerId) return;
