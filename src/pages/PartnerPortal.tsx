@@ -130,36 +130,60 @@ const PartnerPortal = () => {
     });
   }, [referrals, filterStatus, filterFrom, filterTo]);
 
-  const exportCsv = () => {
-    const headers = [
-      "Datum",
-      "Rendeles_ID",
-      "Kupon_kod",
-      "Rendeles_osszeg_Ft",
-      "Jutalek_Ft",
-      "Statusz",
-    ];
-    const escape = (v: string) => `"${String(v).replace(/"/g, '""')}"`;
-    const rows = filteredReferrals.map((r) =>
-      [
-        new Date(r.created_at).toLocaleString("hu-HU"),
-        r.order_id,
-        r.coupon_code,
-        String(Math.round(Number(r.order_total))),
-        String(Math.round(Number(r.commission_amount))),
-        r.status,
-      ].map(escape).join(",")
-    );
-    const csv = "\uFEFF" + [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    const today = new Date().toISOString().slice(0, 10);
-    a.download = `partner-tranzakciok-${today}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast({ title: "CSV letöltve", description: `${filteredReferrals.length} tranzakció exportálva` });
+  const exportCsv = async () => {
+    if (filteredReferrals.length === 0) {
+      toast({ title: "Nincs exportálható sor", description: "Lazíts a szűrőkön és próbáld újra.", variant: "destructive" });
+      return;
+    }
+    setExporting(true);
+    try {
+      const headers = ["Datum","Rendeles_ID","Kupon_kod","Rendeles_osszeg_Ft","Jutalek_Ft","Statusz"];
+      const escape = (v: string) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+
+      // Nagy mennyiség esetén chunk-okban építjük + microtask-yield → ne fagyjon a UI.
+      const total = filteredReferrals.length;
+      const chunkSize = 500;
+      const lines: string[] = [headers.join(",")];
+      for (let i = 0; i < total; i += chunkSize) {
+        const slice = filteredReferrals.slice(i, i + chunkSize);
+        for (const r of slice) {
+          lines.push([
+            new Date(r.created_at).toLocaleString("hu-HU"),
+            r.order_id, r.coupon_code,
+            String(Math.round(Number(r.order_total))),
+            String(Math.round(Number(r.commission_amount))),
+            r.status,
+          ].map(escape).join(","));
+        }
+        // engedjük lélegezni a böngészőt
+        await new Promise((res) => setTimeout(res, 0));
+      }
+
+      const csv = "\uFEFF" + lines.join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      if (blob.size === 0) throw new Error("Az exportált fájl üres.");
+      const url = URL.createObjectURL(blob);
+      try {
+        const a = document.createElement("a");
+        a.href = url;
+        const today = new Date().toISOString().slice(0, 10);
+        a.download = `partner-tranzakciok-${today}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+      toast({ title: "CSV letöltve", description: `${total} tranzakció exportálva` });
+    } catch (e: any) {
+      toast({
+        title: "CSV export sikertelen",
+        description: e?.message || "Ismeretlen hiba a letöltés során.",
+        variant: "destructive",
+      });
+    } finally {
+      setExporting(false);
+    }
   };
 
   const handlePayoutRequest = async () => {
