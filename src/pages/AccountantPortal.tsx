@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { useAccountantCheck } from "@/hooks/useAccountantCheck";
 import {
@@ -8,6 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import AccountantTotpGate from "@/components/accountant/AccountantTotpGate";
 
 type Tab = "overview" | "invoices" | "refunds" | "expenses" | "vat" | "export";
 
