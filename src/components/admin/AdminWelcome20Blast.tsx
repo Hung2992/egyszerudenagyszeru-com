@@ -115,7 +115,32 @@ const AdminWelcome20Blast = () => {
     await Promise.all([preview(), loadLog()]);
   };
 
+  const resendAllFailed = async () => {
+    const failedEmails = Array.from(new Set(
+      log.filter((l) => l.status === "failed").map((l) => l.email.toLowerCase())
+    )).filter((e) => !log.some((l) => l.status === "sent" && l.email.toLowerCase() === e));
+    if (failedEmails.length === 0) {
+      toast({ title: "Nincs failed címzett", description: "Minden korábbi hibás küldés azóta sikerült, vagy nincs hibás bejegyzés." });
+      return;
+    }
+    if (!confirm(`Újraküldöd a WELCOME20-et ${failedEmails.length} korábban sikertelen címnek?`)) return;
+    setSending(true);
+    const { data, error } = await supabase.functions.invoke("send-welcome20-blast", { body: { retry_all_failed: true } });
+    setSending(false);
+    const r = data as any;
+    if (error || r?.error) {
+      toast({ title: "Hiba", description: error?.message || r?.error, variant: "destructive" });
+    } else {
+      toast({ title: "✅ Újraküldés kész", description: `${r.sent} sikeres / ${r.failed} sikertelen` });
+    }
+    await loadLog();
+  };
+
   const filtered = recipients?.filter((r) => (filter === "all" ? true : r.status === filter)) || [];
+  const failedCount = (() => {
+    const sentSet = new Set(log.filter((l) => l.status === "sent").map((l) => l.email.toLowerCase()));
+    return new Set(log.filter((l) => l.status === "failed" && !sentSet.has(l.email.toLowerCase())).map((l) => l.email.toLowerCase())).size;
+  })();
 
   return (
     <div className="border border-accent/40 bg-accent/5 p-4 space-y-4">
@@ -124,16 +149,24 @@ const AdminWelcome20Blast = () => {
           <Megaphone className="w-4 h-4 text-accent" />
           <h3 className="text-sm font-bold uppercase tracking-wider">Nyitó akció — WELCOME20 körlevél</h3>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button size="sm" variant="outline" className="rounded-none uppercase tracking-wider text-xs" onClick={preview} disabled={loading || sending}>
             {loading ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <RefreshCw className="w-3 h-3 mr-1" />}
             Előnézet
+          </Button>
+          <Button size="sm" variant="outline" className="rounded-none uppercase tracking-wider text-xs" onClick={resendAllFailed} disabled={loading || sending || failedCount === 0}>
+            <RotateCw className="w-3 h-3 mr-1" />
+            Újraküldés failed-eknek{failedCount > 0 ? ` (${failedCount})` : ""}
           </Button>
           <Button size="sm" className="rounded-none uppercase tracking-wider text-xs" onClick={send} disabled={loading || sending || !recipients}>
             {sending ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Send className="w-3 h-3 mr-1" />}
             Kupon kiküldése most
           </Button>
         </div>
+      </div>
+
+      <div className="text-[11px] text-muted-foreground bg-background/60 border px-3 py-2">
+        ⏰ <strong>Ütemezett kiküldés aktív:</strong> minden nap 09:00 (Budapest) automatikusan futtatja a kiküldést azoknak, akik még nem kapták meg sikeresen. Duplikáció kizárva (email + 'sent' státusz egyedi index).
       </div>
 
       <p className="text-xs text-muted-foreground">
