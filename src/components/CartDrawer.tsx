@@ -5,6 +5,7 @@ import { Minus, Plus, Trash2, ShoppingBag, Flame, Truck, Clock, Eye, Sparkles } 
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { Progress } from "@/components/ui/progress";
+import Welcome20StatusBanner from "@/components/Welcome20StatusBanner";
 
 const LAUNCH_DATE = new Date("2026-06-05T10:00:00+02:00").getTime();
 const FREE_SHIPPING_THRESHOLD = 15000;
@@ -113,6 +114,9 @@ const CartDrawer = () => {
                 </div>
               </div>
             )}
+
+            {/* WELCOME20 status */}
+            <div className="px-5 pb-2"><Welcome20StatusBanner compact /></div>
 
             {/* CART ITEMS */}
             <div className="flex-1 overflow-y-auto space-y-3 px-5 py-2">

@@ -12,6 +12,7 @@ import type { User } from "@supabase/supabase-js";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { getStoredReferralCode, clearStoredReferralCode } from "@/hooks/useReferralCapture";
+import Welcome20StatusBanner from "@/components/Welcome20StatusBanner";
 
 interface GiftWrapOption {
   id: string;
@@ -465,6 +466,7 @@ const Checkout = () => {
         {/* Coupon */}
         <div className="border bg-card p-5 space-y-3">
           <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Kuponkód</h3>
+          <Welcome20StatusBanner />
           {appliedCoupon ? (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
