@@ -398,6 +398,10 @@ const AdminLegalCenterTab = () => {
         </div>
       </div>
 
+      {/* Élő preview az impresszum publikus oldalról */}
+      <AdminImpresszumLivePreview />
+
+
 
 
       {/* Dokumentum választó grid */}
