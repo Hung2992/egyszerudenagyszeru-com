@@ -12,6 +12,7 @@ import type { User } from "@supabase/supabase-js";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { getStoredReferralCode, clearStoredReferralCode } from "@/hooks/useReferralCapture";
+import Welcome20StatusBanner from "@/components/Welcome20StatusBanner";
 
 interface GiftWrapOption {
   id: string;
