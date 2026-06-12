@@ -73,13 +73,16 @@ const PartnerPortal = () => {
       return;
     }
     if (partner.status !== "active") {
+      void logAccess("redirected", { reason: partner.status });
       toast({
         title: partner.status === "paused" ? "Partner fiók szüneteltetve" : partner.status === "revoked" ? "Partner hozzáférés visszavonva" : "Partner fiók nem aktív",
         description: "Lépj kapcsolatba az adminnal a hozzáférés visszaállításáért.",
         variant: "destructive",
       });
       navigate("/");
+      return;
     }
+    void logAccess("portal_entered", { status: partner.status });
   }, [loading, partner, isAdmin]);
 
   useEffect(() => {
