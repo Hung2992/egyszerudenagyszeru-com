@@ -438,8 +438,8 @@ const ProfilePage = () => {
           </button>
         )}
 
-        {/* Partner portal access */}
-        <PartnerPortalButton />
+        <PartnerAccessButton />
+
 
 
 
