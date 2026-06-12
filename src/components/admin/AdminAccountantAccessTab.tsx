@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { Calculator, Mail, Trash2, Loader2, Copy, ExternalLink, Send, Clock } from "lucide-react";
 import AdminAuditExportCard from "./AdminAuditExportCard";
+import AdminNavMappingCard from "./AdminNavMappingCard";
+import AdminInviteMonitor from "./AdminInviteMonitor";
 
 interface AccountantUser { user_id: string; email: string; granted_at: string; }
 interface PendingInvite { id: string; email: string; invited_at: string; accepted_at: string | null; expires_at: string | null; resend_count: number | null; last_sent_at: string | null; }
@@ -183,7 +185,11 @@ const AdminAccountantAccessTab = () => {
         )}
       </div>
 
+      <AdminInviteMonitor />
+
       <AdminAuditExportCard />
+
+      <AdminNavMappingCard />
 
       <div className="border border-border p-4 bg-secondary/20 text-xs text-muted-foreground">
         <p className="font-bold text-foreground mb-1">Mit lát a könyvelő?</p>

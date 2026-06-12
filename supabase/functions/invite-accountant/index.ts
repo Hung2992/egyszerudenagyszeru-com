@@ -77,10 +77,11 @@ Deno.serve(async (req) => {
     }
 
     // Branded email
+    let emailFailed: string | null = null;
     try {
       const { data: settings } = await admin.from("store_settings").select("legal_owner_name,store_name").maybeSingle();
       const inviterName = (settings as any)?.legal_owner_name || (settings as any)?.store_name || "Egyszerű de Nagyszerű";
-      await admin.functions.invoke("send-transactional-email", {
+      const { error: emailErr } = await admin.functions.invoke("send-transactional-email", {
         body: {
           templateName: "accountant-invite",
           recipientEmail: email,
@@ -88,18 +89,19 @@ Deno.serve(async (req) => {
           templateData: { invite_link, inviter_name: inviterName, expires_at: expiresAt, is_resend: isResend },
         },
       });
-    } catch (_e) { /* best-effort */ }
+      if (emailErr) emailFailed = emailErr.message;
+    } catch (e) { emailFailed = (e as Error).message; }
 
     await admin.from("accountant_access_log").insert({
       user_id: user.id,
-      action: isResend ? "invite_resent" : "invite_sent",
+      action: emailFailed ? "invite_failed" : (isResend ? "invite_resent" : "invite_sent"),
       resource: email,
       ip_address: req.headers.get("x-forwarded-for") ?? null,
       user_agent: req.headers.get("user-agent") ?? null,
-      metadata: { expires_at: expiresAt, resend_count: resendCount },
+      metadata: { expires_at: expiresAt, resend_count: resendCount, email_error: emailFailed },
     });
 
-    return json({ ok: true, invite_link, expires_at: expiresAt, resend_count: resendCount });
+    return json({ ok: true, invite_link, expires_at: expiresAt, resend_count: resendCount, email_failed: emailFailed });
   } catch (e) {
     return json({ ok: false, error: (e as Error).message }, 500);
   }
