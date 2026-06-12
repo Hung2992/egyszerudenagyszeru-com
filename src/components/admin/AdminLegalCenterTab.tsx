@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/untyped-client";
+import { notifyLegalInfoUpdated } from "@/hooks/useLegalInfo";
+import AdminImpresszumLivePreview from "@/components/admin/AdminImpresszumLivePreview";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -166,7 +168,8 @@ const AdminLegalCenterTab = () => {
     if (error) {
       toast({ title: "Hiba", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Mentve", description: "Jogi dokumentumok frissítve." });
+      notifyLegalInfoUpdated();
+      toast({ title: "Mentve", description: "Jogi dokumentumok frissítve — az élő oldalak azonnal frissülnek." });
     }
   };
 
