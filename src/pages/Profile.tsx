@@ -414,6 +414,7 @@ const ProfilePage = () => {
           <div className="text-center">
             <h1 className="text-lg font-bold uppercase tracking-wider text-foreground">Fiókom</h1>
             <p className="text-xs text-muted-foreground mt-0.5">{user?.email}</p>
+          </div>
         </div>
 
         {/* Accountant portal access */}
@@ -437,7 +438,6 @@ const ProfilePage = () => {
           </button>
         )}
 
-        </div>
 
         {/* Tabs */}
         <div className="flex border-b border-border mb-6 overflow-x-auto">
