@@ -456,7 +456,7 @@ const Checkout = () => {
               <Button
                 variant="outline"
                 className="rounded-none uppercase tracking-wider text-xs shrink-0"
-                onClick={applyCoupon}
+                onClick={() => applyCoupon()}
                 disabled={couponLoading}
               >
                 Beváltás
