@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { useCart } from "@/contexts/CartContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { usePartnerCheck } from "@/hooks/usePartnerCheck";
 import { Button } from "@/components/ui/button";
 import { LogOut, User, ShoppingCart, Menu, X, Shield, Heart, Package, Star, Gift, Users } from "lucide-react";
 import type { User as SupaUser } from "@supabase/supabase-js";
