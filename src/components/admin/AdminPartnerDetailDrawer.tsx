@@ -75,6 +75,13 @@ const AdminPartnerDetailDrawer = ({ partnerId, onClose, onChanged }: Props) => {
     revenue: referrals.filter((r) => r.status !== "cancelled").reduce((s, r) => s + Number(r.order_total), 0),
     paidOut: payouts.filter((p) => p.status === "paid").reduce((s, p) => s + Number(p.amount), 0),
   };
+  const lastPaidPayout = payouts.filter((p) => p.status === "paid" && p.paid_at).sort((a, b) => new Date(b.paid_at!).getTime() - new Date(a.paid_at!).getTime())[0] || null;
+  const statusColor: Record<string, string> = {
+    active: "bg-green-500/20 text-green-500 border-green-500/40",
+    paused: "bg-yellow-500/20 text-yellow-500 border-yellow-500/40",
+    revoked: "bg-red-500/20 text-red-500 border-red-500/40",
+    invited: "bg-blue-500/20 text-blue-500 border-blue-500/40",
+  };
 
   return (
     <Sheet open={!!partnerId} onOpenChange={(o) => { if (!o) onClose(); }}>
