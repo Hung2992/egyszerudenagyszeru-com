@@ -8,8 +8,9 @@ import { CartProvider } from "@/contexts/CartContext";
 import Index from "./pages/Index.tsx";
 import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner.tsx";
 import { usePageTracking } from "@/hooks/usePageTracking";
+import { useReferralCapture } from "@/hooks/useReferralCapture";
 
-const PageTracker = () => { usePageTracking(); return null; };
+const PageTracker = () => { usePageTracking(); useReferralCapture(); return null; };
 
 // Lazy-loaded components that appear with delay or on interaction
 const CartDrawer = lazy(() => import("@/components/CartDrawer"));
