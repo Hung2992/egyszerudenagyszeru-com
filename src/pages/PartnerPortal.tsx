@@ -319,8 +319,9 @@ const PartnerPortal = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={exportCsv} className="rounded-none uppercase tracking-wider ml-auto" disabled={filteredReferrals.length === 0}>
-                <FileSpreadsheet className="h-4 w-4 mr-2" /> CSV export ({filteredReferrals.length})
+              <Button onClick={exportCsv} className="rounded-none uppercase tracking-wider ml-auto" disabled={exporting || filteredReferrals.length === 0}>
+                {exporting ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <FileSpreadsheet className="h-4 w-4 mr-2" />}
+                {exporting ? "Exportálás…" : `CSV export (${filteredReferrals.length})`}
               </Button>
             </Card>
 
