@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { useCart } from "@/contexts/CartContext";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { usePartnerCheck } from "@/hooks/usePartnerCheck";
 import { Button } from "@/components/ui/button";
 import { LogOut, User, ShoppingCart, Menu, X, Shield, Heart, Package, Star, Gift, Users } from "lucide-react";
 import type { User as SupaUser } from "@supabase/supabase-js";
@@ -27,6 +28,8 @@ const Navbar = () => {
   const location = useLocation();
   const { totalItems, setIsCartOpen } = useCart();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
+  const { partner, loading: partnerLoading } = usePartnerCheck();
+  const isPartner = !partnerLoading && partner?.status === "active";
   const [user, setUser] = useState<SupaUser | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -113,6 +116,11 @@ const Navbar = () => {
                     <Shield className="h-4 w-4" />
                   </Button>
                 )}
+                {isPartner && (
+                  <Button variant="ghost" size="icon" className="h-9 w-9 text-accent" onClick={() => navigate("/partner")} aria-label="Partner felület">
+                    <Users className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setUserMenuOpen(!userMenuOpen)}>
                   <User className="h-4 w-4" />
                 </Button>
@@ -145,6 +153,18 @@ const Navbar = () => {
                       >
                         <Shield className="h-4 w-4" />
                         Admin felület
+                      </button>
+                    )}
+                    {isPartner && (
+                      <button
+                        onClick={() => {
+                          navigate("/partner");
+                          setUserMenuOpen(false);
+                        }}
+                        className="w-full px-4 py-3 text-left text-sm text-accent hover:bg-muted flex items-center gap-3 border-t border-border"
+                      >
+                        <Users className="h-4 w-4" />
+                        Partner felület
                       </button>
                     )}
                     <button onClick={handleLogout} className="w-full px-4 py-3 text-left text-sm text-destructive hover:bg-muted flex items-center gap-3 border-t border-border">
