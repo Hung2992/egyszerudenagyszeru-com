@@ -66,7 +66,7 @@ const App = () => (
           <Toaster />
           <Sonner />
         </Suspense>
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <PageTracker />
           <PaymentTestModeBanner />
           <Suspense fallback={null}>
