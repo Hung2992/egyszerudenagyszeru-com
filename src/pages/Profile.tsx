@@ -36,6 +36,7 @@ import LoyaltyRedemption from "@/components/LoyaltyRedemption";
 import AiSizeRecommender from "@/components/AiSizeRecommender";
 import type { User as SupaUser } from "@supabase/supabase-js";
 import { sendAppEmail } from "@/lib/app-email";
+import { useAccountantCheck } from "@/hooks/useAccountantCheck";
 
 interface ProfileData {
   display_name: string;
