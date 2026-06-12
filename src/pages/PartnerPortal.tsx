@@ -258,15 +258,41 @@ const PartnerPortal = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="referrals" className="mt-6">
+          <TabsContent value="referrals" className="mt-6 space-y-4">
+            <Card className="rounded-none border-foreground/20 p-4 flex flex-wrap items-end gap-3">
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider">Időszak ettől</Label>
+                <Input type="date" className="rounded-none h-9" value={filterFrom} onChange={(e) => setFilterFrom(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider">Időszak eddig</Label>
+                <Input type="date" className="rounded-none h-9" value={filterTo} onChange={(e) => setFilterTo(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider">Státusz</Label>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="rounded-none h-9 w-40"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Összes</SelectItem>
+                    <SelectItem value="pending">Függő</SelectItem>
+                    <SelectItem value="confirmed">Megerősítve</SelectItem>
+                    <SelectItem value="cancelled">Lemondva</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={exportCsv} className="rounded-none uppercase tracking-wider ml-auto" disabled={filteredReferrals.length === 0}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" /> CSV export ({filteredReferrals.length})
+              </Button>
+            </Card>
+
             <Card className="rounded-none border-foreground/20">
               <Table>
                 <TableHeader>
                   <TableRow><TableHead>Dátum</TableHead><TableHead>Rendelés</TableHead><TableHead>Kupon</TableHead><TableHead>Összeg</TableHead><TableHead>Jutalék</TableHead><TableHead>Állapot</TableHead></TableRow>
                 </TableHeader>
                 <TableBody>
-                  {referrals.length === 0 && (<TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Még nincs rendelés a kuponoddal.</TableCell></TableRow>)}
-                  {referrals.map((r) => (
+                  {filteredReferrals.length === 0 && (<TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nincs a szűrésnek megfelelő rendelés.</TableCell></TableRow>)}
+                  {filteredReferrals.map((r) => (
                     <TableRow key={r.id}>
                       <TableCell>{new Date(r.created_at).toLocaleDateString("hu-HU")}</TableCell>
                       <TableCell className="font-mono text-xs">…{r.order_id.slice(-6)}</TableCell>
