@@ -28,6 +28,8 @@ const Navbar = () => {
   const location = useLocation();
   const { totalItems, setIsCartOpen } = useCart();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
+  const { partner, loading: partnerLoading } = usePartnerCheck();
+  const isPartner = !partnerLoading && partner?.status === "active";
   const [user, setUser] = useState<SupaUser | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
