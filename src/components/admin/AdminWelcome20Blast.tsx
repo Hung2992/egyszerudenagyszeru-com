@@ -43,11 +43,42 @@ const AdminWelcome20Blast = () => {
       .from("welcome20_send_log" as any)
       .select("id,email,status,reason,error,created_at")
       .order("created_at", { ascending: false })
-      .limit(100);
+      .limit(500);
     setLog((data as unknown as LogRow[]) || []);
   };
 
   useEffect(() => { loadLog(); }, []);
+
+  const exportCsv = () => {
+    const header = ["timestamp", "email", "status", "reason", "error"];
+    const escape = (v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const rows = log.map((l) => [l.created_at, l.email, l.status, l.reason || "", l.error || ""].map(escape).join(","));
+    const csv = [header.join(","), ...rows].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `welcome20-send-log-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const resendFailed = async (email: string) => {
+    if (!confirm(`Újraküldöd a WELCOME20 kupont ${email} címre?`)) return;
+    setSending(true);
+    const { data, error } = await supabase.functions.invoke("send-welcome20-blast", {
+      body: { retry_failed: true, emails: [email] },
+    });
+    setSending(false);
+    const r = data as any;
+    if (error || r?.error) {
+      toast({ title: "Sikertelen újraküldés", description: error?.message || r?.error, variant: "destructive" });
+    } else {
+      toast({ title: r.sent > 0 ? "✅ Újraküldve" : "Nem küldhető", description: `${r.sent} sikeres / ${r.failed} sikertelen` });
+    }
+    await loadLog();
+  };
+
 
   const preview = async () => {
     setLoading(true);
