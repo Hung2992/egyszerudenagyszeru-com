@@ -57,6 +57,7 @@ const AccountantPortal = () => {
   useEffect(() => {
     if (authLoading) return;
     if (!allowed) { navigate("/auth"); return; }
+    if (!totpPassed) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
@@ -74,14 +75,16 @@ const AccountantPortal = () => {
       setProcurement((procRes.data as Procurement[]) ?? []);
       setLoading(false);
 
-      // Audit
+      const uid = (await supabase.auth.getUser()).data.user?.id;
       await supabase.from("accountant_access_log").insert({
-        user_id: (await supabase.auth.getUser()).data.user?.id,
-        action: "view_month", resource: range.label, metadata: { tab },
+        user_id: uid, action: "view_month", resource: range.label,
+        user_agent: navigator.userAgent, metadata: { tab },
       });
+      // Welcome email — fires once per invite
+      void supabase.functions.invoke("accountant-welcome");
     })();
     return () => { cancelled = true; };
-  }, [authLoading, allowed, year, month, tab, navigate]);
+  }, [authLoading, allowed, totpPassed, year, month, tab, navigate]);
 
   const kpi = useMemo(() => {
     const gross = invoices.reduce((s, i) => s + Number(i.total_amount ?? 0), 0);
