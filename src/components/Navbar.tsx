@@ -155,6 +155,18 @@ const Navbar = () => {
                         Admin felület
                       </button>
                     )}
+                    {isPartner && (
+                      <button
+                        onClick={() => {
+                          navigate("/partner");
+                          setUserMenuOpen(false);
+                        }}
+                        className="w-full px-4 py-3 text-left text-sm text-accent hover:bg-muted flex items-center gap-3 border-t border-border"
+                      >
+                        <Users className="h-4 w-4" />
+                        Partner felület
+                      </button>
+                    )}
                     <button onClick={handleLogout} className="w-full px-4 py-3 text-left text-sm text-destructive hover:bg-muted flex items-center gap-3 border-t border-border">
                       <LogOut className="h-4 w-4" />
                       Kilépés
