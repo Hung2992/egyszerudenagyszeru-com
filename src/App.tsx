@@ -24,6 +24,7 @@ const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 const Profile = lazy(() => import("./pages/Profile.tsx"));
 const Admin = lazy(() => import("./pages/Admin.tsx"));
 const AccountantPortal = lazy(() => import("./pages/AccountantPortal.tsx"));
+const PartnerPortal = lazy(() => import("./pages/PartnerPortal.tsx"));
 const Shop = lazy(() => import("./pages/Shop.tsx"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail.tsx"));
 const Checkout = lazy(() => import("./pages/Checkout.tsx"));
