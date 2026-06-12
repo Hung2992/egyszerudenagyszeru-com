@@ -5927,6 +5927,19 @@ export type Database = {
           weak_response_count: number
         }[]
       }
+      get_top_partners: {
+        Args: { _from?: string; _limit?: number; _to?: string }
+        Returns: {
+          coupon_code: string
+          orders_count: number
+          paid_commission: number
+          partner_id: string
+          partner_name: string
+          pending_commission: number
+          total_commission: number
+          total_revenue: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
