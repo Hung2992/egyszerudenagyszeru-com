@@ -6194,6 +6194,7 @@ export type Database = {
         Returns: boolean
       }
       welcome20_eligible: { Args: { _user_id: string }; Returns: boolean }
+      welcome20_status: { Args: { _user_id: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "accountant" | "partner"
