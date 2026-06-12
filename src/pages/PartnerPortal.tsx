@@ -11,7 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { LogOut, Copy, Check, Download, Banknote, BarChart3, Megaphone, User as UserIcon, ListChecks, RefreshCw } from "lucide-react";
+import { LogOut, Copy, Check, Download, Banknote, BarChart3, Megaphone, User as UserIcon, ListChecks, RefreshCw, Link2, FileSpreadsheet } from "lucide-react";
+import { copyToClipboard } from "@/lib/clipboard";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Stats { pending_commission: number; available_commission: number; paid_total: number; total_orders: number; }
 interface Referral { id: string; created_at: string; order_id: string; coupon_code: string; order_total: number; commission_amount: number; status: string; }
@@ -34,9 +36,17 @@ const PartnerPortal = () => {
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileForm, setProfileForm] = useState({ phone: "", address: "", iban: "", tax_number: "", company_name: "" });
 
+  // Szűrők CSV exporthoz / rendelés listához
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterFrom, setFilterFrom] = useState<string>("");
+  const [filterTo, setFilterTo] = useState<string>("");
+
   useEffect(() => {
-    if (!loading && !partner && !isAdmin) {
-      // try auto-claim once if a pending invite exists for this user
+    if (loading) return;
+    // Hozzáférés szigorítva: csak aktív partner vagy admin léphet be.
+    // Paused / revoked / invited fiók NEM léphet be.
+    if (isAdmin) return;
+    if (!partner) {
       (async () => {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) { navigate("/auth"); return; }
@@ -48,6 +58,15 @@ const PartnerPortal = () => {
           navigate("/");
         }
       })();
+      return;
+    }
+    if (partner.status !== "active") {
+      toast({
+        title: partner.status === "paused" ? "Partner fiók szüneteltetve" : partner.status === "revoked" ? "Partner hozzáférés visszavonva" : "Partner fiók nem aktív",
+        description: "Lépj kapcsolatba az adminnal a hozzáférés visszaállításáért.",
+        variant: "destructive",
+      });
+      navigate("/");
     }
   }, [loading, partner, isAdmin]);
 
@@ -73,12 +92,59 @@ const PartnerPortal = () => {
     if (assetRes.data) setAssets(assetRes.data as MarketingAsset[]);
   };
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (!partner?.coupon_code) return;
-    navigator.clipboard.writeText(partner.coupon_code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-    toast({ title: "Másolva", description: partner.coupon_code });
+    const ok = await copyToClipboard(partner.coupon_code, "Kuponkód másolva", partner.coupon_code);
+    if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
+  };
+
+  const referralLink = partner?.coupon_code ? `${window.location.origin}/?ref=${partner.coupon_code}` : "";
+  const handleCopyReferral = async () => {
+    if (!referralLink) return;
+    await copyToClipboard(referralLink, "Referral link másolva", referralLink);
+  };
+
+  // Szűrt referrals
+  const filteredReferrals = useMemo(() => {
+    return referrals.filter((r) => {
+      if (filterStatus !== "all" && r.status !== filterStatus) return false;
+      const d = new Date(r.created_at).getTime();
+      if (filterFrom && d < new Date(filterFrom).getTime()) return false;
+      if (filterTo && d > new Date(filterTo).getTime() + 86_399_000) return false;
+      return true;
+    });
+  }, [referrals, filterStatus, filterFrom, filterTo]);
+
+  const exportCsv = () => {
+    const headers = [
+      "Datum",
+      "Rendeles_ID",
+      "Kupon_kod",
+      "Rendeles_osszeg_Ft",
+      "Jutalek_Ft",
+      "Statusz",
+    ];
+    const escape = (v: string) => `"${String(v).replace(/"/g, '""')}"`;
+    const rows = filteredReferrals.map((r) =>
+      [
+        new Date(r.created_at).toLocaleString("hu-HU"),
+        r.order_id,
+        r.coupon_code,
+        String(Math.round(Number(r.order_total))),
+        String(Math.round(Number(r.commission_amount))),
+        r.status,
+      ].map(escape).join(",")
+    );
+    const csv = "\uFEFF" + [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const today = new Date().toISOString().slice(0, 10);
+    a.download = `partner-tranzakciok-${today}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "CSV letöltve", description: `${filteredReferrals.length} tranzakció exportálva` });
   };
 
   const handlePayoutRequest = async () => {
@@ -153,15 +219,24 @@ const PartnerPortal = () => {
           <TabsContent value="overview" className="mt-6 space-y-6">
             <Card className="rounded-none border-foreground/20 p-6">
               <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">A te kuponkódod</p>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <code className="text-3xl font-bold tracking-widest text-accent">{partner.coupon_code || "—"}</code>
                 {partner.coupon_code && (
                   <Button size="sm" variant="outline" onClick={handleCopy} className="rounded-none">
-                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    {copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
+                    Kód
+                  </Button>
+                )}
+                {referralLink && (
+                  <Button size="sm" variant="outline" onClick={handleCopyReferral} className="rounded-none">
+                    <Link2 className="h-4 w-4 mr-1" /> Referral link
                   </Button>
                 )}
               </div>
               <p className="text-xs text-muted-foreground mt-2">Minden teljesített rendelés után <strong>{fmt(partner.commission_per_order_amount)}</strong> jutalék.</p>
+              {referralLink && (
+                <p className="text-[10px] text-muted-foreground mt-1 font-mono break-all">{referralLink}</p>
+              )}
             </Card>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card className="rounded-none border-foreground/20 p-4">
@@ -183,15 +258,41 @@ const PartnerPortal = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="referrals" className="mt-6">
+          <TabsContent value="referrals" className="mt-6 space-y-4">
+            <Card className="rounded-none border-foreground/20 p-4 flex flex-wrap items-end gap-3">
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider">Időszak ettől</Label>
+                <Input type="date" className="rounded-none h-9" value={filterFrom} onChange={(e) => setFilterFrom(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider">Időszak eddig</Label>
+                <Input type="date" className="rounded-none h-9" value={filterTo} onChange={(e) => setFilterTo(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider">Státusz</Label>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="rounded-none h-9 w-40"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Összes</SelectItem>
+                    <SelectItem value="pending">Függő</SelectItem>
+                    <SelectItem value="confirmed">Megerősítve</SelectItem>
+                    <SelectItem value="cancelled">Lemondva</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={exportCsv} className="rounded-none uppercase tracking-wider ml-auto" disabled={filteredReferrals.length === 0}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" /> CSV export ({filteredReferrals.length})
+              </Button>
+            </Card>
+
             <Card className="rounded-none border-foreground/20">
               <Table>
                 <TableHeader>
                   <TableRow><TableHead>Dátum</TableHead><TableHead>Rendelés</TableHead><TableHead>Kupon</TableHead><TableHead>Összeg</TableHead><TableHead>Jutalék</TableHead><TableHead>Állapot</TableHead></TableRow>
                 </TableHeader>
                 <TableBody>
-                  {referrals.length === 0 && (<TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Még nincs rendelés a kuponoddal.</TableCell></TableRow>)}
-                  {referrals.map((r) => (
+                  {filteredReferrals.length === 0 && (<TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nincs a szűrésnek megfelelő rendelés.</TableCell></TableRow>)}
+                  {filteredReferrals.map((r) => (
                     <TableRow key={r.id}>
                       <TableCell>{new Date(r.created_at).toLocaleDateString("hu-HU")}</TableCell>
                       <TableCell className="font-mono text-xs">…{r.order_id.slice(-6)}</TableCell>

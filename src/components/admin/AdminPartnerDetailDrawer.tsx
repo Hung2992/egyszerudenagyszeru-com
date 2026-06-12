@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pause, Play, Ban, Copy, Eye } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { copyToClipboard } from "@/lib/clipboard";
 
 interface Props {
   partnerId: string | null;
@@ -74,6 +75,13 @@ const AdminPartnerDetailDrawer = ({ partnerId, onClose, onChanged }: Props) => {
     revenue: referrals.filter((r) => r.status !== "cancelled").reduce((s, r) => s + Number(r.order_total), 0),
     paidOut: payouts.filter((p) => p.status === "paid").reduce((s, p) => s + Number(p.amount), 0),
   };
+  const lastPaidPayout = payouts.filter((p) => p.status === "paid" && p.paid_at).sort((a, b) => new Date(b.paid_at!).getTime() - new Date(a.paid_at!).getTime())[0] || null;
+  const statusColor: Record<string, string> = {
+    active: "bg-green-500/20 text-green-500 border-green-500/40",
+    paused: "bg-yellow-500/20 text-yellow-500 border-yellow-500/40",
+    revoked: "bg-red-500/20 text-red-500 border-red-500/40",
+    invited: "bg-blue-500/20 text-blue-500 border-blue-500/40",
+  };
 
   return (
     <Sheet open={!!partnerId} onOpenChange={(o) => { if (!o) onClose(); }}>
@@ -94,9 +102,9 @@ const AdminPartnerDetailDrawer = ({ partnerId, onClose, onChanged }: Props) => {
                   <h2 className="text-lg font-bold">{partner.company_name || partner.full_name}</h2>
                   {partner.company_name && <p className="text-xs text-muted-foreground">Kapcsolat: {partner.full_name}</p>}
                   <p className="text-xs text-muted-foreground">{partner.email || "—"} · {partner.phone || "—"}</p>
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex gap-2 mt-2 flex-wrap">
                     <Badge variant="outline" className="rounded-none text-[10px] uppercase">{partner.partner_type}</Badge>
-                    <Badge variant="outline" className="rounded-none text-[10px] uppercase">Státusz: {partner.status}</Badge>
+                    <Badge variant="outline" className={`rounded-none text-[10px] uppercase ${statusColor[partner.status] || ""}`}>Státusz: {partner.status}</Badge>
                     <Badge variant="outline" className="rounded-none text-[10px] uppercase">{fmt(Number(partner.commission_per_order_amount || 0))} / rendelés</Badge>
                   </div>
                 </div>
@@ -119,25 +127,37 @@ const AdminPartnerDetailDrawer = ({ partnerId, onClose, onChanged }: Props) => {
                 </div>
               </div>
               {couponCode && (
-                <div className="mt-3 border-t pt-2 flex items-center gap-2">
+                <div className="mt-3 border-t pt-2 flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] uppercase text-muted-foreground">Kupon kód:</span>
                   <code className="font-mono text-sm font-bold text-accent">{couponCode}</code>
-                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => { navigator.clipboard.writeText(couponCode); toast({ title: "Másolva" }); }}>
+                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => copyToClipboard(couponCode, "Kuponkód másolva", couponCode)}>
                     <Copy className="w-3 h-3" />
                   </Button>
-                  <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/?ref=${couponCode}`); toast({ title: "Referral link másolva" }); }}>
+                  <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => copyToClipboard(`${window.location.origin}/?ref=${couponCode}`, "Referral link másolva")}>
                     Link másolása
                   </Button>
                 </div>
               )}
             </div>
 
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               <div className="border p-2"><p className="text-[10px] uppercase text-muted-foreground">Forgalom</p><p className="text-sm font-bold">{fmt(totals.revenue)}</p></div>
               <div className="border p-2"><p className="text-[10px] uppercase text-muted-foreground">Megerősített jutalék</p><p className="text-sm font-bold text-accent">{fmt(totals.confirmed)}</p></div>
               <div className="border p-2"><p className="text-[10px] uppercase text-muted-foreground">Függő</p><p className="text-sm font-bold text-yellow-500">{fmt(totals.pending)}</p></div>
               <div className="border p-2"><p className="text-[10px] uppercase text-muted-foreground">Kifizetve</p><p className="text-sm font-bold text-green-500">{fmt(totals.paidOut)}</p></div>
             </div>
+
+            {lastPaidPayout && (
+              <div className="border p-3 bg-green-500/5 border-green-500/30">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Legutóbbi kifizetés</p>
+                <div className="flex items-baseline justify-between mt-1">
+                  <p className="text-lg font-bold text-green-500">{fmt(Number(lastPaidPayout.amount))}</p>
+                  <p className="text-xs text-muted-foreground">{fmtDate(lastPaidPayout.paid_at)}</p>
+                </div>
+              </div>
+            )}
+
+
 
             <div>
               <h3 className="text-xs uppercase tracking-widest font-bold mb-2">Rendelések (utolsó 50)</h3>
