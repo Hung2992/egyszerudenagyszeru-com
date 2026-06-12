@@ -21,20 +21,33 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return json({ error: "unauthorized" }, 401);
-    const userClient = createClient(SUPABASE_URL, ANON_KEY, { global: { headers: { Authorization: authHeader } } });
-    const { data: { user } } = await userClient.auth.getUser();
-    if (!user) return json({ error: "unauthorized" }, 401);
-    const { data: isAdmin } = await userClient.rpc("has_role", { _user_id: user.id, _role: "admin" });
-    if (!isAdmin) return json({ error: "forbidden" }, 403);
-
     const supa = createClient(SUPABASE_URL, SERVICE_KEY);
     const body = await req.json().catch(() => ({}));
+
+    // --- Hitelesítés: vagy admin auth, vagy belső cron-token (store_settings.welcome20_cron_token) ---
+    const cronHeader = req.headers.get("x-cron-secret");
+    let isCron = false;
+    if (cronHeader) {
+      const { data: settings } = await supa.from("store_settings").select("welcome20_cron_token").limit(1).maybeSingle();
+      const expected = (settings as any)?.welcome20_cron_token as string | undefined;
+      if (expected && cronHeader === expected) isCron = true;
+    }
+    if (!isCron) {
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader) return json({ error: "unauthorized" }, 401);
+      const userClient = createClient(SUPABASE_URL, ANON_KEY, { global: { headers: { Authorization: authHeader } } });
+      const { data: { user } } = await userClient.auth.getUser();
+      if (!user) return json({ error: "unauthorized" }, 401);
+      const { data: isAdmin } = await userClient.rpc("has_role", { _user_id: user.id, _role: "admin" });
+      if (!isAdmin) return json({ error: "forbidden" }, 403);
+    }
+
     const dryRun = !!body?.dry_run;
     const retryFailed = !!body?.retry_failed;
+    const retryAllFailed = !!body?.retry_all_failed;
     const retryEmails: string[] = Array.isArray(body?.emails) ? body.emails.map((e: string) => String(e).toLowerCase()) : [];
     const discountText = (body?.discount_text as string) || "20% kedvezmény";
+
 
     // --- 1) Userek ---
     const users: { id: string; email: string; name: string }[] = [];
@@ -96,12 +109,23 @@ Deno.serve(async (req) => {
 
     // --- 3) Cél címzettek ---
     let targets: Recipient[];
-    if (retryFailed && retryEmails.length > 0) {
+    if (retryAllFailed) {
+      // Minden olyan email, ahol volt 'failed' és nincs 'sent' bejegyzés
+      const { data: failedRows } = await supa
+        .from("welcome20_send_log")
+        .select("email,status")
+        .eq("coupon_code", COUPON_CODE);
+      const sentSet = new Set((failedRows || []).filter((r: any) => r.status === "sent").map((r: any) => String(r.email).toLowerCase()));
+      const failedSet = new Set((failedRows || []).filter((r: any) => r.status === "failed" && !sentSet.has(String(r.email).toLowerCase())).map((r: any) => String(r.email).toLowerCase()));
+      targets = recipients.filter((r) => failedSet.has(r.email.toLowerCase()) && r.status === "eligible");
+    } else if (retryFailed && retryEmails.length > 0) {
       const set = new Set(retryEmails);
       targets = recipients.filter((r) => set.has(r.email.toLowerCase()) && !sentEmails.has(r.email.toLowerCase()) && r.status === "eligible");
     } else {
+      // Default (incl. cron): minden eligible, akinek még nem ment ki sikeresen
       targets = recipients.filter((r) => r.status === "eligible");
     }
+
 
     let sent = 0, failed = 0;
     const errors: any[] = [];
