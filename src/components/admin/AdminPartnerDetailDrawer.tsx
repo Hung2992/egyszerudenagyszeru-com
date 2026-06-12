@@ -198,6 +198,11 @@ const AdminPartnerDetailDrawer = ({ partnerId, onClose, onChanged }: Props) => {
                       <Ban className="w-3 h-3 mr-1" /> Visszavon
                     </Button>
                   )}
+                  {partner.status === "active" && partner.email && (
+                    <Button size="sm" variant="outline" className="rounded-none h-7 text-[10px] uppercase" disabled={activating} onClick={sendActivationEmail}>
+                      <Mail className="w-3 h-3 mr-1" /> {activating ? "Küldés…" : "Aktiváló email"}
+                    </Button>
+                  )}
                 </div>
               </div>
               {couponCode && (
