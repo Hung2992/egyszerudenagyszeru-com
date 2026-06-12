@@ -122,12 +122,49 @@ const AccountantPortal = () => {
     const a = document.createElement("a");
     a.href = url; a.download = `szamlak_${year}_${String(month+1).padStart(2,"0")}.csv`;
     a.click(); URL.revokeObjectURL(url);
-    void supabase.from("accountant_access_log").insert({ user_id: null, action: "export_csv", resource: rangeLabel, metadata: { count: invoices.length } } as any);
+    void supabase.from("accountant_access_log").insert({ user_id: null, action: "export_csv", resource: rangeLabel, user_agent: navigator.userAgent, metadata: { count: invoices.length } } as any);
     toast({ title: "Export kész", description: `${invoices.length} számla letöltve` });
+  };
+
+  const exportXlsx = () => {
+    const wb = XLSX.utils.book_new();
+    const invSheet = XLSX.utils.json_to_sheet(invoices.map(i => ({
+      Számlaszám: i.invoice_number ?? "", Dátum: (i.paid_at ?? i.created_at)?.slice(0,10),
+      Vevő: i.customer_name ?? "", "Vevő adószám": i.customer_tax_number ?? "", Cím: i.customer_address ?? "",
+      Nettó: Number(i.subtotal ?? 0), "ÁFA kulcs (%)": Number(i.tax_rate ?? 27),
+      ÁFA: Number(i.tax_amount ?? 0), Bruttó: Number(i.total_amount ?? 0),
+      Pénznem: i.currency ?? "HUF", Állapot: i.status ?? "",
+    })));
+    XLSX.utils.book_append_sheet(wb, invSheet, "Számlák");
+    const byRate: Record<string, { net: number; vat: number; gross: number; count: number }> = {};
+    invoices.forEach(i => {
+      const r = String(i.tax_rate ?? 27);
+      byRate[r] = byRate[r] ?? { net: 0, vat: 0, gross: 0, count: 0 };
+      byRate[r].net += Number(i.subtotal ?? 0); byRate[r].vat += Number(i.tax_amount ?? 0);
+      byRate[r].gross += Number(i.total_amount ?? 0); byRate[r].count += 1;
+    });
+    const vatSheet = XLSX.utils.json_to_sheet(Object.entries(byRate).map(([rate, v]) => ({
+      "ÁFA kulcs (%)": rate, "Adóalap (nettó)": v.net, "Felszámított ÁFA": v.vat, Bruttó: v.gross, Tételszám: v.count,
+    })));
+    XLSX.utils.book_append_sheet(wb, vatSheet, "ÁFA-összesítő");
+    const refSheet = XLSX.utils.json_to_sheet(refunds.map(r => ({
+      Dátum: r.created_at?.slice(0,10), Tranzakció: r.transaction_id ?? "", Állapot: r.new_status ?? "", Összeg: Number(r.amount ?? 0),
+    })));
+    XLSX.utils.book_append_sheet(wb, refSheet, "Visszatérítések");
+    const procSheet = XLSX.utils.json_to_sheet(procurement.map(p => ({
+      Dátum: p.created_at?.slice(0,10), Termék: p.product_name, Beszállító: p.supplier_name ?? "",
+      Mennyiség: p.quantity, "Egységár": Number(p.unit_cost), Összesen: Number(p.total_cost ?? p.unit_cost * p.quantity),
+      Pénznem: p.currency ?? "HUF", Állapot: p.order_status ?? "",
+    })));
+    XLSX.utils.book_append_sheet(wb, procSheet, "Költségek");
+    XLSX.writeFile(wb, `nav_export_${year}_${String(month+1).padStart(2,"0")}.xlsx`);
+    void supabase.from("accountant_access_log").insert({ user_id: null, action: "export_xlsx", resource: rangeLabel, user_agent: navigator.userAgent, metadata: { count: invoices.length } } as any);
+    toast({ title: "XLSX letöltve", description: `${invoices.length} számla + ÁFA + költségek` });
   };
 
   if (authLoading) return <FullPageLoader />;
   if (!allowed) return null;
+  if (!totpPassed) return <AccountantTotpGate onPass={() => setTotpPassed(true)} />;
 
   const isMissingLegal = !legal.ownerName || !legal.taxId;
 
