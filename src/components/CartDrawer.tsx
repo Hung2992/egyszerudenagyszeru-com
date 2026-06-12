@@ -5,6 +5,7 @@ import { Minus, Plus, Trash2, ShoppingBag, Flame, Truck, Clock, Eye, Sparkles } 
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { Progress } from "@/components/ui/progress";
+import Welcome20StatusBanner from "@/components/Welcome20StatusBanner";
 
 const LAUNCH_DATE = new Date("2026-06-05T10:00:00+02:00").getTime();
 const FREE_SHIPPING_THRESHOLD = 15000;
