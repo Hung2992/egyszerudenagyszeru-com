@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { Calculator, Mail, Trash2, Loader2, Copy, ExternalLink } from "lucide-react";
+import AdminAuditExportCard from "./AdminAuditExportCard";
 
 interface AccountantUser { user_id: string; email: string; granted_at: string; }
 interface PendingInvite { id: string; email: string; invited_at: string; accepted_at: string | null; }
