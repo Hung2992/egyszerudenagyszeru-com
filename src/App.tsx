@@ -58,6 +58,7 @@ const Garancia = lazy(() => import("./pages/legal/Garancia.tsx"));
 const Impresszum = lazy(() => import("./pages/legal/Impresszum.tsx"));
 const JogiNyilatkozat = lazy(() => import("./pages/legal/JogiNyilatkozat.tsx"));
 const PartnerSzabalyzat = lazy(() => import("./pages/legal/PartnerSzabalyzat.tsx"));
+const KycAdatkezeles = lazy(() => import("./pages/legal/KycAdatkezeles.tsx"));
 
 const queryClient = new QueryClient();
 
