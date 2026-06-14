@@ -78,7 +78,8 @@ const AdminKycTab = () => {
       status, admin_note: note || null, reviewed_at: new Date().toISOString(), reviewed_by: session?.user.id,
     }).eq("id", selected.id);
     if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
-    toast({ title: status === "approved" ? "Jóváhagyva" : "Elutasítva" });
+    await supabase.rpc("log_kyc_access", { _submission_id: selected.id, _event_type: status === "approved" ? "approved" : "rejected", _field: null, _details: { note } });
+    toast({ title: status === "approved" ? "Jóváhagyva" : "Elutasítva (60 nap múlva auto-törlés)" });
     setSelected(null);
     fetchRows();
   };
