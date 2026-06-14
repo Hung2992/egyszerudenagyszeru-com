@@ -196,8 +196,19 @@ const PartnerOnboarding = () => {
           <FileField label="Selfie igazolvánnyal *" file={files.selfie} onChange={f => setFiles({...files, selfie: f})} disabled={readonly} done={!!existing?.selfie_url} />
         </Section>
 
+        {!readonly && !existing && (
+          <div className="border p-4 bg-accent/5 space-y-3">
+            <div className="flex items-start gap-3">
+              <Checkbox id="kyc-consent" checked={consent} onCheckedChange={v => setConsent(v === true)} className="mt-0.5" />
+              <label htmlFor="kyc-consent" className="text-xs leading-relaxed cursor-pointer">
+                Elolvastam és kifejezetten elfogadom a <Link to="/legal/kyc-adatkezeles" target="_blank" className="underline font-medium text-foreground inline-flex items-center gap-1">KYC adatkezelési tájékoztatót <ExternalLink className="w-3 h-3" /></Link>. Tudomásul veszem, hogy személyazonosító okmányadataimat és arcképemet az Üzemeltető a Pmt. 2017/LIII. törvény és a GDPR alapján a szerződés teljesítéséhez kezeli, elutasítás esetén 60 nap, megszűnt szerződés esetén 8 év után törlésre kerülnek.
+              </label>
+            </div>
+          </div>
+        )}
+
         {!readonly && (
-          <Button className="w-full" size="lg" onClick={submit} disabled={saving}>
+          <Button className="w-full" size="lg" onClick={submit} disabled={saving || (!existing && !consent)}>
             {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Beadás...</> : existing?.status === "pending" ? "Adatok frissítése" : "KYC beadása"}
           </Button>
         )}
