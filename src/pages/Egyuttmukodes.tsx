@@ -26,11 +26,11 @@ const Egyuttmukodes = () => {
             kész, működő boltot saját domainen; én adom a technológiát és a karbantartást.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button size="lg" onClick={() => navigate("/contact")}>
-              <Mail className="h-4 w-4 mr-2" /> Érdekel — vegyük fel a kapcsolatot
+            <Button size="lg" onClick={() => navigate("/auth?mode=signup&redirect=/egyuttmukodes")}>
+              <UserPlus className="h-4 w-4 mr-2" /> Regisztráció
             </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate("/about")}>
-              Tudj meg többet rólam
+            <Button size="lg" variant="outline" onClick={() => navigate("/auth?mode=signin&redirect=/egyuttmukodes")}>
+              <LogIn className="h-4 w-4 mr-2" /> Belépés
             </Button>
           </div>
         </div>
