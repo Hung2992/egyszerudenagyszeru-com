@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
-import { ChevronLeft, FileText, Shield, Cookie, Undo2, Truck, ShieldCheck, Building2, Scale } from "lucide-react";
+import { ChevronLeft, FileText, Shield, Cookie, Undo2, Truck, ShieldCheck, Building2, Scale, Handshake } from "lucide-react";
 
 export const LEGAL_DOCS = [
   { slug: "aszf", title: "ÁSZF", short: "Általános Szerződési Feltételek", Icon: FileText, path: "/legal/aszf" },
@@ -12,6 +12,7 @@ export const LEGAL_DOCS = [
   { slug: "garancia", title: "Garancia", short: "Szavatosság, jótállás, panaszkezelés", Icon: ShieldCheck, path: "/legal/garancia" },
   { slug: "impresszum", title: "Impresszum", short: "Szolgáltató adatai", Icon: Building2, path: "/legal/impresszum" },
   { slug: "jogi-nyilatkozat", title: "Jogi nyilatkozat", short: "Felelősségkorlátozás, szellemi tulajdon", Icon: Scale, path: "/legal/jogi-nyilatkozat" },
+  { slug: "partner-szabalyzat", title: "Partner szabályzat", short: "Bérleti / forgalmi részesedéses együttműködés", Icon: Handshake, path: "/legal/partner-szabalyzat" },
 ] as const;
 
 interface Props {
