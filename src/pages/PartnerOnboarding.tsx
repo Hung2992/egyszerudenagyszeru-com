@@ -98,6 +98,9 @@ const PartnerOnboarding = () => {
     if (!existing && (!files.id_front || !files.id_back || !files.address_card || !files.selfie)) {
       toast({ title: "Hiányzó dokumentum", description: "Minden 4 fotót fel kell tölteni.", variant: "destructive" }); return;
     }
+    if (!existing && !consent) {
+      toast({ title: "Hozzájárulás szükséges", description: "El kell fogadnod a KYC adatkezelési tájékoztatót.", variant: "destructive" }); return;
+    }
     setSaving(true);
     const urls: any = {};
     if (files.id_front) urls.id_card_front_url = await uploadFile("id-front", files.id_front);
