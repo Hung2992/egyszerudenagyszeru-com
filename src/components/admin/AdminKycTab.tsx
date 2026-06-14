@@ -59,10 +59,13 @@ const AdminKycTab = () => {
   const openDetail = async (row: KycRow) => {
     setSelected(row);
     setNote(row.admin_note || "");
+    // Audit log: viewed
+    await supabase.rpc("log_kyc_access", { _submission_id: row.id, _event_type: "viewed", _field: null, _details: {} });
     const paths = [row.id_card_front_url, row.id_card_back_url, row.address_card_url, row.selfie_url].filter(Boolean) as string[];
     const urls: Record<string, string> = {};
     for (const p of paths) {
-      const { data } = await supabase.storage.from("tenant-kyc").createSignedUrl(p, 600);
+      // 5-minute signed URL only
+      const { data } = await supabase.storage.from("tenant-kyc").createSignedUrl(p, 300);
       if (data?.signedUrl) urls[p] = data.signedUrl;
     }
     setSignedUrls(urls);
