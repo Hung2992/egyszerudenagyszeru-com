@@ -59,10 +59,13 @@ const AdminKycTab = () => {
   const openDetail = async (row: KycRow) => {
     setSelected(row);
     setNote(row.admin_note || "");
+    // Audit log: viewed
+    await supabase.rpc("log_kyc_access", { _submission_id: row.id, _event_type: "viewed", _field: null, _details: {} });
     const paths = [row.id_card_front_url, row.id_card_back_url, row.address_card_url, row.selfie_url].filter(Boolean) as string[];
     const urls: Record<string, string> = {};
     for (const p of paths) {
-      const { data } = await supabase.storage.from("tenant-kyc").createSignedUrl(p, 600);
+      // 5-minute signed URL only
+      const { data } = await supabase.storage.from("tenant-kyc").createSignedUrl(p, 300);
       if (data?.signedUrl) urls[p] = data.signedUrl;
     }
     setSignedUrls(urls);
@@ -75,7 +78,8 @@ const AdminKycTab = () => {
       status, admin_note: note || null, reviewed_at: new Date().toISOString(), reviewed_by: session?.user.id,
     }).eq("id", selected.id);
     if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
-    toast({ title: status === "approved" ? "Jóváhagyva" : "Elutasítva" });
+    await supabase.rpc("log_kyc_access", { _submission_id: selected.id, _event_type: status === "approved" ? "approved" : "rejected", _field: null, _details: { note } });
+    toast({ title: status === "approved" ? "Jóváhagyva" : "Elutasítva (60 nap múlva auto-törlés)" });
     setSelected(null);
     fetchRows();
   };

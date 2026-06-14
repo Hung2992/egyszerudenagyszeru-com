@@ -7,7 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ShieldCheck, Upload, Loader2, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Link } from "react-router-dom";
+import { ShieldCheck, Upload, Loader2, CheckCircle2, XCircle, Clock, ExternalLink } from "lucide-react";
 
 interface Form {
   full_name: string;
@@ -49,6 +51,7 @@ const PartnerOnboarding = () => {
   const [form, setForm] = useState<Form>(EMPTY);
   const [existing, setExisting] = useState<any>(null);
   const [files, setFiles] = useState<{ id_front?: File; id_back?: File; address_card?: File; selfie?: File }>({});
+  const [consent, setConsent] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -95,6 +98,9 @@ const PartnerOnboarding = () => {
     if (!existing && (!files.id_front || !files.id_back || !files.address_card || !files.selfie)) {
       toast({ title: "Hiányzó dokumentum", description: "Minden 4 fotót fel kell tölteni.", variant: "destructive" }); return;
     }
+    if (!existing && !consent) {
+      toast({ title: "Hozzájárulás szükséges", description: "El kell fogadnod a KYC adatkezelési tájékoztatót.", variant: "destructive" }); return;
+    }
     setSaving(true);
     const urls: any = {};
     if (files.id_front) urls.id_card_front_url = await uploadFile("id-front", files.id_front);
@@ -102,7 +108,12 @@ const PartnerOnboarding = () => {
     if (files.address_card) urls.address_card_url = await uploadFile("address-card", files.address_card);
     if (files.selfie) urls.selfie_url = await uploadFile("selfie", files.selfie);
 
-    const payload = { ...form, ...urls, user_id: userId, status: "pending" as const };
+    const payload: any = { ...form, ...urls, user_id: userId, status: "pending" as const };
+    if (!existing) {
+      payload.consent_accepted = true;
+      payload.consent_accepted_at = new Date().toISOString();
+      payload.consent_version = "v1-2026-06";
+    }
     let res;
     if (existing && existing.status === "pending") {
       res = await supabase.from("tenant_kyc_submissions").update(payload).eq("id", existing.id);
@@ -185,8 +196,19 @@ const PartnerOnboarding = () => {
           <FileField label="Selfie igazolvánnyal *" file={files.selfie} onChange={f => setFiles({...files, selfie: f})} disabled={readonly} done={!!existing?.selfie_url} />
         </Section>
 
+        {!readonly && !existing && (
+          <div className="border p-4 bg-accent/5 space-y-3">
+            <div className="flex items-start gap-3">
+              <Checkbox id="kyc-consent" checked={consent} onCheckedChange={v => setConsent(v === true)} className="mt-0.5" />
+              <label htmlFor="kyc-consent" className="text-xs leading-relaxed cursor-pointer">
+                Elolvastam és kifejezetten elfogadom a <Link to="/legal/kyc-adatkezeles" target="_blank" className="underline font-medium text-foreground inline-flex items-center gap-1">KYC adatkezelési tájékoztatót <ExternalLink className="w-3 h-3" /></Link>. Tudomásul veszem, hogy személyazonosító okmányadataimat és arcképemet az Üzemeltető a Pmt. 2017/LIII. törvény és a GDPR alapján a szerződés teljesítéséhez kezeli, elutasítás esetén 60 nap, megszűnt szerződés esetén 8 év után törlésre kerülnek.
+              </label>
+            </div>
+          </div>
+        )}
+
         {!readonly && (
-          <Button className="w-full" size="lg" onClick={submit} disabled={saving}>
+          <Button className="w-full" size="lg" onClick={submit} disabled={saving || (!existing && !consent)}>
             {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Beadás...</> : existing?.status === "pending" ? "Adatok frissítése" : "KYC beadása"}
           </Button>
         )}
