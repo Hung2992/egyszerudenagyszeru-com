@@ -7,7 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ShieldCheck, Upload, Loader2, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Link } from "react-router-dom";
+import { ShieldCheck, Upload, Loader2, CheckCircle2, XCircle, Clock, ExternalLink } from "lucide-react";
 
 interface Form {
   full_name: string;
