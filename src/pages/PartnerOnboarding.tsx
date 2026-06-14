@@ -51,6 +51,7 @@ const PartnerOnboarding = () => {
   const [form, setForm] = useState<Form>(EMPTY);
   const [existing, setExisting] = useState<any>(null);
   const [files, setFiles] = useState<{ id_front?: File; id_back?: File; address_card?: File; selfie?: File }>({});
+  const [consent, setConsent] = useState(false);
 
   useEffect(() => {
     (async () => {
