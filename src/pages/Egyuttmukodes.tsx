@@ -365,4 +365,13 @@ const LegalCard = ({ icon: Icon, title, children }: { icon: typeof FileText; tit
   </div>
 );
 
+const Clause = ({ num, title, children }: { num: string; title: string; children: React.ReactNode }) => (
+  <div className="space-y-2">
+    <h3 className="font-bold uppercase tracking-tight text-foreground text-sm">
+      <span className="text-accent mr-2">{num}</span>{title}
+    </h3>
+    <div className="space-y-2 text-muted-foreground pl-6 border-l-2 border-accent/20">{children}</div>
+  </div>
+);
+
 export default Egyuttmukodes;
