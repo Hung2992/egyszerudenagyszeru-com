@@ -60,6 +60,7 @@ const Footer = () => {
               <button onClick={() => navigate("/shop")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">Kollekció</button>
               <button onClick={() => navigate("/contact")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">Kapcsolat</button>
               <button onClick={() => navigate("/help")} className="text-xs text-muted-foreground hover:text-foreground text-left transition-colors">Segítség</button>
+              <button onClick={() => navigate("/egyuttmukodes")} className="text-xs text-accent hover:text-foreground text-left transition-colors font-bold">Együttműködés</button>
             </nav>
           </div>
           <div>
