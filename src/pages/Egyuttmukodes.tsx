@@ -1,7 +1,7 @@
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Handshake, FileText, User, Mail, ShieldCheck, Percent, Scale, CheckCircle2, Gavel, Lock, AlertTriangle, Download } from "lucide-react";
+import { Handshake, FileText, User, Mail, ShieldCheck, Percent, Scale, CheckCircle2, Gavel, Lock, AlertTriangle, Download, UserPlus, LogIn } from "lucide-react";
 
 const Egyuttmukodes = () => {
   const navigate = useNavigate();
@@ -26,11 +26,11 @@ const Egyuttmukodes = () => {
             kész, működő boltot saját domainen; én adom a technológiát és a karbantartást.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button size="lg" onClick={() => navigate("/contact")}>
-              <Mail className="h-4 w-4 mr-2" /> Érdekel — vegyük fel a kapcsolatot
+            <Button size="lg" onClick={() => navigate("/auth?mode=signup&redirect=/egyuttmukodes")}>
+              <UserPlus className="h-4 w-4 mr-2" /> Regisztráció
             </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate("/about")}>
-              Tudj meg többet rólam
+            <Button size="lg" variant="outline" onClick={() => navigate("/auth?mode=signin&redirect=/egyuttmukodes")}>
+              <LogIn className="h-4 w-4 mr-2" /> Belépés
             </Button>
           </div>
         </div>
@@ -326,14 +326,19 @@ const Egyuttmukodes = () => {
       <section className="bg-accent/5">
         <div className="mx-auto max-w-5xl px-5 py-16 text-center">
           <h2 className="text-2xl md:text-4xl font-bold uppercase tracking-tight">
-            Beszélgessünk az együttműködésről
+            Indítsd el saját webshopodat
           </h2>
           <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-            Írj egy üzenetet, és 48 órán belül visszajelzek a részletekkel.
+            Regisztrálj vagy lépj be — utána egyeztetjük a szerződés részleteit és élesítjük a saját Példányodat.
           </p>
-          <Button size="lg" className="mt-6" onClick={() => navigate("/contact")}>
-            <Mail className="h-4 w-4 mr-2" /> Kapcsolatfelvétel
-          </Button>
+          <div className="mt-6 flex flex-wrap gap-3 justify-center">
+            <Button size="lg" onClick={() => navigate("/auth?mode=signup&redirect=/egyuttmukodes")}>
+              <UserPlus className="h-4 w-4 mr-2" /> Regisztráció
+            </Button>
+            <Button size="lg" variant="outline" onClick={() => navigate("/auth?mode=signin&redirect=/egyuttmukodes")}>
+              <LogIn className="h-4 w-4 mr-2" /> Belépés
+            </Button>
+          </div>
         </div>
       </section>
     </Layout>
