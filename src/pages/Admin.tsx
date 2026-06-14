@@ -123,6 +123,7 @@ import AdminCouponRulesTab from "@/components/admin/AdminCouponRulesTab";
 import AdminCouponsManagerTab from "@/components/admin/AdminCouponsManagerTab";
 import AdminPartnersTab from "@/components/admin/AdminPartnersTab";
 import AdminTenantsTab from "@/components/admin/AdminTenantsTab";
+import AdminKycTab from "@/components/admin/AdminKycTab";
 import AdminStockAlertAutoTab from "@/components/admin/AdminStockAlertAutoTab";
 import AdminCrosssellUpsellTab from "@/components/admin/AdminCrosssellUpsellTab";
 import AdminCustomerSurveysTab from "@/components/admin/AdminCustomerSurveysTab";
