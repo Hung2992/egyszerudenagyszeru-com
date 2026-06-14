@@ -26,10 +26,10 @@ const Egyuttmukodes = () => {
             kész, működő boltot saját domainen; én adom a technológiát és a karbantartást.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button size="lg" onClick={() => navigate("/auth?mode=signup&redirect=/egyuttmukodes")}>
+            <Button size="lg" onClick={() => navigate("/auth?mode=signup&redirect=/partner-onboarding")}>
               <UserPlus className="h-4 w-4 mr-2" /> Regisztráció
             </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate("/auth?mode=signin&redirect=/egyuttmukodes")}>
+            <Button size="lg" variant="outline" onClick={() => navigate("/auth?mode=signin&redirect=/partner-onboarding")}>
               <LogIn className="h-4 w-4 mr-2" /> Belépés
             </Button>
           </div>
@@ -332,10 +332,10 @@ const Egyuttmukodes = () => {
             Regisztrálj vagy lépj be — utána egyeztetjük a szerződés részleteit és élesítjük a saját Példányodat.
           </p>
           <div className="mt-6 flex flex-wrap gap-3 justify-center">
-            <Button size="lg" onClick={() => navigate("/auth?mode=signup&redirect=/egyuttmukodes")}>
+            <Button size="lg" onClick={() => navigate("/auth?mode=signup&redirect=/partner-onboarding")}>
               <UserPlus className="h-4 w-4 mr-2" /> Regisztráció
             </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate("/auth?mode=signin&redirect=/egyuttmukodes")}>
+            <Button size="lg" variant="outline" onClick={() => navigate("/auth?mode=signin&redirect=/partner-onboarding")}>
               <LogIn className="h-4 w-4 mr-2" /> Belépés
             </Button>
           </div>
