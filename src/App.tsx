@@ -46,6 +46,7 @@ const Launch = lazy(() => import("./pages/Launch.tsx"));
 const LaunchProductDetail = lazy(() => import("./pages/LaunchProductDetail.tsx"));
 const Help = lazy(() => import("./pages/Help.tsx"));
 const About = lazy(() => import("./pages/About.tsx"));
+const Egyuttmukodes = lazy(() => import("./pages/Egyuttmukodes.tsx"));
 const LegalHub = lazy(() => import("./pages/legal/LegalHub.tsx"));
 const Aszf = lazy(() => import("./pages/legal/Aszf.tsx"));
 const Adatvedelem = lazy(() => import("./pages/legal/Adatvedelem.tsx"));
@@ -104,6 +105,7 @@ const App = () => (
             <Route path="/launch/:id" element={<LaunchProductDetail />} />
             <Route path="/help" element={<Help />} />
             <Route path="/about" element={<About />} />
+            <Route path="/egyuttmukodes" element={<Egyuttmukodes />} />
             <Route path="/legal" element={<LegalHub />} />
             <Route path="/legal/aszf" element={<Aszf />} />
             <Route path="/legal/adatvedelem" element={<Adatvedelem />} />
