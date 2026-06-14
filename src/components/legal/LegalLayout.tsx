@@ -13,6 +13,7 @@ export const LEGAL_DOCS = [
   { slug: "impresszum", title: "Impresszum", short: "Szolgáltató adatai", Icon: Building2, path: "/legal/impresszum" },
   { slug: "jogi-nyilatkozat", title: "Jogi nyilatkozat", short: "Felelősségkorlátozás, szellemi tulajdon", Icon: Scale, path: "/legal/jogi-nyilatkozat" },
   { slug: "partner-szabalyzat", title: "Partner szabályzat", short: "Bérleti / forgalmi részesedéses együttműködés", Icon: Handshake, path: "/legal/partner-szabalyzat" },
+  { slug: "kyc-adatkezeles", title: "KYC adatkezelés", short: "Bérlői azonosítás (Pmt. + GDPR)", Icon: ShieldCheck, path: "/legal/kyc-adatkezeles" },
 ] as const;
 
 interface Props {
