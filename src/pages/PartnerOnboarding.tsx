@@ -108,7 +108,12 @@ const PartnerOnboarding = () => {
     if (files.address_card) urls.address_card_url = await uploadFile("address-card", files.address_card);
     if (files.selfie) urls.selfie_url = await uploadFile("selfie", files.selfie);
 
-    const payload = { ...form, ...urls, user_id: userId, status: "pending" as const };
+    const payload: any = { ...form, ...urls, user_id: userId, status: "pending" as const };
+    if (!existing) {
+      payload.consent_accepted = true;
+      payload.consent_accepted_at = new Date().toISOString();
+      payload.consent_version = "v1-2026-06";
+    }
     let res;
     if (existing && existing.status === "pending") {
       res = await supabase.from("tenant_kyc_submissions").update(payload).eq("id", existing.id);
