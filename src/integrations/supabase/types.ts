@@ -5007,6 +5007,125 @@ export type Database = {
         }
         Relationships: []
       }
+      tenant_revenue_reports: {
+        Row: {
+          commission_amount: number
+          commission_percent_snapshot: number
+          created_at: string
+          gross_revenue: number
+          id: string
+          invoice_number: string | null
+          notes: string | null
+          paid: boolean
+          paid_at: string | null
+          period_month: number
+          period_year: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          commission_amount?: number
+          commission_percent_snapshot: number
+          created_at?: string
+          gross_revenue?: number
+          id?: string
+          invoice_number?: string | null
+          notes?: string | null
+          paid?: boolean
+          paid_at?: string | null
+          period_month: number
+          period_year: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          commission_amount?: number
+          commission_percent_snapshot?: number
+          created_at?: string
+          gross_revenue?: number
+          id?: string
+          invoice_number?: string | null
+          notes?: string | null
+          paid?: boolean
+          paid_at?: string | null
+          period_month?: number
+          period_year?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_revenue_reports_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          commission_percent: number
+          company_name: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          contract_expires_at: string | null
+          contract_reference: string | null
+          contract_signed_at: string | null
+          created_at: string
+          display_name: string
+          domain: string | null
+          fork_project_url: string | null
+          iban: string | null
+          id: string
+          notes: string | null
+          status: Database["public"]["Enums"]["tenant_status"]
+          tax_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          commission_percent?: number
+          company_name?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          contract_expires_at?: string | null
+          contract_reference?: string | null
+          contract_signed_at?: string | null
+          created_at?: string
+          display_name: string
+          domain?: string | null
+          fork_project_url?: string | null
+          iban?: string | null
+          id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["tenant_status"]
+          tax_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          commission_percent?: number
+          company_name?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          contract_expires_at?: string | null
+          contract_reference?: string | null
+          contract_signed_at?: string | null
+          created_at?: string
+          display_name?: string
+          domain?: string | null
+          fork_project_url?: string | null
+          iban?: string | null
+          id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["tenant_status"]
+          tax_number?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tts_generations_v2: {
         Row: {
           audio_storage_path: string | null
@@ -6201,6 +6320,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "accountant" | "partner"
+      tenant_status: "draft" | "active" | "suspended" | "terminated"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -6329,6 +6449,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user", "accountant", "partner"],
+      tenant_status: ["draft", "active", "suspended", "terminated"],
     },
   },
 } as const
