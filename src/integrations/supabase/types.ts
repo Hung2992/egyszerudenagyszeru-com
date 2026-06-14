@@ -5007,6 +5007,114 @@ export type Database = {
         }
         Relationships: []
       }
+      tenant_kyc_submissions: {
+        Row: {
+          address_card_number: string
+          address_card_url: string | null
+          address_city: string
+          address_country: string
+          address_street: string
+          address_zip: string
+          admin_note: string | null
+          bank_account_holder: string
+          bank_account_number: string
+          bank_name: string
+          birth_date: string
+          birth_name: string | null
+          birth_place: string
+          company_name: string | null
+          company_reg_number: string | null
+          company_tax_number: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          id_card_back_url: string | null
+          id_card_front_url: string | null
+          id_card_number: string
+          mother_name: string
+          nationality: string
+          phone: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          selfie_url: string | null
+          status: string
+          tax_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address_card_number: string
+          address_card_url?: string | null
+          address_city: string
+          address_country?: string
+          address_street: string
+          address_zip: string
+          admin_note?: string | null
+          bank_account_holder: string
+          bank_account_number: string
+          bank_name: string
+          birth_date: string
+          birth_name?: string | null
+          birth_place: string
+          company_name?: string | null
+          company_reg_number?: string | null
+          company_tax_number?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          id_card_back_url?: string | null
+          id_card_front_url?: string | null
+          id_card_number: string
+          mother_name: string
+          nationality?: string
+          phone: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          selfie_url?: string | null
+          status?: string
+          tax_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address_card_number?: string
+          address_card_url?: string | null
+          address_city?: string
+          address_country?: string
+          address_street?: string
+          address_zip?: string
+          admin_note?: string | null
+          bank_account_holder?: string
+          bank_account_number?: string
+          bank_name?: string
+          birth_date?: string
+          birth_name?: string | null
+          birth_place?: string
+          company_name?: string | null
+          company_reg_number?: string | null
+          company_tax_number?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          id_card_back_url?: string | null
+          id_card_front_url?: string | null
+          id_card_number?: string
+          mother_name?: string
+          nationality?: string
+          phone?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          selfie_url?: string | null
+          status?: string
+          tax_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tenant_revenue_reports: {
         Row: {
           commission_amount: number
