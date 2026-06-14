@@ -5007,6 +5007,53 @@ export type Database = {
         }
         Relationships: []
       }
+      tenant_kyc_audit_log: {
+        Row: {
+          actor_id: string | null
+          actor_role: string
+          created_at: string
+          details: Json | null
+          event_type: string
+          field_accessed: string | null
+          id: string
+          ip_address: string | null
+          submission_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_role?: string
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          field_accessed?: string | null
+          id?: string
+          ip_address?: string | null
+          submission_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_role?: string
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          field_accessed?: string | null
+          id?: string
+          ip_address?: string | null
+          submission_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_kyc_audit_log_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_kyc_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_kyc_submissions: {
         Row: {
           address_card_number: string
@@ -5025,7 +5072,12 @@ export type Database = {
           company_name: string | null
           company_reg_number: string | null
           company_tax_number: string | null
+          consent_accepted: boolean
+          consent_accepted_at: string | null
+          consent_ip: string | null
+          consent_version: string | null
           created_at: string
+          data_retention_until: string | null
           email: string
           full_name: string
           id: string
@@ -5060,7 +5112,12 @@ export type Database = {
           company_name?: string | null
           company_reg_number?: string | null
           company_tax_number?: string | null
+          consent_accepted?: boolean
+          consent_accepted_at?: string | null
+          consent_ip?: string | null
+          consent_version?: string | null
           created_at?: string
+          data_retention_until?: string | null
           email: string
           full_name: string
           id?: string
@@ -5095,7 +5152,12 @@ export type Database = {
           company_name?: string | null
           company_reg_number?: string | null
           company_tax_number?: string | null
+          consent_accepted?: boolean
+          consent_accepted_at?: string | null
+          consent_ip?: string | null
+          consent_version?: string | null
           created_at?: string
+          data_retention_until?: string | null
           email?: string
           full_name?: string
           id?: string
@@ -6305,6 +6367,15 @@ export type Database = {
           user_id: string
         }[]
       }
+      log_kyc_access: {
+        Args: {
+          _details?: Json
+          _event_type: string
+          _field?: string
+          _submission_id: string
+        }
+        Returns: undefined
+      }
       log_meta_run_audit: {
         Args: {
           _event_type: string
@@ -6355,6 +6426,7 @@ export type Database = {
           strategy_name: string
         }[]
       }
+      purge_expired_kyc: { Args: never; Returns: number }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
