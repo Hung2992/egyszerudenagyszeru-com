@@ -143,7 +143,186 @@ const Egyuttmukodes = () => {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* SZERZŐDÉS — JOGILAG LEGERŐSEBB MINTA */}
+      <section id="szerzodes" className="border-b border-border bg-muted/10">
+        <div className="mx-auto max-w-5xl px-5 py-16">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="h-10 w-10 border border-accent/40 bg-accent/10 flex items-center justify-center">
+              <Gavel className="h-5 w-5 text-accent" />
+            </div>
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold uppercase tracking-tight">
+                Szerződéses keret — mintaszerződés
+              </h2>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground mt-1">
+                Magyar jog · Ptk. 6:272–6:280 § (megbízási / vállalkozási vegyes) · ÁSZF-kiegészítés
+              </p>
+            </div>
+          </div>
+
+          <div className="border-2 border-accent/40 bg-card p-6 md:p-8 space-y-6 text-sm leading-relaxed">
+
+            <Clause num="1." title="Szerződő felek">
+              <p><strong>Üzemeltető (Licencadó):</strong> az „Egyszerű de Nagyszerű" platform tulajdonosa,
+              mint a teljes szoftverforráskód, adatbázis-architektúra és szellemi alkotás kizárólagos jogosultja.</p>
+              <p><strong>Bérlő (Licencvevő):</strong> a webshop-példányt saját domainen, saját brand alatt
+              üzemeltető magánszemély vagy gazdálkodó szervezet, aki/amely a jelen szerződést aláírja.</p>
+            </Clause>
+
+            <Clause num="2." title="A szerződés tárgya">
+              <p>Az Üzemeltető biztosítja a Bérlő részére az „Egyszerű de Nagyszerű" webshop-platform
+              egy elkülönített, branding-szinten testreszabott példányát (a továbbiakban: <em>Példány</em>),
+              annak technológiai üzemeltetését, frissítését, biztonsági karbantartását és support-szolgáltatását.</p>
+              <p>A Bérlő ezért a saját nevében, saját kockázatára, saját termékkínálattal kereskedik a Példányon
+              keresztül, és az ebből származó <strong>bruttó forgalom után jutalékot</strong> fizet
+              az Üzemeltetőnek.</p>
+            </Clause>
+
+            <Clause num="3." title="Jutalék — kötelező minimum 5%">
+              <p>A jutalék mértéke a <strong>tényleges befolyt bruttó forgalom (áfa nélküli nettó értéke
+              + áfa) minimum 5,00%-a</strong>. A felek ennél magasabb mértékben szabadon megállapodhatnak,
+              de <strong>5% alá semmilyen körülmény között nem mehetnek</strong> — az ezt sértő bármely
+              megállapodás semmis (Ptk. 6:95. §).</p>
+              <p>Elszámolási időszak: naptári hónap. Az Üzemeltető minden hónap 5. napjáig kiállítja
+              a jutalék-számlát, amelyet a Bérlő <strong>8 naptári napon belül</strong> banki átutalással teljesít.</p>
+              <p><strong>Késedelmi kamat:</strong> a mindenkori jegybanki alapkamat + 8 százalékpont
+              (Ptk. 6:155. §). <strong>Behajtási költségátalány:</strong> 40 EUR / lejárt számla
+              (2016. évi IX. tv.).</p>
+            </Clause>
+
+            <Clause num="4." title="Forgalmi adatok ellenőrzése · audit jog">
+              <p>Az Üzemeltető a Példányba beépített, manipulálhatatlan analitikai modul (event-log,
+              order-ledger, append-only revenue_ledger tábla) alapján rögzíti a forgalmat.
+              A Bérlő ezt a mérést <strong>elfogadja mint elsődleges bizonyítékot</strong>.</p>
+              <p>Az Üzemeltető évente <strong>kétszer, saját költségén, előzetes 15 napos értesítéssel</strong>
+              jogosult a Bérlő könyvelésébe a vonatkozó tételek erejéig betekinteni vagy független
+              könyvvizsgálót megbízni. Ha az audit ≥ 3% eltérést tár fel a Bérlő terhére,
+              az audit teljes költségét a Bérlő viseli.</p>
+            </Clause>
+
+            <Clause num="5." title="Szellemi tulajdon · forráskód">
+              <p>A Példány teljes forráskódja, adatbázis-sémája, design-rendszere és minden szellemi alkotása
+              <strong> az Üzemeltető kizárólagos tulajdona marad</strong> (Szjt. 1999. évi LXXVI. tv.).
+              A Bérlő <strong>nem szerez tulajdonjogot</strong>, kizárólag <em>nem kizárólagos, át nem ruházható,
+              al-licenc adásra nem jogosító használati jogot</em> kap a szerződés időtartamára.</p>
+              <p>Tilos: forráskód-kivonás, dekompilálás, reverse engineering, klónozás, harmadik félnek
+              továbbadás, AI-tréningadatként felhasználás. Bármely megsértése esetén
+              <strong> 10 000 000 Ft (tízmillió forint) kötbér</strong> jár esetenként, a tényleges kár
+              érvényesítésén felül (Ptk. 6:186. §).</p>
+            </Clause>
+
+            <Clause num="6." title="Adatvédelem · GDPR DPA">
+              <p>A vásárlói adatok tekintetében a <strong>Bérlő az adatkezelő</strong>, az Üzemeltető
+              az <strong>adatfeldolgozó</strong> (GDPR 28. cikk). A felek külön adatfeldolgozói szerződést
+              (DPA) kötnek, amely a jelen szerződés elválaszthatatlan melléklete.</p>
+              <p>Adatszivárgás esetén az Üzemeltető <strong>72 órán belül</strong> értesíti a Bérlőt
+              a NAIH-bejelentési kötelezettsége teljesítéséhez (GDPR 33. cikk).</p>
+              <p><strong>Fizetési adatok:</strong> a platform <em>kizárólag a kártyabirtokos nevét
+              és az utolsó 4 számjegyet</em> tárolja; teljes PAN, CVC vagy lejárati adat tárolása
+              tilos és a PCI-DSS hatálya alá esik — ezekért az Üzemeltető szavatol.</p>
+            </Clause>
+
+            <Clause num="7." title="SLA · rendelkezésre állás">
+              <p>Az Üzemeltető <strong>99,5% havi uptime</strong>-ot garantál (tervezett karbantartás nélkül).
+              Hibajegy-válaszidő: kritikus (P1) ≤ 4 óra, magas (P2) ≤ 24 óra, normál (P3) ≤ 5 munkanap.</p>
+              <p>SLA-megsértés esetén jutalék-jóváírás: minden megkezdett 0,1% downtime után
+              a havi jutalék 2%-ának visszatérítése, max. a havi jutalék 50%-áig.</p>
+            </Clause>
+
+            <Clause num="8." title="Felelősség és felelősségkorlátozás">
+              <p>Az Üzemeltető felel a platform technológiai üzemképességéért, a biztonsági frissítésekért
+              és a saját szándékos vagy súlyosan gondatlan magatartásából eredő károkért.</p>
+              <p>A Bérlő <strong>kizárólagos felelősséget vállal</strong>: a termékei jogszerűségéért,
+              minőségéért, készletéért, a vásárlói reklamációk kezeléséért, a saját számlázásáért,
+              ÁFA-bevallásáért, a vásárlóival szembeni szavatossági és jótállási kötelezettségekért,
+              valamint a saját brand-kommunikációjáért.</p>
+              <p>Az Üzemeltető <strong>kártérítési felelősségének felső határa</strong>: a kárt megelőző
+              12 hónapban a Bérlő által ténylegesen kifizetett jutalék összege.
+              Közvetett kárért, elmaradt haszonért, jó hírnév-sérelemért az Üzemeltető nem felel
+              (Ptk. 6:152–6:153. §).</p>
+            </Clause>
+
+            <Clause num="9." title="Időtartam · felmondás">
+              <p><strong>Határozott időtartam:</strong> 12 hónap, amely automatikusan 12 hónappal meghosszabbodik,
+              ha bármelyik fél a lejárat előtt 60 nappal írásban nem mond fel.</p>
+              <p><strong>Rendes felmondás:</strong> 60 napos felmondási idővel, írásban (e-mail is elfogadott
+              tértivevény-egyenértékű olvasási visszaigazolással).</p>
+              <p><strong>Azonnali hatályú felmondás</strong> az Üzemeltető részéről, ha a Bérlő: (a) 15 napon
+              túli fizetési késedelembe esik, (b) a Példányt jogellenes tevékenységre használja,
+              (c) megsérti az 5. pont szerinti IP-védelmet, (d) ellene csőd/felszámolási eljárás indul.</p>
+              <p>Megszűnéskor az Üzemeltető a Bérlő vásárlói adatait gépi olvasható formátumban
+              (CSV/JSON) <strong>30 napon belül</strong> átadja, majd a Példányt deaktiválja és
+              további 90 nap után véglegesen törli.</p>
+            </Clause>
+
+            <Clause num="10." title="Versenytilalom · titoktartás">
+              <p>A Bérlő a szerződés időtartama alatt és annak megszűnését követő 24 hónapig <strong>nem
+              fejleszt, nem üzemeltet és nem támogat</strong> az Üzemeltető platformjával lényegében
+              azonos funkcionalitású, magyar piacra szánt versenytermék létrehozását.</p>
+              <p>A felek minden, a szerződés teljesítése során megismert információt <strong>üzleti
+              titokként</strong> kezelnek (2018. évi LIV. tv.). Megsértés esetén <strong>5 000 000 Ft
+              kötbér</strong> + tényleges kártérítés.</p>
+            </Clause>
+
+            <Clause num="11." title="Vis maior">
+              <p>Egyik fél sem felel olyan kötelezettsége nem teljesítéséért, amelyet rajta kívül álló,
+              elháríthatatlan ok (háború, természeti katasztrófa, állami korlátozás, országos
+              internet-/áramkimaradás, pandémia) okozott. A vis maior 30 napon túli fennállása
+              esetén bármely fél jogosult azonnali hatállyal felmondani.</p>
+            </Clause>
+
+            <Clause num="12." title="Irányadó jog · jogviták">
+              <p>A szerződésre a <strong>magyar jog</strong> irányadó, különösen a Ptk., az Szjt.,
+              az Eker. tv. (2001. évi CVIII.) és a GDPR.</p>
+              <p>A felek a vitáikat elsősorban békés úton, 30 napos egyeztetési időszak alatt rendezik.
+              Eredménytelenség esetén kikötik a <strong>Budapesti II. és III. Kerületi Bíróság,
+              illetve hatáskör függvényében a Fővárosi Törvényszék</strong> kizárólagos illetékességét.</p>
+            </Clause>
+
+            <Clause num="13." title="Záró rendelkezések">
+              <p>A szerződés bármely módosítása <strong>kizárólag írásban</strong>, mindkét fél által
+              aláírva érvényes (e-aláírás elfogadott, eIDAS 910/2014/EU rendelet szerint).</p>
+              <p>Ha bármely rendelkezés érvénytelennek minősülne, az nem érinti a többi rendelkezés
+              érvényességét (severability). Az érvénytelen rendelkezés helyébe a felek által
+              célzott gazdasági eredményhez legközelebb álló érvényes rendelkezés lép.</p>
+            </Clause>
+
+            <div className="border-t border-border pt-5 mt-2 grid md:grid-cols-2 gap-5">
+              <div className="border border-border p-4">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Üzemeltető</p>
+                <div className="h-12 border-b border-dashed border-muted-foreground/40 mb-2" />
+                <p className="text-xs text-muted-foreground">aláírás, dátum, hely</p>
+              </div>
+              <div className="border border-border p-4">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Bérlő</p>
+                <div className="h-12 border-b border-dashed border-muted-foreground/40 mb-2" />
+                <p className="text-xs text-muted-foreground">aláírás, dátum, hely</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-3 items-center">
+            <Button
+              onClick={() => window.print()}
+              variant="outline"
+              size="lg"
+            >
+              <Download className="h-4 w-4 mr-2" /> Nyomtatás / PDF mentés
+            </Button>
+            <div className="flex items-start gap-2 text-xs text-muted-foreground max-w-xl">
+              <AlertTriangle className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+              <span>
+                Ez egy <strong>mintaszerződés-keret</strong>. A végleges, aláírható példányt
+                ügyvédi ellenjegyzéssel, az egyedi adatok (felek, jutalék %, domain, indulási dátum)
+                kitöltésével állítjuk ki. Az itt szereplő minimum-feltételek (5% jutalék, IP-védelem,
+                GDPR DPA, magyar jog) <strong>nem alku tárgya</strong>.
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
       <section className="bg-accent/5">
         <div className="mx-auto max-w-5xl px-5 py-16 text-center">
           <h2 className="text-2xl md:text-4xl font-bold uppercase tracking-tight">
