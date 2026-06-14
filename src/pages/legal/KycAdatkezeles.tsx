@@ -1,63 +1,66 @@
-import LegalLayout from "@/components/legal/LegalLayout";
-import { LegalProse } from "@/components/legal/LegalProse";
+import LegalLayout, { LEGAL_DOCS } from "@/components/legal/LegalLayout";
+import { H2, P, UL, Strong, Box } from "@/components/legal/LegalProse";
 
 const KycAdatkezeles = () => (
-  <LegalLayout title="KYC adatkezelési tájékoztató" updatedAt="2026-06-14">
-    <LegalProse>
-      <h2>1. Az adatkezelő</h2>
-      <p>Egyszerű de Nagyszerű – mint Üzemeltető és webshop bérleti rendszer szolgáltatója. Kapcsolat: az Impresszumban.</p>
+  <LegalLayout slug="kyc-adatkezeles" title="KYC adatkezelési tájékoztató" subtitle="Bérlői azonosításhoz kötelezően megadott adatok" effectiveDate="2026.06.14.">
+    <Box variant="warn">
+      Ez a tájékoztató kizárólag a webshop-bérlő partnerekre vonatkozik, akik saját Példányt kívánnak üzemeltetni és így pénzügyi elszámolásba lépnek az Üzemeltetővel. Webshop-vásárlókra nem!
+    </Box>
 
-      <h2>2. Milyen adatokat kérünk és miért</h2>
-      <p>A KYC (Know Your Customer) folyamat kizárólag azokra a felhasználókra vonatkozik, akik saját webshop-példányt szeretnének bérelni, és így pénzügyi elszámolás (legalább 5% jutalék) jön létre. Jogalap: <strong>szerződés teljesítése (GDPR 6. cikk (1) b)</strong> és <strong>jogi kötelezettség</strong> (Pmt. 2017. évi LIII. tv. – pénzmosás megelőzése, számviteli tv.).</p>
-      <ul>
-        <li><strong>Személyazonosító adatok</strong> (név, születési hely/dátum, anyja neve, állampolgárság, szem.ig. szám, lakcímkártya szám) – partner-azonosításhoz, szerződéskötéshez.</li>
-        <li><strong>Lakcím + telefon + e-mail</strong> – kapcsolattartáshoz és számlázáshoz.</li>
-        <li><strong>Bankszámla adatok</strong> – jutalék kifizetéséhez.</li>
-        <li><strong>Adóazonosító / cégadatok</strong> – számviteli kötelezettség teljesítéséhez.</li>
-        <li><strong>Okmányfotók</strong> (szem.ig. előlap/hátlap, lakcímkártya, selfie igazolvánnyal) – személyazonosság megerősítéséhez, csalás megelőzéséhez.</li>
-      </ul>
-      <p>A selfie biometrikus jellegű adatnak minősülhet – kizárólag emberi szemmel kerül összevetésre az okmányfotóval, automatikus arcfelismerést NEM végzünk.</p>
+    <H2>1. Az adatkezelő</H2>
+    <P>Egyszerű de Nagyszerű – mint Üzemeltető és webshop bérleti rendszer szolgáltatója. Kapcsolat az Impresszumban.</P>
 
-      <h2>3. Meddig tároljuk</h2>
-      <ul>
-        <li><strong>Elutasított KYC:</strong> 60 nap után automatikusan, visszafordíthatatlanul törölve.</li>
-        <li><strong>Jóváhagyott / aktív partner:</strong> a szerződés időtartama alatt + 5 év (Pmt. 56. §, Számv. tv. 169. §).</li>
-        <li><strong>Megszűnt partner:</strong> a szerződés megszűnését követő 8 év (számviteli bizonylatok), utána törlés.</li>
-      </ul>
+    <H2>2. Milyen adatokat kérünk és miért</H2>
+    <P>Jogalap: <Strong>szerződés teljesítése (GDPR 6. cikk (1) b)</Strong> és <Strong>jogi kötelezettség</Strong> – Pmt. 2017. évi LIII. tv. (pénzmosás megelőzése), Számv. tv.</P>
+    <UL>
+      <li><Strong>Személyazonosító adatok</Strong> (név, születési hely/dátum, anyja neve, állampolgárság, szem.ig. szám, lakcímkártya szám) – partner-azonosításhoz, szerződéskötéshez.</li>
+      <li><Strong>Lakcím, telefon, e-mail</Strong> – kapcsolattartás, számlázás.</li>
+      <li><Strong>Bankszámla adatok</Strong> – kizárólag jutalék kifizetéséhez.</li>
+      <li><Strong>Adóazonosító / cégadatok</Strong> – számviteli kötelezettség.</li>
+      <li><Strong>Okmányfotók</Strong> (szem.ig. elő/hátlap, lakcímkártya, selfie igazolvánnyal) – személyazonosság megerősítése, csalás megelőzése.</li>
+    </UL>
+    <P>A selfie biometrikus jellegű adatnak minősülhet – kizárólag emberi szemmel kerül összevetésre az okmányfotóval. <Strong>Automatikus arcfelismerést NEM végzünk.</Strong></P>
 
-      <h2>4. Ki fér hozzá</h2>
-      <ul>
-        <li>Az adatfeltöltő partner – csak a saját beküldését látja.</li>
-        <li>Az Üzemeltető <strong>super admin</strong>ja – kizárólag a KYC ellenőrzés céljából.</li>
-        <li>Minden adminisztrátori betekintést, jóváhagyást, elutasítást és letöltést <strong>audit napló</strong> rögzít (ki, mikor, IP).</li>
-        <li>Harmadik fél részére csak hatósági megkeresésre, jogi kötelezettség alapján.</li>
-      </ul>
+    <H2>3. Adatmegőrzési idő</H2>
+    <UL>
+      <li><Strong>Elutasított KYC:</Strong> 60 nap után automatikusan, visszafordíthatatlanul törölve.</li>
+      <li><Strong>Jóváhagyott / aktív partner:</Strong> a szerződés időtartama alatt.</li>
+      <li><Strong>Megszűnt partner:</Strong> Pmt. 56. § és Számv. tv. 169. § szerint 8 év, utána törlés.</li>
+    </UL>
 
-      <h2>5. Biztonság</h2>
-      <ul>
-        <li>Privát, titkosított tárolás (Supabase Storage, RLS-szel védve).</li>
-        <li>Az okmányfotók kizárólag rövid lejáratú (5 perc) aláírt linken keresztül érhetők el az adminnak.</li>
-        <li>Sorba állított és rendszeres biztonsági ellenőrzés (RLS, security definer policy).</li>
-      </ul>
+    <H2>4. Ki fér hozzá</H2>
+    <UL>
+      <li>Az adatfeltöltő partner – csak a saját beküldését látja.</li>
+      <li>Az Üzemeltető <Strong>super admin</Strong>ja – kizárólag a KYC ellenőrzés céljából.</li>
+      <li>Minden admin betekintést, megtekintést, letöltést, jóváhagyást és elutasítást <Strong>audit napló</Strong> rögzít (ki, mikor, esemény).</li>
+      <li>Harmadik fél részére kizárólag hatósági megkeresésre.</li>
+    </UL>
 
-      <h2>6. Jogaid</h2>
-      <ul>
-        <li><strong>Hozzáférés</strong> – e-mailben kérheted minden rólad tárolt adatod másolatát.</li>
-        <li><strong>Helyesbítés</strong> – hibás adatot bármikor javíthatsz vagy javíttathatsz.</li>
-        <li><strong>Törlés</strong> – ha nem kötöttünk szerződést, azonnal; szerződés után csak a jogi kötelező megőrzés lejártakor.</li>
-        <li><strong>Korlátozás, tiltakozás, adathordozhatóság.</strong></li>
-        <li><strong>Panasz:</strong> NAIH (1055 Budapest, Falk Miksa u. 9-11., ugyfelszolgalat@naih.hu).</li>
-      </ul>
+    <H2>5. Biztonsági intézkedések</H2>
+    <UL>
+      <li>Privát, titkosított tárolás Row-Level Security védelemmel.</li>
+      <li>Az okmányfotók kizárólag <Strong>5 perces lejáratú aláírt linken</Strong> érhetők el az adminnak.</li>
+      <li>Audit napló minden hozzáférésről.</li>
+      <li>Automatikus törlés a megőrzési idő után.</li>
+    </UL>
 
-      <h2>7. Hozzájárulás visszavonása</h2>
-      <p>A KYC adatkezeléshez adott hozzájárulást bármikor visszavonhatod – ez a folyamatban lévő bérleti szerződést azonnal megszünteti, és a megőrzési idő után minden adatot törlünk.</p>
+    <H2>6. Jogaid (GDPR)</H2>
+    <UL>
+      <li><Strong>Hozzáférés</Strong> – e-mailben kérheted minden rólad tárolt adatod másolatát.</li>
+      <li><Strong>Helyesbítés, törlés, korlátozás, tiltakozás, adathordozhatóság.</Strong></li>
+      <li><Strong>Hozzájárulás visszavonása</Strong> – bármikor, ez a bérleti szerződést megszünteti.</li>
+      <li><Strong>Panasz:</Strong> NAIH – 1055 Budapest, Falk Miksa u. 9-11., ugyfelszolgalat@naih.hu, www.naih.hu</li>
+    </UL>
 
-      <h2>8. Adatfeldolgozók</h2>
-      <ul>
-        <li>Supabase (EU régió) – tárhely, adatbázis, storage.</li>
-        <li>Resend / SMTP – értesítő e-mailek.</li>
-      </ul>
-    </LegalProse>
+    <H2>7. Adatfeldolgozók</H2>
+    <UL>
+      <li>Supabase (EU régió) – tárhely, adatbázis, storage.</li>
+      <li>Resend / SMTP szolgáltató – értesítő e-mailek.</li>
+    </UL>
+
+    <Box variant="law">
+      A KYC adatkezeléshez adott hozzájárulásod nélkül a webshop bérlés <Strong>nem indítható el</Strong> – a Pmt. és a szerződéses partnerellenőrzés ezt kötelezővé teszi.
+    </Box>
   </LegalLayout>
 );
 
