@@ -1,7 +1,7 @@
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Handshake, FileText, User, Mail, ShieldCheck, Percent, Scale, CheckCircle2, Gavel, Lock, AlertTriangle, Download } from "lucide-react";
+import { Handshake, FileText, User, Mail, ShieldCheck, Percent, Scale, CheckCircle2, Gavel, Lock, AlertTriangle, Download, UserPlus, LogIn } from "lucide-react";
 
 const Egyuttmukodes = () => {
   const navigate = useNavigate();
