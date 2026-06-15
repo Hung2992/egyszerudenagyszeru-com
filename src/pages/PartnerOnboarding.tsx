@@ -151,7 +151,14 @@ const PartnerOnboarding = () => {
               {existing.admin_note && <span className="text-xs text-muted-foreground">– {existing.admin_note}</span>}
             </div>
           )}
+          {existing?.status === "approved" && (
+            <div className="border p-4 bg-green-500/10 flex items-center justify-between flex-wrap gap-2">
+              <p className="text-sm">KYC jóváhagyva. A partneri szerződés generálódott – kérjük, írd alá.</p>
+              <Button size="sm" onClick={() => navigate("/partner-contract")}>Szerződés megnyitása</Button>
+            </div>
+          )}
         </div>
+
 
         <Section title="Személyes adatok">
           <Field label="Teljes név *" value={form.full_name} onChange={v => setForm({...form, full_name: v})} disabled={readonly} />
