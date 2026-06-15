@@ -48,6 +48,7 @@ const Help = lazy(() => import("./pages/Help.tsx"));
 const About = lazy(() => import("./pages/About.tsx"));
 const Egyuttmukodes = lazy(() => import("./pages/Egyuttmukodes.tsx"));
 const PartnerOnboarding = lazy(() => import("./pages/PartnerOnboarding.tsx"));
+const PartnerContract = lazy(() => import("./pages/PartnerContract.tsx"));
 const LegalHub = lazy(() => import("./pages/legal/LegalHub.tsx"));
 const Aszf = lazy(() => import("./pages/legal/Aszf.tsx"));
 const Adatvedelem = lazy(() => import("./pages/legal/Adatvedelem.tsx"));
