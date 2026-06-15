@@ -2776,6 +2776,122 @@ export type Database = {
           },
         ]
       }
+      partner_contracts: {
+        Row: {
+          contract_body: string
+          contract_number: string
+          contract_version: string
+          created_at: string
+          effective_from: string | null
+          id: string
+          kyc_submission_id: string
+          owner_address: string | null
+          owner_name: string
+          owner_representative: string
+          owner_signature_ip: string | null
+          owner_signature_name: string | null
+          owner_signed_at: string | null
+          owner_signed_by: string | null
+          owner_tax_number: string | null
+          partner_address: string
+          partner_birth_date: string | null
+          partner_birth_name: string | null
+          partner_birth_place: string | null
+          partner_email: string
+          partner_full_name: string
+          partner_id_card_number: string
+          partner_mother_name: string | null
+          partner_phone: string | null
+          partner_signature_ip: string | null
+          partner_signature_name: string | null
+          partner_signed_at: string | null
+          partner_tax_id: string | null
+          status: string
+          terminated_at: string | null
+          termination_reason: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contract_body: string
+          contract_number: string
+          contract_version?: string
+          created_at?: string
+          effective_from?: string | null
+          id?: string
+          kyc_submission_id: string
+          owner_address?: string | null
+          owner_name?: string
+          owner_representative?: string
+          owner_signature_ip?: string | null
+          owner_signature_name?: string | null
+          owner_signed_at?: string | null
+          owner_signed_by?: string | null
+          owner_tax_number?: string | null
+          partner_address: string
+          partner_birth_date?: string | null
+          partner_birth_name?: string | null
+          partner_birth_place?: string | null
+          partner_email: string
+          partner_full_name: string
+          partner_id_card_number: string
+          partner_mother_name?: string | null
+          partner_phone?: string | null
+          partner_signature_ip?: string | null
+          partner_signature_name?: string | null
+          partner_signed_at?: string | null
+          partner_tax_id?: string | null
+          status?: string
+          terminated_at?: string | null
+          termination_reason?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contract_body?: string
+          contract_number?: string
+          contract_version?: string
+          created_at?: string
+          effective_from?: string | null
+          id?: string
+          kyc_submission_id?: string
+          owner_address?: string | null
+          owner_name?: string
+          owner_representative?: string
+          owner_signature_ip?: string | null
+          owner_signature_name?: string | null
+          owner_signed_at?: string | null
+          owner_signed_by?: string | null
+          owner_tax_number?: string | null
+          partner_address?: string
+          partner_birth_date?: string | null
+          partner_birth_name?: string | null
+          partner_birth_place?: string | null
+          partner_email?: string
+          partner_full_name?: string
+          partner_id_card_number?: string
+          partner_mother_name?: string | null
+          partner_phone?: string | null
+          partner_signature_ip?: string | null
+          partner_signature_name?: string | null
+          partner_signed_at?: string | null
+          partner_tax_id?: string | null
+          status?: string
+          terminated_at?: string | null
+          termination_reason?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_contracts_kyc_submission_id_fkey"
+            columns: ["kyc_submission_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_kyc_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_marketing_assets: {
         Row: {
           active: boolean
