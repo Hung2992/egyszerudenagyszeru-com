@@ -1498,6 +1498,7 @@ const Admin = () => {
     { key: "partners", label: "Partnerek (profil)", icon: Users },
     { key: "tenants", label: "Bérlők (revenue share)", icon: Building2 },
     { key: "tenant_kyc", label: "Bérlő KYC ellenőrzés", icon: ShieldCheck },
+    { key: "partner_contracts", label: "Partneri szerződések", icon: ShieldCheck },
     { key: "stock_alert_auto", label: "Készlet riaszt.", icon: Bell },
     { key: "crosssell_upsell", label: "Cross/Upsell", icon: TrendingUp },
     { key: "customer_surveys", label: "Kérdőívek", icon: ListChecks },
