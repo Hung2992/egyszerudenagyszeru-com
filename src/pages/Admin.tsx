@@ -3562,6 +3562,7 @@ const Admin = () => {
         {tab === "partners" && <AdminPartnersTab />}
         {tab === "tenants" && <AdminTenantsTab />}
         {tab === "tenant_kyc" && <AdminKycTab />}
+        {tab === "partner_contracts" && <AdminContractsTab />}
         {tab === "stock_alert_auto" && <AdminStockAlertAutoTab />}
         {tab === "crosssell_upsell" && <AdminCrosssellUpsellTab />}
         {tab === "customer_surveys" && <AdminCustomerSurveysTab />}
