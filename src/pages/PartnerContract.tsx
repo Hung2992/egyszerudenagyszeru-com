@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { FileSignature, CheckCircle2, Clock, Loader2, ShieldCheck } from "lucide-react";
+import { FileSignature, CheckCircle2, Clock, Loader2, ShieldCheck, Download, XCircle, AlertTriangle } from "lucide-react";
 
 const PartnerContract = () => {
   const navigate = useNavigate();
