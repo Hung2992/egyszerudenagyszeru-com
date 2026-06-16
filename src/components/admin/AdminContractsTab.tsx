@@ -13,7 +13,7 @@ const AdminContractsTab = () => {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<any>(null);
-  const [sigName, setSigName] = useState("Egyszerű de Nagyszerű Kft. – Ügyvezető");
+  const [sigName, setSigName] = useState("Horváth Zoltán e.v.");
   const [accept, setAccept] = useState(false);
   const [saving, setSaving] = useState(false);
 
