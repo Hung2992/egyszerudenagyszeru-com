@@ -92,9 +92,36 @@ const PartnerContract = () => {
           <StatusBadge />
         </div>
 
+        {contract.status === "rejected" && (
+          <div className="border border-destructive/40 bg-destructive/10 p-4 text-sm">
+            <strong className="block mb-1">Elutasítva</strong>
+            <p className="text-muted-foreground">{contract.rejection_reason || "Indok nincs megadva."}</p>
+          </div>
+        )}
+        {contract.status === "needs_correction" && (
+          <div className="border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
+            <strong className="block mb-1">Javítás szükséges</strong>
+            <p className="text-muted-foreground">{contract.correction_notes || "Az üzemeltető javítást kért. Kérjük, frissítsd a KYC adataid."}</p>
+            <Button size="sm" variant="outline" className="mt-3" onClick={() => navigate("/partner-onboarding")}>KYC frissítése</Button>
+          </div>
+        )}
+
+        {contract.contract_hash && (
+          <div className="border p-3 text-[10px] font-mono break-all bg-muted/20">
+            <span className="text-muted-foreground">SHA-256:</span> {contract.contract_hash}
+            {contract.locked_at && <span className="ml-2 text-green-600">🔒 Lezárva {new Date(contract.locked_at).toLocaleString("hu")}</span>}
+          </div>
+        )}
+
         <pre className="border p-5 bg-muted/30 text-xs whitespace-pre-wrap font-mono leading-relaxed max-h-[500px] overflow-auto">
 {contract.contract_body}
         </pre>
+
+        {contract.partner_signed_at && (
+          <Button variant="outline" onClick={downloadPdf} className="w-full sm:w-auto">
+            <Download className="w-4 h-4 mr-2" />PDF letöltése
+          </Button>
+        )}
 
         <div className="grid sm:grid-cols-2 gap-4">
           <SigBox
