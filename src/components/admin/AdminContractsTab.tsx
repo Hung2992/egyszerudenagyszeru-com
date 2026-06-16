@@ -107,7 +107,7 @@ const AdminContractsTab = () => {
       <div className="flex items-center gap-2">
         <FileSignature className="w-5 h-5" />
         <h2 className="font-bold text-lg">Partneri szerződések</h2>
-        <Badge variant="outline">{rows.filter(r => r.status === "awaiting_owner_signature").length} ellenjegyzésre vár</Badge>
+        <Badge variant="outline">{rows.filter(r => r.status === "pending_admin_countersign").length} ellenjegyzésre vár</Badge>
       </div>
 
       {rows.length === 0 ? (
@@ -123,9 +123,16 @@ const AdminContractsTab = () => {
                 </div>
                 <p className="text-xs text-muted-foreground font-mono">{r.contract_number} · {r.partner_email}</p>
               </div>
-              <Button size="sm" variant="outline" onClick={() => { setSelected(r); setAccept(false); }}>
-                <Eye className="w-4 h-4 mr-1" />Megnyitás
-              </Button>
+              <div className="flex gap-2">
+                {r.partner_signed_at && (
+                  <Button size="sm" variant="ghost" onClick={() => downloadPdf(r.id)}>
+                    <Download className="w-4 h-4" />
+                  </Button>
+                )}
+                <Button size="sm" variant="outline" onClick={() => openContract(r)}>
+                  <Eye className="w-4 h-4 mr-1" />Megnyitás
+                </Button>
+              </div>
             </div>
           ))}
         </div>
