@@ -17,6 +17,12 @@ const AdminContractsTab = () => {
   const [accept, setAccept] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  const [auditLog, setAuditLog] = useState<any[]>([]);
+  const [showAudit, setShowAudit] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [correctionNotes, setCorrectionNotes] = useState("");
+  const [actionMode, setActionMode] = useState<"sign" | "reject" | "correct" | null>("sign");
+
   const fetch_ = async () => {
     setLoading(true);
     const { data } = await supabase.from("partner_contracts").select("*").order("created_at", { ascending: false });
@@ -24,6 +30,48 @@ const AdminContractsTab = () => {
     setLoading(false);
   };
   useEffect(() => { fetch_(); }, []);
+
+  const loadAudit = async (contractId: string) => {
+    const { data } = await supabase.from("partner_contract_audit_log")
+      .select("*").eq("contract_id", contractId).order("created_at", { ascending: false });
+    setAuditLog(data || []);
+  };
+
+  const openContract = async (row: any) => {
+    setSelected(row);
+    setAccept(false);
+    setActionMode("sign");
+    setRejectReason("");
+    setCorrectionNotes("");
+    setShowAudit(false);
+    await loadAudit(row.id);
+  };
+
+  const downloadPdf = async (id: string) => {
+    const { data, error } = await supabase.functions.invoke("generate-contract-pdf", { body: { contract_id: id } });
+    if (error || !data?.url) { toast({ title: "Hiba", description: error?.message || "PDF hiba", variant: "destructive" }); return; }
+    window.open(data.url, "_blank");
+  };
+
+  const reject = async () => {
+    if (!selected || !rejectReason.trim()) return;
+    setSaving(true);
+    const { error } = await supabase.rpc("reject_partner_contract", { _contract_id: selected.id, _reason: rejectReason.trim() });
+    setSaving(false);
+    if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Elutasítva" });
+    setSelected(null); fetch_();
+  };
+
+  const requestCorrection = async () => {
+    if (!selected || !correctionNotes.trim()) return;
+    setSaving(true);
+    const { error } = await supabase.rpc("request_partner_contract_correction", { _contract_id: selected.id, _notes: correctionNotes.trim() });
+    setSaving(false);
+    if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Javítás kérve" });
+    setSelected(null); fetch_();
+  };
 
   const sign = async () => {
     if (!selected || !accept || !sigName.trim()) return;
@@ -45,7 +93,9 @@ const AdminContractsTab = () => {
 
   const badge = (s: string) => {
     if (s === "signed") return <Badge className="bg-green-600"><CheckCircle2 className="w-3 h-3 mr-1" />Hatályos</Badge>;
-    if (s === "awaiting_owner_signature") return <Badge className="bg-blue-600"><Clock className="w-3 h-3 mr-1" />Ellenjegyzésre vár</Badge>;
+    if (s === "pending_admin_countersign") return <Badge className="bg-blue-600"><Clock className="w-3 h-3 mr-1" />Ellenjegyzésre vár</Badge>;
+    if (s === "rejected") return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Elutasítva</Badge>;
+    if (s === "needs_correction") return <Badge className="bg-amber-600"><AlertTriangle className="w-3 h-3 mr-1" />Javítás kérve</Badge>;
     if (s === "terminated") return <Badge variant="destructive">Megszűnt</Badge>;
     return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" />Partner aláírására vár</Badge>;
   };
