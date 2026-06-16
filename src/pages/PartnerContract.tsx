@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { FileSignature, CheckCircle2, Clock, Loader2, ShieldCheck } from "lucide-react";
+import { FileSignature, CheckCircle2, Clock, Loader2, ShieldCheck, Download, XCircle, AlertTriangle } from "lucide-react";
 
 const PartnerContract = () => {
   const navigate = useNavigate();
@@ -47,6 +47,12 @@ const PartnerContract = () => {
     load();
   };
 
+  const downloadPdf = async () => {
+    const { data, error } = await supabase.functions.invoke("generate-contract-pdf", { body: { contract_id: contract.id } });
+    if (error || !data?.url) { toast({ title: "Hiba", description: error?.message || "Nem sikerült letölteni", variant: "destructive" }); return; }
+    window.open(data.url, "_blank");
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin" /></div>;
 
   if (!contract) {
@@ -66,7 +72,9 @@ const PartnerContract = () => {
 
   const StatusBadge = () => {
     if (contract.status === "signed") return <Badge className="bg-green-600"><CheckCircle2 className="w-3 h-3 mr-1" />Aláírva, hatályos</Badge>;
-    if (contract.status === "awaiting_owner_signature") return <Badge className="bg-blue-600"><Clock className="w-3 h-3 mr-1" />Üzemeltető aláírására vár</Badge>;
+    if (contract.status === "pending_admin_countersign") return <Badge className="bg-blue-600"><Clock className="w-3 h-3 mr-1" />Üzemeltető aláírására vár</Badge>;
+    if (contract.status === "rejected") return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Elutasítva</Badge>;
+    if (contract.status === "needs_correction") return <Badge className="bg-amber-600"><AlertTriangle className="w-3 h-3 mr-1" />Javítás szükséges</Badge>;
     return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" />Aláírásodra vár</Badge>;
   };
 
@@ -84,9 +92,36 @@ const PartnerContract = () => {
           <StatusBadge />
         </div>
 
+        {contract.status === "rejected" && (
+          <div className="border border-destructive/40 bg-destructive/10 p-4 text-sm">
+            <strong className="block mb-1">Elutasítva</strong>
+            <p className="text-muted-foreground">{contract.rejection_reason || "Indok nincs megadva."}</p>
+          </div>
+        )}
+        {contract.status === "needs_correction" && (
+          <div className="border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
+            <strong className="block mb-1">Javítás szükséges</strong>
+            <p className="text-muted-foreground">{contract.correction_notes || "Az üzemeltető javítást kért. Kérjük, frissítsd a KYC adataid."}</p>
+            <Button size="sm" variant="outline" className="mt-3" onClick={() => navigate("/partner-onboarding")}>KYC frissítése</Button>
+          </div>
+        )}
+
+        {contract.contract_hash && (
+          <div className="border p-3 text-[10px] font-mono break-all bg-muted/20">
+            <span className="text-muted-foreground">SHA-256:</span> {contract.contract_hash}
+            {contract.locked_at && <span className="ml-2 text-green-600">🔒 Lezárva {new Date(contract.locked_at).toLocaleString("hu")}</span>}
+          </div>
+        )}
+
         <pre className="border p-5 bg-muted/30 text-xs whitespace-pre-wrap font-mono leading-relaxed max-h-[500px] overflow-auto">
 {contract.contract_body}
         </pre>
+
+        {contract.partner_signed_at && (
+          <Button variant="outline" onClick={downloadPdf} className="w-full sm:w-auto">
+            <Download className="w-4 h-4 mr-2" />PDF letöltése
+          </Button>
+        )}
 
         <div className="grid sm:grid-cols-2 gap-4">
           <SigBox
@@ -101,7 +136,7 @@ const PartnerContract = () => {
           />
         </div>
 
-        {!contract.partner_signed_at && (
+        {!contract.partner_signed_at && contract.status !== "rejected" && contract.status !== "needs_correction" && (
           <div className="border p-5 space-y-4 bg-accent/5">
             <h2 className="font-bold">Elektronikus aláírás</h2>
             <div>
@@ -111,11 +146,11 @@ const PartnerContract = () => {
             <div className="flex items-start gap-2">
               <Checkbox id="accept" checked={accept} onCheckedChange={v => setAccept(v === true)} className="mt-0.5" />
               <label htmlFor="accept" className="text-xs leading-relaxed cursor-pointer">
-                Kijelentem, hogy a fenti szerződés tartalmát elolvastam, megértettem és magamra nézve kötelezőnek elismerem. Az aláírással egyenértékűen rögzített elektronikus aláírásom (név + IP cím + időbélyeg) jogi kötőerővel bír.
+                Kijelentem, hogy a fenti szerződés tartalmát elolvastam, megértettem és magamra nézve kötelezőnek elismerem. Az aláírással egyenértékűen rögzített elektronikus aláírásom (név + IP cím + időbélyeg) jogi kötőerővel bír. Az aláírás után a szerződés azonnal lezárul és módosíthatatlanná válik (SHA-256 hash-sel hitelesítve).
               </label>
             </div>
             <Button className="w-full" size="lg" disabled={!accept || !signatureName.trim() || saving} onClick={sign}>
-              {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Aláírás...</> : <><FileSignature className="w-4 h-4 mr-2" />Szerződés aláírása</>}
+              {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Aláírás...</> : <><FileSignature className="w-4 h-4 mr-2" />Szerződés aláírása és lezárása</>}
             </Button>
           </div>
         )}

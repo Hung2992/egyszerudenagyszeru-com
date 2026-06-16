@@ -2705,6 +2705,63 @@ export type Database = {
         }
         Relationships: []
       }
+      owner_company_profile: {
+        Row: {
+          address: string
+          created_at: string
+          effective_from: string
+          effective_until: string | null
+          email: string | null
+          entity_type: string
+          eu_tax_number: string | null
+          id: string
+          is_current: boolean
+          legal_name: string
+          phone: string | null
+          registration_number: string | null
+          representative_name: string
+          tax_identification_number: string | null
+          tax_number: string
+          version: number
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          effective_from?: string
+          effective_until?: string | null
+          email?: string | null
+          entity_type?: string
+          eu_tax_number?: string | null
+          id?: string
+          is_current?: boolean
+          legal_name: string
+          phone?: string | null
+          registration_number?: string | null
+          representative_name: string
+          tax_identification_number?: string | null
+          tax_number: string
+          version: number
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          effective_from?: string
+          effective_until?: string | null
+          email?: string | null
+          entity_type?: string
+          eu_tax_number?: string | null
+          id?: string
+          is_current?: boolean
+          legal_name?: string
+          phone?: string | null
+          registration_number?: string | null
+          representative_name?: string
+          tax_identification_number?: string | null
+          tax_number?: string
+          version?: number
+        }
+        Relationships: []
+      }
       page_views: {
         Row: {
           country: string | null
@@ -2776,17 +2833,69 @@ export type Database = {
           },
         ]
       }
+      partner_contract_audit_log: {
+        Row: {
+          actor_id: string | null
+          actor_role: string | null
+          contract_id: string | null
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          kyc_submission_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_role?: string | null
+          contract_id?: string | null
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          kyc_submission_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_role?: string | null
+          contract_id?: string | null
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          kyc_submission_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_contract_audit_log_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "partner_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_contracts: {
         Row: {
           contract_body: string
+          contract_hash: string | null
           contract_number: string
+          contract_pdf_path: string | null
           contract_version: string
+          correction_notes: string | null
           created_at: string
           effective_from: string | null
           id: string
           kyc_submission_id: string
+          locked_at: string | null
           owner_address: string | null
           owner_name: string
+          owner_profile_version: number | null
           owner_representative: string
           owner_signature_ip: string | null
           owner_signature_name: string | null
@@ -2806,6 +2915,7 @@ export type Database = {
           partner_signature_name: string | null
           partner_signed_at: string | null
           partner_tax_id: string | null
+          rejection_reason: string | null
           status: string
           terminated_at: string | null
           termination_reason: string | null
@@ -2814,14 +2924,19 @@ export type Database = {
         }
         Insert: {
           contract_body: string
+          contract_hash?: string | null
           contract_number: string
+          contract_pdf_path?: string | null
           contract_version?: string
+          correction_notes?: string | null
           created_at?: string
           effective_from?: string | null
           id?: string
           kyc_submission_id: string
+          locked_at?: string | null
           owner_address?: string | null
           owner_name?: string
+          owner_profile_version?: number | null
           owner_representative?: string
           owner_signature_ip?: string | null
           owner_signature_name?: string | null
@@ -2841,6 +2956,7 @@ export type Database = {
           partner_signature_name?: string | null
           partner_signed_at?: string | null
           partner_tax_id?: string | null
+          rejection_reason?: string | null
           status?: string
           terminated_at?: string | null
           termination_reason?: string | null
@@ -2849,14 +2965,19 @@ export type Database = {
         }
         Update: {
           contract_body?: string
+          contract_hash?: string | null
           contract_number?: string
+          contract_pdf_path?: string | null
           contract_version?: string
+          correction_notes?: string | null
           created_at?: string
           effective_from?: string | null
           id?: string
           kyc_submission_id?: string
+          locked_at?: string | null
           owner_address?: string | null
           owner_name?: string
+          owner_profile_version?: number | null
           owner_representative?: string
           owner_signature_ip?: string | null
           owner_signature_name?: string | null
@@ -2876,6 +2997,7 @@ export type Database = {
           partner_signature_name?: string | null
           partner_signed_at?: string | null
           partner_tax_id?: string | null
+          rejection_reason?: string | null
           status?: string
           terminated_at?: string | null
           termination_reason?: string | null
@@ -6566,6 +6688,14 @@ export type Database = {
       }
       reject_meta_principle: {
         Args: { _principle_id: string; _reason: string }
+        Returns: undefined
+      }
+      reject_partner_contract: {
+        Args: { _contract_id: string; _reason: string }
+        Returns: undefined
+      }
+      request_partner_contract_correction: {
+        Args: { _contract_id: string; _notes: string }
         Returns: undefined
       }
       request_partner_payout: {
