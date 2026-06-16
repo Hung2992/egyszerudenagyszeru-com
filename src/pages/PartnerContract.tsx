@@ -136,7 +136,7 @@ const PartnerContract = () => {
           />
         </div>
 
-        {!contract.partner_signed_at && (
+        {!contract.partner_signed_at && contract.status !== "rejected" && contract.status !== "needs_correction" && (
           <div className="border p-5 space-y-4 bg-accent/5">
             <h2 className="font-bold">Elektronikus aláírás</h2>
             <div>
@@ -146,11 +146,11 @@ const PartnerContract = () => {
             <div className="flex items-start gap-2">
               <Checkbox id="accept" checked={accept} onCheckedChange={v => setAccept(v === true)} className="mt-0.5" />
               <label htmlFor="accept" className="text-xs leading-relaxed cursor-pointer">
-                Kijelentem, hogy a fenti szerződés tartalmát elolvastam, megértettem és magamra nézve kötelezőnek elismerem. Az aláírással egyenértékűen rögzített elektronikus aláírásom (név + IP cím + időbélyeg) jogi kötőerővel bír.
+                Kijelentem, hogy a fenti szerződés tartalmát elolvastam, megértettem és magamra nézve kötelezőnek elismerem. Az aláírással egyenértékűen rögzített elektronikus aláírásom (név + IP cím + időbélyeg) jogi kötőerővel bír. Az aláírás után a szerződés azonnal lezárul és módosíthatatlanná válik (SHA-256 hash-sel hitelesítve).
               </label>
             </div>
             <Button className="w-full" size="lg" disabled={!accept || !signatureName.trim() || saving} onClick={sign}>
-              {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Aláírás...</> : <><FileSignature className="w-4 h-4 mr-2" />Szerződés aláírása</>}
+              {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Aláírás...</> : <><FileSignature className="w-4 h-4 mr-2" />Szerződés aláírása és lezárása</>}
             </Button>
           </div>
         )}
