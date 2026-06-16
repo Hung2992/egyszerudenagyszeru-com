@@ -175,23 +175,83 @@ const AdminContractsTab = () => {
               </div>
             </div>
 
-            {selected.status === "awaiting_owner_signature" && (
-              <div className="border p-4 bg-accent/5 space-y-3">
-                <h4 className="font-bold text-sm">Ellenjegyzés üzemeltetőként</h4>
-                <div>
-                  <Label className="text-xs">Aláíró neve / titulusa</Label>
-                  <Input value={sigName} onChange={e => setSigName(e.target.value)} className="mt-1" />
-                </div>
-                <div className="flex items-start gap-2">
-                  <Checkbox id="ack" checked={accept} onCheckedChange={v => setAccept(v === true)} className="mt-0.5" />
-                  <label htmlFor="ack" className="text-xs leading-relaxed cursor-pointer">
-                    A szerződés tartalmát ellenőriztem, a partner aláírását elfogadom, és a szerződést a Egyszerű de Nagyszerű Kft. nevében ellenjegyzem. A partner ezután automatikusan megkapja a partneri admin hozzáférést.
-                  </label>
-                </div>
-                <Button className="w-full" disabled={!accept || !sigName.trim() || saving} onClick={sign}>
-                  {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Mentés...</> : <><FileSignature className="w-4 h-4 mr-2" />Ellenjegyzés + hozzáférés aktiválása</>}
-                </Button>
+            {selected.contract_hash && (
+              <div className="border p-2 text-[10px] font-mono break-all bg-muted/20">
+                <span className="text-muted-foreground">SHA-256:</span> {selected.contract_hash}
+                {selected.locked_at && <span className="ml-2 text-green-600">🔒 Lezárva</span>}
               </div>
+            )}
+
+            <div className="flex gap-2 flex-wrap">
+              {selected.partner_signed_at && (
+                <Button size="sm" variant="outline" onClick={() => downloadPdf(selected.id)}>
+                  <Download className="w-4 h-4 mr-1" />PDF
+                </Button>
+              )}
+              <Button size="sm" variant="outline" onClick={() => setShowAudit(v => !v)}>
+                <ScrollText className="w-4 h-4 mr-1" />Audit log ({auditLog.length})
+              </Button>
+            </div>
+
+            {showAudit && (
+              <div className="border p-3 bg-muted/20 text-xs space-y-1 max-h-60 overflow-auto">
+                {auditLog.length === 0 ? <p className="italic text-muted-foreground">Nincs esemény.</p> : auditLog.map(a => (
+                  <div key={a.id} className="border-b border-border/40 pb-1">
+                    <span className="font-mono text-[10px] text-muted-foreground">{new Date(a.created_at).toLocaleString("hu")}</span>{" "}
+                    <strong>{a.event_type}</strong> <span className="text-muted-foreground">· {a.actor_role || "?"}</span>
+                    {a.ip_address && <span className="text-[10px] text-muted-foreground"> · IP {a.ip_address}</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {selected.status === "pending_admin_countersign" && (
+              <>
+                <div className="flex gap-2 border-b pb-2">
+                  <Button size="sm" variant={actionMode === "sign" ? "default" : "ghost"} onClick={() => setActionMode("sign")}>Ellenjegyzés</Button>
+                  <Button size="sm" variant={actionMode === "correct" ? "default" : "ghost"} onClick={() => setActionMode("correct")}>Javítás kérése</Button>
+                  <Button size="sm" variant={actionMode === "reject" ? "default" : "ghost"} onClick={() => setActionMode("reject")}>Elutasítás</Button>
+                </div>
+
+                {actionMode === "sign" && (
+                  <div className="border p-4 bg-accent/5 space-y-3">
+                    <h4 className="font-bold text-sm">Ellenjegyzés üzemeltetőként</h4>
+                    <div>
+                      <Label className="text-xs">Aláíró neve / titulusa</Label>
+                      <Input value={sigName} onChange={e => setSigName(e.target.value)} className="mt-1" />
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Checkbox id="ack" checked={accept} onCheckedChange={v => setAccept(v === true)} className="mt-0.5" />
+                      <label htmlFor="ack" className="text-xs leading-relaxed cursor-pointer">
+                        A szerződés tartalmát ellenőriztem, a partner aláírását elfogadom, és a szerződést Horváth Zoltán egyéni vállalkozó nevében ellenjegyzem. A partner ezután automatikusan megkapja a partneri admin hozzáférést.
+                      </label>
+                    </div>
+                    <Button className="w-full" disabled={!accept || !sigName.trim() || saving} onClick={sign}>
+                      {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Mentés...</> : <><FileSignature className="w-4 h-4 mr-2" />Ellenjegyzés + hozzáférés aktiválása</>}
+                    </Button>
+                  </div>
+                )}
+
+                {actionMode === "correct" && (
+                  <div className="border p-4 bg-amber-500/5 space-y-3">
+                    <h4 className="font-bold text-sm">Javítás kérése</h4>
+                    <Textarea value={correctionNotes} onChange={e => setCorrectionNotes(e.target.value)} placeholder="Mit kell javítani a KYC / szerződéses adatokban?" rows={4} />
+                    <Button className="w-full" variant="secondary" disabled={!correctionNotes.trim() || saving} onClick={requestCorrection}>
+                      {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <AlertTriangle className="w-4 h-4 mr-2" />}Javítás kérése
+                    </Button>
+                  </div>
+                )}
+
+                {actionMode === "reject" && (
+                  <div className="border p-4 bg-destructive/5 space-y-3">
+                    <h4 className="font-bold text-sm">Elutasítás</h4>
+                    <Textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="Az elutasítás indoka (a partner is látni fogja)" rows={4} />
+                    <Button className="w-full" variant="destructive" disabled={!rejectReason.trim() || saving} onClick={reject}>
+                      {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <XCircle className="w-4 h-4 mr-2" />}Szerződés elutasítása
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
