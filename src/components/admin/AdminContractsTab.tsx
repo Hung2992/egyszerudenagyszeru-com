@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FileSignature, CheckCircle2, Clock, Eye, Loader2 } from "lucide-react";
+import { FileSignature, CheckCircle2, Clock, Eye, Loader2, XCircle, AlertTriangle, Download, ScrollText } from "lucide-react";
 
 const AdminContractsTab = () => {
   const [rows, setRows] = useState<any[]>([]);
