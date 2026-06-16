@@ -47,6 +47,12 @@ const PartnerContract = () => {
     load();
   };
 
+  const downloadPdf = async () => {
+    const { data, error } = await supabase.functions.invoke("generate-contract-pdf", { body: { contract_id: contract.id } });
+    if (error || !data?.url) { toast({ title: "Hiba", description: error?.message || "Nem sikerült letölteni", variant: "destructive" }); return; }
+    window.open(data.url, "_blank");
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin" /></div>;
 
   if (!contract) {
@@ -66,7 +72,9 @@ const PartnerContract = () => {
 
   const StatusBadge = () => {
     if (contract.status === "signed") return <Badge className="bg-green-600"><CheckCircle2 className="w-3 h-3 mr-1" />Aláírva, hatályos</Badge>;
-    if (contract.status === "awaiting_owner_signature") return <Badge className="bg-blue-600"><Clock className="w-3 h-3 mr-1" />Üzemeltető aláírására vár</Badge>;
+    if (contract.status === "pending_admin_countersign") return <Badge className="bg-blue-600"><Clock className="w-3 h-3 mr-1" />Üzemeltető aláírására vár</Badge>;
+    if (contract.status === "rejected") return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Elutasítva</Badge>;
+    if (contract.status === "needs_correction") return <Badge className="bg-amber-600"><AlertTriangle className="w-3 h-3 mr-1" />Javítás szükséges</Badge>;
     return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" />Aláírásodra vár</Badge>;
   };
 
