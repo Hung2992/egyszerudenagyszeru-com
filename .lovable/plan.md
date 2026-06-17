@@ -1,114 +1,160 @@
 ## Cél
 
-Teljes partner program: te meghívsz valakit (influencer / B2B viszonteladó / márka együttműködő / egyszerű ajánló), kap egy saját kupont, minden vele érkezett rendelés után fix Ft jutalékot számolunk, ő látja a statisztikáit, kérhet kifizetést és letölthet marketing anyagokat. Te admin felületen kezelsz mindent.
+Minden aktív partner kap egy saját, testreszabható mini-webshopot a te platformodon belül, saját URL slug-gal, saját brandeléssel, saját termékekkel és saját rendelés-teljesítéssel.
 
-## 1. Adatbázis (új migráció)
-
-**Új enum**: `partner_type` = `influencer | reseller | brand | referrer`  
-**Új enum**: `partner_status` = `invited | active | paused | revoked`  
-**Új enum**: `payout_status` = `requested | approved | paid | rejected`  
-`app_role` **enum bővítés**: `+ partner`
-
-**Új táblák** (mind RLS + GRANT a megfelelő szerepkörökhöz):
-
-- `partners` — partner profil
-  - `user_id`, `type`, `status`, `display_name`, `company_name`, `tax_number`, `bank_account`, `commission_per_order` (Ft, fix), `coupon_id` (→ `coupons.id`), `notes`, időbélyegek
-- `pending_partner_invites` — meghívott e-mailek várnak regisztrációra (mint a könyvelőnél), `type`, `commission_per_order`, `coupon_code`, `expires_at`
-- `partner_referrals` — minden rendelés ami partnerhez köthető (kupon-egyezés alapján)
-  - `partner_id`, `order_id`, `coupon_code`, `order_total`, `commission_amount`, `status` (`pending | confirmed | cancelled` — rendelés státuszt követi), `confirmed_at`
-- `partner_payouts` — kifizetési kérelmek
-  - `partner_id`, `amount`, `status`, `requested_at`, `paid_at`, `payment_reference`, `notes`
-- `partner_marketing_assets` — letölthető bannerek / képek / linkek (storage bucket-ből)
-  - `title`, `description`, `asset_url`, `asset_type` (`banner | logo | photo | link_template`), `active`
-
-**Új trigger**: rendelés `status = 'paid' / 'fulfilled'` → ha a `coupon_code` egy partner kuponja, automatikus `INSERT` a `partner_referrals`-be a `commission_per_order` értékkel. Visszamondott rendelésnél `status = 'cancelled'`.
-
-**RLS** kulcsszabályok:
-
-- Partner csak a saját `partners`, `partner_referrals`, `partner_payouts` rekordjait látja (`auth.uid() = partners.user_id`)
-- `partner_marketing_assets` — minden bejelentkezett partner olvashatja
-- Admin mindent kezelhet (`has_role(uid,'admin')`)
-- Csak admin írhat `partners`-be (státusz, jutalék), partner csak `partner_payouts`-ba kérhet kifizetést
-
-## 2. Edge függvények
-
-- `invite-partner` — admin meghív egy e-mailt: létrehoz egy `pending_partner_invites` rekordot, generál egyedi kupont a `coupons` táblába (admin által megadott %/Ft kedvezménnyel a vásárlónak), e-mailben elküldi a meghívó linket (új tranzakciós e-mail sablon: `partner-invite.tsx`)
-- `partner-claim` — első bejelentkezéskor: ha az e-mail szerepel a `pending_partner_invites`-ban, létrejön a `partners` rekord, hozzáköti a kupont, beállítja a `partner` szerepkört a `user_roles`-ba, törli a meghívót
-- `partner-request-payout` — partner kéri a felhalmozott `confirmed` jutalék kifizetését (min. összeg ellenőrzés)
-- `partner-stats` — összegzett statisztika a partner dashboardhoz (összes elad., összes jutalék, ebből kifizetett, függő)
-
-## 3. Frontend: új útvonal `/partner`
-
-Külön minimalista layout (mint `/konyvelo`), NEM webshop nav:
-
-- **Áttekintés tab** — KPI kártyák: kupon kód (copy gomb), aktív állapot, összes rendelés, összes jutalék, függő jutalék, kifizetett jutalék, mini havi chart
-- **Rendelések tab** — `partner_referrals` lista: dátum, rendelésazonosító (csak utolsó 4), összeg, jutalék, státusz
-- **Kifizetések tab** — gomb "Kifizetés kérése" (csak ha van confirmed jutalék), korábbi kérések listája státusszal
-- **Marketing tab** — `partner_marketing_assets` rács, letöltés / link másolás gomb, kész szöveg-sablonok Instagram/TikTok posthoz
-- **Profil tab** — saját adatok (cégnév, adószám, bankszámla) szerkesztése
-
-Új fájlok:
-
-- `src/hooks/usePartnerCheck.ts`
-- `src/pages/PartnerPortal.tsx`
-- `src/components/partner/PartnerLayout.tsx`, `OverviewTab.tsx`, `ReferralsTab.tsx`, `PayoutsTab.tsx`, `MarketingTab.tsx`, `ProfileTab.tsx`
-
-`Profile.tsx`-ben új gomb (mint a könyvelői), csak partnernek látható: **"Partner felület"** → `/partner`.
-
-## 4. Admin felület (Super Admin új szekció)
-
-Új tab: **"Partnerek"** (`AdminPartnersTab.tsx`)
-
-- Meghívás form: e-mail + típus (4 választás) + fix Ft jutalék/rendelés + vásárlói kupon kedvezmény (%/Ft) → "Meghívás" gomb
-- Aktív partnerek táblázat: név, típus, kupon, össz forgalom, össz jutalék, állapot (pause/revoke gomb)
-- Kifizetési kérelmek lista: jóváhagyás / kifizetve jelölés / elutasítás (megjegyzéssel)
-- Marketing anyagok feltöltése (storage bucket: `partner-assets`)
-- Statisztikai összesítő (top partnerek, havi forgalom)
-
-## 5. E-mail sablonok
-
-- `partner-invite.tsx` — meghívó link + magyarázat
-- `partner-payout-approved.tsx` — kifizetés visszaigazolás
-- `partner-welcome.tsx` — első sikeres bejelentkezés után
-
-## 6. Biztonság
-
-- Kuponok admin által generáltak, garantáltan egyediek (`PARTNER-XXXX` formátum)
-- Jutalék csak `paid`/`fulfilled` rendelésre `confirmed`, `cancelled`/`refunded`-nél visszavonjuk
-- Bankszámla titkosított oszlop (pgcrypto opcionális, vagy csak admin által olvasható view)
-- Audit napló a kifizetésekről
-
-## Technikai részletek
+## URL struktúra
 
 ```text
-USER FLOW
-─────────────────────────────────────────────
-Admin → "Partnerek" tab → Meghívás (email, típus, 1000 Ft/rendelés)
-         ↓
-       invite-partner edge fn
-         ↓
-       pending_partner_invites + új kupon "PARTNER-AB12" + email
-         ↓
-Partner regisztrál ugyanazzal az emaillel
-         ↓
-       partner-claim → partners + user_roles('partner') + welcome email
-         ↓
-Vásárló használja "PARTNER-AB12" kupont rendeléskor
-         ↓
-       order paid → trigger → partner_referrals (+1000 Ft pending)
-         ↓
-       order fulfilled → status = confirmed
-         ↓
-Partner /partner felületen látja → "Kifizetés kérése"
-         ↓
-       partner-payouts (requested) → admin jóváhagyja → paid
+egyszerudenagyszeru.com/b/{partner-slug}          → partner storefront főoldal
+egyszerudenagyszeru.com/b/{partner-slug}/termek/{id}  → termék oldal
+egyszerudenagyszeru.com/b/{partner-slug}/kosar    → kosár (partner specifikus)
+egyszerudenagyszeru.com/b/{partner-slug}/checkout → checkout (rendelés a partnerhez megy)
+/partner/storefront                                 → partner admin: brand szerkesztő, termék feltöltő, rendelései
 ```
 
-## Mit NEM csinálok most (későbbre hagyom)
+## 1. Adatbázis migráció
 
-- Automatikus banki utalás (manuálisan utalsz, csak jelölöd "paid"-nek)
-- Lépcsős jutalék (most csak fix Ft)
-- Click tracking / referral link (most csak kupon-alapú attribúció)
-- Adóügyi automatizmus (1%-os kifizetési jelentés a NAV-nak — később ha kell)
+**Új táblák** (mind RLS + GRANT):
 
-Megerősítés után megépítem a teljes rendszert egy menetben
+- `partner_storefronts` — egy-az-egyhez `partners`-szal
+  - `partner_id`, `slug` (unique, kötelező), `display_name`, `tagline`, `about_html`
+  - **Branding**: `logo_url`, `banner_url`, `primary_color`, `accent_color`, `bg_color`, `text_color`, `font_heading`, `font_body`
+  - **Hero**: `hero_title`, `hero_subtitle`, `hero_cta_text`, `hero_image_url`
+  - **Social**: `instagram_url`, `tiktok_url`, `facebook_url`, `youtube_url`
+  - **SEO**: `meta_title`, `meta_description`, `og_image_url`
+  - `is_published` (csak ha admin jóváhagyta), `published_at`, `theme_preset`
+
+- `partner_products` — partner saját termékei (külön a `shop_products`-tól)
+  - `partner_id`, `slug`, `title`, `description`, `price_huf`, `compare_price_huf`
+  - `images` (jsonb array), `category`, `tags` (text[])
+  - `stock_qty`, `sku`, `weight_g`
+  - `status` (`draft | pending_review | active | paused | rejected`), `rejection_reason`
+  - `view_count`, `sales_count`
+
+- `partner_product_variants` — méret/szín
+  - `product_id`, `size`, `color`, `stock_qty`, `price_override_huf`, `sku`
+
+- `partner_orders` — partner storefront-on leadott rendelések
+  - `partner_id`, `order_number` (egyedi: `P-{partner_slug}-{seq}`)
+  - `customer_email`, `customer_name`, `customer_phone`
+  - `shipping_address` (jsonb), `billing_address` (jsonb)
+  - `items` (jsonb: product_id, title, qty, price, variant)
+  - `subtotal_huf`, `shipping_huf`, `total_huf`
+  - `platform_fee_huf` (a te jutalékod, pl. 10%), `partner_payout_huf`
+  - `status` (`pending | paid | fulfilled | shipped | delivered | cancelled | refunded`)
+  - `payment_method`, `payment_status`, `stripe_payment_intent`
+  - `tracking_number`, `carrier`, `shipped_at`, `delivered_at`
+
+- `partner_storefront_settings` — partner-szintű webshop beállítások
+  - `partner_id`, `shipping_zones` (jsonb), `shipping_rates` (jsonb)
+  - `accept_cod` (utánvét), `accept_card`, `min_order_huf`
+  - `return_policy`, `shipping_policy` (saját szöveg)
+  - `bank_account_for_payouts`, `vat_number`
+
+**Triggerek**:
+- `partner_orders` insert → automatikusan kiszámolja `platform_fee_huf` (default 10%, `store_settings.partner_platform_fee_pct`-ból), `partner_payout_huf`
+- `partner_products` insert/update → ha `status = pending_review`, admin notification
+- Slug egyediség ellenőrzése
+
+**RLS**:
+- Partner csak saját `partner_storefronts`, `partner_products`, `partner_orders`-t lát/módosít
+- `anon` + `authenticated` `SELECT` a publikus `partner_storefronts` (csak `is_published = true`) + `partner_products` (csak `status = active`)
+- Admin mindent
+
+## 2. Edge funkciók
+
+- `partner-storefront-publish` — partner kéri publikálást → admin jóváhagy
+- `partner-product-submit-review` — termék beküldése jóváhagyásra
+- `partner-checkout-create` — Stripe checkout session a partner storefront kosárhoz, `metadata.partner_id` + `metadata.partner_order_id`
+- `partner-payout-calculate` — havi elszámolás: összes `delivered` rendelés `partner_payout_huf` összege
+
+## 3. Storage bucketok
+
+- `partner-storefront-media` (publikus) — logók, bannerek, hero képek
+- `partner-product-images` (publikus) — termékfotók
+
+## 4. Partner admin felület (`/partner` portál bővítése)
+
+Új tabok a `PartnerLayout`-ban:
+
+- **Storefront tab** (`StorefrontEditorTab.tsx`)
+  - Slug szerkesztő (egyediség check)
+  - Brand szerkesztő: logo/banner upload, color picker (primary/accent/bg/text), font választó (3 preset)
+  - Hero szerkesztő: cím, alcím, CTA, hero kép
+  - About szöveg, social linkek
+  - SEO mezők
+  - "Élő előnézet" iframe `/b/{slug}?preview=true`
+  - "Publikálás kérése" gomb
+
+- **Termékek tab** (`PartnerProductsTab.tsx`)
+  - Új termék form: cím, leírás, ár, fotók (multi-upload), kategória, méret/szín variációk, készlet
+  - Termék lista státusz badge-ekkel
+  - Szerkesztés / törlés / pause
+  - "Jóváhagyásra küldés" gomb
+
+- **Rendelések tab** (`PartnerOrdersTab.tsx`)
+  - Beérkezett rendelések táblázat
+  - Részletek modal: vevő adatok, címek, tételek
+  - Státusz váltó: paid → fulfilled → shipped (tracking szám input) → delivered
+  - PDF szállítólevél/számla generálás
+
+- **Beállítások tab** (`PartnerStorefrontSettingsTab.tsx`)
+  - Szállítási zónák és díjak
+  - Fizetési módok (kártya/utánvét)
+  - Visszaküldési szabályzat saját szövege
+  - Banki adatok kifizetéshez
+
+## 5. Publikus storefront (`/b/{slug}`)
+
+Új útvonalak `App.tsx`-ben:
+
+- `/b/:slug` → `BrandStorefront.tsx` (hero + termék rács, partner brand alkalmazva CSS változókon keresztül)
+- `/b/:slug/termek/:productSlug` → `BrandProductDetail.tsx`
+- `/b/:slug/kosar` → `BrandCart.tsx`
+- `/b/:slug/checkout` → `BrandCheckout.tsx`
+- `/b/:slug/rendeles/:orderNumber` → `BrandOrderConfirmation.tsx`
+
+Új layout: `BrandStorefrontLayout.tsx` — partner saját nav, footer, brand színek inline CSS változókkal injektálva (`--brand-primary`, `--brand-accent` stb.), nincs te navbar/footer.
+
+Külön cart context: `BrandCartContext.tsx` (localStorage kulcs partner slug-gal namespacelve, hogy ne keveredjen a fő webshop kosárral).
+
+## 6. Admin felület (`AdminPartnerStorefrontsTab.tsx`)
+
+- Publikálásra váró storefrontok jóváhagyása
+- Jóváhagyásra váró termékek (preview + approve/reject indoklással)
+- Beérkezett rendelések globális nézete (partner szerint szűrhető)
+- Platform fee % beállítás (`store_settings`-be új mező)
+- Storefront kényszerített szuspenzió szabálysértés esetén
+
+## 7. Jutalékmodell
+
+A platform fee a partner minden rendelése után automatikusan számolódik:
+
+```text
+total_huf = subtotal + shipping
+platform_fee = total * (store_settings.partner_platform_fee_pct / 100)  -- default 10%
+partner_payout = total - platform_fee
+```
+
+A meglévő kupon-alapú jutalék rendszer (`partner_referrals`) megmarad: ha valaki a te fő webshopodon vásárol egy partner kuponjával, az továbbra is fix Ft jutalékot ad. A storefront rendelések ettől függetlenül kerülnek elszámolásra.
+
+## 8. Biztonság / jogi
+
+- Partner csak akkor kapja meg a storefront funkciót, ha:
+  - `partners.status = 'active'`
+  - KYC `approved`
+  - Szerződés `signed` (mindkét aláírás megvan)
+- Új jogi oldal: `/jogi/partner-storefront-szabalyzat` — partner felelőssége a saját termékeiért, fogyasztóvédelem, NAV
+- Storefront termékre kötelező: méret/anyag/származási hely megadás form-validációval
+
+## 9. Mit NEM csinálok most
+
+- Egyedi domain partnerenként (csak `/b/{slug}` aldomain helyett)
+- Stripe Connect (most a fizetés hozzád érkezik, te utalod a `partner_payout_huf`-ot manuálisan a havi kifizetésben)
+- Több nyelv partnerenként
+- Részletes analytics dashboard (csak alap KPI most)
+- Egyedi email sablonok partnerenként (most a default sablonok mennek a partner nevével)
+
+## Megerősítés
+
+Ez egy 2-3 körös, nagy ívű feature. Az első körben megépítem a DB schemát + storage bucketokat + storefront editor tabot + publikus storefront alap nézetét. A termék upload + checkout + admin jóváhagyás külön körben jön. Megerősítés után indul.
