@@ -3053,6 +3053,104 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_orders: {
+        Row: {
+          billing_address: Json | null
+          carrier: string | null
+          created_at: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string | null
+          customer_user_id: string | null
+          delivered_at: string | null
+          id: string
+          items: Json
+          notes: string | null
+          order_number: string
+          partner_id: string
+          partner_payout_huf: number
+          payment_method: string | null
+          payment_status: string | null
+          platform_fee_huf: number
+          platform_fee_pct: number
+          shipped_at: string | null
+          shipping_address: Json
+          shipping_huf: number
+          status: string
+          stripe_payment_intent: string | null
+          subtotal_huf: number
+          total_huf: number
+          tracking_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          billing_address?: Json | null
+          carrier?: string | null
+          created_at?: string
+          customer_email: string
+          customer_name: string
+          customer_phone?: string | null
+          customer_user_id?: string | null
+          delivered_at?: string | null
+          id?: string
+          items?: Json
+          notes?: string | null
+          order_number: string
+          partner_id: string
+          partner_payout_huf?: number
+          payment_method?: string | null
+          payment_status?: string | null
+          platform_fee_huf?: number
+          platform_fee_pct?: number
+          shipped_at?: string | null
+          shipping_address?: Json
+          shipping_huf?: number
+          status?: string
+          stripe_payment_intent?: string | null
+          subtotal_huf?: number
+          total_huf?: number
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          billing_address?: Json | null
+          carrier?: string | null
+          created_at?: string
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string | null
+          customer_user_id?: string | null
+          delivered_at?: string | null
+          id?: string
+          items?: Json
+          notes?: string | null
+          order_number?: string
+          partner_id?: string
+          partner_payout_huf?: number
+          payment_method?: string | null
+          payment_status?: string | null
+          platform_fee_huf?: number
+          platform_fee_pct?: number
+          shipped_at?: string | null
+          shipping_address?: Json
+          shipping_huf?: number
+          status?: string
+          stripe_payment_intent?: string | null
+          subtotal_huf?: number
+          total_huf?: number
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_orders_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_payouts: {
         Row: {
           admin_notes: string | null
@@ -3105,6 +3203,136 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "partner_payouts_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_product_variants: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          price_override_huf: number | null
+          product_id: string
+          size: string | null
+          sku: string | null
+          stock_qty: number
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          price_override_huf?: number | null
+          product_id: string
+          size?: string | null
+          sku?: string | null
+          stock_qty?: number
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          price_override_huf?: number | null
+          product_id?: string
+          size?: string | null
+          sku?: string | null
+          stock_qty?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "partner_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_products: {
+        Row: {
+          approved_at: string | null
+          category: string | null
+          compare_price_huf: number | null
+          created_at: string
+          description: string | null
+          id: string
+          images: Json
+          material: string | null
+          origin_country: string | null
+          partner_id: string
+          price_huf: number
+          rejection_reason: string | null
+          sales_count: number
+          sku: string | null
+          slug: string
+          status: Database["public"]["Enums"]["partner_product_status"]
+          stock_qty: number
+          submitted_at: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          view_count: number
+          weight_g: number | null
+        }
+        Insert: {
+          approved_at?: string | null
+          category?: string | null
+          compare_price_huf?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          images?: Json
+          material?: string | null
+          origin_country?: string | null
+          partner_id: string
+          price_huf: number
+          rejection_reason?: string | null
+          sales_count?: number
+          sku?: string | null
+          slug: string
+          status?: Database["public"]["Enums"]["partner_product_status"]
+          stock_qty?: number
+          submitted_at?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          view_count?: number
+          weight_g?: number | null
+        }
+        Update: {
+          approved_at?: string | null
+          category?: string | null
+          compare_price_huf?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          images?: Json
+          material?: string | null
+          origin_country?: string | null
+          partner_id?: string
+          price_huf?: number
+          rejection_reason?: string | null
+          sales_count?: number
+          sku?: string | null
+          slug?: string
+          status?: Database["public"]["Enums"]["partner_product_status"]
+          stock_qty?: number
+          submitted_at?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          view_count?: number
+          weight_g?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_products_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
             referencedRelation: "partners"
@@ -3215,6 +3443,181 @@ export type Database = {
             foreignKeyName: "partner_referrals_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_storefront_settings: {
+        Row: {
+          accept_card: boolean
+          accept_cod: boolean
+          bank_account_for_payouts: string | null
+          created_at: string
+          free_shipping_threshold_huf: number | null
+          id: string
+          min_order_huf: number | null
+          partner_id: string
+          return_policy_html: string | null
+          shipping_policy_html: string | null
+          shipping_rates: Json
+          shipping_zones: Json
+          updated_at: string
+          vat_included: boolean | null
+          vat_number: string | null
+        }
+        Insert: {
+          accept_card?: boolean
+          accept_cod?: boolean
+          bank_account_for_payouts?: string | null
+          created_at?: string
+          free_shipping_threshold_huf?: number | null
+          id?: string
+          min_order_huf?: number | null
+          partner_id: string
+          return_policy_html?: string | null
+          shipping_policy_html?: string | null
+          shipping_rates?: Json
+          shipping_zones?: Json
+          updated_at?: string
+          vat_included?: boolean | null
+          vat_number?: string | null
+        }
+        Update: {
+          accept_card?: boolean
+          accept_cod?: boolean
+          bank_account_for_payouts?: string | null
+          created_at?: string
+          free_shipping_threshold_huf?: number | null
+          id?: string
+          min_order_huf?: number | null
+          partner_id?: string
+          return_policy_html?: string | null
+          shipping_policy_html?: string | null
+          shipping_rates?: Json
+          shipping_zones?: Json
+          updated_at?: string
+          vat_included?: boolean | null
+          vat_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_storefront_settings_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: true
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_storefronts: {
+        Row: {
+          about_html: string | null
+          accent_color: string | null
+          banner_url: string | null
+          bg_color: string | null
+          created_at: string
+          display_name: string
+          facebook_url: string | null
+          font_body: string | null
+          font_heading: string | null
+          hero_cta_text: string | null
+          hero_image_url: string | null
+          hero_subtitle: string | null
+          hero_title: string | null
+          id: string
+          instagram_url: string | null
+          is_published: boolean
+          logo_url: string | null
+          meta_description: string | null
+          meta_title: string | null
+          og_image_url: string | null
+          partner_id: string
+          primary_color: string | null
+          publish_requested_at: string | null
+          published_at: string | null
+          rejection_reason: string | null
+          slug: string
+          tagline: string | null
+          text_color: string | null
+          theme_preset: string | null
+          tiktok_url: string | null
+          updated_at: string
+          youtube_url: string | null
+        }
+        Insert: {
+          about_html?: string | null
+          accent_color?: string | null
+          banner_url?: string | null
+          bg_color?: string | null
+          created_at?: string
+          display_name: string
+          facebook_url?: string | null
+          font_body?: string | null
+          font_heading?: string | null
+          hero_cta_text?: string | null
+          hero_image_url?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          id?: string
+          instagram_url?: string | null
+          is_published?: boolean
+          logo_url?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          og_image_url?: string | null
+          partner_id: string
+          primary_color?: string | null
+          publish_requested_at?: string | null
+          published_at?: string | null
+          rejection_reason?: string | null
+          slug: string
+          tagline?: string | null
+          text_color?: string | null
+          theme_preset?: string | null
+          tiktok_url?: string | null
+          updated_at?: string
+          youtube_url?: string | null
+        }
+        Update: {
+          about_html?: string | null
+          accent_color?: string | null
+          banner_url?: string | null
+          bg_color?: string | null
+          created_at?: string
+          display_name?: string
+          facebook_url?: string | null
+          font_body?: string | null
+          font_heading?: string | null
+          hero_cta_text?: string | null
+          hero_image_url?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          id?: string
+          instagram_url?: string | null
+          is_published?: boolean
+          logo_url?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          og_image_url?: string | null
+          partner_id?: string
+          primary_color?: string | null
+          publish_requested_at?: string | null
+          published_at?: string | null
+          rejection_reason?: string | null
+          slug?: string
+          tagline?: string | null
+          text_color?: string | null
+          theme_preset?: string | null
+          tiktok_url?: string | null
+          updated_at?: string
+          youtube_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_storefronts_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: true
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
@@ -4483,6 +4886,7 @@ export type Database = {
           order_reminder_enabled: boolean | null
           order_require_payment_proof: boolean | null
           order_workflow_steps: Json | null
+          partner_platform_fee_pct: number
           payment_card_enabled: boolean | null
           payment_cash_enabled: boolean | null
           payment_cod_enabled: boolean | null
@@ -4757,6 +5161,7 @@ export type Database = {
           order_reminder_enabled?: boolean | null
           order_require_payment_proof?: boolean | null
           order_workflow_steps?: Json | null
+          partner_platform_fee_pct?: number
           payment_card_enabled?: boolean | null
           payment_cash_enabled?: boolean | null
           payment_cod_enabled?: boolean | null
@@ -5031,6 +5436,7 @@ export type Database = {
           order_reminder_enabled?: boolean | null
           order_require_payment_proof?: boolean | null
           order_workflow_steps?: Json | null
+          partner_platform_fee_pct?: number
           payment_card_enabled?: boolean | null
           payment_cash_enabled?: boolean | null
           payment_cod_enabled?: boolean | null
@@ -6746,6 +7152,12 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "accountant" | "partner"
+      partner_product_status:
+        | "draft"
+        | "pending_review"
+        | "active"
+        | "paused"
+        | "rejected"
       tenant_status: "draft" | "active" | "suspended" | "terminated"
     }
     CompositeTypes: {
@@ -6875,6 +7287,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user", "accountant", "partner"],
+      partner_product_status: [
+        "draft",
+        "pending_review",
+        "active",
+        "paused",
+        "rejected",
+      ],
       tenant_status: ["draft", "active", "suspended", "terminated"],
     },
   },

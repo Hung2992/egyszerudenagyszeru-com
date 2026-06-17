@@ -60,6 +60,8 @@ const Impresszum = lazy(() => import("./pages/legal/Impresszum.tsx"));
 const JogiNyilatkozat = lazy(() => import("./pages/legal/JogiNyilatkozat.tsx"));
 const PartnerSzabalyzat = lazy(() => import("./pages/legal/PartnerSzabalyzat.tsx"));
 const KycAdatkezeles = lazy(() => import("./pages/legal/KycAdatkezeles.tsx"));
+const BrandStorefront = lazy(() => import("./pages/BrandStorefront.tsx"));
+const BrandProductDetail = lazy(() => import("./pages/BrandProductDetail.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -123,6 +125,8 @@ const App = () => (
             <Route path="/legal/jogi-nyilatkozat" element={<JogiNyilatkozat />} />
             <Route path="/legal/partner-szabalyzat" element={<PartnerSzabalyzat />} />
             <Route path="/legal/kyc-adatkezeles" element={<KycAdatkezeles />} />
+            <Route path="/b/:slug" element={<BrandStorefront />} />
+            <Route path="/b/:slug/termek/:productSlug" element={<BrandProductDetail />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
