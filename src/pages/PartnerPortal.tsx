@@ -11,9 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { LogOut, Copy, Check, Download, Banknote, BarChart3, Megaphone, User as UserIcon, ListChecks, RefreshCw, Link2, FileSpreadsheet } from "lucide-react";
+import { LogOut, Copy, Check, Download, Banknote, BarChart3, Megaphone, User as UserIcon, ListChecks, RefreshCw, Link2, FileSpreadsheet, Store, Package } from "lucide-react";
 import { copyToClipboard } from "@/lib/clipboard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import StorefrontEditorTab from "@/components/partner/StorefrontEditorTab";
+import PartnerProductsTab from "@/components/partner/PartnerProductsTab";
 
 interface Stats { pending_commission: number; available_commission: number; paid_total: number; total_orders: number; }
 interface Referral { id: string; created_at: string; order_id: string; coupon_code: string; order_total: number; commission_amount: number; status: string; }
@@ -249,11 +251,21 @@ const PartnerPortal = () => {
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="rounded-none w-full justify-start overflow-x-auto">
             <TabsTrigger value="overview" className="rounded-none"><BarChart3 className="h-4 w-4 mr-2" />Áttekintés</TabsTrigger>
+            <TabsTrigger value="storefront" className="rounded-none"><Store className="h-4 w-4 mr-2" />Saját webshop</TabsTrigger>
+            <TabsTrigger value="products" className="rounded-none"><Package className="h-4 w-4 mr-2" />Termékek</TabsTrigger>
             <TabsTrigger value="referrals" className="rounded-none"><ListChecks className="h-4 w-4 mr-2" />Rendelések</TabsTrigger>
             <TabsTrigger value="payouts" className="rounded-none"><Banknote className="h-4 w-4 mr-2" />Kifizetések</TabsTrigger>
             <TabsTrigger value="marketing" className="rounded-none"><Megaphone className="h-4 w-4 mr-2" />Marketing</TabsTrigger>
             <TabsTrigger value="profile" className="rounded-none"><UserIcon className="h-4 w-4 mr-2" />Profil</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="storefront" className="mt-6">
+            <StorefrontEditorTab partnerId={partner.id} />
+          </TabsContent>
+
+          <TabsContent value="products" className="mt-6">
+            <PartnerProductsTab partnerId={partner.id} />
+          </TabsContent>
 
           <TabsContent value="overview" className="mt-6 space-y-6">
             <Card className="rounded-none border-foreground/20 p-6">
