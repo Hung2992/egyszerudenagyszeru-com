@@ -37,7 +37,34 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
-    if (!invite) return json({ ok: false, error: "Nincs aktív meghívó ehhez az e-mailhez" }, 404);
+    if (!invite) {
+      // Fallback: ha a usernek van aláírt (vagy ellenjegyzésre váró) szerződése, abból hozzuk létre a partner sort.
+      const { data: contract } = await admin.from("partner_contracts")
+        .select("*")
+        .eq("user_id", user.id)
+        .in("status", ["signed", "pending_admin_countersign"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!contract) return json({ ok: false, error: "Nincs aktív meghívó vagy aláírt szerződés ehhez a fiókhoz" }, 404);
+
+      const { data: contractPartner, error: cpErr } = await admin.from("partners").insert({
+        user_id: user.id,
+        partner_type: "person",
+        full_name: contract.partner_full_name || user.email,
+        email,
+        status: "active",
+        commission_per_order_amount: 0,
+        tax_number: contract.partner_tax_id || null,
+        address: contract.partner_address || null,
+        phone: contract.partner_phone || null,
+        is_active: true,
+      }).select("id").single();
+      if (cpErr) return json({ ok: false, error: cpErr.message }, 500);
+
+      await admin.from("user_roles").upsert({ user_id: user.id, role: "partner" }, { onConflict: "user_id,role" });
+      return json({ ok: true, partner_id: contractPartner.id, status: "active", claimed: true, source: "contract" });
+    }
 
     const { data: newPartner, error: pErr } = await admin.from("partners").insert({
       user_id: user.id,
