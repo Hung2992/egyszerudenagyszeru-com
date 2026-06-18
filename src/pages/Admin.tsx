@@ -1742,6 +1742,18 @@ const Admin = () => {
             </button>
           </div>
 
+          {/* Globális admin szekció kereső (Ctrl+K) */}
+          <AdminSectionSearch
+            tabs={visibleTabs as any}
+            currentKey={tab}
+            onSelect={(k) => {
+              setTab(k as Tab);
+              setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
+            }}
+          />
+
+
+
 
           <div className="grid grid-cols-3 gap-2 sm:hidden">
             {primaryTabs.map(t => (
