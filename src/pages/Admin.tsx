@@ -16,6 +16,7 @@ import {
   MonitorSmartphone, Factory, Trophy, Rss, Database, RefreshCw, Globe as Globe2, ShieldCheck, Sparkles, Layers, Wallet, Rocket, Brain, Calculator, Building2
 } from "lucide-react";
 import AdminShippingTab from "@/components/admin/AdminShippingTab";
+import AdminSectionSearch from "@/components/admin/AdminSectionSearch";
 import AdminInventoryTab from "@/components/admin/AdminInventoryTab";
 import AdminSeoMarketingTab from "@/components/admin/AdminSeoMarketingTab";
 import AdminTranslationsTab from "@/components/admin/AdminTranslationsTab";
