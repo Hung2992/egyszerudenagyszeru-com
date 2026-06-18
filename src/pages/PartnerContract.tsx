@@ -159,8 +159,8 @@ const PartnerContract = () => {
           <div className="border p-5 bg-green-500/10 space-y-2 text-center">
             <CheckCircle2 className="w-10 h-10 mx-auto text-green-500" />
             <h2 className="font-bold">Szerződés hatályos</h2>
-            <p className="text-sm text-muted-foreground">A partner adminisztrációs felülethez való hozzáférésed aktiválva.</p>
-            <Button onClick={() => navigate("/admin")}>Admin panel megnyitása</Button>
+            <p className="text-sm text-muted-foreground">A partner felülethez való hozzáférésed aktiválva. Itt tudod létrehozni a saját webshopodat.</p>
+            <Button onClick={() => navigate("/partner")}>Partner felület megnyitása</Button>
           </div>
         )}
       </div>
