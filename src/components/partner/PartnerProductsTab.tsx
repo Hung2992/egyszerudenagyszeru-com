@@ -307,6 +307,13 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
               </div>
             )}
 
+            {/* Típus-specifikus jellemzők + egyéni attribútumok */}
+            <ProductAttributesFields
+              productType={form.product_type}
+              attributes={form.attributes || {}}
+              setAttributes={(a) => setForm({ ...form, attributes: a })}
+            />
+
             <div className="grid grid-cols-2 gap-2">
               <div><Label>Anyag</Label><Input className="rounded-none" value={form.material} onChange={e => setForm({ ...form, material: e.target.value })} placeholder="pl. 100% pamut / szilikon" /></div>
               <div><Label>Származási hely</Label><Input className="rounded-none" value={form.origin_country} onChange={e => setForm({ ...form, origin_country: e.target.value })} placeholder="pl. Magyarország" /></div>
