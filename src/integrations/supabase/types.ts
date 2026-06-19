@@ -3257,18 +3257,24 @@ export type Database = {
       partner_products: {
         Row: {
           approved_at: string | null
+          attributes: Json
+          brand: string | null
           category: string | null
           compare_price_huf: number | null
+          compatible_devices: Json
           created_at: string
           description: string | null
           id: string
           images: Json
           material: string | null
+          model: string | null
           origin_country: string | null
           partner_id: string
           price_huf: number
+          product_type: string
           rejection_reason: string | null
           sales_count: number
+          sizes: Json
           sku: string | null
           slug: string
           status: Database["public"]["Enums"]["partner_product_status"]
@@ -3282,18 +3288,24 @@ export type Database = {
         }
         Insert: {
           approved_at?: string | null
+          attributes?: Json
+          brand?: string | null
           category?: string | null
           compare_price_huf?: number | null
+          compatible_devices?: Json
           created_at?: string
           description?: string | null
           id?: string
           images?: Json
           material?: string | null
+          model?: string | null
           origin_country?: string | null
           partner_id: string
           price_huf: number
+          product_type?: string
           rejection_reason?: string | null
           sales_count?: number
+          sizes?: Json
           sku?: string | null
           slug: string
           status?: Database["public"]["Enums"]["partner_product_status"]
@@ -3307,18 +3319,24 @@ export type Database = {
         }
         Update: {
           approved_at?: string | null
+          attributes?: Json
+          brand?: string | null
           category?: string | null
           compare_price_huf?: number | null
+          compatible_devices?: Json
           created_at?: string
           description?: string | null
           id?: string
           images?: Json
           material?: string | null
+          model?: string | null
           origin_country?: string | null
           partner_id?: string
           price_huf?: number
+          product_type?: string
           rejection_reason?: string | null
           sales_count?: number
+          sizes?: Json
           sku?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["partner_product_status"]
@@ -4194,6 +4212,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      product_type_catalog: {
+        Row: {
+          brand: string | null
+          category: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          model: string | null
+          product_type: string
+          sort_order: number
+        }
+        Insert: {
+          brand?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          model?: string | null
+          product_type: string
+          sort_order?: number
+        }
+        Update: {
+          brand?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          model?: string | null
+          product_type?: string
+          sort_order?: number
+        }
+        Relationships: []
       }
       product_variants: {
         Row: {
