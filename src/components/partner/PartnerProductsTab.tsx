@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import { Plus, Trash2, Send, X, Edit3, Check } from "lucide-react";
 import { uploadPartnerMedia } from "@/lib/partner-storage";
 import MediaImage from "./MediaImage";
+import ProductAttributesFields from "./ProductAttributesFields";
 
 interface Props { partnerId: string; }
 
@@ -305,6 +306,13 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
                 <div><Label>Modell / kollekció</Label><Input className="rounded-none" value={form.model} onChange={e => setForm({ ...form, model: e.target.value })} /></div>
               </div>
             )}
+
+            {/* Típus-specifikus jellemzők + egyéni attribútumok */}
+            <ProductAttributesFields
+              productType={form.product_type}
+              attributes={form.attributes || {}}
+              setAttributes={(a) => setForm({ ...form, attributes: a })}
+            />
 
             <div className="grid grid-cols-2 gap-2">
               <div><Label>Anyag</Label><Input className="rounded-none" value={form.material} onChange={e => setForm({ ...form, material: e.target.value })} placeholder="pl. 100% pamut / szilikon" /></div>
