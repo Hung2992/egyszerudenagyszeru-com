@@ -27,6 +27,7 @@ const empty: any = {
   material: "", origin_country: "", tags: [], images: [],
   product_type: "clothing", brand: "", model: "",
   sizes: [], compatible_devices: [], attributes: {},
+  care_instructions: "", manufacturer: "", primary_image: 0,
 };
 
 interface CatalogRow { product_type: string; label: string; brand: string | null; model: string | null; category: string | null; }
