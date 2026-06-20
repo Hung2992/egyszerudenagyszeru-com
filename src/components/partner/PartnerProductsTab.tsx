@@ -357,19 +357,30 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
             <div className="grid grid-cols-2 gap-2">
               <div><Label>Anyag</Label><Input className="rounded-none" value={form.material} onChange={e => setForm({ ...form, material: e.target.value })} placeholder="pl. 100% pamut / szilikon" /></div>
               <div><Label>Származási hely</Label><Input className="rounded-none" value={form.origin_country} onChange={e => setForm({ ...form, origin_country: e.target.value })} placeholder="pl. Magyarország" /></div>
+              <div><Label>Gyártó</Label><Input className="rounded-none" value={form.manufacturer} onChange={e => setForm({ ...form, manufacturer: e.target.value })} placeholder="pl. NagyszerűWear Kft." /></div>
+              <div><Label>Ápolási útmutató</Label><Input className="rounded-none" value={form.care_instructions} onChange={e => setForm({ ...form, care_instructions: e.target.value })} placeholder="pl. 30°C mosás, ne vasald" /></div>
             </div>
 
             <div>
-              <Label>Képek</Label>
+              <Label>Képek (kattints csillagra a főkép kijelöléshez)</Label>
               <Input type="file" multiple accept="image/*" className="rounded-none" onChange={e => e.target.files && handleImageUpload(e.target.files)} disabled={uploading} />
               {uploading && <div className="text-xs text-muted-foreground mt-1">Feltöltés…</div>}
               <div className="grid grid-cols-4 gap-2 mt-2">
-                {form.images?.map((p: string, i: number) => (
-                  <div key={i} className="relative aspect-square border">
-                    <MediaImage bucket="partner-product-images" path={p} className="w-full h-full object-cover" />
-                    <button type="button" onClick={() => removeImage(i)} className="absolute top-0 right-0 bg-destructive text-white p-1"><X className="h-3 w-3" /></button>
-                  </div>
-                ))}
+                {form.images?.map((p: string, i: number) => {
+                  const isPrimary = (form.primary_image || 0) === i;
+                  return (
+                    <div key={i} className={`relative aspect-square border ${isPrimary ? "border-accent border-2" : "border-foreground/20"}`}>
+                      <MediaImage bucket="partner-product-images" path={p} className="w-full h-full object-cover" />
+                      {isPrimary && <span className="absolute top-0 left-0 bg-accent text-accent-foreground text-[9px] px-1 py-0.5 font-bold uppercase">Főkép</span>}
+                      <div className="absolute bottom-0 inset-x-0 flex">
+                        <button type="button" className="flex-1 bg-background/80 text-[10px] py-0.5" onClick={() => setForm({ ...form, primary_image: i })}>★</button>
+                        <button type="button" className="flex-1 bg-background/80 text-[10px] py-0.5" onClick={() => { if (i > 0) { const arr = [...form.images]; [arr[i-1], arr[i]] = [arr[i], arr[i-1]]; setForm({ ...form, images: arr }); } }}>←</button>
+                        <button type="button" className="flex-1 bg-background/80 text-[10px] py-0.5" onClick={() => { if (i < form.images.length - 1) { const arr = [...form.images]; [arr[i+1], arr[i]] = [arr[i], arr[i+1]]; setForm({ ...form, images: arr }); } }}>→</button>
+                      </div>
+                      <button type="button" onClick={() => removeImage(i)} className="absolute top-0 right-0 bg-destructive text-white p-1"><X className="h-3 w-3" /></button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
