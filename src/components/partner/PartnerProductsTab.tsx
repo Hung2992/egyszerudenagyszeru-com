@@ -315,6 +315,24 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
               setAttributes={(a) => setForm({ ...form, attributes: a })}
             />
 
+            {/* Variánsok mátrix: méret/modell × szín × készlet */}
+            <VariantMatrix
+              mode={isCase ? "device" : isClothing ? "size" : "simple"}
+              sizes={form.sizes || []}
+              devices={form.compatible_devices || []}
+              colors={(form.attributes?.colors as string[]) || []}
+              setColors={(c) => setForm({ ...form, attributes: { ...(form.attributes || {}), colors: c } })}
+              variants={(form.attributes?.variants as Variant[]) || []}
+              setVariants={(v) => {
+                const total = v.reduce((s, x) => s + (Number(x.stock) || 0), 0);
+                setForm({
+                  ...form,
+                  attributes: { ...(form.attributes || {}), variants: v },
+                  stock_qty: total || form.stock_qty,
+                });
+              }}
+            />
+
             <div className="grid grid-cols-2 gap-2">
               <div><Label>Anyag</Label><Input className="rounded-none" value={form.material} onChange={e => setForm({ ...form, material: e.target.value })} placeholder="pl. 100% pamut / szilikon" /></div>
               <div><Label>Származási hely</Label><Input className="rounded-none" value={form.origin_country} onChange={e => setForm({ ...form, origin_country: e.target.value })} placeholder="pl. Magyarország" /></div>
