@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Wand2, Trash2 } from "lucide-react";
 
 export interface Variant {
   size?: string;
@@ -14,26 +14,28 @@ export interface Variant {
 }
 
 interface Props {
-  sizes: string[];          // selected sizes (for clothing/shoes)
-  devices: { brand: string; model: string }[]; // for cases/protectors
+  sizes: string[];
+  devices: { brand: string; model: string }[];
   colors: string[];
   setColors: (c: string[]) => void;
   variants: Variant[];
   setVariants: (v: Variant[]) => void;
-  mode: "size" | "device" | "simple"; // simple = just colors
+  mode: "size" | "device" | "simple";
 }
+
+const COLOR_PRESETS = ["Fekete", "Fehér", "Szürke", "Bézs", "Barna", "Kék", "Piros", "Zöld", "Sárga", "Rózsaszín", "Lila", "Narancs", "Arany", "Ezüst"];
 
 const keyOf = (v: { size?: string; color?: string; brand?: string; model?: string }) =>
   `${v.size || ""}|${v.color || ""}|${v.brand || ""}|${v.model || ""}`;
 
 const VariantMatrix = ({ sizes, devices, colors, setColors, variants, setVariants, mode }: Props) => {
   const [newColor, setNewColor] = useState("");
+  const [bulkStock, setBulkStock] = useState(10);
 
-  const addColor = () => {
-    const c = newColor.trim();
-    if (!c || colors.includes(c)) return;
-    setColors([...colors, c]);
-    setNewColor("");
+  const addColor = (c: string) => {
+    const v = c.trim();
+    if (!v || colors.includes(v)) return;
+    setColors([...colors, v]);
   };
   const removeColor = (c: string) => {
     setColors(colors.filter((x) => x !== c));
@@ -61,6 +63,19 @@ const VariantMatrix = ({ sizes, devices, colors, setColors, variants, setVariant
       ? devices.map((d) => ({ label: `${d.brand} ${d.model}`, row: { brand: d.brand, model: d.model } }))
       : [{ label: "—", row: {} }];
 
+  const generateMatrix = () => {
+    const next: Variant[] = [];
+    for (const { row } of rows) {
+      for (const c of colors) {
+        const existing = variants.find((v) => keyOf(v) === keyOf({ ...row, color: c }));
+        next.push(existing ? existing : { ...row, color: c, stock: bulkStock });
+      }
+    }
+    setVariants(next);
+  };
+
+  const clearAll = () => setVariants([]);
+
   const total = variants.reduce((s, v) => s + (Number(v.stock) || 0), 0);
 
   return (
@@ -71,23 +86,53 @@ const VariantMatrix = ({ sizes, devices, colors, setColors, variants, setVariant
       </div>
 
       <div>
-        <Label className="text-xs">Színek</Label>
-        <div className="flex gap-1 mt-1">
-          <Input className="rounded-none h-9" placeholder="pl. fekete" value={newColor}
+        <Label className="text-xs uppercase tracking-wider mb-2 block">Színek (kattints a preset chipre vagy írj egyedit)</Label>
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {COLOR_PRESETS.map((c) => {
+            const on = colors.includes(c);
+            return (
+              <button type="button" key={c}
+                onClick={() => on ? removeColor(c) : addColor(c)}
+                className={`px-2.5 py-1 text-[11px] font-bold border ${on ? "bg-accent text-accent-foreground border-accent" : "border-foreground/20 hover:border-foreground"}`}>
+                {c}
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex gap-1">
+          <Input className="rounded-none h-9" placeholder="Egyedi szín (pl. neon zöld)" value={newColor}
             onChange={(e) => setNewColor(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addColor(); } }} />
-          <Button type="button" className="rounded-none h-9" onClick={addColor}><Plus className="h-3 w-3" /></Button>
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addColor(newColor); setNewColor(""); } }} />
+          <Button type="button" className="rounded-none h-9" onClick={() => { addColor(newColor); setNewColor(""); }}><Plus className="h-3 w-3" /></Button>
         </div>
-        <div className="flex flex-wrap gap-1 mt-2">
-          {colors.map((c) => (
-            <span key={c} className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-foreground/20">
-              {c}
-              <button type="button" onClick={() => removeColor(c)}><X className="h-3 w-3 text-destructive" /></button>
-            </span>
-          ))}
-          {colors.length === 0 && <span className="text-[10px] text-muted-foreground">Adj hozzá legalább egy színt</span>}
-        </div>
+        {colors.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {colors.filter(c => !COLOR_PRESETS.includes(c)).map((c) => (
+              <span key={c} className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-foreground/20">
+                {c}
+                <button type="button" onClick={() => removeColor(c)}><X className="h-3 w-3 text-destructive" /></button>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
+
+      {colors.length > 0 && rows.length > 0 && (
+        <div className="flex flex-wrap gap-2 items-end border-t border-foreground/10 pt-2">
+          <div>
+            <Label className="text-[10px] uppercase tracking-wider">Mátrix kitöltés</Label>
+            <Input type="number" min={0} className="rounded-none h-9 w-24" value={bulkStock} onChange={(e) => setBulkStock(Number(e.target.value) || 0)} />
+          </div>
+          <Button type="button" variant="outline" className="rounded-none h-9 text-xs" onClick={generateMatrix}>
+            <Wand2 className="h-3 w-3 mr-1" /> Méret×szín kitöltése ({bulkStock} db)
+          </Button>
+          {variants.length > 0 && (
+            <Button type="button" variant="ghost" className="rounded-none h-9 text-xs" onClick={clearAll}>
+              <Trash2 className="h-3 w-3 mr-1 text-destructive" /> Mátrix törlése
+            </Button>
+          )}
+        </div>
+      )}
 
       {colors.length > 0 && rows.length > 0 && (
         <div className="overflow-x-auto">
@@ -113,6 +158,7 @@ const VariantMatrix = ({ sizes, devices, colors, setColors, variants, setVariant
                         min={0}
                         className="rounded-none h-8 text-xs text-center"
                         value={getVar(row, c).stock || ""}
+                        onFocus={(e) => e.target.select()}
                         onChange={(e) => setStock(row, c, Number(e.target.value) || 0)}
                       />
                     </td>
@@ -126,7 +172,7 @@ const VariantMatrix = ({ sizes, devices, colors, setColors, variants, setVariant
 
       {mode !== "simple" && rows.length === 0 && (
         <div className="text-[10px] text-muted-foreground">
-          {mode === "size" ? "Válassz méreteket fent" : "Válassz kompatibilis modelleket fent"}
+          {mode === "size" ? "Válassz méreteket fent (preset vagy egyedi)" : "Válassz kompatibilis modelleket fent"}
         </div>
       )}
     </div>
