@@ -40,6 +40,7 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
   const [form, setForm] = useState<any>(empty);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [customSize, setCustomSize] = useState("");
 
   const load = async () => {
     const { data } = await supabase.from("partner_products").select("*").eq("partner_id", partnerId).order("created_at", { ascending: false });
