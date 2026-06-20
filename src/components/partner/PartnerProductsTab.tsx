@@ -62,7 +62,15 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
   const startNew = () => { setEditing(null); setForm(empty); setOpen(true); };
   const startEdit = (p: any) => {
     setEditing(p);
-    setForm({ ...empty, ...p, images: p.images || [], sizes: p.sizes || [], compatible_devices: p.compatible_devices || [], attributes: p.attributes || {} });
+    const attrs = p.attributes || {};
+    setForm({
+      ...empty, ...p,
+      images: p.images || [], sizes: p.sizes || [], compatible_devices: p.compatible_devices || [],
+      attributes: attrs,
+      care_instructions: attrs.care_instructions || "",
+      manufacturer: attrs.manufacturer || "",
+      primary_image: attrs.primary_image || 0,
+    });
     setOpen(true);
   };
 
