@@ -246,11 +246,11 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
             </div>
 
             {/* Ruha / cipő méretek */}
-            {isClothing && sizeOptions.length > 0 && (
+            {isClothing && (
               <div>
-                <Label>Elérhető méretek</Label>
+                <Label>Elérhető méretek (preset chipek + egyedi)</Label>
                 <div className="flex flex-wrap gap-2 mt-1">
-                  {sizeOptions.map(s => {
+                  {Array.from(new Set([...sizeOptions, ...form.sizes])).map(s => {
                     const on = form.sizes.includes(s);
                     return (
                       <button type="button" key={s} onClick={() => toggleSize(s)}
@@ -259,6 +259,12 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
                       </button>
                     );
                   })}
+                </div>
+                <div className="flex gap-1 mt-2 max-w-xs">
+                  <Input className="rounded-none h-9" placeholder="Egyedi méret (pl. 46, 32/34)" value={customSize}
+                    onChange={e => setCustomSize(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); const v = customSize.trim(); if (v && !form.sizes.includes(v)) setForm({ ...form, sizes: [...form.sizes, v] }); setCustomSize(""); } }} />
+                  <Button type="button" className="rounded-none h-9" onClick={() => { const v = customSize.trim(); if (v && !form.sizes.includes(v)) setForm({ ...form, sizes: [...form.sizes, v] }); setCustomSize(""); }}><Plus className="h-3 w-3" /></Button>
                 </div>
               </div>
             )}
