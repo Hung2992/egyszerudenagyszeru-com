@@ -113,7 +113,12 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
       brand: form.brand || null, model: form.model || null,
       sizes: form.sizes || [],
       compatible_devices: form.compatible_devices || [],
-      attributes: form.attributes || {},
+      attributes: {
+        ...(form.attributes || {}),
+        care_instructions: form.care_instructions || "",
+        manufacturer: form.manufacturer || "",
+        primary_image: form.primary_image || 0,
+      },
       status: submit ? "pending_review" : "draft",
     };
     const op = editing
