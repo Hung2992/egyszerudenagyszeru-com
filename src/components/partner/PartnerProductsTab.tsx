@@ -13,6 +13,7 @@ import { Plus, Trash2, Send, X, Edit3, Check } from "lucide-react";
 import { uploadPartnerMedia } from "@/lib/partner-storage";
 import MediaImage from "./MediaImage";
 import ProductAttributesFields from "./ProductAttributesFields";
+import VariantMatrix, { Variant } from "./VariantMatrix";
 
 interface Props { partnerId: string; }
 
@@ -312,6 +313,24 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
               productType={form.product_type}
               attributes={form.attributes || {}}
               setAttributes={(a) => setForm({ ...form, attributes: a })}
+            />
+
+            {/* Variánsok mátrix: méret/modell × szín × készlet */}
+            <VariantMatrix
+              mode={isCase ? "device" : isClothing ? "size" : "simple"}
+              sizes={form.sizes || []}
+              devices={form.compatible_devices || []}
+              colors={(form.attributes?.colors as string[]) || []}
+              setColors={(c) => setForm({ ...form, attributes: { ...(form.attributes || {}), colors: c } })}
+              variants={(form.attributes?.variants as Variant[]) || []}
+              setVariants={(v) => {
+                const total = v.reduce((s, x) => s + (Number(x.stock) || 0), 0);
+                setForm({
+                  ...form,
+                  attributes: { ...(form.attributes || {}), variants: v },
+                  stock_qty: total || form.stock_qty,
+                });
+              }}
             />
 
             <div className="grid grid-cols-2 gap-2">
