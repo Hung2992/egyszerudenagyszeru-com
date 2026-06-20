@@ -27,6 +27,7 @@ const empty: any = {
   material: "", origin_country: "", tags: [], images: [],
   product_type: "clothing", brand: "", model: "",
   sizes: [], compatible_devices: [], attributes: {},
+  care_instructions: "", manufacturer: "", primary_image: 0,
 };
 
 interface CatalogRow { product_type: string; label: string; brand: string | null; model: string | null; category: string | null; }
@@ -39,6 +40,7 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
   const [form, setForm] = useState<any>(empty);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [customSize, setCustomSize] = useState("");
 
   const load = async () => {
     const { data } = await supabase.from("partner_products").select("*").eq("partner_id", partnerId).order("created_at", { ascending: false });
@@ -60,7 +62,15 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
   const startNew = () => { setEditing(null); setForm(empty); setOpen(true); };
   const startEdit = (p: any) => {
     setEditing(p);
-    setForm({ ...empty, ...p, images: p.images || [], sizes: p.sizes || [], compatible_devices: p.compatible_devices || [], attributes: p.attributes || {} });
+    const attrs = p.attributes || {};
+    setForm({
+      ...empty, ...p,
+      images: p.images || [], sizes: p.sizes || [], compatible_devices: p.compatible_devices || [],
+      attributes: attrs,
+      care_instructions: attrs.care_instructions || "",
+      manufacturer: attrs.manufacturer || "",
+      primary_image: attrs.primary_image || 0,
+    });
     setOpen(true);
   };
 
@@ -111,7 +121,12 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
       brand: form.brand || null, model: form.model || null,
       sizes: form.sizes || [],
       compatible_devices: form.compatible_devices || [],
-      attributes: form.attributes || {},
+      attributes: {
+        ...(form.attributes || {}),
+        care_instructions: form.care_instructions || "",
+        manufacturer: form.manufacturer || "",
+        primary_image: form.primary_image || 0,
+      },
       status: submit ? "pending_review" : "draft",
     };
     const op = editing
@@ -231,11 +246,11 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
             </div>
 
             {/* Ruha / cipő méretek */}
-            {isClothing && sizeOptions.length > 0 && (
+            {isClothing && (
               <div>
-                <Label>Elérhető méretek</Label>
+                <Label>Elérhető méretek (preset chipek + egyedi)</Label>
                 <div className="flex flex-wrap gap-2 mt-1">
-                  {sizeOptions.map(s => {
+                  {Array.from(new Set([...sizeOptions, ...form.sizes])).map(s => {
                     const on = form.sizes.includes(s);
                     return (
                       <button type="button" key={s} onClick={() => toggleSize(s)}
@@ -244,6 +259,12 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
                       </button>
                     );
                   })}
+                </div>
+                <div className="flex gap-1 mt-2 max-w-xs">
+                  <Input className="rounded-none h-9" placeholder="Egyedi méret (pl. 46, 32/34)" value={customSize}
+                    onChange={e => setCustomSize(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); const v = customSize.trim(); if (v && !form.sizes.includes(v)) setForm({ ...form, sizes: [...form.sizes, v] }); setCustomSize(""); } }} />
+                  <Button type="button" className="rounded-none h-9" onClick={() => { const v = customSize.trim(); if (v && !form.sizes.includes(v)) setForm({ ...form, sizes: [...form.sizes, v] }); setCustomSize(""); }}><Plus className="h-3 w-3" /></Button>
                 </div>
               </div>
             )}
@@ -336,19 +357,30 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
             <div className="grid grid-cols-2 gap-2">
               <div><Label>Anyag</Label><Input className="rounded-none" value={form.material} onChange={e => setForm({ ...form, material: e.target.value })} placeholder="pl. 100% pamut / szilikon" /></div>
               <div><Label>Származási hely</Label><Input className="rounded-none" value={form.origin_country} onChange={e => setForm({ ...form, origin_country: e.target.value })} placeholder="pl. Magyarország" /></div>
+              <div><Label>Gyártó</Label><Input className="rounded-none" value={form.manufacturer} onChange={e => setForm({ ...form, manufacturer: e.target.value })} placeholder="pl. NagyszerűWear Kft." /></div>
+              <div><Label>Ápolási útmutató</Label><Input className="rounded-none" value={form.care_instructions} onChange={e => setForm({ ...form, care_instructions: e.target.value })} placeholder="pl. 30°C mosás, ne vasald" /></div>
             </div>
 
             <div>
-              <Label>Képek</Label>
+              <Label>Képek (kattints csillagra a főkép kijelöléshez)</Label>
               <Input type="file" multiple accept="image/*" className="rounded-none" onChange={e => e.target.files && handleImageUpload(e.target.files)} disabled={uploading} />
               {uploading && <div className="text-xs text-muted-foreground mt-1">Feltöltés…</div>}
               <div className="grid grid-cols-4 gap-2 mt-2">
-                {form.images?.map((p: string, i: number) => (
-                  <div key={i} className="relative aspect-square border">
-                    <MediaImage bucket="partner-product-images" path={p} className="w-full h-full object-cover" />
-                    <button type="button" onClick={() => removeImage(i)} className="absolute top-0 right-0 bg-destructive text-white p-1"><X className="h-3 w-3" /></button>
-                  </div>
-                ))}
+                {form.images?.map((p: string, i: number) => {
+                  const isPrimary = (form.primary_image || 0) === i;
+                  return (
+                    <div key={i} className={`relative aspect-square border ${isPrimary ? "border-accent border-2" : "border-foreground/20"}`}>
+                      <MediaImage bucket="partner-product-images" path={p} className="w-full h-full object-cover" />
+                      {isPrimary && <span className="absolute top-0 left-0 bg-accent text-accent-foreground text-[9px] px-1 py-0.5 font-bold uppercase">Főkép</span>}
+                      <div className="absolute bottom-0 inset-x-0 flex">
+                        <button type="button" className="flex-1 bg-background/80 text-[10px] py-0.5" onClick={() => setForm({ ...form, primary_image: i })}>★</button>
+                        <button type="button" className="flex-1 bg-background/80 text-[10px] py-0.5" onClick={() => { if (i > 0) { const arr = [...form.images]; [arr[i-1], arr[i]] = [arr[i], arr[i-1]]; setForm({ ...form, images: arr }); } }}>←</button>
+                        <button type="button" className="flex-1 bg-background/80 text-[10px] py-0.5" onClick={() => { if (i < form.images.length - 1) { const arr = [...form.images]; [arr[i+1], arr[i]] = [arr[i], arr[i+1]]; setForm({ ...form, images: arr }); } }}>→</button>
+                      </div>
+                      <button type="button" onClick={() => removeImage(i)} className="absolute top-0 right-0 bg-destructive text-white p-1"><X className="h-3 w-3" /></button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
