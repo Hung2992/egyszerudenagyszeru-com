@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { Instagram, Music2, Facebook, Youtube, ShoppingBag } from "lucide-react";
 import MediaImage from "@/components/partner/MediaImage";
@@ -34,15 +34,7 @@ const BrandStorefront = () => {
   }, [slug]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-black text-white">Betöltés…</div>;
-  if (notFound) return (
-    <div className="min-h-screen flex items-center justify-center bg-black text-white p-4">
-      <div className="text-center space-y-3">
-        <h1 className="text-3xl font-bold uppercase">Nincs ilyen márka</h1>
-        <p className="text-sm opacity-70">A keresett storefront nem található vagy nincs publikálva.</p>
-        <Link to="/" className="underline text-sm">Vissza a főoldalra</Link>
-      </div>
-    </div>
-  );
+  if (notFound) return <Navigate to="/" replace />;
 
   const css = {
     "--brand-bg": sf.bg_color, "--brand-text": sf.text_color,
