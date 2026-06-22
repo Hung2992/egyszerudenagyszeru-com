@@ -3,9 +3,11 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { Instagram, Music2, Facebook, Youtube, ShoppingBag } from "lucide-react";
 import MediaImage from "@/components/partner/MediaImage";
+import { getPartnerSlugFromHostname } from "@/lib/partner-subdomain";
 
 const BrandStorefront = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const params = useParams<{ slug: string }>();
+  const slug = params.slug || getPartnerSlugFromHostname() || undefined;
   const [sf, setSf] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
