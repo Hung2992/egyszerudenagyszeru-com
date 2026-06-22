@@ -132,7 +132,15 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
           <div>
             <Label className="text-xs uppercase">URL slug *</Label>
             <Input className="rounded-none font-mono" value={sf.slug} onChange={e => set("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} placeholder="pl. john-streetwear" />
-            <p className="text-[10px] text-muted-foreground mt-1">/b/{sf.slug || "..."}</p>
+            <div className="mt-2 space-y-1 text-[11px]">
+              <div className="font-bold uppercase tracking-widest text-muted-foreground">A te címeid:</div>
+              {subdomainUrl && (
+                <a href={subdomainUrl} target="_blank" rel="noreferrer" className="block font-mono underline text-accent">
+                  {sf.slug}.egyszerudenagyszeru.com
+                </a>
+              )}
+              <div className="font-mono text-muted-foreground">egyszerudenagyszeru.com/b/{sf.slug || "..."}</div>
+            </div>
           </div>
           <div>
             <Label className="text-xs uppercase">Márka neve *</Label>
