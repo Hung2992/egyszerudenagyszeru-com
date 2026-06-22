@@ -9,8 +9,10 @@ import Index from "./pages/Index.tsx";
 import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner.tsx";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { useReferralCapture } from "@/hooks/useReferralCapture";
+import { getPartnerSlugFromHostname } from "@/lib/partner-subdomain";
 
 const PageTracker = () => { usePageTracking(); useReferralCapture(); return null; };
+const partnerSubdomainSlug = getPartnerSlugFromHostname();
 
 // Lazy-loaded components that appear with delay or on interaction
 const CartDrawer = lazy(() => import("@/components/CartDrawer"));
@@ -84,7 +86,8 @@ const App = () => (
           </Suspense>
           <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-background text-foreground"><div className="h-6 w-6 animate-spin rounded-none border-2 border-foreground border-t-transparent" /></div>}>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={partnerSubdomainSlug ? <BrandStorefront /> : <Index />} />
+            <Route path="/termek/:productSlug" element={partnerSubdomainSlug ? <BrandProductDetail /> : <NotFound />} />
             <Route path="/index" element={<Navigate to="/" replace />} />
             <Route path="/index.html" element={<Navigate to="/" replace />} />
             <Route path="/auth" element={<Auth />} />
