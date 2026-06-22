@@ -97,6 +97,7 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
   if (!sf) return <div className="text-sm text-muted-foreground">Betöltés…</div>;
 
   const previewUrl = sf.slug ? `${window.location.origin}/b/${sf.slug}` : null;
+  const subdomainUrl = sf.slug ? `https://${sf.slug}.egyszerudenagyszeru.com` : null;
 
   return (
     <div className="space-y-6">
