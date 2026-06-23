@@ -3537,10 +3537,19 @@ export type Database = {
           created_at: string
           display_name: string
           facebook_url: string | null
+          featured_product_ids: Json
+          featured_products_enabled: boolean
+          featured_products_title: string | null
           font_body: string | null
           font_heading: string | null
+          footer_links: Json
+          footer_text: string | null
+          hero_badge_enabled: boolean
+          hero_badge_text: string | null
           hero_cta_text: string | null
           hero_image_url: string | null
+          hero_layout: string
+          hero_overlay_opacity: number
           hero_subtitle: string | null
           hero_title: string | null
           id: string
@@ -3549,17 +3558,38 @@ export type Database = {
           logo_url: string | null
           meta_description: string | null
           meta_title: string | null
+          newsletter_enabled: boolean
+          newsletter_subtitle: string | null
+          newsletter_title: string | null
           og_image_url: string | null
           partner_id: string
           primary_color: string | null
           publish_requested_at: string | null
           published_at: string | null
           rejection_reason: string | null
+          section1_cta_text: string | null
+          section1_cta_url: string | null
+          section1_enabled: boolean
+          section1_image_url: string | null
+          section1_subtitle: string | null
+          section1_title: string | null
+          section2_cta_text: string | null
+          section2_cta_url: string | null
+          section2_enabled: boolean
+          section2_image_url: string | null
+          section2_subtitle: string | null
+          section2_title: string | null
           slug: string
           tagline: string | null
+          testimonials: Json
+          testimonials_enabled: boolean
+          testimonials_title: string | null
           text_color: string | null
           theme_preset: string | null
           tiktok_url: string | null
+          topbar_enabled: boolean
+          topbar_icon: string | null
+          topbar_text: string | null
           updated_at: string
           youtube_url: string | null
         }
@@ -3571,10 +3601,19 @@ export type Database = {
           created_at?: string
           display_name: string
           facebook_url?: string | null
+          featured_product_ids?: Json
+          featured_products_enabled?: boolean
+          featured_products_title?: string | null
           font_body?: string | null
           font_heading?: string | null
+          footer_links?: Json
+          footer_text?: string | null
+          hero_badge_enabled?: boolean
+          hero_badge_text?: string | null
           hero_cta_text?: string | null
           hero_image_url?: string | null
+          hero_layout?: string
+          hero_overlay_opacity?: number
           hero_subtitle?: string | null
           hero_title?: string | null
           id?: string
@@ -3583,17 +3622,38 @@ export type Database = {
           logo_url?: string | null
           meta_description?: string | null
           meta_title?: string | null
+          newsletter_enabled?: boolean
+          newsletter_subtitle?: string | null
+          newsletter_title?: string | null
           og_image_url?: string | null
           partner_id: string
           primary_color?: string | null
           publish_requested_at?: string | null
           published_at?: string | null
           rejection_reason?: string | null
+          section1_cta_text?: string | null
+          section1_cta_url?: string | null
+          section1_enabled?: boolean
+          section1_image_url?: string | null
+          section1_subtitle?: string | null
+          section1_title?: string | null
+          section2_cta_text?: string | null
+          section2_cta_url?: string | null
+          section2_enabled?: boolean
+          section2_image_url?: string | null
+          section2_subtitle?: string | null
+          section2_title?: string | null
           slug: string
           tagline?: string | null
+          testimonials?: Json
+          testimonials_enabled?: boolean
+          testimonials_title?: string | null
           text_color?: string | null
           theme_preset?: string | null
           tiktok_url?: string | null
+          topbar_enabled?: boolean
+          topbar_icon?: string | null
+          topbar_text?: string | null
           updated_at?: string
           youtube_url?: string | null
         }
@@ -3605,10 +3665,19 @@ export type Database = {
           created_at?: string
           display_name?: string
           facebook_url?: string | null
+          featured_product_ids?: Json
+          featured_products_enabled?: boolean
+          featured_products_title?: string | null
           font_body?: string | null
           font_heading?: string | null
+          footer_links?: Json
+          footer_text?: string | null
+          hero_badge_enabled?: boolean
+          hero_badge_text?: string | null
           hero_cta_text?: string | null
           hero_image_url?: string | null
+          hero_layout?: string
+          hero_overlay_opacity?: number
           hero_subtitle?: string | null
           hero_title?: string | null
           id?: string
@@ -3617,17 +3686,38 @@ export type Database = {
           logo_url?: string | null
           meta_description?: string | null
           meta_title?: string | null
+          newsletter_enabled?: boolean
+          newsletter_subtitle?: string | null
+          newsletter_title?: string | null
           og_image_url?: string | null
           partner_id?: string
           primary_color?: string | null
           publish_requested_at?: string | null
           published_at?: string | null
           rejection_reason?: string | null
+          section1_cta_text?: string | null
+          section1_cta_url?: string | null
+          section1_enabled?: boolean
+          section1_image_url?: string | null
+          section1_subtitle?: string | null
+          section1_title?: string | null
+          section2_cta_text?: string | null
+          section2_cta_url?: string | null
+          section2_enabled?: boolean
+          section2_image_url?: string | null
+          section2_subtitle?: string | null
+          section2_title?: string | null
           slug?: string
           tagline?: string | null
+          testimonials?: Json
+          testimonials_enabled?: boolean
+          testimonials_title?: string | null
           text_color?: string | null
           theme_preset?: string | null
           tiktok_url?: string | null
+          topbar_enabled?: boolean
+          topbar_icon?: string | null
+          topbar_text?: string | null
           updated_at?: string
           youtube_url?: string | null
         }
