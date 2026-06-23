@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { Save, Upload, Eye, Send, ExternalLink } from "lucide-react";
+import { Save, Send, ExternalLink, Plus, Trash2 } from "lucide-react";
 import { uploadPartnerMedia } from "@/lib/partner-storage";
 import MediaImage from "./MediaImage";
 
@@ -27,26 +29,32 @@ const THEMES = [
 
 const StorefrontEditorTab = ({ partnerId }: Props) => {
   const [sf, setSf] = useState<any>(null);
+  const [products, setProducts] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
-  const [slugChecking, setSlugChecking] = useState(false);
 
   const load = async () => {
     const { data } = await supabase.from("partner_storefronts").select("*").eq("partner_id", partnerId).maybeSingle();
     if (data) setSf(data);
     else setSf({
       partner_id: partnerId,
-      slug: "",
-      display_name: "",
-      tagline: "",
-      about_html: "",
+      slug: "", display_name: "", tagline: "", about_html: "",
       primary_color: "#000000", accent_color: "#D4AF37", bg_color: "#0a0a0a", text_color: "#ffffff",
       font_heading: "Space Grotesk", font_body: "Inter", theme_preset: "dark_minimal",
       hero_title: "", hero_subtitle: "", hero_cta_text: "Vásárolj most",
+      hero_layout: "split", hero_badge_enabled: false, hero_badge_text: "", hero_overlay_opacity: 0.5,
+      topbar_enabled: true, topbar_text: "Üdv a boltban! Nézd meg a kollekciókat.",
+      section1_enabled: false, section2_enabled: false,
+      featured_products_enabled: true, featured_products_title: "Kiemelt termékek", featured_product_ids: [],
+      testimonials_enabled: false, testimonials_title: "Vásárlóink mondták", testimonials: [],
+      newsletter_enabled: false, newsletter_title: "Iratkozz fel hírlevelünkre", newsletter_subtitle: "Kapj értesítést új termékekről és akciókról.",
+      footer_text: "", footer_links: [],
       instagram_url: "", tiktok_url: "", facebook_url: "", youtube_url: "",
       meta_title: "", meta_description: "",
       is_published: false,
     });
+    const { data: prods } = await supabase.from("partner_products").select("id, title, slug").eq("partner_id", partnerId).order("created_at", { ascending: false });
+    setProducts(prods || []);
   };
 
   useEffect(() => { void load(); }, [partnerId]);
@@ -63,9 +71,7 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
 
   const checkSlug = async (slug: string) => {
     if (!slug) return false;
-    setSlugChecking(true);
     const { data } = await supabase.from("partner_storefronts").select("id, partner_id").eq("slug", slug).maybeSingle();
-    setSlugChecking(false);
     if (!data) return true;
     return data.partner_id === partnerId;
   };
@@ -94,6 +100,27 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
     setSf((s: any) => ({ ...s, theme_preset: t.id, bg_color: t.bg, text_color: t.text, primary_color: t.primary, accent_color: t.accent }));
   };
 
+  const toggleFeatured = (id: string) => {
+    const cur: string[] = sf.featured_product_ids || [];
+    set("featured_product_ids", cur.includes(id) ? cur.filter(x => x !== id) : [...cur, id]);
+  };
+
+  const addTestimonial = () => set("testimonials", [...(sf.testimonials || []), { name: "", text: "", rating: 5 }]);
+  const updTestimonial = (i: number, k: string, v: any) => {
+    const arr = [...(sf.testimonials || [])];
+    arr[i] = { ...arr[i], [k]: v };
+    set("testimonials", arr);
+  };
+  const rmTestimonial = (i: number) => set("testimonials", (sf.testimonials || []).filter((_: any, idx: number) => idx !== i));
+
+  const addFooterLink = () => set("footer_links", [...(sf.footer_links || []), { label: "", url: "" }]);
+  const updFooterLink = (i: number, k: string, v: any) => {
+    const arr = [...(sf.footer_links || [])];
+    arr[i] = { ...arr[i], [k]: v };
+    set("footer_links", arr);
+  };
+  const rmFooterLink = (i: number) => set("footer_links", (sf.footer_links || []).filter((_: any, idx: number) => idx !== i));
+
   if (!sf) return <div className="text-sm text-muted-foreground">Betöltés…</div>;
 
   const previewUrl = sf.slug ? `${window.location.origin}/b/${sf.slug}` : null;
@@ -103,13 +130,18 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
     <div className="space-y-6">
       {/* Status banner */}
       <Card className="rounded-none border-foreground/20 p-4 flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <Badge className="rounded-none uppercase" variant={sf.is_published ? "default" : "secondary"}>
             {sf.is_published ? "Élesben" : sf.publish_requested_at ? "Várja a jóváhagyást" : "Vázlat"}
           </Badge>
           {previewUrl && (
             <a href={previewUrl} target="_blank" rel="noreferrer" className="text-xs underline flex items-center gap-1">
-              <ExternalLink className="h-3 w-3" /> {previewUrl}
+              <ExternalLink className="h-3 w-3" /> Előnézet
+            </a>
+          )}
+          {subdomainUrl && sf.is_published && (
+            <a href={subdomainUrl} target="_blank" rel="noreferrer" className="text-xs underline flex items-center gap-1 text-accent">
+              <ExternalLink className="h-3 w-3" /> {sf.slug}.egyszerudenagyszeru.com
             </a>
           )}
         </div>
@@ -125,132 +157,279 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
         </div>
       </Card>
 
-      {/* Alapadatok */}
-      <Card className="rounded-none border-foreground/20 p-6 space-y-4">
-        <h3 className="text-sm font-bold uppercase tracking-widest">Alapadatok</h3>
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <Label className="text-xs uppercase">URL slug *</Label>
-            <Input className="rounded-none font-mono" value={sf.slug} onChange={e => set("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} placeholder="pl. john-streetwear" />
-            <div className="mt-2 space-y-1 text-[11px]">
-              <div className="font-bold uppercase tracking-widest text-muted-foreground">A te címeid:</div>
-              {subdomainUrl && (
-                <a href={subdomainUrl} target="_blank" rel="noreferrer" className="block font-mono underline text-accent">
-                  {sf.slug}.egyszerudenagyszeru.com
-                </a>
-              )}
-              <div className="font-mono text-muted-foreground">egyszerudenagyszeru.com/b/{sf.slug || "..."}</div>
-            </div>
-          </div>
-          <div>
-            <Label className="text-xs uppercase">Márka neve *</Label>
-            <Input className="rounded-none" value={sf.display_name} onChange={e => set("display_name", e.target.value)} />
-          </div>
-        </div>
-        <div>
-          <Label className="text-xs uppercase">Rövid mottó</Label>
-          <Input className="rounded-none" value={sf.tagline || ""} onChange={e => set("tagline", e.target.value)} placeholder="pl. Streetwear minden napra" />
-        </div>
-        <div>
-          <Label className="text-xs uppercase">Bemutatkozás (HTML)</Label>
-          <Textarea className="rounded-none" rows={4} value={sf.about_html || ""} onChange={e => set("about_html", e.target.value)} />
-        </div>
-      </Card>
+      <Tabs defaultValue="basics">
+        <TabsList className="rounded-none flex flex-wrap h-auto">
+          <TabsTrigger value="basics" className="rounded-none">Alap</TabsTrigger>
+          <TabsTrigger value="design" className="rounded-none">Megjelenés</TabsTrigger>
+          <TabsTrigger value="topbar" className="rounded-none">Topbar</TabsTrigger>
+          <TabsTrigger value="hero" className="rounded-none">Hero</TabsTrigger>
+          <TabsTrigger value="sections" className="rounded-none">Szekciók</TabsTrigger>
+          <TabsTrigger value="featured" className="rounded-none">Kiemelt</TabsTrigger>
+          <TabsTrigger value="testimonials" className="rounded-none">Vélemények</TabsTrigger>
+          <TabsTrigger value="newsletter" className="rounded-none">Newsletter</TabsTrigger>
+          <TabsTrigger value="footer" className="rounded-none">Footer</TabsTrigger>
+          <TabsTrigger value="social" className="rounded-none">Közösségi</TabsTrigger>
+          <TabsTrigger value="seo" className="rounded-none">SEO</TabsTrigger>
+        </TabsList>
 
-      {/* Branding */}
-      <Card className="rounded-none border-foreground/20 p-6 space-y-4">
-        <h3 className="text-sm font-bold uppercase tracking-widest">Megjelenés</h3>
-
-        <div className="space-y-2">
-          <Label className="text-xs uppercase">Téma preset</Label>
-          <div className="grid grid-cols-3 gap-2">
-            {THEMES.map(t => (
-              <button key={t.id} onClick={() => applyTheme(t)} className={`p-3 border text-xs text-left ${sf.theme_preset === t.id ? "border-accent" : "border-foreground/20"}`} style={{ background: t.bg, color: t.text }}>
-                <div className="font-bold">{t.label}</div>
-                <div className="flex gap-1 mt-2">
-                  <span className="w-4 h-4 inline-block" style={{ background: t.primary }} />
-                  <span className="w-4 h-4 inline-block" style={{ background: t.accent }} />
+        {/* BASICS */}
+        <TabsContent value="basics">
+          <Card className="rounded-none border-foreground/20 p-6 space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs uppercase">URL slug *</Label>
+                <Input className="rounded-none font-mono" value={sf.slug} onChange={e => set("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} placeholder="pl. john-streetwear" />
+                <div className="mt-2 space-y-1 text-[11px]">
+                  <div className="font-bold uppercase tracking-widest text-muted-foreground">A te címeid:</div>
+                  {subdomainUrl && <div className="font-mono">{sf.slug}.egyszerudenagyszeru.com</div>}
+                  <div className="font-mono text-muted-foreground">egyszerudenagyszeru.com/b/{sf.slug || "..."}</div>
                 </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-4 gap-3">
-          {(["primary_color","accent_color","bg_color","text_color"] as const).map(f => (
-            <div key={f}>
-              <Label className="text-xs uppercase">{f.replace("_"," ")}</Label>
-              <div className="flex gap-1">
-                <input type="color" value={sf[f] || "#000000"} onChange={e => set(f, e.target.value)} className="h-10 w-12 border" />
-                <Input className="rounded-none font-mono text-xs" value={sf[f] || ""} onChange={e => set(f, e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs uppercase">Márka neve *</Label>
+                <Input className="rounded-none" value={sf.display_name} onChange={e => set("display_name", e.target.value)} />
               </div>
             </div>
-          ))}
-        </div>
+            <div>
+              <Label className="text-xs uppercase">Rövid mottó</Label>
+              <Input className="rounded-none" value={sf.tagline || ""} onChange={e => set("tagline", e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs uppercase">Bemutatkozás (HTML)</Label>
+              <Textarea className="rounded-none" rows={5} value={sf.about_html || ""} onChange={e => set("about_html", e.target.value)} />
+            </div>
+          </Card>
+        </TabsContent>
 
-        <div>
-          <Label className="text-xs uppercase">Betűtípus pár</Label>
-          <div className="grid md:grid-cols-3 gap-2">
-            {FONT_OPTIONS.map(f => (
-              <button key={f.label} onClick={() => setSf((s:any)=>({...s,font_heading:f.heading,font_body:f.body}))}
-                className={`p-3 border text-left ${sf.font_heading === f.heading ? "border-accent" : "border-foreground/20"}`}>
-                <div className="text-xs uppercase tracking-wider" style={{ fontFamily: f.heading }}>{f.heading}</div>
-                <div className="text-xs text-muted-foreground" style={{ fontFamily: f.body }}>{f.body} text</div>
-              </button>
+        {/* DESIGN */}
+        <TabsContent value="design">
+          <Card className="rounded-none border-foreground/20 p-6 space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs uppercase">Téma preset</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {THEMES.map(t => (
+                  <button key={t.id} onClick={() => applyTheme(t)} className={`p-3 border text-xs text-left ${sf.theme_preset === t.id ? "border-accent" : "border-foreground/20"}`} style={{ background: t.bg, color: t.text }}>
+                    <div className="font-bold">{t.label}</div>
+                    <div className="flex gap-1 mt-2">
+                      <span className="w-4 h-4 inline-block" style={{ background: t.primary }} />
+                      <span className="w-4 h-4 inline-block" style={{ background: t.accent }} />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="grid md:grid-cols-4 gap-3">
+              {(["primary_color","accent_color","bg_color","text_color"] as const).map(f => (
+                <div key={f}>
+                  <Label className="text-xs uppercase">{f.replace("_"," ")}</Label>
+                  <div className="flex gap-1">
+                    <input type="color" value={sf[f] || "#000000"} onChange={e => set(f, e.target.value)} className="h-10 w-12 border" />
+                    <Input className="rounded-none font-mono text-xs" value={sf[f] || ""} onChange={e => set(f, e.target.value)} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div>
+              <Label className="text-xs uppercase">Betűtípus pár</Label>
+              <div className="grid md:grid-cols-3 gap-2">
+                {FONT_OPTIONS.map(f => (
+                  <button key={f.label} onClick={() => setSf((s:any)=>({...s,font_heading:f.heading,font_body:f.body}))}
+                    className={`p-3 border text-left ${sf.font_heading === f.heading ? "border-accent" : "border-foreground/20"}`}>
+                    <div className="text-xs uppercase tracking-wider" style={{ fontFamily: f.heading }}>{f.heading}</div>
+                    <div className="text-xs text-muted-foreground" style={{ fontFamily: f.body }}>{f.body} text</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs uppercase">Logó</Label>
+                <div className="flex items-center gap-2">
+                  <Input type="file" accept="image/*" className="rounded-none" onChange={e => e.target.files?.[0] && handleFile("logo_url", e.target.files[0])} disabled={uploading === "logo_url"} />
+                  {sf.logo_url && <MediaImage bucket="partner-storefront-media" path={sf.logo_url} className="h-12 w-12 object-contain border" />}
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs uppercase">Banner</Label>
+                <div className="flex items-center gap-2">
+                  <Input type="file" accept="image/*" className="rounded-none" onChange={e => e.target.files?.[0] && handleFile("banner_url", e.target.files[0])} disabled={uploading === "banner_url"} />
+                  {sf.banner_url && <MediaImage bucket="partner-storefront-media" path={sf.banner_url} className="h-12 w-20 object-cover border" />}
+                </div>
+              </div>
+            </div>
+          </Card>
+        </TabsContent>
+
+        {/* TOPBAR */}
+        <TabsContent value="topbar">
+          <Card className="rounded-none border-foreground/20 p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs uppercase">Topbar megjelenítése</Label>
+              <Switch checked={!!sf.topbar_enabled} onCheckedChange={v => set("topbar_enabled", v)} />
+            </div>
+            <Input className="rounded-none" placeholder="Topbar szöveg" value={sf.topbar_text || ""} onChange={e => set("topbar_text", e.target.value)} />
+          </Card>
+        </TabsContent>
+
+        {/* HERO */}
+        <TabsContent value="hero">
+          <Card className="rounded-none border-foreground/20 p-6 space-y-4">
+            <div>
+              <Label className="text-xs uppercase">Layout</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {["split", "center", "fullscreen"].map(l => (
+                  <button key={l} onClick={() => set("hero_layout", l)} className={`p-3 border text-xs uppercase ${sf.hero_layout === l ? "border-accent" : "border-foreground/20"}`}>{l}</button>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs uppercase">Hero badge</Label>
+              <Switch checked={!!sf.hero_badge_enabled} onCheckedChange={v => set("hero_badge_enabled", v)} />
+            </div>
+            {sf.hero_badge_enabled && (
+              <Input className="rounded-none" placeholder="Badge szöveg" value={sf.hero_badge_text || ""} onChange={e => set("hero_badge_text", e.target.value)} />
+            )}
+            <Input className="rounded-none" placeholder="Hero cím" value={sf.hero_title || ""} onChange={e => set("hero_title", e.target.value)} />
+            <Textarea className="rounded-none" rows={2} placeholder="Hero alcím" value={sf.hero_subtitle || ""} onChange={e => set("hero_subtitle", e.target.value)} />
+            <Input className="rounded-none" placeholder="CTA gomb szövege" value={sf.hero_cta_text || ""} onChange={e => set("hero_cta_text", e.target.value)} />
+            <div>
+              <Label className="text-xs uppercase">Hero kép</Label>
+              <div className="flex items-center gap-2">
+                <Input type="file" accept="image/*" className="rounded-none" onChange={e => e.target.files?.[0] && handleFile("hero_image_url", e.target.files[0])} disabled={uploading === "hero_image_url"} />
+                {sf.hero_image_url && <MediaImage bucket="partner-storefront-media" path={sf.hero_image_url} className="h-16 w-28 object-cover border" />}
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs uppercase">Overlay sötétség ({Math.round((sf.hero_overlay_opacity ?? 0.5) * 100)}%)</Label>
+              <input type="range" min={0} max={1} step={0.05} value={sf.hero_overlay_opacity ?? 0.5} onChange={e => set("hero_overlay_opacity", parseFloat(e.target.value))} className="w-full" />
+            </div>
+          </Card>
+        </TabsContent>
+
+        {/* SECTIONS */}
+        <TabsContent value="sections">
+          <div className="space-y-4">
+            {[1, 2].map(n => (
+              <Card key={n} className="rounded-none border-foreground/20 p-6 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold uppercase tracking-widest">Szekció {n}</h3>
+                  <Switch checked={!!sf[`section${n}_enabled`]} onCheckedChange={v => set(`section${n}_enabled`, v)} />
+                </div>
+                <Input className="rounded-none" placeholder="Cím" value={sf[`section${n}_title`] || ""} onChange={e => set(`section${n}_title`, e.target.value)} />
+                <Textarea className="rounded-none" rows={2} placeholder="Alcím" value={sf[`section${n}_subtitle`] || ""} onChange={e => set(`section${n}_subtitle`, e.target.value)} />
+                <div className="grid md:grid-cols-2 gap-2">
+                  <Input className="rounded-none" placeholder="CTA szöveg" value={sf[`section${n}_cta_text`] || ""} onChange={e => set(`section${n}_cta_text`, e.target.value)} />
+                  <Input className="rounded-none" placeholder="CTA URL" value={sf[`section${n}_cta_url`] || ""} onChange={e => set(`section${n}_cta_url`, e.target.value)} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input type="file" accept="image/*" className="rounded-none" onChange={e => e.target.files?.[0] && handleFile(`section${n}_image_url`, e.target.files[0])} disabled={uploading === `section${n}_image_url`} />
+                  {sf[`section${n}_image_url`] && <MediaImage bucket="partner-storefront-media" path={sf[`section${n}_image_url`]} className="h-16 w-24 object-cover border" />}
+                </div>
+              </Card>
             ))}
           </div>
-        </div>
+        </TabsContent>
 
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <Label className="text-xs uppercase">Logó</Label>
-            <div className="flex items-center gap-2">
-              <Input type="file" accept="image/*" className="rounded-none" onChange={e => e.target.files?.[0] && handleFile("logo_url", e.target.files[0])} disabled={uploading === "logo_url"} />
-              {sf.logo_url && <MediaImage bucket="partner-storefront-media" path={sf.logo_url} className="h-12 w-12 object-contain border" />}
+        {/* FEATURED */}
+        <TabsContent value="featured">
+          <Card className="rounded-none border-foreground/20 p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs uppercase">Kiemelt termékek szekció</Label>
+              <Switch checked={!!sf.featured_products_enabled} onCheckedChange={v => set("featured_products_enabled", v)} />
             </div>
-          </div>
-          <div>
-            <Label className="text-xs uppercase">Banner</Label>
-            <div className="flex items-center gap-2">
-              <Input type="file" accept="image/*" className="rounded-none" onChange={e => e.target.files?.[0] && handleFile("banner_url", e.target.files[0])} disabled={uploading === "banner_url"} />
-              {sf.banner_url && <MediaImage bucket="partner-storefront-media" path={sf.banner_url} className="h-12 w-20 object-cover border" />}
+            <Input className="rounded-none" placeholder="Szekció címe" value={sf.featured_products_title || ""} onChange={e => set("featured_products_title", e.target.value)} />
+            <div>
+              <Label className="text-xs uppercase mb-2 block">Válassz termékeket ({(sf.featured_product_ids || []).length} kiválasztva)</Label>
+              {products.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Még nincsenek termékeid.</p>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-2 max-h-80 overflow-auto">
+                  {products.map(p => (
+                    <label key={p.id} className="flex items-center gap-2 p-2 border border-foreground/20 cursor-pointer">
+                      <input type="checkbox" checked={(sf.featured_product_ids || []).includes(p.id)} onChange={() => toggleFeatured(p.id)} />
+                      <span className="text-sm">{p.title}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
-        </div>
-      </Card>
+          </Card>
+        </TabsContent>
 
-      {/* Hero */}
-      <Card className="rounded-none border-foreground/20 p-6 space-y-4">
-        <h3 className="text-sm font-bold uppercase tracking-widest">Hero szekció</h3>
-        <Input className="rounded-none" placeholder="Hero cím" value={sf.hero_title || ""} onChange={e => set("hero_title", e.target.value)} />
-        <Textarea className="rounded-none" rows={2} placeholder="Hero alcím" value={sf.hero_subtitle || ""} onChange={e => set("hero_subtitle", e.target.value)} />
-        <Input className="rounded-none" placeholder="CTA gomb szövege" value={sf.hero_cta_text || ""} onChange={e => set("hero_cta_text", e.target.value)} />
-        <div>
-          <Label className="text-xs uppercase">Hero kép</Label>
-          <div className="flex items-center gap-2">
-            <Input type="file" accept="image/*" className="rounded-none" onChange={e => e.target.files?.[0] && handleFile("hero_image_url", e.target.files[0])} disabled={uploading === "hero_image_url"} />
-            {sf.hero_image_url && <MediaImage bucket="partner-storefront-media" path={sf.hero_image_url} className="h-16 w-28 object-cover border" />}
-          </div>
-        </div>
-      </Card>
+        {/* TESTIMONIALS */}
+        <TabsContent value="testimonials">
+          <Card className="rounded-none border-foreground/20 p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs uppercase">Vélemények szekció</Label>
+              <Switch checked={!!sf.testimonials_enabled} onCheckedChange={v => set("testimonials_enabled", v)} />
+            </div>
+            <Input className="rounded-none" placeholder="Cím" value={sf.testimonials_title || ""} onChange={e => set("testimonials_title", e.target.value)} />
+            <div className="space-y-3">
+              {(sf.testimonials || []).map((t: any, i: number) => (
+                <div key={i} className="border border-foreground/20 p-3 space-y-2">
+                  <div className="grid md:grid-cols-3 gap-2">
+                    <Input className="rounded-none" placeholder="Név" value={t.name || ""} onChange={e => updTestimonial(i, "name", e.target.value)} />
+                    <Input className="rounded-none" type="number" min={1} max={5} placeholder="Csillagok (1-5)" value={t.rating || 5} onChange={e => updTestimonial(i, "rating", parseInt(e.target.value) || 5)} />
+                    <Button variant="outline" size="sm" className="rounded-none" onClick={() => rmTestimonial(i)}><Trash2 className="h-4 w-4 mr-1" /> Törlés</Button>
+                  </div>
+                  <Textarea className="rounded-none" rows={2} placeholder="Vélemény szövege" value={t.text || ""} onChange={e => updTestimonial(i, "text", e.target.value)} />
+                </div>
+              ))}
+              <Button variant="outline" size="sm" className="rounded-none" onClick={addTestimonial}><Plus className="h-4 w-4 mr-1" /> Új vélemény</Button>
+            </div>
+          </Card>
+        </TabsContent>
 
-      {/* Social */}
-      <Card className="rounded-none border-foreground/20 p-6 space-y-3">
-        <h3 className="text-sm font-bold uppercase tracking-widest">Közösségi linkek</h3>
-        <div className="grid md:grid-cols-2 gap-3">
-          <Input className="rounded-none" placeholder="Instagram URL" value={sf.instagram_url || ""} onChange={e => set("instagram_url", e.target.value)} />
-          <Input className="rounded-none" placeholder="TikTok URL" value={sf.tiktok_url || ""} onChange={e => set("tiktok_url", e.target.value)} />
-          <Input className="rounded-none" placeholder="Facebook URL" value={sf.facebook_url || ""} onChange={e => set("facebook_url", e.target.value)} />
-          <Input className="rounded-none" placeholder="YouTube URL" value={sf.youtube_url || ""} onChange={e => set("youtube_url", e.target.value)} />
-        </div>
-      </Card>
+        {/* NEWSLETTER */}
+        <TabsContent value="newsletter">
+          <Card className="rounded-none border-foreground/20 p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs uppercase">Newsletter szekció</Label>
+              <Switch checked={!!sf.newsletter_enabled} onCheckedChange={v => set("newsletter_enabled", v)} />
+            </div>
+            <Input className="rounded-none" placeholder="Cím" value={sf.newsletter_title || ""} onChange={e => set("newsletter_title", e.target.value)} />
+            <Textarea className="rounded-none" rows={2} placeholder="Alcím" value={sf.newsletter_subtitle || ""} onChange={e => set("newsletter_subtitle", e.target.value)} />
+          </Card>
+        </TabsContent>
 
-      {/* SEO */}
-      <Card className="rounded-none border-foreground/20 p-6 space-y-3">
-        <h3 className="text-sm font-bold uppercase tracking-widest">SEO</h3>
-        <Input className="rounded-none" placeholder="Meta title (max 60)" maxLength={60} value={sf.meta_title || ""} onChange={e => set("meta_title", e.target.value)} />
-        <Textarea className="rounded-none" rows={2} placeholder="Meta description (max 160)" maxLength={160} value={sf.meta_description || ""} onChange={e => set("meta_description", e.target.value)} />
-      </Card>
+        {/* FOOTER */}
+        <TabsContent value="footer">
+          <Card className="rounded-none border-foreground/20 p-6 space-y-4">
+            <Input className="rounded-none" placeholder="Footer szöveg (pl. cégadat)" value={sf.footer_text || ""} onChange={e => set("footer_text", e.target.value)} />
+            <div className="space-y-2">
+              <Label className="text-xs uppercase">Footer linkek</Label>
+              {(sf.footer_links || []).map((l: any, i: number) => (
+                <div key={i} className="grid grid-cols-[1fr_1fr_auto] gap-2">
+                  <Input className="rounded-none" placeholder="Címke" value={l.label || ""} onChange={e => updFooterLink(i, "label", e.target.value)} />
+                  <Input className="rounded-none" placeholder="URL" value={l.url || ""} onChange={e => updFooterLink(i, "url", e.target.value)} />
+                  <Button variant="outline" size="sm" className="rounded-none" onClick={() => rmFooterLink(i)}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+              ))}
+              <Button variant="outline" size="sm" className="rounded-none" onClick={addFooterLink}><Plus className="h-4 w-4 mr-1" /> Új link</Button>
+            </div>
+          </Card>
+        </TabsContent>
+
+        {/* SOCIAL */}
+        <TabsContent value="social">
+          <Card className="rounded-none border-foreground/20 p-6 space-y-3">
+            <div className="grid md:grid-cols-2 gap-3">
+              <Input className="rounded-none" placeholder="Instagram URL" value={sf.instagram_url || ""} onChange={e => set("instagram_url", e.target.value)} />
+              <Input className="rounded-none" placeholder="TikTok URL" value={sf.tiktok_url || ""} onChange={e => set("tiktok_url", e.target.value)} />
+              <Input className="rounded-none" placeholder="Facebook URL" value={sf.facebook_url || ""} onChange={e => set("facebook_url", e.target.value)} />
+              <Input className="rounded-none" placeholder="YouTube URL" value={sf.youtube_url || ""} onChange={e => set("youtube_url", e.target.value)} />
+            </div>
+          </Card>
+        </TabsContent>
+
+        {/* SEO */}
+        <TabsContent value="seo">
+          <Card className="rounded-none border-foreground/20 p-6 space-y-3">
+            <Input className="rounded-none" placeholder="Meta title (max 60)" maxLength={60} value={sf.meta_title || ""} onChange={e => set("meta_title", e.target.value)} />
+            <Textarea className="rounded-none" rows={2} placeholder="Meta description (max 160)" maxLength={160} value={sf.meta_description || ""} onChange={e => set("meta_description", e.target.value)} />
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
