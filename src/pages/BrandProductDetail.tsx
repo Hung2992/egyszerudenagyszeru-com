@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { ArrowLeft, ShoppingBag } from "lucide-react";
 import MediaImage from "@/components/partner/MediaImage";
@@ -21,14 +22,23 @@ const BrandProductDetail = () => {
       setProduct(p);
       setLoading(false);
       if (p) {
-        document.title = `${p.title} · ${store.display_name}`;
         await supabase.from("partner_products").update({ view_count: (p.view_count || 0) + 1 }).eq("id", p.id);
       }
     })();
   }, [slug, productSlug]);
 
+  const seo = useMemo(() => {
+    if (!sf || !product) return null;
+    const title = `${product.title} – ${sf.display_name}`;
+    const description = (product.description || sf.tagline || "").slice(0, 160);
+    const base = sf.custom_domain ? `https://${sf.custom_domain}` : `https://${sf.slug}.egyszerudenagyszeru.com`;
+    const url = `${base}/termek/${product.slug}`;
+    const image = product.images?.[0] ? `${base}/storage/partner-product-images/${product.images[0]}` : undefined;
+    return { title: title.slice(0, 60), description, url, image };
+  }, [sf, product]);
+
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-black text-white">Betöltés…</div>;
-  if (!sf || !product) return (
+  if (!sf || !product || !seo) return (
     <div className="min-h-screen flex items-center justify-center bg-black text-white p-4">
       <div className="text-center space-y-3">
         <h1 className="text-2xl uppercase">Nincs ilyen termék</h1>
@@ -39,8 +49,39 @@ const BrandProductDetail = () => {
 
   const css = { background: sf.bg_color, color: sf.text_color, fontFamily: sf.font_body, minHeight: "100vh" };
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.title,
+    description: product.description || sf.tagline,
+    image: seo.image ? [seo.image] : undefined,
+    brand: { "@type": "Brand", name: sf.display_name },
+    offers: {
+      "@type": "Offer",
+      url: seo.url,
+      priceCurrency: "HUF",
+      price: product.price_huf,
+      availability: product.stock_qty > 0
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+    },
+  };
+
   return (
     <div style={css}>
+      <Helmet>
+        <title>{seo.title}</title>
+        <meta name="description" content={seo.description} />
+        <link rel="canonical" href={seo.url} />
+        <meta property="og:type" content="product" />
+        <meta property="og:title" content={seo.title} />
+        <meta property="og:description" content={seo.description} />
+        <meta property="og:url" content={seo.url} />
+        {seo.image && <meta property="og:image" content={seo.image} />}
+        <meta name="twitter:card" content="summary_large_image" />
+        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+      </Helmet>
+
       <header className="border-b" style={{ borderColor: `${sf.text_color}20` }}>
         <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between">
           <Link to={`/b/${sf.slug}`} className="flex items-center gap-2 text-sm uppercase tracking-widest">
