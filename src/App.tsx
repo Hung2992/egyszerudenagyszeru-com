@@ -64,6 +64,7 @@ const PartnerSzabalyzat = lazy(() => import("./pages/legal/PartnerSzabalyzat.tsx
 const KycAdatkezeles = lazy(() => import("./pages/legal/KycAdatkezeles.tsx"));
 const BrandStorefront = lazy(() => import("./pages/BrandStorefront.tsx"));
 const BrandProductDetail = lazy(() => import("./pages/BrandProductDetail.tsx"));
+const PartnerApprovals = lazy(() => import("./pages/PartnerApprovals.tsx"));
 
 const queryClient = new QueryClient();
 
