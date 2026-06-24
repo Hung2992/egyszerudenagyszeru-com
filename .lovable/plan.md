@@ -1,101 +1,95 @@
-## Cél
+## Terv: Partner Webshop SEO + Domain + Verziókezelés + Jóváhagyás + Élő Előnézet
 
-Minden partner kap egy **saját, teljes webshop-oldalt** ami az `egyszerudenagyszeru.com` főoldalának (Index) felépítését tükrözi (felső akciósáv → hero → kiemelt szekciók → termékek → bemutatkozás → footer), DE:
+Nagy, többrészes feladat. Az alábbi modulokat építem meg egy menetben, a meglévő `partner_storefronts`, `BrandStorefront.tsx`, `StorefrontEditorTab.tsx` és a super admin felület köré.
 
-- a tartalmat csak a **saját partner** szerkesztheti a PartnerPortal-ban,
-- kizárólag a partner saját aldomainjén (`partnernev.egyszerudenagyszeru.com`) jelenik meg,
-- a super admin webshop (főoldal) változatlan marad — nem kerül oda partner termék.
+### 1. SEO a partner webshophoz
+- `BrandStorefront.tsx`: `react-helmet-async` használatával dinamikus `<title>`, `<meta description>`, `canonical`, `og:title/description/image/url`, `twitter:card`, JSON-LD (`Store` + `Product` lista).
+- Automatikus fallback: ha a partner nem ad meg `meta_title`-t → `{display_name} – {tagline}`; description → `tagline` vagy első 160 karakter `about_html`-ből.
+- `main.tsx`: `HelmetProvider` hozzáadása (ha még nincs).
+- Termékaloldal (`BrandProductDetail.tsx`) → `Product` JSON-LD (ár, kép, név, leírás).
 
-## Mit építünk
+### 2. Sitemap
+- `scripts/generate-sitemap.ts` kibővítése: lekérdezi az összes `is_published=true` partner storefrontot és a hozzájuk tartozó aktív termékeket, és minden partner aldomainjéhez generál egy bejegyzést.
+- Két stratégia:
+  - **fő sitemap** (`public/sitemap.xml`): a fő domain útvonalai + `/b/{slug}` partner aloldalak.
+  - **partner sitemap endpoint**: új edge function `partner-sitemap` → `https://{slug}.egyszerudenagyszeru.com/sitemap.xml` → dinamikusan generálja az adott partner összes termékét. (Az aldomain ugyanazt az SPA-t szolgálja ki, de a `/sitemap.xml` útvonalat React Router elkapja és átirányítja a függvényre.)
+- `robots.txt` kiegészítése `Sitemap:` direktívával.
 
-### 1. Adatbázis: `partner_storefronts` tábla bővítése
-Új oszlopok a teljes Index-szerű élményhez (a super admin `store_settings` 273 oszlopa közül csak a *megjelenítéshez* szükséges ~25-öt másoljuk, hogy ne legyen kezelhetetlen):
+### 3. Partner domain kérelmek
+Új tábla: `partner_domain_requests`
+- mezők: `partner_id`, `requested_domain` (pl. `myshop.com`), `status` (`pending`/`approved`/`rejected`/`verifying`/`active`), `verification_token`, `dns_instructions` (jsonb), `admin_note`, `reviewed_by`, `reviewed_at`.
+- RLS: partner csak a sajátját látja/írja `pending`-ben; super admin mindent.
+- Új mező a `partner_storefronts`-ban: `custom_domain` (text, unique), `custom_domain_status`.
+- Partner UI: `StorefrontEditorTab` új "Domain" tabja → kérés beadása, státusz látszik, DNS utasítások (A record 185.158.133.1 + TXT `_lovable_partner`).
+- Super admin jóváhagyás után az `approved` triggerre a `partner_storefronts.custom_domain` mező automatikusan beíródik trigger-rel.
+- `getPartnerSlugFromHostname` kibővítése: ha a hostname egy egyezik egy aktív `custom_domain`-nel, akkor a hozzá tartozó slug-ot adja vissza (kliens oldalon külön lekérdezés).
 
-```text
-topbar_enabled, topbar_text, topbar_icon
-hero_layout (split|center|fullscreen)
-hero_badge_text, hero_badge_enabled
-hero_overlay_opacity
-section1_enabled, section1_title, section1_subtitle, section1_image_url, section1_cta_text, section1_cta_url
-section2_enabled, section2_title, section2_subtitle, section2_image_url, section2_cta_text, section2_cta_url
-featured_products_enabled, featured_products_title, featured_product_ids (jsonb)
-newsletter_enabled, newsletter_title, newsletter_subtitle
-testimonials_enabled, testimonials (jsonb)
-footer_text, footer_links (jsonb)
-```
-+ RLS: csak a `partner_id`-hoz tartozó partner user szerkesztheti (UPDATE), publikált sor mindenki számára SELECT.
+### 4. Verziókezelés a StorefrontEditorhez
+Új tábla: `partner_storefront_versions`
+- mezők: `storefront_id`, `version_number` (auto incr per storefront), `snapshot` (jsonb teljes storefront másolat), `created_by`, `change_summary`, `is_published_version` (bool), `approved_by`, `approved_at`.
+- Trigger: minden `partner_storefronts` UPDATE előtt készít egy snapshot-ot (csak ha érdemi változás van), max 50 verzió tartása partnerenként.
+- Partner UI: új "Előzmények" tab → lista verziókkal, dátum, "Visszaállítás" gomb (publikálás előtti `draft`-ot felülírja a választott snapshot-tal).
+- Diff nézet egyszerű: melyik mező változott.
 
-### 2. Frontend: `BrandStorefront.tsx` újraírás
-A jelenlegi egyszerű oldal helyett az `Index.tsx` szerkezetét másoló elrendezés:
+### 5. Super admin jóváhagyási oldal
+Új komponens: `src/components/admin/PartnerApprovalsPanel.tsx`
+Új route + super admin panel tab: **"Partner Jóváhagyások"**
+Három al-tab:
+- **Storefront publikáció kérések** (`partner_storefronts` ahol `publish_requested_at IS NOT NULL` és `is_published=false` vagy van változás)
+- **Domain kérések** (`partner_domain_requests` ahol `status='pending'`)
+- **Termék jóváhagyások** (a meglévő `partner_products` jóváhagyási logika, ha létezik)
 
-```text
-┌────────────────────────────────────────┐
-│  Topbar (akciósáv – ha enabled)        │
-├────────────────────────────────────────┤
-│  Navbar (logo + cart + ...)            │
-├────────────────────────────────────────┤
-│  HERO (badge, cím, alcím, CTA, kép)    │
-├────────────────────────────────────────┤
-│  Szekció 1 (kép + szöveg + CTA)        │
-├────────────────────────────────────────┤
-│  Szekció 2 (kép + szöveg + CTA)        │
-├────────────────────────────────────────┤
-│  Kiemelt termékek (4-8 db)             │
-├────────────────────────────────────────┤
-│  Összes termék rács                    │
-├────────────────────────────────────────┤
-│  Vélemények (testimonials)             │
-├────────────────────────────────────────┤
-│  Rólunk (about_html)                   │
-├────────────────────────────────────────┤
-│  Newsletter feliratkozás               │
-├────────────────────────────────────────┤
-│  Footer (saját szöveg + linkek)        │
-└────────────────────────────────────────┘
-```
+Minden tételhez:
+- diff/snapshot megjelenítése (mi változott a legutóbbi jóváhagyott verzióhoz képest)
+- "Jóváhagyás" gomb → `is_published=true`, új jóváhagyott verzió mentése
+- "Elutasítás" gomb → `admin_note` szöveges indoklással
+- E-mail értesítés a partnernek (meglévő `send-transactional-email` használata)
 
-Színeket, betűtípust, képet a partner saját mezőiből veszi (`bg_color`, `accent_color`, `font_heading` stb.). Minden szekció elrejthető a partner saját `*_enabled` kapcsolójával.
+### 6. Valós idejű élő előnézet mód
+Két szint:
+- **Local Live Preview**: az `StorefrontEditorTab` mellett egy bal/jobb split — jobb oldalt `<iframe>` ami a `BrandStorefront`-ot renderel egy `?preview=1&token=<draft-token>` paraméterrel. A draft állapotot a partner szerkesztője `postMessage`-szel élőben tolja az iframe-be, így pillanatok alatt látja a változást.
+- **Shareable Preview Link**: gomb "Élő előnézet külön ablakban" → `https://{slug}.egyszerudenagyszeru.com/?preview=<one-time-token>` → 1 órás token, csak a partner és super admin tudja megnyitni (`partner_storefront_preview_tokens` táblából validál). A `BrandStorefront` ekkor a `draft_snapshot` mezőből renderel, nem a publikált adatokból.
 
-### 3. PartnerPortal szerkesztő bővítése
-A jelenlegi `StorefrontEditorTab.tsx`-be új tab-os szekciók (super-admin-szerű elrendezés, csak ezt a partnerét):
+A `partner_storefronts` tábla `draft_snapshot` (jsonb) mezőt kap → minden mentésnél ide kerül a "publikálás alatt álló" másolat; a publikus oldal a fő mezőket olvassa, az előnézet a `draft_snapshot`-ot.
 
-- **Alapadatok** (slug, név, mottó) — már megvan
-- **Megjelenés** (téma, színek, fontok, logo, banner) — már megvan
-- **Topbar** ÚJ
-- **Hero** ÚJ — több layout-tal
-- **Szekciók** ÚJ — 2 db szabadon szerkeszthető
-- **Kiemelt termékek** ÚJ — termékek közül választható
-- **Vélemények** ÚJ — name/text/rating tömb
-- **Newsletter** ÚJ
-- **Footer** ÚJ
-- **Közösségi** + **SEO** — már megvan
+---
 
-A super admin **nem** látja/nem szerkeszti, csak a publish kérést hagyja jóvá.
+### Technikai részletek
 
-### 4. Routing — biztosítjuk hogy a subdomainen NE a fő Index jelenjen meg
-`src/App.tsx`-ben (már részben kész) a `/` route:
+**Új/módosított SQL migráció (1 darab):**
+1. `partner_domain_requests` tábla + RLS + GRANT + trigger
+2. `partner_storefront_versions` tábla + RLS + GRANT
+3. `partner_storefront_preview_tokens` tábla + RLS + GRANT  
+4. `partner_storefronts` új oszlopok: `custom_domain`, `custom_domain_status`, `draft_snapshot`, `publish_requested_at`
+5. Trigger: `partner_storefronts` UPDATE → snapshot insert `partner_storefront_versions`-be
+6. Trigger: `partner_domain_requests` UPDATE status=`approved` → `partner_storefronts.custom_domain` beíródik
+7. Function: `prune_old_storefront_versions()` — verziónként top 50
 
-```ts
-partnerSubdomainSlug ? <BrandStorefront /> : <Index />
-```
+**Új edge functions:**
+- `partner-sitemap` — dinamikus sitemap per aldomain
+- `request-partner-domain-verification` — DNS TXT ellenőrzés
+- `approve-partner-storefront` — super admin → status + e-mail
 
-Megerősítjük + checkout, kosár, termékoldal is a partner saját termékeit kezelje a subdomainen (`partner_products` tábla), ne a `shop_products`-t.
+**Új/módosított fájlok (~15 db):**
+- `src/pages/BrandStorefront.tsx` (Helmet + preview mód + draft snapshot olvasás)
+- `src/pages/BrandProductDetail.tsx` (Helmet + Product JSON-LD)
+- `src/components/partner/StorefrontEditorTab.tsx` (Domain tab, Előzmények tab, élő előnézet split)
+- `src/components/partner/StorefrontLivePreview.tsx` (új — iframe + postMessage)
+- `src/components/partner/StorefrontVersionsTab.tsx` (új)
+- `src/components/partner/PartnerDomainTab.tsx` (új)
+- `src/components/admin/PartnerApprovalsPanel.tsx` (új)
+- `src/lib/partner-subdomain.ts` (custom_domain lookup)
+- `scripts/generate-sitemap.ts`
+- `src/main.tsx` (HelmetProvider, ha hiányzik)
+- `index.html` / `public/robots.txt`
+- `src/App.tsx` (route a super admin jóváhagyásnak)
+- `package.json` (`react-helmet-async` ha nincs)
 
-## Műszaki részletek
+### Becsült méret
+~1 nagy migráció, 3 edge function, ~12-15 fájl, kb. 25-35 perc.
 
-- **Migráció**: 1 db `ALTER TABLE partner_storefronts ADD COLUMN ...` (~25 új oszlop), defaultokkal hogy a meglévő partnerek ne törjenek.
-- **RLS**: meglévő policy-k elegendőek (partner_id-szűrt UPDATE, is_published=true SELECT mindenkinek).
-- **Termékek**: a meglévő `partner_products` táblát használjuk — már létezik.
-- **Kosár**: a partner subdomain saját kosarat tart (`localStorage` partner_id kulcs alá), nem keveredik a fő shop kosarával.
-- **Edit jog**: új RLS check — `is_published`-et csak super admin tudja `true`-ra állítani (a partner csak `publish_requested_at`-ot tud beírni). Ez már a jelenlegi mentési logikában van.
+### Amit NEM csinálok automatikusan
+- Nem konfigurálok valódi DNS-t a partner domainjére — csak az utasításokat adom meg és ellenőrzöm a TXT rekordot (Lovable-szintű SSL kiállítás külön kérdés, ott a partnernek a Lovable docs-ot ajánljuk).
+- Nem írom át a meglévő super admin oldalt teljesen — új tabként/panelként illesztem be ahova logikus.
 
-## Mit NEM csinálunk most (külön kérésre)
-
-- Nem másoljuk a 45+ admin tabot (loyalty, AI marketing, dynamic pricing, ERP sync stb.) — a partner sokkal egyszerűbb felületet kap.
-- Nem külön Stripe account a partnernek (a fizetés most a fő platformon keresztül megy).
-- Nem külön domain-vásárlás partnernek — aldomain `egyszerudenagyszeru.com` alatt.
-
-## Becsült munka
-~6-8 fájl módosul/jön létre, 1 migráció. Kb. 15-20 perc futás.
-
-**Indítsam?**
+Megerősíted? Vagy szűkítsem valamelyik részt?
