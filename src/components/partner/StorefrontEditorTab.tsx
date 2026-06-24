@@ -12,6 +12,9 @@ import { toast } from "@/hooks/use-toast";
 import { Save, Send, ExternalLink, Plus, Trash2 } from "lucide-react";
 import { uploadPartnerMedia } from "@/lib/partner-storage";
 import MediaImage from "./MediaImage";
+import PartnerDomainTab from "./PartnerDomainTab";
+import StorefrontVersionsTab from "./StorefrontVersionsTab";
+import StorefrontLivePreview from "./StorefrontLivePreview";
 
 interface Props { partnerId: string; }
 
