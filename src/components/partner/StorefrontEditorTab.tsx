@@ -431,9 +431,32 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
         {/* SEO */}
         <TabsContent value="seo">
           <Card className="rounded-none border-foreground/20 p-6 space-y-3">
-            <Input className="rounded-none" placeholder="Meta title (max 60)" maxLength={60} value={sf.meta_title || ""} onChange={e => set("meta_title", e.target.value)} />
-            <Textarea className="rounded-none" rows={2} placeholder="Meta description (max 160)" maxLength={160} value={sf.meta_description || ""} onChange={e => set("meta_description", e.target.value)} />
+            <div>
+              <Label className="text-xs uppercase">Meta title (max 60)</Label>
+              <Input className="rounded-none" maxLength={60} value={sf.meta_title || ""} onChange={e => set("meta_title", e.target.value)} placeholder={`${sf.display_name || "Márka"} – ${sf.tagline || "mottó"}`} />
+              <p className="text-[10px] text-muted-foreground mt-1">Ha üres: márkanév – mottó automatikusan.</p>
+            </div>
+            <div>
+              <Label className="text-xs uppercase">Meta description (max 160)</Label>
+              <Textarea className="rounded-none" rows={2} maxLength={160} value={sf.meta_description || ""} onChange={e => set("meta_description", e.target.value)} placeholder="Rövid leírás Google találatokhoz" />
+              <p className="text-[10px] text-muted-foreground mt-1">Ha üres: mottó vagy bemutatkozás eleje.</p>
+            </div>
           </Card>
+        </TabsContent>
+
+        {/* DOMAIN */}
+        <TabsContent value="domain">
+          <PartnerDomainTab partnerId={partnerId} />
+        </TabsContent>
+
+        {/* VERSIONS */}
+        <TabsContent value="versions">
+          <StorefrontVersionsTab storefrontId={sf?.id ?? null} onRestored={load} />
+        </TabsContent>
+
+        {/* LIVE PREVIEW */}
+        <TabsContent value="preview">
+          <StorefrontLivePreview storefrontId={sf?.id ?? null} slug={sf?.slug || ""} draft={sf} />
         </TabsContent>
       </Tabs>
     </div>
