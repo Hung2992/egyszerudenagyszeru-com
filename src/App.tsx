@@ -64,6 +64,7 @@ const PartnerSzabalyzat = lazy(() => import("./pages/legal/PartnerSzabalyzat.tsx
 const KycAdatkezeles = lazy(() => import("./pages/legal/KycAdatkezeles.tsx"));
 const BrandStorefront = lazy(() => import("./pages/BrandStorefront.tsx"));
 const BrandProductDetail = lazy(() => import("./pages/BrandProductDetail.tsx"));
+const PartnerApprovals = lazy(() => import("./pages/PartnerApprovals.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -94,6 +95,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/partner-approvals" element={<PartnerApprovals />} />
             <Route path="/konyvelo" element={<AccountantPortal />} />
             <Route path="/partner" element={<PartnerPortal />} />
             <Route path="/shop" element={<Shop />} />

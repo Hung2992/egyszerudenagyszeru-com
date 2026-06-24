@@ -1,39 +1,86 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/untyped-client";
-import { Instagram, Music2, Facebook, Youtube, ShoppingBag, Flame, Star, ArrowRight } from "lucide-react";
+import { Instagram, Music2, Facebook, Youtube, ShoppingBag, Flame, Star, ArrowRight, Eye } from "lucide-react";
 import MediaImage from "@/components/partner/MediaImage";
-import { getPartnerSlugFromHostname } from "@/lib/partner-subdomain";
+import { getPartnerSlugFromHostname, resolveCustomDomainSlug } from "@/lib/partner-subdomain";
 
 const BrandStorefront = () => {
   const params = useParams<{ slug: string }>();
-  const slug = params.slug || getPartnerSlugFromHostname() || undefined;
+  const [search] = useSearchParams();
+  const previewToken = search.get("preview");
+  const isEditorPreview = previewToken === "editor";
+  const isAdminPreview = previewToken === "admin";
+
+  const [resolvedSlug, setResolvedSlug] = useState<string | null>(
+    params.slug || getPartnerSlugFromHostname()
+  );
   const [sf, setSf] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [email, setEmail] = useState("");
+  const [tokenValid, setTokenValid] = useState<boolean | null>(null);
 
+  // resolve custom domain → slug
   useEffect(() => {
+    if (resolvedSlug) return;
+    (async () => {
+      const s = await resolveCustomDomainSlug();
+      if (s) setResolvedSlug(s);
+      else setNotFound(true);
+    })();
+  }, [resolvedSlug]);
+
+  // validate share token
+  useEffect(() => {
+    if (!previewToken || isEditorPreview || isAdminPreview) { setTokenValid(true); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("partner_storefront_preview_tokens")
+        .select("storefront_id, expires_at")
+        .eq("token", previewToken)
+        .maybeSingle();
+      setTokenValid(!!(data && new Date(data.expires_at) > new Date()));
+    })();
+  }, [previewToken, isEditorPreview, isAdminPreview]);
+
+  // load storefront
+  useEffect(() => {
+    if (!resolvedSlug) return;
     let alive = true;
     (async () => {
-      const { data: store } = await supabase.from("partner_storefronts").select("*").eq("slug", slug).eq("is_published", true).maybeSingle();
+      const usePreview = isEditorPreview || isAdminPreview || (previewToken && tokenValid);
+      let q = supabase.from("partner_storefronts").select("*").eq("slug", resolvedSlug);
+      if (!usePreview) q = q.eq("is_published", true);
+      const { data: store } = await q.maybeSingle();
       if (!alive) return;
       if (!store) { setNotFound(true); setLoading(false); return; }
+      // if preview token but valid for different storefront → reject
+      if (previewToken && !isEditorPreview && !isAdminPreview && tokenValid !== true) {
+        setNotFound(true); setLoading(false); return;
+      }
       setSf(store);
       const { data: prods } = await supabase.from("partner_products").select("*").eq("partner_id", store.partner_id).eq("status", "active").order("created_at", { ascending: false });
       if (!alive) return;
       setProducts(prods || []);
       setLoading(false);
-
-      document.title = store.meta_title || store.display_name;
-      const meta = document.querySelector('meta[name="description"]') || document.createElement("meta");
-      meta.setAttribute("name", "description");
-      meta.setAttribute("content", store.meta_description || store.tagline || "");
-      document.head.appendChild(meta);
     })();
     return () => { alive = false; };
-  }, [slug]);
+  }, [resolvedSlug, previewToken, isEditorPreview, isAdminPreview, tokenValid]);
+
+  // editor live preview: listen for postMessage
+  useEffect(() => {
+    if (!isEditorPreview) return;
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === "storefront-preview-update" && e.data.draft) {
+        setSf((prev: any) => ({ ...(prev || {}), ...e.data.draft }));
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [isEditorPreview]);
 
   const featured = useMemo(() => {
     if (!sf?.featured_product_ids?.length) return [];
@@ -41,8 +88,21 @@ const BrandStorefront = () => {
     return products.filter(p => ids.includes(p.id)).slice(0, 8);
   }, [sf, products]);
 
+  // SEO computed values
+  const seo = useMemo(() => {
+    if (!sf) return null;
+    const title = sf.meta_title || `${sf.display_name}${sf.tagline ? " – " + sf.tagline : ""}`;
+    const stripped = (sf.about_html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const description = sf.meta_description || sf.tagline || stripped.slice(0, 157) + (stripped.length > 157 ? "…" : "");
+    const url = sf.custom_domain
+      ? `https://${sf.custom_domain}/`
+      : `https://${sf.slug}.egyszerudenagyszeru.com/`;
+    return { title: title.slice(0, 60), description: description.slice(0, 160), url };
+  }, [sf]);
+
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-black text-white">Betöltés…</div>;
   if (notFound) return <Navigate to="/" replace />;
+  if (!sf || !seo) return null;
 
   const cssVars = {
     background: sf.bg_color,
@@ -55,8 +115,39 @@ const BrandStorefront = () => {
   const testimonials: any[] = Array.isArray(sf.testimonials) ? sf.testimonials : [];
   const footerLinks: any[] = Array.isArray(sf.footer_links) ? sf.footer_links : [];
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    name: sf.display_name,
+    description: seo.description,
+    url: seo.url,
+    image: sf.logo_url ? `${seo.url}${sf.logo_url}` : undefined,
+    sameAs: [sf.instagram_url, sf.tiktok_url, sf.facebook_url, sf.youtube_url].filter(Boolean),
+  };
+
   return (
     <div className="min-h-screen" style={cssVars}>
+      <Helmet>
+        <title>{seo.title}</title>
+        <meta name="description" content={seo.description} />
+        <link rel="canonical" href={seo.url} />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={seo.title} />
+        <meta property="og:description" content={seo.description} />
+        <meta property="og:url" content={seo.url} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={seo.title} />
+        <meta name="twitter:description" content={seo.description} />
+        {(isEditorPreview || isAdminPreview || previewToken) && <meta name="robots" content="noindex,nofollow" />}
+        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+      </Helmet>
+
+      {(isEditorPreview || isAdminPreview || previewToken) && (
+        <div className="bg-yellow-500 text-black text-center py-1 text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+          <Eye className="h-3 w-3" /> Előnézet mód {isEditorPreview ? "(szerkesztő)" : isAdminPreview ? "(admin)" : "(megosztott link)"}
+        </div>
+      )}
+
       {/* TOPBAR */}
       {sf.topbar_enabled && sf.topbar_text && (
         <div className="text-center py-2 px-4" style={{ background: sf.accent_color, color: sf.bg_color }}>
@@ -155,7 +246,7 @@ const BrandStorefront = () => {
         </section>
       )}
 
-      {/* FEATURED PRODUCTS */}
+      {/* FEATURED */}
       {sf.featured_products_enabled && featured.length > 0 && (
         <section className="mx-auto max-w-6xl px-4 py-16 border-t" style={{ borderColor: borderCol }}>
           <h2 className="text-3xl font-bold uppercase tracking-widest mb-8 text-center" style={headingStyle}>{sf.featured_products_title}</h2>

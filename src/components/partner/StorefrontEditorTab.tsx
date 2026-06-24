@@ -12,6 +12,9 @@ import { toast } from "@/hooks/use-toast";
 import { Save, Send, ExternalLink, Plus, Trash2 } from "lucide-react";
 import { uploadPartnerMedia } from "@/lib/partner-storage";
 import MediaImage from "./MediaImage";
+import PartnerDomainTab from "./PartnerDomainTab";
+import StorefrontVersionsTab from "./StorefrontVersionsTab";
+import StorefrontLivePreview from "./StorefrontLivePreview";
 
 interface Props { partnerId: string; }
 
@@ -170,6 +173,9 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
           <TabsTrigger value="footer" className="rounded-none">Footer</TabsTrigger>
           <TabsTrigger value="social" className="rounded-none">Közösségi</TabsTrigger>
           <TabsTrigger value="seo" className="rounded-none">SEO</TabsTrigger>
+          <TabsTrigger value="domain" className="rounded-none">Domain</TabsTrigger>
+          <TabsTrigger value="versions" className="rounded-none">Verziók</TabsTrigger>
+          <TabsTrigger value="preview" className="rounded-none">Élő előnézet</TabsTrigger>
         </TabsList>
 
         {/* BASICS */}
@@ -425,9 +431,32 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
         {/* SEO */}
         <TabsContent value="seo">
           <Card className="rounded-none border-foreground/20 p-6 space-y-3">
-            <Input className="rounded-none" placeholder="Meta title (max 60)" maxLength={60} value={sf.meta_title || ""} onChange={e => set("meta_title", e.target.value)} />
-            <Textarea className="rounded-none" rows={2} placeholder="Meta description (max 160)" maxLength={160} value={sf.meta_description || ""} onChange={e => set("meta_description", e.target.value)} />
+            <div>
+              <Label className="text-xs uppercase">Meta title (max 60)</Label>
+              <Input className="rounded-none" maxLength={60} value={sf.meta_title || ""} onChange={e => set("meta_title", e.target.value)} placeholder={`${sf.display_name || "Márka"} – ${sf.tagline || "mottó"}`} />
+              <p className="text-[10px] text-muted-foreground mt-1">Ha üres: márkanév – mottó automatikusan.</p>
+            </div>
+            <div>
+              <Label className="text-xs uppercase">Meta description (max 160)</Label>
+              <Textarea className="rounded-none" rows={2} maxLength={160} value={sf.meta_description || ""} onChange={e => set("meta_description", e.target.value)} placeholder="Rövid leírás Google találatokhoz" />
+              <p className="text-[10px] text-muted-foreground mt-1">Ha üres: mottó vagy bemutatkozás eleje.</p>
+            </div>
           </Card>
+        </TabsContent>
+
+        {/* DOMAIN */}
+        <TabsContent value="domain">
+          <PartnerDomainTab partnerId={partnerId} />
+        </TabsContent>
+
+        {/* VERSIONS */}
+        <TabsContent value="versions">
+          <StorefrontVersionsTab storefrontId={sf?.id ?? null} onRestored={load} />
+        </TabsContent>
+
+        {/* LIVE PREVIEW */}
+        <TabsContent value="preview">
+          <StorefrontLivePreview storefrontId={sf?.id ?? null} slug={sf?.slug || ""} draft={sf} />
         </TabsContent>
       </Tabs>
     </div>

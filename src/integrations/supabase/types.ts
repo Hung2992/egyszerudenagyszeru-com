@@ -3014,6 +3014,56 @@ export type Database = {
           },
         ]
       }
+      partner_domain_requests: {
+        Row: {
+          admin_note: string | null
+          created_at: string
+          dns_instructions: Json | null
+          id: string
+          partner_id: string
+          requested_domain: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          verification_token: string
+        }
+        Insert: {
+          admin_note?: string | null
+          created_at?: string
+          dns_instructions?: Json | null
+          id?: string
+          partner_id: string
+          requested_domain: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          verification_token?: string
+        }
+        Update: {
+          admin_note?: string | null
+          created_at?: string
+          dns_instructions?: Json | null
+          id?: string
+          partner_id?: string
+          requested_domain?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          verification_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_domain_requests_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_marketing_assets: {
         Row: {
           active: boolean
@@ -3466,6 +3516,41 @@ export type Database = {
           },
         ]
       }
+      partner_storefront_preview_tokens: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          storefront_id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          storefront_id: string
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          storefront_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_storefront_preview_tokens_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "partner_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_storefront_settings: {
         Row: {
           accept_card: boolean
@@ -3528,6 +3613,53 @@ export type Database = {
           },
         ]
       }
+      partner_storefront_versions: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          change_summary: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          is_published_version: boolean
+          snapshot: Json
+          storefront_id: string
+          version_number: number
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          change_summary?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_published_version?: boolean
+          snapshot: Json
+          storefront_id: string
+          version_number: number
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          change_summary?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_published_version?: boolean
+          snapshot?: Json
+          storefront_id?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_storefront_versions_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "partner_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_storefronts: {
         Row: {
           about_html: string | null
@@ -3535,7 +3667,10 @@ export type Database = {
           banner_url: string | null
           bg_color: string | null
           created_at: string
+          custom_domain: string | null
+          custom_domain_status: string | null
           display_name: string
+          draft_snapshot: Json | null
           facebook_url: string | null
           featured_product_ids: Json
           featured_products_enabled: boolean
@@ -3555,6 +3690,7 @@ export type Database = {
           id: string
           instagram_url: string | null
           is_published: boolean
+          last_approved_version_id: string | null
           logo_url: string | null
           meta_description: string | null
           meta_title: string | null
@@ -3599,7 +3735,10 @@ export type Database = {
           banner_url?: string | null
           bg_color?: string | null
           created_at?: string
+          custom_domain?: string | null
+          custom_domain_status?: string | null
           display_name: string
+          draft_snapshot?: Json | null
           facebook_url?: string | null
           featured_product_ids?: Json
           featured_products_enabled?: boolean
@@ -3619,6 +3758,7 @@ export type Database = {
           id?: string
           instagram_url?: string | null
           is_published?: boolean
+          last_approved_version_id?: string | null
           logo_url?: string | null
           meta_description?: string | null
           meta_title?: string | null
@@ -3663,7 +3803,10 @@ export type Database = {
           banner_url?: string | null
           bg_color?: string | null
           created_at?: string
+          custom_domain?: string | null
+          custom_domain_status?: string | null
           display_name?: string
+          draft_snapshot?: Json | null
           facebook_url?: string | null
           featured_product_ids?: Json
           featured_products_enabled?: boolean
@@ -3683,6 +3826,7 @@ export type Database = {
           id?: string
           instagram_url?: string | null
           is_published?: boolean
+          last_approved_version_id?: string | null
           logo_url?: string | null
           meta_description?: string | null
           meta_title?: string | null

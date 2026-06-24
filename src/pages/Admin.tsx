@@ -3573,7 +3573,14 @@ const Admin = () => {
         {tab === "product_compare" && <AdminProductCompareTab />}
         {tab === "coupon_rules" && <AdminCouponRulesTab />}
         {tab === "coupons_manager" && <AdminCouponsManagerTab />}
-        {tab === "partners" && <AdminPartnersTab />}
+        {tab === "partners" && (
+          <div className="space-y-3">
+            <a href="/admin/partner-approvals" className="inline-flex items-center gap-2 px-4 py-2 border border-foreground/20 hover:bg-accent/10 uppercase text-xs font-bold tracking-widest">
+              <Check className="h-4 w-4" /> Partner jóváhagyások (storefront + domain)
+            </a>
+            <AdminPartnersTab />
+          </div>
+        )}
         {tab === "tenants" && <AdminTenantsTab />}
         {tab === "tenant_kyc" && <AdminKycTab />}
         {tab === "partner_contracts" && <AdminContractsTab />}
