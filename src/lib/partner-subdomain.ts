@@ -1,6 +1,6 @@
-// Detects partner storefront subdomain from current hostname.
-// Returns slug if hostname is like `<slug>.egyszerudenagyszeru.com` or `<slug>.edn.shop` etc.
-// Returns null for apex/www/preview/localhost.
+// Detects partner storefront subdomain (or custom domain) from current hostname.
+// - `<slug>.egyszerudenagyszeru.com`, `<slug>.edn.shop`, etc. → returns slug synchronously
+// - Custom domain (e.g. `myshop.com`) → returns null sync; use `resolvePartnerSlugAsync` for async lookup
 
 const APEX_DOMAINS = [
   "egyszerudenagyszeru.com",
@@ -20,7 +20,6 @@ export function getPartnerSlugFromHostname(hostname?: string): string | null {
   const host = (hostname ?? (typeof window !== "undefined" ? window.location.hostname : "")).toLowerCase();
   if (!host) return null;
 
-  // localhost / IPs / lovable preview → no partner subdomain
   if (host === "localhost" || /^[\d.]+$/.test(host)) return null;
   if (host.endsWith(".lovable.app") || host.endsWith(".lovableproject.com")) return null;
 
@@ -28,7 +27,6 @@ export function getPartnerSlugFromHostname(hostname?: string): string | null {
     if (host === apex) return null;
     if (host.endsWith("." + apex)) {
       const sub = host.slice(0, -1 - apex.length);
-      // only single-level subdomain (no nested)
       if (sub.includes(".")) return null;
       if (RESERVED_SUBDOMAINS.has(sub)) return null;
       if (!/^[a-z0-9][a-z0-9-]{0,62}$/.test(sub)) return null;
@@ -48,4 +46,24 @@ export function getApexDomain(hostname?: string): string | null {
 
 export function buildPartnerSubdomainUrl(slug: string, apex = "egyszerudenagyszeru.com"): string {
   return `https://${slug}.${apex}`;
+}
+
+// Async lookup for custom domain → slug
+export async function resolveCustomDomainSlug(hostname?: string): Promise<string | null> {
+  const host = (hostname ?? (typeof window !== "undefined" ? window.location.hostname : "")).toLowerCase();
+  if (!host) return null;
+  if (getApexDomain(host)) return null; // already handled by subdomain
+  if (host === "localhost" || host.endsWith(".lovable.app") || host.endsWith(".lovableproject.com")) return null;
+  try {
+    const { supabase } = await import("@/integrations/supabase/untyped-client");
+    const { data } = await supabase
+      .from("partner_storefronts")
+      .select("slug")
+      .eq("custom_domain", host)
+      .in("custom_domain_status", ["approved", "active"])
+      .maybeSingle();
+    return data?.slug ?? null;
+  } catch {
+    return null;
+  }
 }
