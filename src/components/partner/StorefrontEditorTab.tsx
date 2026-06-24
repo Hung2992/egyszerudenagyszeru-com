@@ -173,6 +173,9 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
           <TabsTrigger value="footer" className="rounded-none">Footer</TabsTrigger>
           <TabsTrigger value="social" className="rounded-none">Közösségi</TabsTrigger>
           <TabsTrigger value="seo" className="rounded-none">SEO</TabsTrigger>
+          <TabsTrigger value="domain" className="rounded-none">Domain</TabsTrigger>
+          <TabsTrigger value="versions" className="rounded-none">Verziók</TabsTrigger>
+          <TabsTrigger value="preview" className="rounded-none">Élő előnézet</TabsTrigger>
         </TabsList>
 
         {/* BASICS */}
