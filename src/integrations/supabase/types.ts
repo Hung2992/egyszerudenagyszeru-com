@@ -3018,9 +3018,14 @@ export type Database = {
         Row: {
           admin_note: string | null
           created_at: string
+          dns_check_result: Json | null
+          dns_check_status: string
+          dns_checked_at: string | null
           dns_instructions: Json | null
+          dns_proof_url: string | null
           id: string
           partner_id: string
+          partner_self_reported: boolean
           requested_domain: string
           reviewed_at: string | null
           reviewed_by: string | null
@@ -3031,9 +3036,14 @@ export type Database = {
         Insert: {
           admin_note?: string | null
           created_at?: string
+          dns_check_result?: Json | null
+          dns_check_status?: string
+          dns_checked_at?: string | null
           dns_instructions?: Json | null
+          dns_proof_url?: string | null
           id?: string
           partner_id: string
+          partner_self_reported?: boolean
           requested_domain: string
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -3044,9 +3054,14 @@ export type Database = {
         Update: {
           admin_note?: string | null
           created_at?: string
+          dns_check_result?: Json | null
+          dns_check_status?: string
+          dns_checked_at?: string | null
           dns_instructions?: Json | null
+          dns_proof_url?: string | null
           id?: string
           partner_id?: string
+          partner_self_reported?: boolean
           requested_domain?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -3516,30 +3531,172 @@ export type Database = {
           },
         ]
       }
+      partner_sitemap_cache: {
+        Row: {
+          etag: string
+          generated_at: string
+          hit_count: number
+          storefront_id: string
+          xml: string
+        }
+        Insert: {
+          etag: string
+          generated_at?: string
+          hit_count?: number
+          storefront_id: string
+          xml: string
+        }
+        Update: {
+          etag?: string
+          generated_at?: string
+          hit_count?: number
+          storefront_id?: string
+          xml?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_sitemap_cache_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: true
+            referencedRelation: "partner_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_storefront_audit_log: {
+        Row: {
+          action: string
+          actor_role: string | null
+          actor_user_id: string | null
+          after_snapshot: Json | null
+          before_snapshot: Json | null
+          changed_fields: Json | null
+          created_at: string
+          id: string
+          ip: string | null
+          note: string | null
+          partner_id: string | null
+          storefront_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          actor_role?: string | null
+          actor_user_id?: string | null
+          after_snapshot?: Json | null
+          before_snapshot?: Json | null
+          changed_fields?: Json | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          note?: string | null
+          partner_id?: string | null
+          storefront_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          actor_role?: string | null
+          actor_user_id?: string | null
+          after_snapshot?: Json | null
+          before_snapshot?: Json | null
+          changed_fields?: Json | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          note?: string | null
+          partner_id?: string | null
+          storefront_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      partner_storefront_preview_access_log: {
+        Row: {
+          accessed_at: string
+          id: string
+          ip: string | null
+          outcome: string
+          storefront_id: string | null
+          token_id: string
+          user_agent: string | null
+          viewer_user_id: string | null
+        }
+        Insert: {
+          accessed_at?: string
+          id?: string
+          ip?: string | null
+          outcome?: string
+          storefront_id?: string | null
+          token_id: string
+          user_agent?: string | null
+          viewer_user_id?: string | null
+        }
+        Update: {
+          accessed_at?: string
+          id?: string
+          ip?: string | null
+          outcome?: string
+          storefront_id?: string | null
+          token_id?: string
+          user_agent?: string | null
+          viewer_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_storefront_preview_access_log_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "partner_storefront_preview_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_storefront_preview_tokens: {
         Row: {
           created_at: string
           created_by: string | null
           expires_at: string
           id: string
+          label: string | null
+          last_accessed_at: string | null
+          last_accessed_ip: string | null
+          last_accessed_user_agent: string | null
+          max_uses: number | null
+          revoked_at: string | null
           storefront_id: string
           token: string
+          use_count: number
         }
         Insert: {
           created_at?: string
           created_by?: string | null
           expires_at?: string
           id?: string
+          label?: string | null
+          last_accessed_at?: string | null
+          last_accessed_ip?: string | null
+          last_accessed_user_agent?: string | null
+          max_uses?: number | null
+          revoked_at?: string | null
           storefront_id: string
           token?: string
+          use_count?: number
         }
         Update: {
           created_at?: string
           created_by?: string | null
           expires_at?: string
           id?: string
+          label?: string | null
+          last_accessed_at?: string | null
+          last_accessed_ip?: string | null
+          last_accessed_user_agent?: string | null
+          max_uses?: number | null
+          revoked_at?: string | null
           storefront_id?: string
           token?: string
+          use_count?: number
         }
         Relationships: [
           {
@@ -3666,6 +3823,13 @@ export type Database = {
           accent_color: string | null
           banner_url: string | null
           bg_color: string | null
+          business_hours: Json | null
+          company_address: string | null
+          company_email: string | null
+          company_legal_name: string | null
+          company_phone: string | null
+          company_registration_number: string | null
+          company_tax_id: string | null
           created_at: string
           custom_domain: string | null
           custom_domain_status: string | null
@@ -3679,6 +3843,7 @@ export type Database = {
           font_heading: string | null
           footer_links: Json
           footer_text: string | null
+          founding_year: number | null
           hero_badge_enabled: boolean
           hero_badge_text: string | null
           hero_cta_text: string | null
@@ -3715,7 +3880,9 @@ export type Database = {
           section2_image_url: string | null
           section2_subtitle: string | null
           section2_title: string | null
+          seo_keywords: string[] | null
           slug: string
+          social_profiles: Json | null
           tagline: string | null
           testimonials: Json
           testimonials_enabled: boolean
@@ -3734,6 +3901,13 @@ export type Database = {
           accent_color?: string | null
           banner_url?: string | null
           bg_color?: string | null
+          business_hours?: Json | null
+          company_address?: string | null
+          company_email?: string | null
+          company_legal_name?: string | null
+          company_phone?: string | null
+          company_registration_number?: string | null
+          company_tax_id?: string | null
           created_at?: string
           custom_domain?: string | null
           custom_domain_status?: string | null
@@ -3747,6 +3921,7 @@ export type Database = {
           font_heading?: string | null
           footer_links?: Json
           footer_text?: string | null
+          founding_year?: number | null
           hero_badge_enabled?: boolean
           hero_badge_text?: string | null
           hero_cta_text?: string | null
@@ -3783,7 +3958,9 @@ export type Database = {
           section2_image_url?: string | null
           section2_subtitle?: string | null
           section2_title?: string | null
+          seo_keywords?: string[] | null
           slug: string
+          social_profiles?: Json | null
           tagline?: string | null
           testimonials?: Json
           testimonials_enabled?: boolean
@@ -3802,6 +3979,13 @@ export type Database = {
           accent_color?: string | null
           banner_url?: string | null
           bg_color?: string | null
+          business_hours?: Json | null
+          company_address?: string | null
+          company_email?: string | null
+          company_legal_name?: string | null
+          company_phone?: string | null
+          company_registration_number?: string | null
+          company_tax_id?: string | null
           created_at?: string
           custom_domain?: string | null
           custom_domain_status?: string | null
@@ -3815,6 +3999,7 @@ export type Database = {
           font_heading?: string | null
           footer_links?: Json
           footer_text?: string | null
+          founding_year?: number | null
           hero_badge_enabled?: boolean
           hero_badge_text?: string | null
           hero_cta_text?: string | null
@@ -3851,7 +4036,9 @@ export type Database = {
           section2_image_url?: string | null
           section2_subtitle?: string | null
           section2_title?: string | null
+          seo_keywords?: string[] | null
           slug?: string
+          social_profiles?: Json | null
           tagline?: string | null
           testimonials?: Json
           testimonials_enabled?: boolean
