@@ -144,6 +144,7 @@ const BrandStorefront = () => {
       <Helmet>
         <title>{seo.title}</title>
         <meta name="description" content={seo.description} />
+        {seo.keywords && <meta name="keywords" content={seo.keywords} />}
         <link rel="canonical" href={seo.url} />
         <meta property="og:type" content="website" />
         <meta property="og:title" content={seo.title} />
