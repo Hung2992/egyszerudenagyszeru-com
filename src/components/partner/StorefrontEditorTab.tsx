@@ -15,6 +15,8 @@ import MediaImage from "./MediaImage";
 import PartnerDomainTab from "./PartnerDomainTab";
 import StorefrontVersionsTab from "./StorefrontVersionsTab";
 import StorefrontLivePreview from "./StorefrontLivePreview";
+import PreviewTokenManager from "./PreviewTokenManager";
+import PartnerStorefrontAuditLogTab from "./PartnerStorefrontAuditLogTab";
 
 interface Props { partnerId: string; }
 
@@ -173,9 +175,12 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
           <TabsTrigger value="footer" className="rounded-none">Footer</TabsTrigger>
           <TabsTrigger value="social" className="rounded-none">Közösségi</TabsTrigger>
           <TabsTrigger value="seo" className="rounded-none">SEO</TabsTrigger>
+          <TabsTrigger value="company" className="rounded-none">Cégadat</TabsTrigger>
           <TabsTrigger value="domain" className="rounded-none">Domain</TabsTrigger>
           <TabsTrigger value="versions" className="rounded-none">Verziók</TabsTrigger>
+          <TabsTrigger value="audit" className="rounded-none">Napló</TabsTrigger>
           <TabsTrigger value="preview" className="rounded-none">Élő előnézet</TabsTrigger>
+          <TabsTrigger value="share" className="rounded-none">Megosztás</TabsTrigger>
         </TabsList>
 
         {/* BASICS */}
@@ -439,7 +444,68 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
             <div>
               <Label className="text-xs uppercase">Meta description (max 160)</Label>
               <Textarea className="rounded-none" rows={2} maxLength={160} value={sf.meta_description || ""} onChange={e => set("meta_description", e.target.value)} placeholder="Rövid leírás Google találatokhoz" />
-              <p className="text-[10px] text-muted-foreground mt-1">Ha üres: mottó vagy bemutatkozás eleje.</p>
+              <p className="text-[10px] text-muted-foreground mt-1">Ha üres: mottó + kulcsszavak vagy a bemutatkozás eleje.</p>
+            </div>
+            <div>
+              <Label className="text-xs uppercase">Kulcsszavak (vesszővel)</Label>
+              <Input
+                className="rounded-none"
+                value={(sf.seo_keywords || []).join(", ")}
+                onChange={e => set("seo_keywords", e.target.value.split(",").map(s => s.trim()).filter(Boolean))}
+                placeholder="streetwear, férfi póló, oversized hoodie"
+              />
+              <div className="flex flex-wrap gap-1 mt-2">
+                {(sf.seo_keywords || []).map((k: string) => (
+                  <span key={k} className="px-2 py-0.5 bg-muted text-xs">{k}</span>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">A meta description és JSON-LD ezekből generálódik.</p>
+            </div>
+          </Card>
+        </TabsContent>
+
+        {/* COMPANY */}
+        <TabsContent value="company">
+          <Card className="rounded-none border-foreground/20 p-6 space-y-3">
+            <p className="text-xs text-muted-foreground">Ezek az adatok jelennek meg a Google JSON-LD struktúrában (Store típus).</p>
+            <div className="grid md:grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs uppercase">Cég jogi neve</Label>
+                <Input className="rounded-none" value={sf.company_legal_name || ""} onChange={e => set("company_legal_name", e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs uppercase">Adószám</Label>
+                <Input className="rounded-none" value={sf.company_tax_id || ""} onChange={e => set("company_tax_id", e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs uppercase">Cégjegyzékszám</Label>
+                <Input className="rounded-none" value={sf.company_registration_number || ""} onChange={e => set("company_registration_number", e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs uppercase">Alapítás éve</Label>
+                <Input className="rounded-none" type="number" min={1900} max={new Date().getFullYear()} value={sf.founding_year || ""} onChange={e => set("founding_year", parseInt(e.target.value) || null)} />
+              </div>
+              <div className="md:col-span-2">
+                <Label className="text-xs uppercase">Cím</Label>
+                <Input className="rounded-none" value={sf.company_address || ""} onChange={e => set("company_address", e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs uppercase">Telefon</Label>
+                <Input className="rounded-none" value={sf.company_phone || ""} onChange={e => set("company_phone", e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs uppercase">E-mail</Label>
+                <Input className="rounded-none" type="email" value={sf.company_email || ""} onChange={e => set("company_email", e.target.value)} />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs uppercase">További közösségi/profil linkek (JSON-LD sameAs, soronként)</Label>
+              <Textarea
+                className="rounded-none font-mono text-xs" rows={3}
+                value={(sf.social_profiles || []).join("\n")}
+                onChange={e => set("social_profiles", e.target.value.split("\n").map(s => s.trim()).filter(Boolean))}
+                placeholder={"https://linkedin.com/...\nhttps://shoprenter.hu/...\nhttps://glami.hu/..."}
+              />
             </div>
           </Card>
         </TabsContent>
@@ -454,9 +520,23 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
           <StorefrontVersionsTab storefrontId={sf?.id ?? null} onRestored={load} />
         </TabsContent>
 
+        {/* AUDIT */}
+        <TabsContent value="audit">
+          <PartnerStorefrontAuditLogTab partnerId={partnerId} storefrontId={sf?.id} />
+        </TabsContent>
+
         {/* LIVE PREVIEW */}
         <TabsContent value="preview">
           <StorefrontLivePreview storefrontId={sf?.id ?? null} slug={sf?.slug || ""} draft={sf} />
+        </TabsContent>
+
+        {/* SHARE TOKENS */}
+        <TabsContent value="share">
+          {sf?.id ? (
+            <PreviewTokenManager storefrontId={sf.id} slug={sf.slug} />
+          ) : (
+            <p className="text-sm text-muted-foreground">Először mentsd a storefrontot, hogy megosztó linkeket hozhass létre.</p>
+          )}
         </TabsContent>
       </Tabs>
     </div>

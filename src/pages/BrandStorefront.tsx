@@ -33,16 +33,14 @@ const BrandStorefront = () => {
     })();
   }, [resolvedSlug]);
 
-  // validate share token
+  // validate share token via edge function (logs access + enforces expiry/revoke/max_uses)
   useEffect(() => {
     if (!previewToken || isEditorPreview || isAdminPreview) { setTokenValid(true); return; }
     (async () => {
-      const { data } = await supabase
-        .from("partner_storefront_preview_tokens")
-        .select("storefront_id, expires_at")
-        .eq("token", previewToken)
-        .maybeSingle();
-      setTokenValid(!!(data && new Date(data.expires_at) > new Date()));
+      try {
+        const { data, error } = await supabase.functions.invoke("partner-preview-access", { body: { token: previewToken } });
+        setTokenValid(!error && !!(data as any)?.ok);
+      } catch { setTokenValid(false); }
     })();
   }, [previewToken, isEditorPreview, isAdminPreview]);
 
@@ -93,11 +91,15 @@ const BrandStorefront = () => {
     if (!sf) return null;
     const title = sf.meta_title || `${sf.display_name}${sf.tagline ? " – " + sf.tagline : ""}`;
     const stripped = (sf.about_html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-    const description = sf.meta_description || sf.tagline || stripped.slice(0, 157) + (stripped.length > 157 ? "…" : "");
+    const kws = Array.isArray(sf.seo_keywords) ? sf.seo_keywords.filter(Boolean).join(", ") : "";
+    const autoDesc = sf.tagline
+      ? `${sf.tagline}${kws ? " · " + kws : ""}`
+      : stripped.slice(0, 157) + (stripped.length > 157 ? "…" : "");
+    const description = sf.meta_description || autoDesc;
     const url = sf.custom_domain
       ? `https://${sf.custom_domain}/`
       : `https://${sf.slug}.egyszerudenagyszeru.com/`;
-    return { title: title.slice(0, 60), description: description.slice(0, 160), url };
+    return { title: title.slice(0, 60), description: description.slice(0, 160), url, keywords: kws };
   }, [sf]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-black text-white">Betöltés…</div>;
@@ -114,22 +116,35 @@ const BrandStorefront = () => {
 
   const testimonials: any[] = Array.isArray(sf.testimonials) ? sf.testimonials : [];
   const footerLinks: any[] = Array.isArray(sf.footer_links) ? sf.footer_links : [];
+  const socialProfiles: string[] = Array.isArray(sf.social_profiles) ? sf.social_profiles.filter(Boolean) : [];
 
-  const jsonLd = {
+  const jsonLd: any = {
     "@context": "https://schema.org",
     "@type": "Store",
     name: sf.display_name,
+    legalName: sf.company_legal_name || undefined,
     description: seo.description,
     url: seo.url,
     image: sf.logo_url ? `${seo.url}${sf.logo_url}` : undefined,
-    sameAs: [sf.instagram_url, sf.tiktok_url, sf.facebook_url, sf.youtube_url].filter(Boolean),
+    keywords: seo.keywords || undefined,
+    telephone: sf.company_phone || undefined,
+    email: sf.company_email || undefined,
+    taxID: sf.company_tax_id || undefined,
+    foundingDate: sf.founding_year ? String(sf.founding_year) : undefined,
+    address: sf.company_address ? { "@type": "PostalAddress", streetAddress: sf.company_address } : undefined,
+    sameAs: Array.from(new Set([
+      sf.instagram_url, sf.tiktok_url, sf.facebook_url, sf.youtube_url,
+      ...socialProfiles,
+    ].filter(Boolean))),
   };
+  Object.keys(jsonLd).forEach(k => jsonLd[k] === undefined && delete jsonLd[k]);
 
   return (
     <div className="min-h-screen" style={cssVars}>
       <Helmet>
         <title>{seo.title}</title>
         <meta name="description" content={seo.description} />
+        {seo.keywords && <meta name="keywords" content={seo.keywords} />}
         <link rel="canonical" href={seo.url} />
         <meta property="og:type" content="website" />
         <meta property="og:title" content={seo.title} />
