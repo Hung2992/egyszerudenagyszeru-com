@@ -28,6 +28,10 @@ import { template as accountantTotpQr } from './accountant-totp-qr.tsx'
 import { template as partnerInvite } from './partner-invite.tsx'
 import { template as partnerWelcome } from './partner-welcome.tsx'
 import { template as partnerPayoutPaid } from './partner-payout-paid.tsx'
+import { template as partnerDomainApproved } from './partner-domain-approved.tsx'
+import { template as partnerDomainRejected } from './partner-domain-rejected.tsx'
+import { template as partnerDomainDnsStatusChanged } from './partner-domain-dns-status-changed.tsx'
+import { template as partnerStorefrontVersionSubmitted } from './partner-storefront-version-submitted.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'contact-confirmation': contactConfirmation,
@@ -49,4 +53,9 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'partner-invite': partnerInvite,
   'partner-welcome': partnerWelcome,
   'partner-payout-paid': partnerPayoutPaid,
+  'partner-domain-approved': partnerDomainApproved,
+  'partner-domain-rejected': partnerDomainRejected,
+  'partner-domain-dns-status-changed': partnerDomainDnsStatusChanged,
+  'partner-storefront-version-submitted': partnerStorefrontVersionSubmitted,
 }
+
