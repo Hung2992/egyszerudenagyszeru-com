@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Globe, Send, Trash2, Copy, ShieldCheck, ShieldAlert, Upload, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import DomainProofTimeline from "@/components/partner/DomainProofTimeline";
+import { Globe, Send, Trash2, Copy, ShieldCheck, ShieldAlert, Upload, Loader2, History } from "lucide-react";
 
 interface Props { partnerId: string; }
 
