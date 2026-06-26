@@ -62,7 +62,7 @@ const StorefrontQueue = () => {
 
   const load = async () => {
     setLoading(true);
-    let q = supabase.from("partner_storefronts").select("*, partners(business_name, contact_email)").order("publish_requested_at", { ascending: false, nullsFirst: false });
+    let q = supabase.from("partner_storefronts").select("*, partners(full_name, company_name, email)").order("publish_requested_at", { ascending: false, nullsFirst: false });
     if (filter === "pending") q = q.eq("is_published", false).not("publish_requested_at", "is", null);
     else if (filter === "published") q = q.eq("is_published", true);
     const { data } = await q;
@@ -83,6 +83,7 @@ const StorefrontQueue = () => {
       storefront_id: r.id, partner_id: r.partner_id, action: "publish_approved", note: "Admin jóváhagyta a publikációt.",
     });
     toast({ title: "Storefront publikálva" });
+    void sendPartnerEmail("partner-domain-approved", r.partner_id, { domain: `webshop: ${r.display_name}` });
     await load(); setDrawer(null);
   };
 
@@ -95,6 +96,7 @@ const StorefrontQueue = () => {
     await supabase.from("partner_storefront_audit_log").insert({
       storefront_id: r.id, partner_id: r.partner_id, action: "publish_rejected", note,
     });
+    void sendPartnerEmail("partner-domain-rejected", r.partner_id, { domain: `webshop: ${r.display_name}`, admin_note: note });
     toast({ title: "Elutasítva", description: note });
     setNote(""); setDrawer(null); await load();
   };
