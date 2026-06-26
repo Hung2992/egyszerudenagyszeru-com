@@ -10,6 +10,25 @@ import { Check, X, Eye, Globe, Store, RefreshCw, ExternalLink, GitCompare, FileT
 import { toast } from "@/hooks/use-toast";
 import StorefrontVersionDiff from "@/components/partner/StorefrontVersionDiff";
 import PartnerStorefrontAuditLogTab from "@/components/partner/PartnerStorefrontAuditLogTab";
+import AdminPartnerAuditSearch from "@/components/admin/AdminPartnerAuditSearch";
+import DomainProofTimeline from "@/components/partner/DomainProofTimeline";
+
+const PORTAL_URL = "https://www.egyszerudenagyszeru.com/partner";
+
+async function sendPartnerEmail(templateName: string, partnerId: string, templateData: Record<string, any>) {
+  try {
+    const { data: p } = await supabase.from("partners").select("email, full_name, company_name").eq("id", partnerId).maybeSingle();
+    if (!p?.email) return;
+    await supabase.functions.invoke("send-transactional-email", {
+      body: {
+        templateName,
+        recipientEmail: p.email,
+        idempotencyKey: `${templateName}-${partnerId}-${Date.now()}`,
+        templateData: { full_name: p.company_name || p.full_name, portal_url: PORTAL_URL, ...templateData },
+      },
+    });
+  } catch (_) { /* swallow */ }
+}
 
 const PartnerApprovalsPanel = () => {
   const [tab, setTab] = useState("storefronts");
@@ -27,7 +46,7 @@ const PartnerApprovalsPanel = () => {
         </TabsList>
         <TabsContent value="storefronts"><StorefrontQueue /></TabsContent>
         <TabsContent value="domains"><DomainQueue /></TabsContent>
-        <TabsContent value="audit"><PartnerStorefrontAuditLogTab adminView /></TabsContent>
+        <TabsContent value="audit"><AdminPartnerAuditSearch /></TabsContent>
       </Tabs>
     </div>
   );
@@ -43,7 +62,7 @@ const StorefrontQueue = () => {
 
   const load = async () => {
     setLoading(true);
-    let q = supabase.from("partner_storefronts").select("*, partners(business_name, contact_email)").order("publish_requested_at", { ascending: false, nullsFirst: false });
+    let q = supabase.from("partner_storefronts").select("*, partners(full_name, company_name, email)").order("publish_requested_at", { ascending: false, nullsFirst: false });
     if (filter === "pending") q = q.eq("is_published", false).not("publish_requested_at", "is", null);
     else if (filter === "published") q = q.eq("is_published", true);
     const { data } = await q;
@@ -64,6 +83,7 @@ const StorefrontQueue = () => {
       storefront_id: r.id, partner_id: r.partner_id, action: "publish_approved", note: "Admin jóváhagyta a publikációt.",
     });
     toast({ title: "Storefront publikálva" });
+    void sendPartnerEmail("partner-domain-approved", r.partner_id, { domain: `webshop: ${r.display_name}` });
     await load(); setDrawer(null);
   };
 
@@ -76,6 +96,7 @@ const StorefrontQueue = () => {
     await supabase.from("partner_storefront_audit_log").insert({
       storefront_id: r.id, partner_id: r.partner_id, action: "publish_rejected", note,
     });
+    void sendPartnerEmail("partner-domain-rejected", r.partner_id, { domain: `webshop: ${r.display_name}`, admin_note: note });
     toast({ title: "Elutasítva", description: note });
     setNote(""); setDrawer(null); await load();
   };
@@ -96,7 +117,7 @@ const StorefrontQueue = () => {
           <Card key={r.id} className="rounded-none border-foreground/20 p-4 flex flex-wrap items-center gap-3">
             <div className="flex-1 min-w-[220px]">
               <div className="font-bold">{r.display_name} <span className="text-xs text-muted-foreground font-mono">/b/{r.slug}</span></div>
-              <div className="text-xs text-muted-foreground">{r.partners?.business_name} · {r.partners?.contact_email}</div>
+              <div className="text-xs text-muted-foreground">{r.partners?.company_name || r.partners?.full_name} · {r.partners?.email}</div>
               {r.publish_requested_at && <div className="text-xs">Kérve: {new Date(r.publish_requested_at).toLocaleString("hu-HU")}</div>}
             </div>
             <Badge className="rounded-none uppercase" variant={r.is_published ? "default" : "secondary"}>
@@ -122,7 +143,7 @@ const StorefrontQueue = () => {
           <div className="bg-background border border-foreground/20 max-w-4xl w-full max-h-[88vh] overflow-auto p-6 space-y-4" onClick={e => e.stopPropagation()}>
             <div>
               <h3 className="font-bold uppercase tracking-widest">{drawer.display_name}</h3>
-              <div className="text-xs text-muted-foreground">{drawer.partners?.business_name} · {drawer.partners?.contact_email}</div>
+              <div className="text-xs text-muted-foreground">{drawer.partners?.company_name || drawer.partners?.full_name} · {drawer.partners?.email}</div>
             </div>
 
             <Tabs value={drawerTab} onValueChange={setDrawerTab}>
@@ -233,10 +254,11 @@ const DomainQueue = () => {
   const [noteFor, setNoteFor] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [forceOk, setForceOk] = useState<Record<string, boolean>>({});
+  const [showTimeline, setShowTimeline] = useState<Record<string, boolean>>({});
 
   const load = async () => {
     setLoading(true);
-    let q = supabase.from("partner_domain_requests").select("*, partners(business_name, contact_email)").order("created_at", { ascending: false });
+    let q = supabase.from("partner_domain_requests").select("*, partners(full_name, company_name, email)").order("created_at", { ascending: false });
     if (filter === "pending") q = q.in("status", ["pending", "verifying"]);
     const { data } = await q;
     setRows(data || []);
@@ -245,19 +267,24 @@ const DomainQueue = () => {
   useEffect(() => { void load(); }, [filter]);
 
   const setStatus = async (id: string, status: string, admin_note?: string) => {
+    const r = rows.find(x => x.id === id);
     const updates: any = {
       status,
       admin_note: admin_note ?? null,
       reviewed_at: new Date().toISOString(),
     };
-    if (status === "approved") {
-      const r = rows.find(x => x.id === id);
-      if (r) {
-        await supabase.from("partner_storefronts").update({ custom_domain: r.requested_domain, custom_domain_status: "approved" }).eq("partner_id", r.partner_id);
-      }
+    if (status === "approved" && r) {
+      await supabase.from("partner_storefronts").update({ custom_domain: r.requested_domain, custom_domain_status: "approved" }).eq("partner_id", r.partner_id);
     }
     const { error } = await supabase.from("partner_domain_requests").update(updates).eq("id", id);
     if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
+    if (r) {
+      if (status === "approved" || status === "active") {
+        void sendPartnerEmail("partner-domain-approved", r.partner_id, { domain: r.requested_domain, admin_note });
+      } else if (status === "rejected") {
+        void sendPartnerEmail("partner-domain-rejected", r.partner_id, { domain: r.requested_domain, admin_note });
+      }
+    }
     toast({ title: `Státusz: ${status}` });
     setNoteFor(null); setNote("");
     await load();
@@ -296,7 +323,7 @@ const DomainQueue = () => {
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex-1 min-w-[220px]">
                   <div className="font-mono font-bold">{r.requested_domain}</div>
-                  <div className="text-xs text-muted-foreground">{r.partners?.business_name} · {r.partners?.contact_email}</div>
+                  <div className="text-xs text-muted-foreground">{r.partners?.company_name || r.partners?.full_name} · {r.partners?.email}</div>
                   <div className="text-xs">Beküldve: {new Date(r.created_at).toLocaleString("hu-HU")}</div>
                 </div>
                 <Badge className="rounded-none uppercase" variant={r.status === "approved" || r.status === "active" ? "default" : r.status === "rejected" ? "destructive" : "secondary"}>
@@ -322,6 +349,13 @@ const DomainQueue = () => {
                 </Button>
               )}
               {r.admin_note && <div className="text-xs italic">Megjegyzés: {r.admin_note}</div>}
+              {r.last_auto_check_at && <div className="text-[10px] text-muted-foreground">Utolsó auto-ellenőrzés: {new Date(r.last_auto_check_at).toLocaleString("hu-HU")} · Auto: {r.auto_check_enabled ? "BE" : "KI"}</div>}
+              <div>
+                <Button size="sm" variant="outline" className="rounded-none" onClick={() => setShowTimeline(s => ({ ...s, [r.id]: !s[r.id] }))}>
+                  <GitCompare className="h-3 w-3 mr-1" /> {showTimeline[r.id] ? "Idővonal elrejtése" : "Bizonyíték idővonal / összehasonlítás"}
+                </Button>
+              </div>
+              {showTimeline[r.id] && <DomainProofTimeline requestId={r.id} />}
               {noteFor === r.id ? (
                 <div className="space-y-2">
                   <Textarea className="rounded-none" rows={2} placeholder="Üzenet a partnernek" value={note} onChange={e => setNote(e.target.value)} />

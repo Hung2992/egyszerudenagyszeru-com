@@ -98,6 +98,26 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
     setSaving(false);
     if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
     if (data) setSf(data);
+    if (publishRequest) {
+      try {
+        const { data: p } = await supabase.from("partners").select("email, full_name, company_name").eq("id", partnerId).maybeSingle();
+        if (p?.email) {
+          await supabase.functions.invoke("send-transactional-email", {
+            body: {
+              templateName: "partner-storefront-version-submitted",
+              recipientEmail: p.email,
+              idempotencyKey: `sf-submit-${sf.id || data?.id}-${Date.now()}`,
+              templateData: {
+                full_name: p.company_name || p.full_name,
+                storefront_name: (data as any)?.display_name || sf.display_name,
+                submitted_at: new Date().toLocaleString("hu-HU"),
+                portal_url: `${window.location.origin}/partner`,
+              },
+            },
+          });
+        }
+      } catch (_) { /* swallow */ }
+    }
     toast({ title: publishRequest ? "Mentve és publikálási kérés elküldve" : "Mentve" });
   };
 

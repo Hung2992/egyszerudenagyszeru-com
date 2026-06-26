@@ -3014,9 +3014,67 @@ export type Database = {
           },
         ]
       }
+      partner_domain_proof_versions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          dns_check_result: Json | null
+          dns_check_status: string | null
+          dns_proof_url: string | null
+          id: string
+          note: string | null
+          partner_id: string
+          partner_self_reported: boolean | null
+          request_id: string
+          version_no: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          dns_check_result?: Json | null
+          dns_check_status?: string | null
+          dns_proof_url?: string | null
+          id?: string
+          note?: string | null
+          partner_id: string
+          partner_self_reported?: boolean | null
+          request_id: string
+          version_no: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          dns_check_result?: Json | null
+          dns_check_status?: string | null
+          dns_proof_url?: string | null
+          id?: string
+          note?: string | null
+          partner_id?: string
+          partner_self_reported?: boolean | null
+          request_id?: string
+          version_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_domain_proof_versions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_domain_proof_versions_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "partner_domain_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_domain_requests: {
         Row: {
           admin_note: string | null
+          auto_check_enabled: boolean
           created_at: string
           dns_check_result: Json | null
           dns_check_status: string
@@ -3024,6 +3082,7 @@ export type Database = {
           dns_instructions: Json | null
           dns_proof_url: string | null
           id: string
+          last_auto_check_at: string | null
           partner_id: string
           partner_self_reported: boolean
           requested_domain: string
@@ -3035,6 +3094,7 @@ export type Database = {
         }
         Insert: {
           admin_note?: string | null
+          auto_check_enabled?: boolean
           created_at?: string
           dns_check_result?: Json | null
           dns_check_status?: string
@@ -3042,6 +3102,7 @@ export type Database = {
           dns_instructions?: Json | null
           dns_proof_url?: string | null
           id?: string
+          last_auto_check_at?: string | null
           partner_id: string
           partner_self_reported?: boolean
           requested_domain: string
@@ -3053,6 +3114,7 @@ export type Database = {
         }
         Update: {
           admin_note?: string | null
+          auto_check_enabled?: boolean
           created_at?: string
           dns_check_result?: Json | null
           dns_check_status?: string
@@ -3060,6 +3122,7 @@ export type Database = {
           dns_instructions?: Json | null
           dns_proof_url?: string | null
           id?: string
+          last_auto_check_at?: string | null
           partner_id?: string
           partner_self_reported?: boolean
           requested_domain?: string

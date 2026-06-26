@@ -4,6 +4,9 @@ project_id = "meyxhsgnryuupwpddxav"
   [functions.auth-email-hook]
     verify_jwt = false
 
+  [functions.verify-partner-domain-dns]
+    verify_jwt = false
+
   [functions.send-transactional-email]
     verify_jwt = true
 

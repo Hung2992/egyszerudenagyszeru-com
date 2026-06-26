@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Globe, Send, Trash2, Copy, ShieldCheck, ShieldAlert, Upload, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import DomainProofTimeline from "@/components/partner/DomainProofTimeline";
+import { Globe, Send, Trash2, Copy, ShieldCheck, ShieldAlert, Upload, Loader2, History } from "lucide-react";
 
 interface Props { partnerId: string; }
 
@@ -32,6 +34,7 @@ const PartnerDomainTab = ({ partnerId }: Props) => {
   const [submitting, setSubmitting] = useState(false);
   const [checking, setChecking] = useState<string | null>(null);
   const [uploading, setUploading] = useState<string | null>(null);
+  const [showTimeline, setShowTimeline] = useState<Record<string, boolean>>({});
 
   const load = async () => {
     setLoading(true);
@@ -184,7 +187,7 @@ const PartnerDomainTab = ({ partnerId }: Props) => {
                 </details>
               )}
 
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 items-center">
                 <Button size="sm" variant="outline" className="rounded-none" onClick={() => markSelfReported(r.id)} disabled={r.dns_check_status === "verified"}>
                   Beállítottam a DNS-t
                 </Button>
@@ -199,7 +202,26 @@ const PartnerDomainTab = ({ partnerId }: Props) => {
                   </Button>
                 </label>
                 {r.dns_proof_url && <span className="text-[11px] text-muted-foreground self-center">Feltöltve ✓</span>}
+                <Button size="sm" variant="outline" className="rounded-none" onClick={() => setShowTimeline(s => ({ ...s, [r.id]: !s[r.id] }))}>
+                  <History className="h-3 w-3 mr-1" /> {showTimeline[r.id] ? "Idővonal elrejtése" : "Verzió idővonal"}
+                </Button>
+                <label className="flex items-center gap-2 text-[11px] uppercase ml-auto">
+                  <Switch checked={!!r.auto_check_enabled} onCheckedChange={async v => {
+                    await supabase.from("partner_domain_requests").update({ auto_check_enabled: v }).eq("id", r.id);
+                    toast({ title: v ? "Auto-ellenőrzés bekapcsolva" : "Auto-ellenőrzés kikapcsolva" });
+                    await load();
+                  }} />
+                  Auto-ellenőrzés (30 percenként)
+                </label>
               </div>
+              {r.last_auto_check_at && (
+                <div className="text-[10px] text-muted-foreground">Utolsó auto-ellenőrzés: {new Date(r.last_auto_check_at).toLocaleString("hu-HU")}</div>
+              )}
+              {showTimeline[r.id] && (
+                <div className="border-t border-foreground/10 pt-2">
+                  <DomainProofTimeline requestId={r.id} />
+                </div>
+              )}
             </Card>
           ))
         }
