@@ -46,7 +46,7 @@ const PartnerApprovalsPanel = () => {
         </TabsList>
         <TabsContent value="storefronts"><StorefrontQueue /></TabsContent>
         <TabsContent value="domains"><DomainQueue /></TabsContent>
-        <TabsContent value="audit"><PartnerStorefrontAuditLogTab adminView /></TabsContent>
+        <TabsContent value="audit"><AdminPartnerAuditSearch /></TabsContent>
       </Tabs>
     </div>
   );
