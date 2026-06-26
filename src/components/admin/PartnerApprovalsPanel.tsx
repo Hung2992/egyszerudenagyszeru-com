@@ -10,6 +10,25 @@ import { Check, X, Eye, Globe, Store, RefreshCw, ExternalLink, GitCompare, FileT
 import { toast } from "@/hooks/use-toast";
 import StorefrontVersionDiff from "@/components/partner/StorefrontVersionDiff";
 import PartnerStorefrontAuditLogTab from "@/components/partner/PartnerStorefrontAuditLogTab";
+import AdminPartnerAuditSearch from "@/components/admin/AdminPartnerAuditSearch";
+import DomainProofTimeline from "@/components/partner/DomainProofTimeline";
+
+const PORTAL_URL = "https://www.egyszerudenagyszeru.com/partner";
+
+async function sendPartnerEmail(templateName: string, partnerId: string, templateData: Record<string, any>) {
+  try {
+    const { data: p } = await supabase.from("partners").select("email, full_name, company_name").eq("id", partnerId).maybeSingle();
+    if (!p?.email) return;
+    await supabase.functions.invoke("send-transactional-email", {
+      body: {
+        templateName,
+        recipientEmail: p.email,
+        idempotencyKey: `${templateName}-${partnerId}-${Date.now()}`,
+        templateData: { full_name: p.company_name || p.full_name, portal_url: PORTAL_URL, ...templateData },
+      },
+    });
+  } catch (_) { /* swallow */ }
+}
 
 const PartnerApprovalsPanel = () => {
   const [tab, setTab] = useState("storefronts");
