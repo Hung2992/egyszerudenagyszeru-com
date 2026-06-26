@@ -117,7 +117,7 @@ const StorefrontQueue = () => {
           <Card key={r.id} className="rounded-none border-foreground/20 p-4 flex flex-wrap items-center gap-3">
             <div className="flex-1 min-w-[220px]">
               <div className="font-bold">{r.display_name} <span className="text-xs text-muted-foreground font-mono">/b/{r.slug}</span></div>
-              <div className="text-xs text-muted-foreground">{r.partners?.business_name} · {r.partners?.contact_email}</div>
+              <div className="text-xs text-muted-foreground">{r.partners?.company_name || r.partners?.full_name} · {r.partners?.email}</div>
               {r.publish_requested_at && <div className="text-xs">Kérve: {new Date(r.publish_requested_at).toLocaleString("hu-HU")}</div>}
             </div>
             <Badge className="rounded-none uppercase" variant={r.is_published ? "default" : "secondary"}>
@@ -143,7 +143,7 @@ const StorefrontQueue = () => {
           <div className="bg-background border border-foreground/20 max-w-4xl w-full max-h-[88vh] overflow-auto p-6 space-y-4" onClick={e => e.stopPropagation()}>
             <div>
               <h3 className="font-bold uppercase tracking-widest">{drawer.display_name}</h3>
-              <div className="text-xs text-muted-foreground">{drawer.partners?.business_name} · {drawer.partners?.contact_email}</div>
+              <div className="text-xs text-muted-foreground">{drawer.partners?.company_name || drawer.partners?.full_name} · {drawer.partners?.email}</div>
             </div>
 
             <Tabs value={drawerTab} onValueChange={setDrawerTab}>
