@@ -1,50 +1,43 @@
-## Terv: Partner storefront biztonság, audit, diff, sitemap cache és SEO mezők
+## Terv: Domain bizonyíték verziózás, auto DNS recheck, audit szűrés/CSV, e-mail értesítések
 
-### 1. Élő előnézet megosztó linkek (tokenek)
-- `partner_storefront_preview_tokens` bővítés: `expires_at` (alapból +24h), `max_uses`, `use_count`, `last_accessed_at`, `last_accessed_ip`, `last_accessed_user_agent`, `revoked_at`.
-- Új tábla: `partner_storefront_preview_access_log` (token_id, accessed_at, ip, user_agent, viewer_user_id nullable).
-- Új edge function: `partner-preview-access` — validálja a tokent (nem lejárt, nem visszavont, use_count < max_uses), logol, növeli a számlálót.
-- `BrandStorefront.tsx`: `?preview=<token>` esetén előbb meghívja az edge functiont; ha visszadob 403/410, hibaüzenet.
-- Partner UI (`StorefrontLivePreview.tsx`): tokenek listája, lejárat választás (1ó/24ó/7nap), visszavonás gomb, hozzáférés-statisztika (mikor, milyen IP, hány nyitás).
-- Admin UI (új szekció a `PartnerApprovalsPanel`-be vagy a storefront drawer-be): minden token + access log megjelenítése.
+### 1. DNS bizonyíték + státusz verziózás (timeline)
+- Új tábla: `partner_domain_proof_versions` (id, request_id, partner_id, version_no, dns_proof_url, partner_self_reported_status, dns_check_status, dns_check_result jsonb, note, created_at, created_by).
+- Trigger `partner_domain_requests` UPDATE-re: ha `dns_proof_url`, `dns_check_status`, `dns_check_result` vagy `partner_self_reported` változik → új sor a verzió táblába (auto-increment `version_no` per request).
+- `PartnerDomainTab`: új "Bizonyíték verziók" collapsible — lista időponttal, állapot badge-ekkel, proof letöltés link.
+- Admin (`PartnerApprovalsPanel` domain szekció): timeline komponens (egymás melletti két verzió kiválaszthatóan, diff: status / proof preview / result jsonb). Jóváhagyás gomb előtt látható.
 
-### 2. Custom domain DNS bizonyíték és ellenőrzött állapot
-- `partner_domain_requests` bővítés: `dns_proof_url` (storage path), `dns_check_status` ('not_checked' | 'self_reported' | 'verified' | 'failed'), `dns_checked_at`, `dns_check_result` (jsonb: TXT érték, A rekordok).
-- Új edge function: `verify-partner-domain-dns` — `Deno.resolveDns(domain, "TXT")` és `"A"`, összehasonlítás a `verification_token`-nel és IP-vel, eredmény mentése.
-- Partner UI (`PartnerDomainTab.tsx`): "Ellenőrzés futtatása" gomb (meghívja az edge functiont), "Bizonyíték feltöltése" (storage `partner-domain-proofs` bucket — screenshot a DNS panelről), állapot választó ("Beállítottam" / "Várok a propagálásra").
-- Storage bucket: `partner-domain-proofs` (privát, csak partner + admin).
-- Admin UI: a jóváhagyás gomb csak akkor aktív, ha `dns_check_status='verified'`. Manuális override switch (`force_approve` checkbox + indoklás).
+### 2. Automatikus DNS recheck + változás-értesítés
+- `pg_cron` job: 30 percenként hívja a `verify-partner-domain-dns` edge functiont minden `pending` vagy `verifying` státuszú request-re (warmup mód: `{ scheduled: true }` body, függvény végigiterál).
+- `verify-partner-domain-dns` bővítés: scheduled módban listázza a nyitott kéréseket, futtatja a checket, ha a `dns_check_status` MEGVÁLTOZIK (pl. `failed` → `verified` vagy fordítva), beír egy `admin_notifications` sort + meghívja `send-transactional-email`-t a partnernek (`domain-dns-status-changed` template).
+- Új mező `partner_domain_requests.last_auto_check_at`, `auto_check_enabled` (default true, partner kikapcsolhatja).
 
-### 3. Részletes audit napló partner változtatásokhoz
-- Új tábla: `partner_storefront_audit_log` (storefront_id, partner_id, actor_user_id, actor_role, action ['update'|'publish_request'|'publish_approved'|'publish_rejected'|'restore_version'|'domain_request'|'domain_approved'|'token_created'|'token_revoked'], changed_fields jsonb, before_snapshot jsonb, after_snapshot jsonb, ip, user_agent, note).
-- Trigger: `partner_storefronts` UPDATE — kiszámolja a változott mezőket (csak amik tényleg változtak), beszúrja a log-ba.
-- Trigger: `partner_domain_requests` INSERT/UPDATE.
-- Új komponens: `PartnerStorefrontAuditLogTab.tsx` (partner és admin nézet, szűrés akció/dátum szerint).
+### 3. Audit napló keresés/szűrés + CSV export (admin)
+- Új admin oldal-szekció vagy bővítés a `PartnerApprovalsPanel`-ben: "Audit napló" tab.
+- Szűrők: partner select (autocomplete), domain szöveg, akció multi-select, dátum tartomány (from/to), aktor user.
+- Lekérdezés `partner_storefront_audit_log` + join `partners` és `partner_domain_requests` a `requested_domain`-ért (vagy az audit log `note`/`changed_fields`-ből).
+- Eredmény táblázat lapozással (50/oldal).
+- "CSV letöltés" gomb: kliens oldalon összeállítja a szűrt találatokból a CSV-t (`Blob` + `URL.createObjectURL`), oszlopok: created_at, action, partner_id, partner_name, storefront_id, actor_user_id, actor_role, ip, changed_fields, note.
 
-### 4. Verzió-diff a jóváhagyás előtt
-- Új komponens: `StorefrontVersionDiff.tsx` — összehasonlítja a `partner_storefront_versions` legutóbbi publikált verzióját a beküldött (current) változattal.
-- Mező-szintű diff: szöveges mezők piros/zöld szín jelöléssel (`diff` npm csomag), jsonb mezők (testimonials, custom_sections) struktúra-diff.
-- Beépítés a `PartnerApprovalsPanel` storefront drawer-be: a leírás helyett vagy mellé "Változások" tab.
-
-### 5. Sitemap cache és auto-újragenerálás
-- Új tábla: `partner_sitemap_cache` (storefront_id PK, xml text, generated_at, etag, hit_count).
-- `partner-sitemap` edge function átalakítás: először cache-ből próbál olvasni, ha 1 órán belüli → onnan szolgál ki (Cache-Control: public, max-age=3600 + ETag), különben regenerál.
-- Trigger: `partner_storefronts` vagy `partner_products` változáskor → cache törlés az adott storefront-ra (NULL-ra állítjuk a sort, vagy DELETE).
-- pg_cron job: óránként újragenerál minden élesben lévő storefront sitemap-jét (`net.http_post` a `partner-sitemap` functionre warmup paraméterrel).
-
-### 6. SEO és cégadat mezők + auto JSON-LD/meta
-- `partner_storefronts` bővítés: `seo_keywords` text[], `company_legal_name`, `company_tax_id`, `company_registration_number`, `company_address`, `company_phone`, `company_email`, `business_hours` jsonb, `founding_year`, `social_profiles` jsonb (külön a már meglévő social_* mezőktől, kifejezetten JSON-LD `sameAs`-hez).
-- `BrandStorefront.tsx`: auto meta description ha üres → `tagline + " " + seo_keywords.join(", ")`. JSON-LD `Store` típushoz `address`, `telephone`, `email`, `taxID`, `foundingDate`, `sameAs`, `keywords` automatikusan kitöltve.
-- `StorefrontEditorTab.tsx`: új "Cégadat" tab + bővített SEO tab (kulcsszó chip input).
+### 4. E-mail értesítések partnernek
+- Új transactional template-ek (`supabase/functions/_shared/transactional-email-templates/`):
+  - `partner-domain-approved.tsx` — domain jóváhagyva (CTA: portál link).
+  - `partner-domain-rejected.tsx` — domain elutasítva + admin indoklás.
+  - `partner-domain-dns-status-changed.tsx` — DNS státusz változás (verified/failed) automata check-ből.
+  - `partner-storefront-version-submitted.tsx` — partner új verziót küldött be jóváhagyásra (megerősítés a partnernek).
+- Registry frissítése.
+- Trigger pontok:
+  - Admin a `PartnerApprovalsPanel`-ben jóváhagy/elutasít domaint → meghívja a `send-transactional-email`-t a megfelelő template-tel (partner e-mail a `partners.contact_email`-ből).
+  - `StorefrontEditorTab` "Publikálás kérés" gomb → submit után `partner-storefront-version-submitted` küldés.
+  - `verify-partner-domain-dns` scheduled módban státusz változáskor `partner-domain-dns-status-changed`.
 
 ### Technikai részletek
-- **1 migráció**: új oszlopok `partner_storefronts`, `partner_storefront_preview_tokens`, `partner_domain_requests`; új táblák `partner_storefront_preview_access_log`, `partner_storefront_audit_log`, `partner_sitemap_cache`; triggerek; RLS + GRANT minden új public táblára; storage bucket `partner-domain-proofs`.
-- **3 új edge function**: `partner-preview-access`, `verify-partner-domain-dns`, `partner-sitemap` (átírás cache-re).
-- **1 pg_cron job**: óránkénti sitemap warmup.
-- **Új csomag**: `diff` (verzió összehasonlításhoz).
-- **~12 fájl**: BrandStorefront.tsx, StorefrontEditorTab.tsx (új tabok), StorefrontLivePreview.tsx (token kezelés), PartnerDomainTab.tsx (DNS check + upload), PartnerApprovalsPanel.tsx (diff + token log + force approve), új komponensek: StorefrontVersionDiff.tsx, PartnerStorefrontAuditLogTab.tsx, PreviewTokenManager.tsx.
+- **1 migráció**: új tábla `partner_domain_proof_versions` (RLS + GRANT), új oszlopok `partner_domain_requests`-en, trigger, pg_cron job a recheck-re.
+- **1 edge function módosítás**: `verify-partner-domain-dns` (scheduled batch mód + state-change értesítés).
+- **4 új e-mail template** + registry frissítés.
+- **~5 frontend fájl**: `PartnerDomainTab.tsx` (verzió lista, auto_check toggle), `PartnerApprovalsPanel.tsx` (timeline + audit szűrő tab + e-mail trigger jóváhagyáskor), új `DomainProofTimeline.tsx`, új `AuditLogSearchTab.tsx`, `StorefrontEditorTab.tsx` (publikálás kéréskor e-mail).
+- Prereq: email infra már létezik (`send-transactional-email` deployed).
 
 ### Amit NEM csinálunk
-- Nem építünk valódi automatikus DNS propagáció monitort (csak igény szerinti / cron óránkénti DNS lookup).
-- Nem írjuk újra a meglévő super admin felületet, csak új tab/szekciókat adunk hozzá.
-- A diff vizuális — nem ad blokkoló validációt.
+- Nem építünk vizuális diff-et a proof képekhez (csak egymás mellé jelenít meg).
+- Auto-check nem fut sűrűbben 30 percnél (rate-limit / DNS lookup költség).
+- Marketing/bulk e-mail nincs — kizárólag tranzakciós, egy esemény → egy címzett.
