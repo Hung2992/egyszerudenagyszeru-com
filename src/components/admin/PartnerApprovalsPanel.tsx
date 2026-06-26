@@ -349,6 +349,13 @@ const DomainQueue = () => {
                 </Button>
               )}
               {r.admin_note && <div className="text-xs italic">Megjegyzés: {r.admin_note}</div>}
+              {r.last_auto_check_at && <div className="text-[10px] text-muted-foreground">Utolsó auto-ellenőrzés: {new Date(r.last_auto_check_at).toLocaleString("hu-HU")} · Auto: {r.auto_check_enabled ? "BE" : "KI"}</div>}
+              <div>
+                <Button size="sm" variant="outline" className="rounded-none" onClick={() => setShowTimeline(s => ({ ...s, [r.id]: !s[r.id] }))}>
+                  <GitCompare className="h-3 w-3 mr-1" /> {showTimeline[r.id] ? "Idővonal elrejtése" : "Bizonyíték idővonal / összehasonlítás"}
+                </Button>
+              </div>
+              {showTimeline[r.id] && <DomainProofTimeline requestId={r.id} />}
               {noteFor === r.id ? (
                 <div className="space-y-2">
                   <Textarea className="rounded-none" rows={2} placeholder="Üzenet a partnernek" value={note} onChange={e => setNote(e.target.value)} />
