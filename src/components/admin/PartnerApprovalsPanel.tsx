@@ -254,10 +254,11 @@ const DomainQueue = () => {
   const [noteFor, setNoteFor] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [forceOk, setForceOk] = useState<Record<string, boolean>>({});
+  const [showTimeline, setShowTimeline] = useState<Record<string, boolean>>({});
 
   const load = async () => {
     setLoading(true);
-    let q = supabase.from("partner_domain_requests").select("*, partners(business_name, contact_email)").order("created_at", { ascending: false });
+    let q = supabase.from("partner_domain_requests").select("*, partners(full_name, company_name, email)").order("created_at", { ascending: false });
     if (filter === "pending") q = q.in("status", ["pending", "verifying"]);
     const { data } = await q;
     setRows(data || []);
@@ -266,19 +267,24 @@ const DomainQueue = () => {
   useEffect(() => { void load(); }, [filter]);
 
   const setStatus = async (id: string, status: string, admin_note?: string) => {
+    const r = rows.find(x => x.id === id);
     const updates: any = {
       status,
       admin_note: admin_note ?? null,
       reviewed_at: new Date().toISOString(),
     };
-    if (status === "approved") {
-      const r = rows.find(x => x.id === id);
-      if (r) {
-        await supabase.from("partner_storefronts").update({ custom_domain: r.requested_domain, custom_domain_status: "approved" }).eq("partner_id", r.partner_id);
-      }
+    if (status === "approved" && r) {
+      await supabase.from("partner_storefronts").update({ custom_domain: r.requested_domain, custom_domain_status: "approved" }).eq("partner_id", r.partner_id);
     }
     const { error } = await supabase.from("partner_domain_requests").update(updates).eq("id", id);
     if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
+    if (r) {
+      if (status === "approved" || status === "active") {
+        void sendPartnerEmail("partner-domain-approved", r.partner_id, { domain: r.requested_domain, admin_note });
+      } else if (status === "rejected") {
+        void sendPartnerEmail("partner-domain-rejected", r.partner_id, { domain: r.requested_domain, admin_note });
+      }
+    }
     toast({ title: `Státusz: ${status}` });
     setNoteFor(null); setNote("");
     await load();
@@ -317,7 +323,7 @@ const DomainQueue = () => {
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex-1 min-w-[220px]">
                   <div className="font-mono font-bold">{r.requested_domain}</div>
-                  <div className="text-xs text-muted-foreground">{r.partners?.business_name} · {r.partners?.contact_email}</div>
+                  <div className="text-xs text-muted-foreground">{r.partners?.company_name || r.partners?.full_name} · {r.partners?.email}</div>
                   <div className="text-xs">Beküldve: {new Date(r.created_at).toLocaleString("hu-HU")}</div>
                 </div>
                 <Badge className="rounded-none uppercase" variant={r.status === "approved" || r.status === "active" ? "default" : r.status === "rejected" ? "destructive" : "secondary"}>
