@@ -76,6 +76,19 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
 
   useEffect(() => { void load(); }, [partnerId]);
 
+  // Realtime: auto-refresh sf when row changes (publish approval, domain status change, etc.)
+  useEffect(() => {
+    if (!sf?.id) return;
+    const ch = supabase
+      .channel(`sf-${sf.id}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "partner_storefronts", filter: `id=eq.${sf.id}` },
+        (payload) => { if (payload.new) setSf((cur: any) => ({ ...cur, ...payload.new })); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "partner_domain_requests", filter: `partner_id=eq.${partnerId}` },
+        () => { void load(); })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [sf?.id, partnerId]);
+
   const set = (k: string, v: any) => setSf((s: any) => ({ ...s, [k]: v }));
 
   const handleFile = async (field: string, file: File) => {
