@@ -18,6 +18,15 @@ import StorefrontLivePreview from "./StorefrontLivePreview";
 import PreviewTokenManager from "./PreviewTokenManager";
 import PartnerStorefrontAuditLogTab from "./PartnerStorefrontAuditLogTab";
 import { buildPreviewUrl, buildPublicUrl } from "@/lib/partner-storefront-urls";
+import {
+  logButtonEvent,
+  canUsePreviewButton,
+  canUsePublishButton,
+  evaluateDomainReadiness,
+} from "@/lib/partner-storefront-analytics";
+import { usePartnerCheck } from "@/hooks/usePartnerCheck";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { AlertTriangle } from "lucide-react";
 
 interface Props { partnerId: string; }
 
