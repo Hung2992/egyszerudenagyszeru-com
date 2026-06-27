@@ -107,6 +107,18 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
   };
 
   const save = async (publishRequest = false) => {
+    void logButtonEvent({
+      storefrontId: sf?.id, partnerId,
+      eventType: publishRequest ? "publish_request_click" : "save_click",
+    });
+    if (publishRequest) {
+      const block = evaluateDomainReadiness(sf);
+      // Only block if partner explicitly opted in to a custom domain that isn't ready.
+      if (block === "dns_unverified" || block === "dns_expired") {
+        setDomainModal(block);
+        return;
+      }
+    }
     if (!sf?.slug || !sf?.display_name) { toast({ title: "Slug és név kötelező", variant: "destructive" }); return; }
     if (!/^[a-z0-9-]+$/.test(sf.slug)) { toast({ title: "Slug csak kisbetű, szám, kötőjel", variant: "destructive" }); return; }
     const ok = await checkSlug(sf.slug);
