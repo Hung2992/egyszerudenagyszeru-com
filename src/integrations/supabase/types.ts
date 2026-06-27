@@ -3674,6 +3674,60 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_storefront_button_events: {
+        Row: {
+          actor_user_id: string | null
+          context: Json | null
+          created_at: string
+          event_type: string
+          id: string
+          partner_id: string | null
+          storefront_id: string | null
+          url: string | null
+          url_type: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          actor_user_id?: string | null
+          context?: Json | null
+          created_at?: string
+          event_type: string
+          id?: string
+          partner_id?: string | null
+          storefront_id?: string | null
+          url?: string | null
+          url_type?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          actor_user_id?: string | null
+          context?: Json | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          partner_id?: string | null
+          storefront_id?: string | null
+          url?: string | null
+          url_type?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_storefront_button_events_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_storefront_button_events_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "partner_storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_storefront_preview_access_log: {
         Row: {
           accessed_at: string
