@@ -54,7 +54,7 @@ describe("Permission gating — Publish request button", () => {
   it("aktív + nem publikált → engedett", () => {
     expect(canUsePublishButton("active", false, { slug: "x", is_published: false })).toBe(true);
   });
-  it("már publikált → nincs „kérés" gomb", () => {
+  it("mar publikalt → nincs kerés gomb", () => {
     expect(canUsePublishButton("active", false, { slug: "x", is_published: true })).toBe(false);
   });
   it("nem aktív partnernél tiltott", () => {
