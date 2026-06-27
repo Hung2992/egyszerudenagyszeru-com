@@ -43,10 +43,12 @@ const THEMES = [
 ];
 
 const StorefrontEditorTab = ({ partnerId }: Props) => {
+  const { partner, isAdmin } = usePartnerCheck();
   const [sf, setSf] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
+  const [domainModal, setDomainModal] = useState<null | "no_domain" | "dns_unverified" | "dns_expired">(null);
 
   const load = async () => {
     const { data } = await supabase.from("partner_storefronts").select("*").eq("partner_id", partnerId).maybeSingle();
