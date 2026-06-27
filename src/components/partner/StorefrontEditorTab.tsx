@@ -17,6 +17,7 @@ import StorefrontVersionsTab from "./StorefrontVersionsTab";
 import StorefrontLivePreview from "./StorefrontLivePreview";
 import PreviewTokenManager from "./PreviewTokenManager";
 import PartnerStorefrontAuditLogTab from "./PartnerStorefrontAuditLogTab";
+import { buildPreviewUrl, buildPublicUrl } from "@/lib/partner-storefront-urls";
 
 interface Props { partnerId: string; }
 
@@ -148,8 +149,8 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
 
   if (!sf) return <div className="text-sm text-muted-foreground">Betöltés…</div>;
 
-  const previewUrl = sf.slug ? `${window.location.origin}/b/${sf.slug}?preview=editor` : null;
-  const publicUrl = sf.slug ? `${window.location.origin}/b/${sf.slug}` : null;
+  const previewUrl = buildPreviewUrl(window.location.origin, sf);
+  const publicUrl = buildPublicUrl(window.location.origin, sf);
   const subdomainUrl = sf.slug ? `https://${sf.slug}.egyszerudenagyszeru.com` : null;
 
   return (
