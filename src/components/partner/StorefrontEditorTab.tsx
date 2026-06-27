@@ -159,7 +159,10 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
     if (publishRequest) {
       const finalSf = (data as any) || sf;
       const url = buildPreviewUrl(window.location.origin, finalSf);
-      if (url) window.open(url, "_blank", "noopener");
+      if (url) {
+        void logButtonEvent({ storefrontId: finalSf?.id, partnerId, eventType: "preview_url_open", url });
+        window.open(url, "_blank", "noopener");
+      }
     }
   };
 
