@@ -120,6 +120,11 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
       } catch (_) { /* swallow */ }
     }
     toast({ title: publishRequest ? "Mentve és publikálási kérés elküldve" : "Mentve" });
+    if (publishRequest) {
+      const finalSf = (data as any) || sf;
+      const url = buildPreviewUrl(window.location.origin, finalSf);
+      if (url) window.open(url, "_blank", "noopener");
+    }
   };
 
   const applyTheme = (t: typeof THEMES[number]) => {
