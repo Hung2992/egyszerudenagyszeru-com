@@ -18,6 +18,15 @@ import StorefrontLivePreview from "./StorefrontLivePreview";
 import PreviewTokenManager from "./PreviewTokenManager";
 import PartnerStorefrontAuditLogTab from "./PartnerStorefrontAuditLogTab";
 import { buildPreviewUrl, buildPublicUrl } from "@/lib/partner-storefront-urls";
+import {
+  logButtonEvent,
+  canUsePreviewButton,
+  canUsePublishButton,
+  evaluateDomainReadiness,
+} from "@/lib/partner-storefront-analytics";
+import { usePartnerCheck } from "@/hooks/usePartnerCheck";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { AlertTriangle } from "lucide-react";
 
 interface Props { partnerId: string; }
 
@@ -34,10 +43,12 @@ const THEMES = [
 ];
 
 const StorefrontEditorTab = ({ partnerId }: Props) => {
+  const { partner, isAdmin } = usePartnerCheck();
   const [sf, setSf] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
+  const [domainModal, setDomainModal] = useState<null | "no_domain" | "dns_unverified" | "dns_expired">(null);
 
   const load = async () => {
     const { data } = await supabase.from("partner_storefronts").select("*").eq("partner_id", partnerId).maybeSingle();
@@ -65,6 +76,19 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
 
   useEffect(() => { void load(); }, [partnerId]);
 
+  // Realtime: auto-refresh sf when row changes (publish approval, domain status change, etc.)
+  useEffect(() => {
+    if (!sf?.id) return;
+    const ch = supabase
+      .channel(`sf-${sf.id}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "partner_storefronts", filter: `id=eq.${sf.id}` },
+        (payload) => { if (payload.new) setSf((cur: any) => ({ ...cur, ...payload.new })); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "partner_domain_requests", filter: `partner_id=eq.${partnerId}` },
+        () => { void load(); })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [sf?.id, partnerId]);
+
   const set = (k: string, v: any) => setSf((s: any) => ({ ...s, [k]: v }));
 
   const handleFile = async (field: string, file: File) => {
@@ -83,6 +107,18 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
   };
 
   const save = async (publishRequest = false) => {
+    void logButtonEvent({
+      storefrontId: sf?.id, partnerId,
+      eventType: publishRequest ? "publish_request_click" : "save_click",
+    });
+    if (publishRequest) {
+      const block = evaluateDomainReadiness(sf);
+      // Only block if partner explicitly opted in to a custom domain that isn't ready.
+      if (block === "dns_unverified" || block === "dns_expired") {
+        setDomainModal(block);
+        return;
+      }
+    }
     if (!sf?.slug || !sf?.display_name) { toast({ title: "Slug és név kötelező", variant: "destructive" }); return; }
     if (!/^[a-z0-9-]+$/.test(sf.slug)) { toast({ title: "Slug csak kisbetű, szám, kötőjel", variant: "destructive" }); return; }
     const ok = await checkSlug(sf.slug);
@@ -123,7 +159,10 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
     if (publishRequest) {
       const finalSf = (data as any) || sf;
       const url = buildPreviewUrl(window.location.origin, finalSf);
-      if (url) window.open(url, "_blank", "noopener");
+      if (url) {
+        void logButtonEvent({ storefrontId: finalSf?.id, partnerId, eventType: "preview_url_open", url });
+        window.open(url, "_blank", "noopener");
+      }
     }
   };
 
@@ -157,6 +196,24 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
   const previewUrl = buildPreviewUrl(window.location.origin, sf);
   const publicUrl = buildPublicUrl(window.location.origin, sf);
   const subdomainUrl = sf.slug ? `https://${sf.slug}.egyszerudenagyszeru.com` : null;
+  const canPreview = canUsePreviewButton(partner?.status, isAdmin, sf);
+  const canPublish = canUsePublishButton(partner?.status, isAdmin, sf);
+
+  const handlePreviewClick = () => {
+    if (!previewUrl) return;
+    void logButtonEvent({ storefrontId: sf.id, partnerId, eventType: "preview_click", url: previewUrl });
+    void logButtonEvent({ storefrontId: sf.id, partnerId, eventType: "preview_url_open", url: previewUrl });
+  };
+  const handleSubdomainClick = () => {
+    if (!subdomainUrl) return;
+    void logButtonEvent({ storefrontId: sf.id, partnerId, eventType: "preview_url_open", url: subdomainUrl });
+  };
+
+  const DOMAIN_BLOCK_COPY: Record<NonNullable<typeof domainModal>, { title: string; body: string; steps: string[] }> = {
+    no_domain: { title: "Nincs custom domain beállítva", body: "A subdomain működik, custom domainhez állítsd be a DNS-t.", steps: ["Nyisd meg a Domain fület", "Add meg a domained", "Állítsd be a DNS rekordokat"] },
+    dns_unverified: { title: "DNS még nem ellenőrzött", body: "A custom domain DNS rekordjai nincsenek igazolva. A publikálás kérés tartja a subdomain működését, de a domain nem fog átirányítani amíg az ellenőrzés nem kész.", steps: ["Domain fül → DNS ellenőrzés", "Várd meg az automatikus ellenőrzést (30 perc)", "Ellenőrzött státusz után küldd újra a kérést"] },
+    dns_expired: { title: "DNS bizonyíték lejárt", body: "Az ellenőrzött DNS bizonyíték lejárt. Az adminisztrátornak újra kell ellenőriznie.", steps: ["Domain fül → újra-ellenőrzés indítása", "Töltsd fel a friss bizonyítékot", "Várd meg az admin jóváhagyást"] },
+  };
 
   return (
     <div className="space-y-6">
@@ -166,28 +223,53 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
           <Badge className="rounded-none uppercase" variant={sf.is_published ? "default" : "secondary"}>
             {sf.is_published ? "Élesben" : sf.publish_requested_at ? "Várja a jóváhagyást" : "Vázlat"}
           </Badge>
-          {previewUrl && (
-            <a href={previewUrl} target="_blank" rel="noreferrer" className="text-xs underline flex items-center gap-1">
+          {previewUrl && canPreview && (
+            <a href={previewUrl} target="_blank" rel="noreferrer" onClick={handlePreviewClick} className="text-xs underline flex items-center gap-1">
               <ExternalLink className="h-3 w-3" /> Előnézet
             </a>
           )}
           {subdomainUrl && sf.is_published && (
-            <a href={subdomainUrl} target="_blank" rel="noreferrer" className="text-xs underline flex items-center gap-1 text-accent">
+            <a href={subdomainUrl} target="_blank" rel="noreferrer" onClick={handleSubdomainClick} className="text-xs underline flex items-center gap-1 text-accent">
               <ExternalLink className="h-3 w-3" /> {sf.slug}.egyszerudenagyszeru.com
             </a>
           )}
+          {!canPreview && partner?.status && partner.status !== "active" && (
+            <span className="text-[11px] text-muted-foreground uppercase">Csak aktív partner használhatja</span>
+          )}
         </div>
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" className="rounded-none" onClick={() => save(false)} disabled={saving}>
+          <Button size="sm" variant="outline" className="rounded-none" onClick={() => save(false)} disabled={saving || (!isAdmin && partner?.status !== "active")}>
             <Save className="h-4 w-4 mr-1" /> Mentés
           </Button>
-          {!sf.is_published && (
+          {canPublish && (
             <Button size="sm" className="rounded-none" onClick={() => save(true)} disabled={saving}>
               <Send className="h-4 w-4 mr-1" /> Publikálás kérése
             </Button>
           )}
         </div>
       </Card>
+
+      <Dialog open={!!domainModal} onOpenChange={(v) => !v && setDomainModal(null)}>
+        <DialogContent className="rounded-none">
+          {domainModal && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 uppercase">
+                  <AlertTriangle className="h-4 w-4 text-accent" /> {DOMAIN_BLOCK_COPY[domainModal].title}
+                </DialogTitle>
+                <DialogDescription>{DOMAIN_BLOCK_COPY[domainModal].body}</DialogDescription>
+              </DialogHeader>
+              <ol className="text-sm list-decimal pl-5 space-y-1">
+                {DOMAIN_BLOCK_COPY[domainModal].steps.map((s) => <li key={s}>{s}</li>)}
+              </ol>
+              <DialogFooter>
+                <Button variant="outline" className="rounded-none" onClick={() => setDomainModal(null)}>Bezárás</Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
 
       <Tabs defaultValue="basics">
         <TabsList className="rounded-none flex flex-wrap h-auto">
