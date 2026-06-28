@@ -55,6 +55,7 @@ import AdminInboxTab from "@/components/admin/AdminInboxTab";
 import AdminApiWebhookTab from "@/components/admin/AdminApiWebhookTab";
 import AdminFaqKnowledgeTab from "@/components/admin/AdminFaqKnowledgeTab";
 import AdminAdvancedAnalyticsTab from "@/components/admin/AdminAdvancedAnalyticsTab";
+import AdminPartnerButtonAnalyticsTab from "@/components/admin/AdminPartnerButtonAnalyticsTab";
 import AdminFulfillmentTab from "@/components/admin/AdminFulfillmentTab";
 import AdminSalesRulesTab from "@/components/admin/AdminSalesRulesTab";
 import AdminProductAttributesTab from "@/components/admin/AdminProductAttributesTab";
@@ -1434,6 +1435,7 @@ const Admin = () => {
     { key: "api_webhooks", label: "API/Webhook", icon: Key },
     { key: "faq_knowledge", label: "GYIK/Tudásbázis", icon: HelpCircle },
     { key: "advanced_analytics", label: "Analitika+", icon: BarChart3Icon },
+    { key: "partner_button_analytics", label: "Partner gomb-analitika", icon: MousePointerClick },
     { key: "fulfillment", label: "Logisztika", icon: Truck },
     { key: "sales_rules", label: "Értékesítés", icon: Zap },
     { key: "product_attributes", label: "Attribútumok", icon: SlidersHorizontal },
@@ -3512,6 +3514,7 @@ const Admin = () => {
         {tab === "api_webhooks" && <AdminApiWebhookTab />}
         {tab === "faq_knowledge" && <AdminFaqKnowledgeTab />}
         {tab === "advanced_analytics" && <AdminAdvancedAnalyticsTab />}
+        {tab === "partner_button_analytics" && <AdminPartnerButtonAnalyticsTab />}
         {tab === "fulfillment" && <AdminFulfillmentTab />}
         {tab === "sales_rules" && <AdminSalesRulesTab />}
         {tab === "product_attributes" && <AdminProductAttributesTab />}
