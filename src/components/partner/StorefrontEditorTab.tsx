@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,17 +80,56 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
 
   useEffect(() => { void load(); }, [partnerId]);
 
-  // Realtime: auto-refresh sf when row changes (publish approval, domain status change, etc.)
+  // Realtime: targeted refresh + health monitor (channel errors, missed events, stale subscription).
   useEffect(() => {
     if (!sf?.id) return;
+    const channelName = `sf-${sf.id}`;
+    lastEventAtRef.current = Date.now();
+    prevSfRef.current = {
+      is_published: sf.is_published,
+      custom_domain_status: sf.custom_domain_status,
+      publish_requested_at: sf.publish_requested_at,
+    };
+
     const ch = supabase
-      .channel(`sf-${sf.id}`)
+      .channel(channelName)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "partner_storefronts", filter: `id=eq.${sf.id}` },
-        (payload) => { if (payload.new) setSf((cur: any) => ({ ...cur, ...payload.new })); })
+        (payload) => {
+          lastEventAtRef.current = Date.now();
+          if (!payload.new) return;
+          const next = payload.new as any;
+          const prev = prevSfRef.current;
+          // Detect "meaningful" changes that need a cache-busted iframe reload (vs. just state merge).
+          const publishFlipped = prev.is_published !== next.is_published;
+          const publishReqChanged = prev.publish_requested_at !== next.publish_requested_at;
+          const domainStatusChanged = prev.custom_domain_status !== next.custom_domain_status;
+          // Always merge for live UI sync
+          setSf((cur: any) => ({ ...cur, ...next }));
+          prevSfRef.current = {
+            is_published: next.is_published,
+            custom_domain_status: next.custom_domain_status,
+            publish_requested_at: next.publish_requested_at,
+          };
+          if (publishFlipped || publishReqChanged || domainStatusChanged) {
+            setPreviewRefreshKey((k) => k + 1);
+            toast({ title: "Frissítve", description: publishFlipped ? "Publikálási státusz változott." : domainStatusChanged ? "Domain státusz változott." : "Új verzió érkezett." });
+          }
+        })
       .on("postgres_changes", { event: "*", schema: "public", table: "partner_domain_requests", filter: `partner_id=eq.${partnerId}` },
-        () => { void load(); })
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+        () => { lastEventAtRef.current = Date.now(); void load(); setPreviewRefreshKey((k) => k + 1); })
+      .subscribe(wrapSubscribeStatus(channelName, partnerId, sf.id));
+
+    // Heartbeat: every 60s check we are still receiving traffic; if stale > 5 min, refetch + warn.
+    const heartbeat = window.setInterval(() => {
+      const ageMs = Date.now() - lastEventAtRef.current;
+      if (ageMs > 5 * 60_000) {
+        void reportRealtimeIssue({ issue: "stale_subscription", channel: channelName, partnerId, storefrontId: sf.id, details: { age_ms: ageMs } });
+        lastEventAtRef.current = Date.now(); // throttle further reports
+        void load();
+      }
+    }, 60_000);
+
+    return () => { supabase.removeChannel(ch); window.clearInterval(heartbeat); };
   }, [sf?.id, partnerId]);
 
   const set = (k: string, v: any) => setSf((s: any) => ({ ...s, [k]: v }));
@@ -640,7 +679,7 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
 
         {/* LIVE PREVIEW */}
         <TabsContent value="preview">
-          <StorefrontLivePreview storefrontId={sf?.id ?? null} slug={sf?.slug || ""} draft={sf} />
+          <StorefrontLivePreview storefrontId={sf?.id ?? null} slug={sf?.slug || ""} draft={sf} refreshKey={previewRefreshKey} />
         </TabsContent>
 
         {/* SHARE TOKENS */}
