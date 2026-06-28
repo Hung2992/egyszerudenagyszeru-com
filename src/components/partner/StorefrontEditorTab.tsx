@@ -200,6 +200,7 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
     }
     toast({ title: publishRequest ? "Mentve és publikálási kérés elküldve" : "Mentve" });
     if (publishRequest) {
+      setPreviewRefreshKey((k) => k + 1); // cache-bust preview iframe
       const finalSf = (data as any) || sf;
       const url = buildPreviewUrl(window.location.origin, finalSf);
       if (url) {
