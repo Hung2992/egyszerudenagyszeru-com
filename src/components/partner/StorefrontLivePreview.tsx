@@ -4,19 +4,32 @@ import { Button } from "@/components/ui/button";
 import { ExternalLink, Smartphone, Monitor, RefreshCw, Link2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
-interface Props { storefrontId: string | null; slug: string; draft: any; }
+interface Props {
+  storefrontId: string | null;
+  slug: string;
+  draft: any;
+  /** Bump this number to force a cache-busted iframe reload (publish, DNS verified, etc.) */
+  refreshKey?: number;
+}
 
-const StorefrontLivePreview = ({ storefrontId, slug, draft }: Props) => {
+const StorefrontLivePreview = ({ storefrontId, slug, draft, refreshKey = 0 }: Props) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const [shareToken, setShareToken] = useState<string | null>(null);
+  const [cacheBust, setCacheBust] = useState<number>(() => Date.now());
+
+  // Bump cache-bust query when a meaningful refresh trigger arrives (publish / DNS change).
+  // We do NOT bump on every draft keystroke — those go via postMessage targeted update.
+  useEffect(() => {
+    if (refreshKey > 0) setCacheBust(Date.now());
+  }, [refreshKey]);
 
   const iframeSrc = useMemo(
-    () => slug ? `/b/${slug}?preview=editor` : "",
-    [slug]
+    () => slug ? `/b/${slug}?preview=editor&v=${cacheBust}` : "",
+    [slug, cacheBust]
   );
 
-  // Push draft state into iframe via postMessage on every change
+  // Push draft state into iframe via postMessage on every change (targeted live update, no reload).
   useEffect(() => {
     const win = iframeRef.current?.contentWindow;
     if (!win) return;
@@ -26,7 +39,7 @@ const StorefrontLivePreview = ({ storefrontId, slug, draft }: Props) => {
   }, [draft]);
 
   const reloadFrame = () => {
-    if (iframeRef.current) iframeRef.current.src = iframeSrc;
+    setCacheBust(Date.now());
   };
 
   const createShareToken = async () => {
