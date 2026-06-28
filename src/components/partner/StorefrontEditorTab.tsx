@@ -27,6 +27,7 @@ import {
 import { usePartnerCheck } from "@/hooks/usePartnerCheck";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { AlertTriangle } from "lucide-react";
+import { reportRealtimeIssue, wrapSubscribeStatus } from "@/lib/partner-realtime-sync";
 
 interface Props { partnerId: string; }
 
@@ -49,6 +50,9 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
   const [domainModal, setDomainModal] = useState<null | "no_domain" | "dns_unverified" | "dns_expired">(null);
+  const [previewRefreshKey, setPreviewRefreshKey] = useState(0);
+  const lastEventAtRef = useRef<number>(Date.now());
+  const prevSfRef = useRef<{ is_published?: boolean; custom_domain_status?: string | null; publish_requested_at?: string | null }>({});
 
   const load = async () => {
     const { data } = await supabase.from("partner_storefronts").select("*").eq("partner_id", partnerId).maybeSingle();
