@@ -92,12 +92,25 @@ const Auth = () => {
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    setLoading(false);
-    if (error) toast({ title: "Hiba", description: translateAuthError(error.message), variant: "destructive" });
-    else toast({ title: "Elküldtük!", description: "Nézd meg az email fiókodat." });
+    try {
+      const { data, error } = await supabase.functions.invoke("request-password-recovery", {
+        body: { email, redirectTo: `${window.location.origin}/reset-password` },
+      });
+      if (error) throw error;
+      if ((data as any)?.rateLimited) {
+        toast({
+          title: "Túl sok próbálkozás",
+          description: "Várj 1 órát, mielőtt újra próbálkozol.",
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Elküldtük!", description: "Nézd meg az email fiókodat." });
+      }
+    } catch (err: any) {
+      toast({ title: "Hiba", description: translateAuthError(err?.message ?? "Ismeretlen hiba"), variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const titles: Record<AuthMode, string> = { login: "BELÉPÉS", register: "REGISZTRÁCIÓ", forgot: "JELSZÓ VISSZAÁLLÍTÁS" };

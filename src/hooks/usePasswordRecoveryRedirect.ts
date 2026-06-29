@@ -1,15 +1,8 @@
 import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/untyped-client";
+import { logRecoveryEvent } from "@/lib/password-recovery-analytics";
 
-/**
- * Global guard: ha a Supabase visszairányít egy jelszó-visszaállító linkről
- * (akár hash-ben akár query-ben jön a token), akkor automatikusan a
- * /reset-password oldalra navigáljuk, megőrizve a tokent.
- *
- * Ez megoldja azt az esetet, amikor a Supabase Auth redirect allow listán
- * nincs rajta a /reset-password és a felhasználó a főoldalra esik vissza.
- */
 export const usePasswordRecoveryRedirect = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -22,12 +15,17 @@ export const usePasswordRecoveryRedirect = () => {
       location.pathname !== "/reset-password";
 
     if (isRecoveryUrl) {
+      logRecoveryEvent("link_opened", {
+        via: hash.includes("type=recovery") ? "hash" : "query",
+        from: location.pathname,
+      });
       navigate(`/reset-password${search}${hash}`, { replace: true });
       return;
     }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY" && window.location.pathname !== "/reset-password") {
+        logRecoveryEvent("link_opened", { via: "auth_event" });
         navigate(
           `/reset-password${window.location.search}${window.location.hash}`,
           { replace: true }

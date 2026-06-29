@@ -4271,6 +4271,69 @@ export type Database = {
           },
         ]
       }
+      password_recovery_events: {
+        Row: {
+          created_at: string
+          email_hash: string | null
+          event_type: string
+          id: string
+          metadata: Json
+          session_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email_hash?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json
+          session_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email_hash?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json
+          session_id?: string | null
+        }
+        Relationships: []
+      }
+      password_recovery_requests: {
+        Row: {
+          created_at: string
+          email: string
+          email_hash: string
+          error_reason: string | null
+          id: string
+          ip: string | null
+          rate_limited: boolean
+          success: boolean
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          email_hash: string
+          error_reason?: string | null
+          id?: string
+          ip?: string | null
+          rate_limited?: boolean
+          success?: boolean
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          email_hash?: string
+          error_reason?: string | null
+          id?: string
+          ip?: string | null
+          rate_limited?: boolean
+          success?: boolean
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       payment_attempts: {
         Row: {
           amount: number
