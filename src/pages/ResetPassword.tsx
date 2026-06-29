@@ -69,23 +69,31 @@ const ResetPassword = () => {
               <CardDescription className="text-xs">Add meg az új jelszavadat.</CardDescription>
             </CardHeader>
 
-            <form onSubmit={handleReset}>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-xs uppercase tracking-wider">Új jelszó</Label>
-                  <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="rounded-none h-11 text-sm" required minLength={6} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="text-xs uppercase tracking-wider">Mégegyszer</Label>
-                  <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" className="rounded-none h-11 text-sm" required minLength={6} />
-                </div>
+            {verifyError ? (
+              <CardContent>
+                <p className="text-xs text-destructive">
+                  A visszaállító link érvénytelen vagy lejárt. Kérj egy újat a bejelentkezési oldalon.
+                </p>
               </CardContent>
-              <CardFooter>
-                <Button type="submit" className="w-full rounded-none h-11 uppercase tracking-wider text-xs" disabled={loading}>
-                  {loading ? "Várj..." : "Mentés"}
-                </Button>
-              </CardFooter>
-            </form>
+            ) : (
+              <form onSubmit={handleReset}>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-xs uppercase tracking-wider">Új jelszó</Label>
+                    <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="rounded-none h-11 text-sm" required minLength={6} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword" className="text-xs uppercase tracking-wider">Mégegyszer</Label>
+                    <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" className="rounded-none h-11 text-sm" required minLength={6} />
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button type="submit" className="w-full rounded-none h-11 uppercase tracking-wider text-xs" disabled={loading || !ready}>
+                    {loading ? "Várj..." : !ready ? "Betöltés..." : "Mentés"}
+                  </Button>
+                </CardFooter>
+              </form>
+            )}
           </Card>
         </div>
       </div>
