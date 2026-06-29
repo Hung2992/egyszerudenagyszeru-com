@@ -14,9 +14,30 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [ready, setReady] = useState(false);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+
   useEffect(() => {
+    // PKCE flow: ?token_hash=...&type=recovery
+    const url = new URL(window.location.href);
+    const tokenHash = url.searchParams.get("token_hash");
+    const type = url.searchParams.get("type");
+
+    if (tokenHash && type === "recovery") {
+      supabase.auth.verifyOtp({ type: "recovery", token_hash: tokenHash }).then(({ error }) => {
+        if (error) setVerifyError(error.message);
+        else setReady(true);
+        // Tisztítsuk az URL-t
+        window.history.replaceState({}, "", "/reset-password");
+      });
+    } else {
+      // Implicit flow: a Supabase JS automatikusan beolvassa a #access_token=... hash-t
+      // és kibocsát egy PASSWORD_RECOVERY eseményt.
+      setReady(true);
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") { /* ready */ }
+      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
     });
     return () => subscription.unsubscribe();
   }, []);

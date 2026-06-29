@@ -9,9 +9,10 @@ import Index from "./pages/Index.tsx";
 import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner.tsx";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { useReferralCapture } from "@/hooks/useReferralCapture";
+import { usePasswordRecoveryRedirect } from "@/hooks/usePasswordRecoveryRedirect";
 import { getPartnerSlugFromHostname } from "@/lib/partner-subdomain";
 
-const PageTracker = () => { usePageTracking(); useReferralCapture(); return null; };
+const PageTracker = () => { usePageTracking(); useReferralCapture(); usePasswordRecoveryRedirect(); return null; };
 const partnerSubdomainSlug = getPartnerSlugFromHostname();
 
 // Lazy-loaded components that appear with delay or on interaction
