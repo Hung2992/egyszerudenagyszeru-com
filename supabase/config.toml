@@ -36,3 +36,9 @@ project_id = "meyxhsgnryuupwpddxav"
 
   [functions.download-invoice]
     verify_jwt = true
+
+  [functions.partner-share-redirect]
+    verify_jwt = false
+
+  [functions.partner-ai-marketing]
+    verify_jwt = true
