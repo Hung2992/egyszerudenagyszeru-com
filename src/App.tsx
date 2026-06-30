@@ -136,6 +136,7 @@ const App = () => (
             <Route path="/legal/kyc-adatkezeles" element={<KycAdatkezeles />} />
             <Route path="/b/:slug" element={<BrandStorefront />} />
             <Route path="/b/:slug/termek/:productSlug" element={<BrandProductDetail />} />
+            <Route path="/p/:partnerSlug/:landingSlug" element={<PartnerLanding />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
