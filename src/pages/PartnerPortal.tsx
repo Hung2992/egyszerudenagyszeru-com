@@ -16,6 +16,7 @@ import { copyToClipboard } from "@/lib/clipboard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import StorefrontEditorTab from "@/components/partner/StorefrontEditorTab";
 import PartnerProductsTab from "@/components/partner/PartnerProductsTab";
+import PartnerMarketingHub from "@/components/partner/PartnerMarketingHub";
 
 interface Stats { pending_commission: number; available_commission: number; paid_total: number; total_orders: number; }
 interface Referral { id: string; created_at: string; order_id: string; coupon_code: string; order_total: number; commission_amount: number; status: string; }
@@ -389,35 +390,38 @@ const PartnerPortal = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="marketing" className="mt-6">
-            {assets.length === 0 ? (
-              <Card className="rounded-none border-foreground/20 p-8 text-center text-muted-foreground">Még nincs feltöltött marketing anyag.</Card>
-            ) : (
-              <div className="grid md:grid-cols-2 gap-4">
-                {assets.map((a) => (
-                  <Card key={a.id} className="rounded-none border-foreground/20 p-4 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-bold uppercase text-sm tracking-wider">{a.title}</h3>
-                      <Badge className="rounded-none uppercase text-[10px]">{a.asset_type}</Badge>
-                    </div>
-                    {a.description && <p className="text-xs text-muted-foreground">{a.description}</p>}
-                    {a.text_content && (
-                      <div className="p-3 bg-muted text-xs whitespace-pre-wrap font-mono">{a.text_content}
-                        <Button size="sm" variant="ghost" className="rounded-none mt-2 w-full" onClick={() => { navigator.clipboard.writeText(a.text_content!); toast({ title: "Szöveg másolva" }); }}>
-                          <Copy className="h-3 w-3 mr-2" /> Másolás
-                        </Button>
+          <TabsContent value="marketing" className="mt-6 space-y-6">
+            <PartnerMarketingHub partner={{ id: partner.id, company_name: partner.company_name, coupon_code: partner.coupon_code }} />
+            {assets.length > 0 && (
+              <div>
+                <h3 className="text-xs uppercase tracking-widest font-bold mb-2 text-muted-foreground">Hivatalos brand assetek</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {assets.map((a) => (
+                    <Card key={a.id} className="rounded-none border-foreground/20 p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-bold uppercase text-sm tracking-wider">{a.title}</h3>
+                        <Badge className="rounded-none uppercase text-[10px]">{a.asset_type}</Badge>
                       </div>
-                    )}
-                    {a.asset_url && (
-                      <Button asChild size="sm" variant="outline" className="rounded-none w-full">
-                        <a href={a.asset_url} target="_blank" rel="noopener noreferrer" download><Download className="h-3 w-3 mr-2" /> Letöltés / Megnyitás</a>
-                      </Button>
-                    )}
-                  </Card>
-                ))}
+                      {a.description && <p className="text-xs text-muted-foreground">{a.description}</p>}
+                      {a.text_content && (
+                        <div className="p-3 bg-muted text-xs whitespace-pre-wrap font-mono">{a.text_content}
+                          <Button size="sm" variant="ghost" className="rounded-none mt-2 w-full" onClick={() => { navigator.clipboard.writeText(a.text_content!); toast({ title: "Szöveg másolva" }); }}>
+                            <Copy className="h-3 w-3 mr-2" /> Másolás
+                          </Button>
+                        </div>
+                      )}
+                      {a.asset_url && (
+                        <Button asChild size="sm" variant="outline" className="rounded-none w-full">
+                          <a href={a.asset_url} target="_blank" rel="noopener noreferrer" download><Download className="h-3 w-3 mr-2" /> Letöltés / Megnyitás</a>
+                        </Button>
+                      )}
+                    </Card>
+                  ))}
+                </div>
               </div>
             )}
           </TabsContent>
+
 
           <TabsContent value="profile" className="mt-6">
             <Card className="rounded-none border-foreground/20 p-6 space-y-4 max-w-xl">
