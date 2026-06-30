@@ -2798,6 +2798,62 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_ab_tests: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          name: string
+          partner_id: string
+          status: string
+          variant_a: Json
+          variant_a_clicks: number
+          variant_a_conversions: number
+          variant_b: Json
+          variant_b_clicks: number
+          variant_b_conversions: number
+          winner: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          partner_id: string
+          status?: string
+          variant_a: Json
+          variant_a_clicks?: number
+          variant_a_conversions?: number
+          variant_b: Json
+          variant_b_clicks?: number
+          variant_b_conversions?: number
+          winner?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          partner_id?: string
+          status?: string
+          variant_a?: Json
+          variant_a_clicks?: number
+          variant_a_conversions?: number
+          variant_b?: Json
+          variant_b_clicks?: number
+          variant_b_conversions?: number
+          winner?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_ab_tests_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_access_log: {
         Row: {
           created_at: string
@@ -3142,6 +3198,178 @@ export type Database = {
           },
         ]
       }
+      partner_email_blasts: {
+        Row: {
+          body_html: string
+          click_count: number
+          created_at: string
+          id: string
+          open_count: number
+          partner_id: string
+          recipient_count: number
+          sent_at: string | null
+          sent_count: number
+          status: string
+          subject: string
+        }
+        Insert: {
+          body_html: string
+          click_count?: number
+          created_at?: string
+          id?: string
+          open_count?: number
+          partner_id: string
+          recipient_count?: number
+          sent_at?: string | null
+          sent_count?: number
+          status?: string
+          subject: string
+        }
+        Update: {
+          body_html?: string
+          click_count?: number
+          created_at?: string
+          id?: string
+          open_count?: number
+          partner_id?: string
+          recipient_count?: number
+          sent_at?: string | null
+          sent_count?: number
+          status?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_email_blasts_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_email_subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string | null
+          partner_id: string
+          source: string | null
+          unsubscribed_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name?: string | null
+          partner_id: string
+          source?: string | null
+          unsubscribed_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string | null
+          partner_id?: string
+          source?: string | null
+          unsubscribed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_email_subscribers_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_landing_pages: {
+        Row: {
+          active: boolean
+          body_html: string | null
+          conversion_count: number
+          created_at: string
+          cta_text: string | null
+          cta_url: string | null
+          headline: string
+          hero_image_url: string | null
+          id: string
+          is_live_shopping: boolean | null
+          live_until: string | null
+          partner_id: string
+          partner_photo_url: string | null
+          partner_quote: string | null
+          product_id: string | null
+          slug: string
+          subheadline: string | null
+          theme_color: string | null
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          active?: boolean
+          body_html?: string | null
+          conversion_count?: number
+          created_at?: string
+          cta_text?: string | null
+          cta_url?: string | null
+          headline: string
+          hero_image_url?: string | null
+          id?: string
+          is_live_shopping?: boolean | null
+          live_until?: string | null
+          partner_id: string
+          partner_photo_url?: string | null
+          partner_quote?: string | null
+          product_id?: string | null
+          slug: string
+          subheadline?: string | null
+          theme_color?: string | null
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          active?: boolean
+          body_html?: string | null
+          conversion_count?: number
+          created_at?: string
+          cta_text?: string | null
+          cta_url?: string | null
+          headline?: string
+          hero_image_url?: string | null
+          id?: string
+          is_live_shopping?: boolean | null
+          live_until?: string | null
+          partner_id?: string
+          partner_photo_url?: string | null
+          partner_quote?: string | null
+          product_id?: string | null
+          slug?: string
+          subheadline?: string | null
+          theme_color?: string | null
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_landing_pages_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_landing_pages_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "partner_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_marketing_assets: {
         Row: {
           active: boolean
@@ -3180,6 +3408,81 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      partner_marketing_campaigns: {
+        Row: {
+          ai_model: string | null
+          ai_prompt: string | null
+          body: string
+          created_at: string
+          cta_text: string | null
+          cta_url: string | null
+          hashtags: string[] | null
+          id: string
+          image_urls: string[] | null
+          partner_id: string
+          performance: Json | null
+          platform: string
+          product_id: string | null
+          scheduled_at: string | null
+          status: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          ai_model?: string | null
+          ai_prompt?: string | null
+          body: string
+          created_at?: string
+          cta_text?: string | null
+          cta_url?: string | null
+          hashtags?: string[] | null
+          id?: string
+          image_urls?: string[] | null
+          partner_id: string
+          performance?: Json | null
+          platform: string
+          product_id?: string | null
+          scheduled_at?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ai_model?: string | null
+          ai_prompt?: string | null
+          body?: string
+          created_at?: string
+          cta_text?: string | null
+          cta_url?: string | null
+          hashtags?: string[] | null
+          id?: string
+          image_urls?: string[] | null
+          partner_id?: string
+          performance?: Json | null
+          platform?: string
+          product_id?: string | null
+          scheduled_at?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_marketing_campaigns_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_marketing_campaigns_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "partner_products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       partner_orders: {
         Row: {
@@ -3590,6 +3893,129 @@ export type Database = {
             columns: ["partner_id"]
             isOneToOne: false
             referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_share_clicks: {
+        Row: {
+          clicked_at: string
+          converted: boolean | null
+          country: string | null
+          device_type: string | null
+          id: string
+          partner_id: string
+          referrer: string | null
+          share_link_id: string
+          source: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          clicked_at?: string
+          converted?: boolean | null
+          country?: string | null
+          device_type?: string | null
+          id?: string
+          partner_id: string
+          referrer?: string | null
+          share_link_id: string
+          source?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          clicked_at?: string
+          converted?: boolean | null
+          country?: string | null
+          device_type?: string | null
+          id?: string
+          partner_id?: string
+          referrer?: string | null
+          share_link_id?: string
+          source?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_share_clicks_share_link_id_fkey"
+            columns: ["share_link_id"]
+            isOneToOne: false
+            referencedRelation: "partner_share_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_share_links: {
+        Row: {
+          active: boolean
+          campaign_id: string | null
+          click_count: number
+          code: string
+          conversion_count: number
+          created_at: string
+          id: string
+          label: string | null
+          last_clicked_at: string | null
+          partner_id: string
+          product_id: string | null
+          target_url: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          active?: boolean
+          campaign_id?: string | null
+          click_count?: number
+          code: string
+          conversion_count?: number
+          created_at?: string
+          id?: string
+          label?: string | null
+          last_clicked_at?: string | null
+          partner_id: string
+          product_id?: string | null
+          target_url: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          active?: boolean
+          campaign_id?: string | null
+          click_count?: number
+          code?: string
+          conversion_count?: number
+          created_at?: string
+          id?: string
+          label?: string | null
+          last_clicked_at?: string | null
+          partner_id?: string
+          product_id?: string | null
+          target_url?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_share_links_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "partner_marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_share_links_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_share_links_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "partner_products"
             referencedColumns: ["id"]
           },
         ]
@@ -7434,6 +7860,7 @@ export type Database = {
         Returns: number
       }
       generate_invoice_number: { Args: never; Returns: string }
+      generate_share_code: { Args: never; Returns: string }
       get_accountant_legal_info: { Args: never; Returns: Json }
       get_active_principles: {
         Args: { _context?: string; _limit?: number }
