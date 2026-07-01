@@ -76,6 +76,12 @@ const PartnerLanding = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground" style={{ ["--accent" as any]: landing.theme_color }}>
+      {isPreview && (
+        <div className="bg-yellow-500 text-black text-center py-2 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+          <Badge className="rounded-none bg-black text-yellow-400">ELŐNÉZET</Badge>
+          Csak neked látható — {landing.active ? "publikálva" : "piszkozat"}
+        </div>
+      )}
       {isLive && (
         <div className="bg-red-600 text-white text-center py-2 text-xs font-bold uppercase tracking-widest animate-pulse">
           🔴 ÉLŐ KÖZVETÍTÉS — KORLÁTOZOTT IDŐRE
