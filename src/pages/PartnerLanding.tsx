@@ -118,7 +118,7 @@ const PartnerLanding = () => {
 
         {landing.cta_url && (
           <Button asChild size="lg" className="rounded-none uppercase tracking-widest text-base px-8 py-6" style={{ backgroundColor: landing.theme_color }}>
-            <a href={landing.cta_url} target="_blank" rel="noreferrer">{landing.cta_text}</a>
+            <a href={landing.cta_url} target="_blank" rel="noreferrer" onClick={handleCtaClick}>{landing.cta_text}</a>
           </Button>
         )}
       </div>
