@@ -496,11 +496,24 @@ const LandingPanel = ({ partner, products }: any) => {
     const product = products.find((p: any) => p.id === form.product_id);
     const { error } = await supabase.from("partner_landing_pages").insert({
       partner_id: partner.id, ...form,
+      active: false, // draft-ban indul
       hero_image_url: product?.images?.[0] || null,
       cta_url: product ? `${window.location.origin}/b/${partner.coupon_code}?p=${product.id}` : null,
     });
     if (error) toast({ title: "Hiba", description: error.message, variant: "destructive" });
-    else { toast({ title: "✅ Landing kész" }); setForm({ slug: "", headline: "", subheadline: "", product_id: "", partner_quote: "", cta_text: "Megnézem", theme_color: "#d4af37" }); load(); }
+    else { toast({ title: "✅ Piszkozat mentve — nyisd meg előnézetben, majd publikáld." }); setForm({ slug: "", headline: "", subheadline: "", product_id: "", partner_quote: "", cta_text: "Megnézem", theme_color: "#d4af37" }); load(); }
+  };
+
+  const setActive = async (id: string, active: boolean) => {
+    const { error } = await supabase.from("partner_landing_pages").update({ active }).eq("id", id);
+    if (error) toast({ title: "Hiba", description: error.message, variant: "destructive" });
+    else { toast({ title: active ? "✅ Publikálva" : "Visszavonva (piszkozat)" }); load(); }
+  };
+
+  const remove = async (id: string) => {
+    if (!confirm("Biztosan törlöd?")) return;
+    await supabase.from("partner_landing_pages").delete().eq("id", id);
+    load();
   };
 
   return (
@@ -515,25 +528,36 @@ const LandingPanel = ({ partner, products }: any) => {
         <Input className="rounded-none" placeholder="CTA szöveg" value={form.cta_text} onChange={(e) => setForm({ ...form, cta_text: e.target.value })} />
         <Input className="rounded-none" type="color" value={form.theme_color} onChange={(e) => setForm({ ...form, theme_color: e.target.value })} />
       </div>
-      <Button onClick={create} className="rounded-none uppercase"><Plus className="w-4 h-4 mr-2" />Létrehozás</Button>
+      <Button onClick={create} className="rounded-none uppercase"><Plus className="w-4 h-4 mr-2" />Piszkozat létrehozás</Button>
 
       <div className="space-y-2">
         {pages.map((p) => {
-          const url = `${window.location.origin}/p/${partner.coupon_code}/${p.slug}`;
+          const publicUrl = `${window.location.origin}/p/${partner.coupon_code}/${p.slug}`;
+          const previewUrl = `${publicUrl}?preview=1`;
           return (
-            <div key={p.id} className="border p-3 flex justify-between items-center">
-              <div>
-                <div className="font-bold">{p.headline}</div>
-                <code className="text-xs text-accent">{url}</code>
-                <div className="text-xs text-muted-foreground">{p.view_count} megtekintés</div>
+            <div key={p.id} className="border p-3 flex flex-wrap justify-between items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold">{p.headline}</span>
+                  <Badge className={`rounded-none text-[10px] ${p.active ? "bg-green-600" : "bg-yellow-600"}`}>{p.active ? "PUBLIKÁLT" : "PISZKOZAT"}</Badge>
+                </div>
+                <code className="text-xs text-accent break-all">{publicUrl}</code>
+                <div className="text-xs text-muted-foreground">{p.view_count} megtekintés · {p.conversion_count || 0} konverzió</div>
               </div>
-              <div className="flex gap-1">
-                <Button size="sm" variant="outline" className="rounded-none h-7 text-xs" onClick={() => { navigator.clipboard.writeText(url); toast({ title: "Másolva" }); }}><Copy className="w-3 h-3" /></Button>
-                <Button size="sm" variant="outline" className="rounded-none h-7 text-xs" onClick={() => window.open(url, "_blank")}>Megnyit</Button>
+              <div className="flex gap-1 flex-wrap">
+                <Button size="sm" variant="outline" className="rounded-none h-7 text-xs" onClick={() => window.open(previewUrl, "_blank")}>Előnézet</Button>
+                {p.active ? (
+                  <Button size="sm" variant="outline" className="rounded-none h-7 text-xs" onClick={() => setActive(p.id, false)}>Visszavon</Button>
+                ) : (
+                  <Button size="sm" className="rounded-none h-7 text-xs" onClick={() => setActive(p.id, true)}>Publikál</Button>
+                )}
+                <Button size="sm" variant="outline" className="rounded-none h-7 text-xs" onClick={() => { navigator.clipboard.writeText(publicUrl); toast({ title: "Másolva" }); }}><Copy className="w-3 h-3" /></Button>
+                <Button size="sm" variant="ghost" className="rounded-none h-7 text-xs" onClick={() => remove(p.id)}><Trash2 className="w-3 h-3" /></Button>
               </div>
             </div>
           );
         })}
+        {pages.length === 0 && <p className="text-xs text-muted-foreground">Még nincs landing oldal.</p>}
       </div>
     </Card>
   );
