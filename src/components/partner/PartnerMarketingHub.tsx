@@ -642,17 +642,45 @@ const MediaKitPanel = ({ partner }: any) => {
 };
 
 // ============ ANALYTICS ============
+const RANGE_OPTIONS = [
+  { value: "7", label: "Utolsó 7 nap" },
+  { value: "30", label: "Utolsó 30 nap" },
+  { value: "90", label: "Utolsó 90 nap" },
+  { value: "all", label: "Összes idő" },
+];
+
 const AnalyticsPanel = ({ partner }: any) => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [topLinks, setTopLinks] = useState<any[]>([]);
   const [rank, setRank] = useState<{ pos: number; total: number } | null>(null);
+  const [range, setRange] = useState("30");
+  const [sourceFilter, setSourceFilter] = useState<string>("all");
+  const [clickAgg, setClickAgg] = useState<{ total: number; conv: number; bySource: Record<string, number>; byDevice: Record<string, number> }>({ total: 0, conv: 0, bySource: {}, byDevice: {} });
 
   const load = async () => {
     setLoading(true);
     try {
       const { data: res } = await supabase.functions.invoke("partner-ai-marketing", { body: { action: "insights", partner_id: partner.id } });
       setData(res);
+
+      // Fetch raw clicks with date + source filter for KPI numbers
+      let q = supabase.from("partner_share_clicks").select("source, device_type, created_at").eq("partner_id", partner.id);
+      if (range !== "all") {
+        const since = new Date(Date.now() - parseInt(range) * 86400_000).toISOString();
+        q = q.gte("created_at", since);
+      }
+      if (sourceFilter !== "all") q = q.eq("source", sourceFilter);
+      const { data: clicks } = await q.limit(5000);
+      const bySource: Record<string, number> = {}, byDevice: Record<string, number> = {};
+      let conv = 0;
+      (clicks || []).forEach((c: any) => {
+        bySource[c.source || "unknown"] = (bySource[c.source || "unknown"] || 0) + 1;
+        byDevice[c.device_type || "unknown"] = (byDevice[c.device_type || "unknown"] || 0) + 1;
+        if (c.source === "conversion" || c.source === "landing_cta") conv++;
+      });
+      setClickAgg({ total: clicks?.length || 0, conv, bySource, byDevice });
+
       const { data: links } = await supabase.from("partner_share_links").select("label, utm_source, click_count").eq("partner_id", partner.id).order("click_count", { ascending: false }).limit(10);
       setTopLinks(links || []);
       const { data: all } = await supabase.from("partners").select("id, total_clicks:partner_share_links(click_count)").limit(1000);
@@ -664,40 +692,69 @@ const AnalyticsPanel = ({ partner }: any) => {
       }
     } finally { setLoading(false); }
   };
-  useEffect(() => { load(); }, [partner.id]);
+  useEffect(() => { load(); }, [partner.id, range, sourceFilter]);
 
-  if (loading || !data) return <Card className="p-8 rounded-none border-foreground/20 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></Card>;
+  const availableSources = Object.keys(clickAgg.bySource);
+  const convRate = clickAgg.total > 0 ? ((clickAgg.conv / clickAgg.total) * 100).toFixed(1) : "0.0";
 
   return (
     <Card className="p-4 rounded-none border-foreground/20 space-y-4">
-      <h3 className="font-bold uppercase tracking-widest text-sm flex items-center gap-2"><BarChart3 className="w-4 h-4" />Analitika & AI javaslatok</h3>
-      <div className="grid md:grid-cols-4 gap-3">
-        <div className="border p-3"><div className="text-3xl font-black">{data.stats?.total_clicks || 0}</div><div className="text-xs uppercase text-muted-foreground">Össz kattintás</div></div>
-        <div className="border p-3"><div className="text-3xl font-black">{data.best_hour}:00</div><div className="text-xs uppercase text-muted-foreground">Legjobb óra</div></div>
-        <div className="border p-3"><div className="text-3xl font-black">{Object.keys(data.stats?.by_source || {}).length}</div><div className="text-xs uppercase text-muted-foreground">Aktív csatorna</div></div>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h3 className="font-bold uppercase tracking-widest text-sm flex items-center gap-2"><BarChart3 className="w-4 h-4" />AI Insights analitika</h3>
+        <div className="flex gap-2">
+          <Select value={range} onValueChange={setRange}>
+            <SelectTrigger className="rounded-none h-8 w-40 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>{RANGE_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+          </Select>
+          <Select value={sourceFilter} onValueChange={setSourceFilter}>
+            <SelectTrigger className="rounded-none h-8 w-40 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Minden forrás</SelectItem>
+              {availableSources.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="border p-3"><div className="text-3xl font-black">{clickAgg.total}</div><div className="text-xs uppercase text-muted-foreground">Kattintás (időszak)</div></div>
+        <div className="border p-3"><div className="text-3xl font-black text-accent">{clickAgg.conv}</div><div className="text-xs uppercase text-muted-foreground">Konverzió</div></div>
+        <div className="border p-3"><div className="text-3xl font-black">{convRate}%</div><div className="text-xs uppercase text-muted-foreground">Conv. arány</div></div>
+        <div className="border p-3"><div className="text-3xl font-black">{data?.best_hour ?? "—"}{data?.best_hour != null ? ":00" : ""}</div><div className="text-xs uppercase text-muted-foreground">Legjobb óra</div></div>
         <div className="border p-3"><div className="text-3xl font-black">{rank ? `#${rank.pos}` : "—"}</div><div className="text-xs uppercase text-muted-foreground">Rangsor / {rank?.total || 0}</div></div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-3">
+      <div className="grid md:grid-cols-3 gap-3">
         <div className="border p-3">
           <div className="text-xs uppercase font-bold mb-2">Forrás bontás</div>
-          {Object.entries(data.stats?.by_source || {}).map(([k, v]: any) => (
+          {Object.entries(clickAgg.bySource).sort((a: any, b: any) => b[1] - a[1]).map(([k, v]: any) => (
             <div key={k} className="flex justify-between text-xs py-1"><span>{k}</span><span className="font-bold">{v}</span></div>
           ))}
+          {availableSources.length === 0 && <p className="text-xs text-muted-foreground">Nincs adat.</p>}
+        </div>
+        <div className="border p-3">
+          <div className="text-xs uppercase font-bold mb-2">Eszköz</div>
+          {Object.entries(clickAgg.byDevice).sort((a: any, b: any) => b[1] - a[1]).map(([k, v]: any) => (
+            <div key={k} className="flex justify-between text-xs py-1"><span>{k}</span><span className="font-bold">{v}</span></div>
+          ))}
+          {Object.keys(clickAgg.byDevice).length === 0 && <p className="text-xs text-muted-foreground">Nincs adat.</p>}
         </div>
         <div className="border p-3">
           <div className="text-xs uppercase font-bold mb-2">Top 10 link (heatmap)</div>
           {topLinks.map((l) => (
             <div key={l.label} className="flex items-center gap-2 text-xs py-1">
               <span className="flex-1 truncate">{l.label} <Badge className="rounded-none text-[9px]">{l.utm_source}</Badge></span>
-              <div className="w-24 h-2 bg-muted relative"><div className="absolute inset-y-0 left-0 bg-accent" style={{ width: `${Math.min(100, (l.click_count / (topLinks[0]?.click_count || 1)) * 100)}%` }} /></div>
-              <span className="font-bold w-10 text-right">{l.click_count}</span>
+              <div className="w-16 h-2 bg-muted relative"><div className="absolute inset-y-0 left-0 bg-accent" style={{ width: `${Math.min(100, (l.click_count / (topLinks[0]?.click_count || 1)) * 100)}%` }} /></div>
+              <span className="font-bold w-8 text-right">{l.click_count}</span>
             </div>
           ))}
+          {topLinks.length === 0 && <p className="text-xs text-muted-foreground">Még nincs link.</p>}
         </div>
       </div>
 
-      {data.ai?.tips && (
+      {loading && <div className="text-xs text-muted-foreground flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" />Frissítés…</div>}
+
+      {data?.ai?.tips && (
         <div className="border-l-4 border-accent bg-muted/20 p-4">
           <div className="text-xs uppercase font-bold mb-2 flex items-center gap-2"><Sparkles className="w-3 h-3" />AI Javaslatok</div>
           <p className="text-xs italic mb-3">{data.ai.summary}</p>
