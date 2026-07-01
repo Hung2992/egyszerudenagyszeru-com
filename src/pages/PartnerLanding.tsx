@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface Landing {
   id: string;
@@ -19,29 +20,37 @@ interface Landing {
   theme_color: string;
   is_live_shopping: boolean;
   live_until: string | null;
+  active: boolean;
 }
 
 const PartnerLanding = () => {
   const { partnerSlug, landingSlug } = useParams();
+  const [searchParams] = useSearchParams();
+  const isPreview = searchParams.get("preview") === "1";
   const [landing, setLanding] = useState<Landing | null>(null);
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
-      const { data: partner } = await supabase.from("partners").select("id, company_name").eq("coupon_code", partnerSlug).maybeSingle();
+      const { data: partner } = await supabase.from("partners").select("id, company_name, coupons:coupon_id(code)").eq("id", (await supabase.from("partners").select("id").eq("coupon_id", (await supabase.from("coupons").select("id").eq("code", partnerSlug).maybeSingle()).data?.id).maybeSingle()).data?.id ?? "00000000-0000-0000-0000-000000000000").maybeSingle().then(async (r) => {
+        if (r.data) return r;
+        // fallback: partners table might have coupon_code column
+        return await supabase.from("partners").select("id, company_name").eq("coupon_code", partnerSlug).maybeSingle();
+      });
       if (!partner) { setLoading(false); return; }
-      const { data: l } = await supabase
+      let q = supabase
         .from("partner_landing_pages")
         .select("*")
         .eq("partner_id", partner.id)
-        .eq("slug", landingSlug)
-        .eq("active", true)
-        .maybeSingle();
+        .eq("slug", landingSlug);
+      if (!isPreview) q = q.eq("active", true);
+      const { data: l } = await q.maybeSingle();
       if (l) {
         setLanding(l as Landing);
-        // Track view
-        await supabase.from("partner_landing_pages").update({ view_count: (l as any).view_count + 1 }).eq("id", l.id);
+        if (!isPreview) {
+          await supabase.from("partner_landing_pages").update({ view_count: (l as any).view_count + 1 }).eq("id", l.id);
+        }
         if (l.product_id) {
           const { data: p } = await supabase.from("partner_products").select("title, price_huf, images, description").eq("id", l.product_id).maybeSingle();
           setProduct(p);
@@ -49,7 +58,20 @@ const PartnerLanding = () => {
       }
       setLoading(false);
     })();
-  }, [partnerSlug, landingSlug]);
+  }, [partnerSlug, landingSlug, isPreview]);
+
+  const handleCtaClick = async () => {
+    if (!landing || isPreview) return;
+    // Fire-and-forget conversion tracking
+    void supabase.from("partner_landing_pages").update({ conversion_count: (landing as any).conversion_count + 1 || 1 }).eq("id", landing.id);
+    void supabase.from("partner_share_clicks").insert({
+      partner_id: landing.partner_id,
+      source: "landing_cta",
+      referrer: window.location.href,
+      user_agent: navigator.userAgent.slice(0, 500),
+      device_type: /mobile/i.test(navigator.userAgent) ? "mobile" : /tablet|ipad/i.test(navigator.userAgent) ? "tablet" : "desktop",
+    });
+  };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="h-6 w-6 animate-spin border-2 border-foreground border-t-transparent" /></div>;
   if (!landing) return <div className="min-h-screen flex items-center justify-center bg-background text-foreground"><div className="text-center"><h1 className="text-2xl font-bold uppercase">Nincs ilyen oldal</h1><Link to="/" className="text-accent underline mt-4 inline-block">Vissza a főoldalra</Link></div></div>;
