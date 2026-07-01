@@ -33,11 +33,7 @@ const PartnerLanding = () => {
 
   useEffect(() => {
     (async () => {
-      const { data: partner } = await supabase.from("partners").select("id, company_name, coupons:coupon_id(code)").eq("id", (await supabase.from("partners").select("id").eq("coupon_id", (await supabase.from("coupons").select("id").eq("code", partnerSlug).maybeSingle()).data?.id).maybeSingle()).data?.id ?? "00000000-0000-0000-0000-000000000000").maybeSingle().then(async (r) => {
-        if (r.data) return r;
-        // fallback: partners table might have coupon_code column
-        return await supabase.from("partners").select("id, company_name").eq("coupon_code", partnerSlug).maybeSingle();
-      });
+      const { data: partner } = await supabase.from("partners").select("id, company_name").eq("coupon_code", partnerSlug).maybeSingle();
       if (!partner) { setLoading(false); return; }
       let q = supabase
         .from("partner_landing_pages")
