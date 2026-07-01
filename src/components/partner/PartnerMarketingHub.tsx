@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import QRCode from "qrcode";
+import { jsPDF } from "jspdf";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -293,6 +294,43 @@ const QrFlyerPanel = ({ partner }: any) => {
     const a = document.createElement("a"); a.href = qr; a.download = `qr-${partner.coupon_code}.png`; a.click();
   };
 
+  const downloadFlyerPdf = () => {
+    if (!qr) return;
+    const doc = new jsPDF({ unit: "mm", format: "a5", orientation: "portrait" });
+    const W = 148, H = 210;
+    // header band
+    doc.setFillColor(0, 0, 0); doc.rect(0, 0, W, 22, "F");
+    doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+    doc.text("EGYSZERŰ DE NAGYSZERŰ · HIVATALOS PARTNER", W / 2, 13, { align: "center" });
+
+    doc.setTextColor(0, 0, 0); doc.setFont("helvetica", "bold"); doc.setFontSize(22);
+    const name = (partner.company_name || "PARTNER").toUpperCase();
+    doc.text(name, W / 2, 40, { align: "center", maxWidth: W - 20 });
+
+    doc.setFont("helvetica", "normal"); doc.setFontSize(11);
+    doc.text("Használd a kuponkódot pénztárnál:", W / 2, 52, { align: "center" });
+
+    // coupon block
+    doc.setFillColor(212, 175, 55); doc.rect(24, 58, W - 48, 22, "F");
+    doc.setFont("courier", "bold"); doc.setFontSize(24);
+    doc.setTextColor(0, 0, 0);
+    doc.text(partner.coupon_code || "—", W / 2, 73, { align: "center" });
+
+    // QR
+    doc.addImage(qr, "PNG", (W - 70) / 2, 90, 70, 70);
+
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+    doc.text("Olvasd be a QR kódot vagy látogass el:", W / 2, 168, { align: "center" });
+    doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+    doc.text(url.replace(/^https?:\/\//, ""), W / 2, 175, { align: "center", maxWidth: W - 20 });
+
+    doc.setFont("helvetica", "italic"); doc.setFontSize(7);
+    doc.setTextColor(120, 120, 120);
+    doc.text("Egyedi hivatalos partnermegosztás · minden vásárlásod számít", W / 2, H - 8, { align: "center" });
+
+    doc.save(`szorolap-${partner.coupon_code || "partner"}.pdf`);
+  };
+
   const printFlyer = () => { window.print(); };
 
   return (
@@ -306,6 +344,7 @@ const QrFlyerPanel = ({ partner }: any) => {
         {qr && <img src={qr} alt="QR" className="w-48 h-48 border" />}
         <div className="space-y-2">
           <Button onClick={downloadQR} className="rounded-none uppercase w-full"><Download className="w-4 h-4 mr-2" />QR letöltése PNG</Button>
+          <Button onClick={downloadFlyerPdf} className="rounded-none uppercase w-full"><Download className="w-4 h-4 mr-2" />Szórólap PDF letöltés</Button>
           <Button onClick={printFlyer} variant="outline" className="rounded-none uppercase w-full"><FileText className="w-4 h-4 mr-2" />Szórólap nyomtatás</Button>
         </div>
       </div>
