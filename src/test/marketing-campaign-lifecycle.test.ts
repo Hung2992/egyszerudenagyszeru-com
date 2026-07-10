@@ -76,7 +76,7 @@ const buildClient = (db: MockDb, role: Role, currentPartnerId: string | null = n
         const rows = enforcePartnerScope(applyFilters(db[table]));
         return resolve({ data: rows, error: null });
       },
-      insert: (payload: Row) => {
+      insert: (payload: Row): Promise<{ data: any; error: any }> => {
         if (!canWrite()) return denied();
         const row = { id: `id-${db[table].length + 1}`, ...payload };
         db[table].push(row);
