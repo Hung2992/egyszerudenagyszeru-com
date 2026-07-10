@@ -205,6 +205,9 @@ const AdminMarketingTab = () => {
           <p className="text-center text-sm text-muted-foreground py-8">Még nincsenek kampányok.</p>
         )}
       </div>
+      </div>
+
+      <MarketingAuditLog />
     </div>
   );
 };
