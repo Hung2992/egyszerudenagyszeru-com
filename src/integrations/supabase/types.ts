@@ -2595,6 +2595,48 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_campaign_audit_log: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_id: string | null
+          campaign_id: string | null
+          campaign_name: string | null
+          created_at: string
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          status_from: string | null
+          status_to: string | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_id?: string | null
+          campaign_id?: string | null
+          campaign_name?: string | null
+          created_at?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          status_from?: string | null
+          status_to?: string | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          campaign_id?: string | null
+          campaign_name?: string | null
+          created_at?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          status_from?: string | null
+          status_to?: string | null
+        }
+        Relationships: []
+      }
       marketing_campaigns: {
         Row: {
           campaign_type: string
