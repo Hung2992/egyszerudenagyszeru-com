@@ -2595,6 +2595,60 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_campaigns: {
+        Row: {
+          campaign_type: string
+          click_count: number
+          content: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          open_count: number
+          scheduled_at: string | null
+          sent_at: string | null
+          sent_count: number
+          status: string
+          subject: string | null
+          target_segment: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_type?: string
+          click_count?: number
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          open_count?: number
+          scheduled_at?: string | null
+          sent_at?: string | null
+          sent_count?: number
+          status?: string
+          subject?: string | null
+          target_segment?: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_type?: string
+          click_count?: number
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          open_count?: number
+          scheduled_at?: string | null
+          sent_at?: string | null
+          sent_count?: number
+          status?: string
+          subject?: string | null
+          target_segment?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_events: {
         Row: {
           created_at: string
