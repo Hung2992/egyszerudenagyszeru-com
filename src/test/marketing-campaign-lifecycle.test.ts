@@ -78,7 +78,7 @@ const buildClient = (db: MockDb, role: Role, currentPartnerId: string | null = n
       },
       insert: (payload: Row): Promise<{ data: any; error: any }> => {
         if (!canWrite()) return denied();
-        const row = { id: `id-${db[table].length + 1}`, ...payload };
+        const row: Row = { id: `id-${db[table].length + 1}`, ...payload };
         db[table].push(row);
         if (table === "marketing_campaigns") {
           db.marketing_campaign_audit_log.push({
