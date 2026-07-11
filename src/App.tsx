@@ -67,6 +67,7 @@ const BrandStorefront = lazy(() => import("./pages/BrandStorefront.tsx"));
 const BrandProductDetail = lazy(() => import("./pages/BrandProductDetail.tsx"));
 const PartnerApprovals = lazy(() => import("./pages/PartnerApprovals.tsx"));
 const PartnerLanding = lazy(() => import("./pages/PartnerLanding.tsx"));
+const PartnerShareRedirect = lazy(() => import("./pages/PartnerShareRedirect.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -136,6 +137,7 @@ const App = () => (
             <Route path="/legal/kyc-adatkezeles" element={<KycAdatkezeles />} />
             <Route path="/b/:slug" element={<BrandStorefront />} />
             <Route path="/b/:slug/termek/:productSlug" element={<BrandProductDetail />} />
+            <Route path="/s/:code" element={<PartnerShareRedirect />} />
             <Route path="/p/:partnerSlug/:landingSlug" element={<PartnerLanding />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
