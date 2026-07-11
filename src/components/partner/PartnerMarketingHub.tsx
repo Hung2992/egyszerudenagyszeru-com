@@ -23,6 +23,10 @@ const PLATFORMS = [
   { value: "email", label: "Email" },
 ];
 
+const BRAND_PRODUCT_VALUE = "__brand__";
+const CUSTOM_URL_VALUE = "__custom_url__";
+const NO_PRODUCT_VALUE = "__no_product__";
+
 const PartnerMarketingHub = ({ partner }: Props) => {
   const [products, setProducts] = useState<any[]>([]);
   useEffect(() => {
@@ -61,7 +65,7 @@ const PartnerMarketingHub = ({ partner }: Props) => {
 
 // ============ AI CAMPAIGN ============
 const AiCampaignPanel = ({ partner, products }: any) => {
-  const [productId, setProductId] = useState<string>("");
+  const [productId, setProductId] = useState<string>(BRAND_PRODUCT_VALUE);
   const [platform, setPlatform] = useState("instagram");
   const [tone, setTone] = useState("energikus, fiatalos");
   const [brief, setBrief] = useState("");
@@ -79,7 +83,7 @@ const AiCampaignPanel = ({ partner, products }: any) => {
     setLoading(true); setResult(null);
     try {
       const { data, error } = await supabase.functions.invoke("partner-ai-marketing", {
-        body: { action: "generate_post", partner_id: partner.id, product_id: productId || null, platform, tone, custom_brief: brief },
+        body: { action: "generate_post", partner_id: partner.id, product_id: productId === BRAND_PRODUCT_VALUE ? null : productId, platform, tone, custom_brief: brief },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -92,7 +96,7 @@ const AiCampaignPanel = ({ partner, products }: any) => {
   const save = async () => {
     if (!result) return;
     const { error } = await supabase.from("partner_marketing_campaigns").insert({
-      partner_id: partner.id, product_id: productId || null, platform,
+      partner_id: partner.id, product_id: productId === BRAND_PRODUCT_VALUE ? null : productId, platform,
       title: result.title, body: result.body, hashtags: result.hashtags || [],
       cta_text: result.cta_text, status: "ready", ai_prompt: brief,
     });
@@ -112,7 +116,7 @@ const AiCampaignPanel = ({ partner, products }: any) => {
           <Select value={productId} onValueChange={setProductId}>
             <SelectTrigger className="rounded-none mt-1"><SelectValue placeholder="Általános / brand" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Általános (brand)</SelectItem>
+              <SelectItem value={BRAND_PRODUCT_VALUE}>Általános (brand)</SelectItem>
               {products.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -169,10 +173,9 @@ const AiCampaignPanel = ({ partner, products }: any) => {
 };
 
 // ============ SHARE LINKS ============
-const SHORT_BASE = `${window.location.origin}/s/`;
 const ShareLinksPanel = ({ partner, products }: any) => {
   const [links, setLinks] = useState<any[]>([]);
-  const [productId, setProductId] = useState("");
+  const [productId, setProductId] = useState(CUSTOM_URL_VALUE);
   const [source, setSource] = useState("facebook");
   const [label, setLabel] = useState("");
   const [targetUrl, setTargetUrl] = useState("");
@@ -184,7 +187,7 @@ const ShareLinksPanel = ({ partner, products }: any) => {
   useEffect(() => { load(); }, [partner.id]);
 
   useEffect(() => {
-    if (productId) {
+    if (productId !== CUSTOM_URL_VALUE) {
       const p = products.find((x: any) => x.id === productId);
       if (p) setTargetUrl(`${window.location.origin}/b/${partner.coupon_code || ""}?p=${p.id}&ref=${partner.coupon_code || ""}`);
     }
@@ -194,15 +197,14 @@ const ShareLinksPanel = ({ partner, products }: any) => {
     if (!targetUrl) { toast({ title: "Cél URL kötelező", variant: "destructive" }); return; }
     const { data: code } = await supabase.rpc("generate_share_code");
     const { error } = await supabase.from("partner_share_links").insert({
-      partner_id: partner.id, code, target_url: targetUrl, product_id: productId || null,
+      partner_id: partner.id, code, target_url: targetUrl, product_id: productId === CUSTOM_URL_VALUE ? null : productId,
       utm_source: source, utm_medium: "social", utm_campaign: partner.coupon_code || "partner", label: label || source,
     });
     if (error) toast({ title: "Hiba", description: error.message, variant: "destructive" });
     else { toast({ title: "✅ Link készen" }); setLabel(""); load(); }
   };
 
-  const projectRef = "meyxhsgnryuupwpddxav";
-  const shortUrl = (code: string) => `https://${projectRef}.supabase.co/functions/v1/partner-share-redirect?c=${code}`;
+  const shortUrl = (code: string) => `${window.location.origin}/s/${code}`;
 
   const shareTo = (platform: string, url: string, text: string) => {
     const enc = encodeURIComponent;
@@ -224,7 +226,7 @@ const ShareLinksPanel = ({ partner, products }: any) => {
           <Select value={productId} onValueChange={setProductId}>
             <SelectTrigger className="rounded-none mt-1"><SelectValue placeholder="Választás..." /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Egyedi URL</SelectItem>
+              <SelectItem value={CUSTOM_URL_VALUE}>Egyedi URL</SelectItem>
               {products.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -425,7 +427,7 @@ const EmailPanel = ({ partner }: any) => {
 
 // ============ A/B TEST ============
 const AbTestPanel = ({ partner, products }: any) => {
-  const [productId, setProductId] = useState("");
+  const [productId, setProductId] = useState(NO_PRODUCT_VALUE);
   const [platform, setPlatform] = useState("instagram");
   const [tests, setTests] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -439,7 +441,7 @@ const AbTestPanel = ({ partner, products }: any) => {
   const create = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("partner-ai-marketing", { body: { action: "generate_ab_variants", partner_id: partner.id, product_id: productId || null, platform } });
+      const { data, error } = await supabase.functions.invoke("partner-ai-marketing", { body: { action: "generate_ab_variants", partner_id: partner.id, product_id: productId === NO_PRODUCT_VALUE ? null : productId, platform } });
       if (error) throw error;
       const p = products.find((x: any) => x.id === productId);
       await supabase.from("partner_ab_tests").insert({
@@ -455,7 +457,7 @@ const AbTestPanel = ({ partner, products }: any) => {
     <Card className="p-4 rounded-none border-foreground/20 space-y-4">
       <h3 className="font-bold uppercase tracking-widest text-sm flex items-center gap-2"><FlaskConical className="w-4 h-4" />Auto A/B teszt</h3>
       <div className="flex gap-2">
-        <Select value={productId} onValueChange={setProductId}><SelectTrigger className="rounded-none"><SelectValue placeholder="Termék" /></SelectTrigger><SelectContent>{products.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}</SelectContent></Select>
+        <Select value={productId} onValueChange={setProductId}><SelectTrigger className="rounded-none"><SelectValue placeholder="Termék" /></SelectTrigger><SelectContent><SelectItem value={NO_PRODUCT_VALUE}>Általános (brand)</SelectItem>{products.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}</SelectContent></Select>
         <Select value={platform} onValueChange={setPlatform}><SelectTrigger className="rounded-none w-40"><SelectValue /></SelectTrigger><SelectContent>{PLATFORMS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent></Select>
         <Button onClick={create} disabled={loading} className="rounded-none uppercase">{loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Generálj 2 variánst"}</Button>
       </div>
@@ -483,7 +485,7 @@ const AbTestPanel = ({ partner, products }: any) => {
 // ============ CO-BRANDED LANDING ============
 const LandingPanel = ({ partner, products }: any) => {
   const [pages, setPages] = useState<any[]>([]);
-  const [form, setForm] = useState<any>({ slug: "", headline: "", subheadline: "", product_id: "", partner_quote: "", cta_text: "Megnézem", theme_color: "#d4af37" });
+  const [form, setForm] = useState<any>({ slug: "", headline: "", subheadline: "", product_id: NO_PRODUCT_VALUE, partner_quote: "", cta_text: "Megnézem", theme_color: "#d4af37" });
 
   const load = async () => {
     const { data } = await supabase.from("partner_landing_pages").select("*").eq("partner_id", partner.id).order("created_at", { ascending: false });
@@ -494,14 +496,15 @@ const LandingPanel = ({ partner, products }: any) => {
   const create = async () => {
     if (!form.slug || !form.headline) return toast({ title: "Slug és cím kötelező", variant: "destructive" });
     const product = products.find((p: any) => p.id === form.product_id);
+    const payload = { ...form, product_id: form.product_id === NO_PRODUCT_VALUE ? null : form.product_id };
     const { error } = await supabase.from("partner_landing_pages").insert({
-      partner_id: partner.id, ...form,
+      partner_id: partner.id, ...payload,
       active: false, // draft-ban indul
       hero_image_url: product?.images?.[0] || null,
       cta_url: product ? `${window.location.origin}/b/${partner.coupon_code}?p=${product.id}` : null,
     });
     if (error) toast({ title: "Hiba", description: error.message, variant: "destructive" });
-    else { toast({ title: "✅ Piszkozat mentve — nyisd meg előnézetben, majd publikáld." }); setForm({ slug: "", headline: "", subheadline: "", product_id: "", partner_quote: "", cta_text: "Megnézem", theme_color: "#d4af37" }); load(); }
+    else { toast({ title: "✅ Piszkozat mentve — nyisd meg előnézetben, majd publikáld." }); setForm({ slug: "", headline: "", subheadline: "", product_id: NO_PRODUCT_VALUE, partner_quote: "", cta_text: "Megnézem", theme_color: "#d4af37" }); load(); }
   };
 
   const setActive = async (id: string, active: boolean) => {
@@ -521,7 +524,7 @@ const LandingPanel = ({ partner, products }: any) => {
       <h3 className="font-bold uppercase tracking-widest text-sm flex items-center gap-2"><Globe className="w-4 h-4" />Co-branded landing oldalak</h3>
       <div className="grid md:grid-cols-2 gap-2">
         <Input className="rounded-none" placeholder="slug (URL-be)" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value.toLowerCase().replace(/\s+/g, "-") })} />
-        <Select value={form.product_id} onValueChange={(v) => setForm({ ...form, product_id: v })}><SelectTrigger className="rounded-none"><SelectValue placeholder="Termék (opcionális)" /></SelectTrigger><SelectContent>{products.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}</SelectContent></Select>
+        <Select value={form.product_id} onValueChange={(v) => setForm({ ...form, product_id: v })}><SelectTrigger className="rounded-none"><SelectValue placeholder="Termék (opcionális)" /></SelectTrigger><SelectContent><SelectItem value={NO_PRODUCT_VALUE}>Termék nélkül</SelectItem>{products.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}</SelectContent></Select>
         <Input className="rounded-none md:col-span-2" placeholder="Főcím" value={form.headline} onChange={(e) => setForm({ ...form, headline: e.target.value })} />
         <Input className="rounded-none md:col-span-2" placeholder="Alcím" value={form.subheadline} onChange={(e) => setForm({ ...form, subheadline: e.target.value })} />
         <Textarea className="rounded-none md:col-span-2" placeholder="Idézet tőled..." value={form.partner_quote} onChange={(e) => setForm({ ...form, partner_quote: e.target.value })} />
@@ -565,7 +568,7 @@ const LandingPanel = ({ partner, products }: any) => {
 
 // ============ LIVE SHOPPING ============
 const LivePanel = ({ partner, products }: any) => {
-  const [productId, setProductId] = useState("");
+  const [productId, setProductId] = useState(NO_PRODUCT_VALUE);
   const [duration, setDuration] = useState(60);
   const [active, setActive] = useState<any[]>([]);
 
@@ -596,7 +599,7 @@ const LivePanel = ({ partner, products }: any) => {
       <h3 className="font-bold uppercase tracking-widest text-sm flex items-center gap-2"><Radio className="w-4 h-4 text-red-500" />Live shopping link</h3>
       <p className="text-xs text-muted-foreground">Indíts élő közvetítést — generálunk egy ideiglenes oldalt automatikus visszaszámlálóval. Tedd ki Insta storyba/IG livera.</p>
       <div className="flex gap-2">
-        <Select value={productId} onValueChange={setProductId}><SelectTrigger className="rounded-none"><SelectValue placeholder="Termék" /></SelectTrigger><SelectContent>{products.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}</SelectContent></Select>
+        <Select value={productId} onValueChange={setProductId}><SelectTrigger className="rounded-none"><SelectValue placeholder="Termék" /></SelectTrigger><SelectContent><SelectItem value={NO_PRODUCT_VALUE}>Válassz terméket</SelectItem>{products.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}</SelectContent></Select>
         <Input className="rounded-none w-24" type="number" value={duration} onChange={(e) => setDuration(parseInt(e.target.value) || 60)} />
         <span className="text-xs self-center">perc</span>
         <Button onClick={goLive} className="rounded-none uppercase bg-red-600 hover:bg-red-700"><Radio className="w-4 h-4 mr-2" />🔴 ÉLŐ INDÍTÁS</Button>
@@ -665,10 +668,10 @@ const AnalyticsPanel = ({ partner }: any) => {
       setData(res);
 
       // Fetch raw clicks with date + source filter for KPI numbers
-      let q = supabase.from("partner_share_clicks").select("source, device_type, created_at").eq("partner_id", partner.id);
+      let q = supabase.from("partner_share_clicks").select("source, device_type, clicked_at").eq("partner_id", partner.id);
       if (range !== "all") {
         const since = new Date(Date.now() - parseInt(range) * 86400_000).toISOString();
-        q = q.gte("created_at", since);
+        q = q.gte("clicked_at", since);
       }
       if (sourceFilter !== "all") q = q.eq("source", sourceFilter);
       const { data: clicks } = await q.limit(5000);
