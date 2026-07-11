@@ -27,11 +27,6 @@ const BRAND_PRODUCT_VALUE = "__brand__";
 const CUSTOM_URL_VALUE = "__custom_url__";
 const NO_PRODUCT_VALUE = "__no_product__";
 
-const getFunctionsBaseUrl = () => {
-  const base = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-  return base ? `${base}/functions/v1` : "";
-};
-
 const PartnerMarketingHub = ({ partner }: Props) => {
   const [products, setProducts] = useState<any[]>([]);
   useEffect(() => {
