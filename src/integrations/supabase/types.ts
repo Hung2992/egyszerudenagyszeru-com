@@ -2611,6 +2611,13 @@ export type Database = {
             foreignKeyName: "drop_events_drop_id_fkey"
             columns: ["drop_id"]
             isOneToOne: false
+            referencedRelation: "drop_performance_stats"
+            referencedColumns: ["drop_id"]
+          },
+          {
+            foreignKeyName: "drop_events_drop_id_fkey"
+            columns: ["drop_id"]
+            isOneToOne: false
             referencedRelation: "product_drops"
             referencedColumns: ["id"]
           },
@@ -2654,6 +2661,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "drop_notifications_drop_id_fkey"
+            columns: ["drop_id"]
+            isOneToOne: false
+            referencedRelation: "drop_performance_stats"
+            referencedColumns: ["drop_id"]
+          },
           {
             foreignKeyName: "drop_notifications_drop_id_fkey"
             columns: ["drop_id"]
@@ -2723,6 +2737,13 @@ export type Database = {
             foreignKeyName: "drop_raffle_entries_drop_id_fkey"
             columns: ["drop_id"]
             isOneToOne: false
+            referencedRelation: "drop_performance_stats"
+            referencedColumns: ["drop_id"]
+          },
+          {
+            foreignKeyName: "drop_raffle_entries_drop_id_fkey"
+            columns: ["drop_id"]
+            isOneToOne: false
             referencedRelation: "product_drops"
             referencedColumns: ["id"]
           },
@@ -2788,6 +2809,13 @@ export type Database = {
           variant_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "drop_reservations_drop_id_fkey"
+            columns: ["drop_id"]
+            isOneToOne: false
+            referencedRelation: "drop_performance_stats"
+            referencedColumns: ["drop_id"]
+          },
           {
             foreignKeyName: "drop_reservations_drop_id_fkey"
             columns: ["drop_id"]
@@ -8909,6 +8937,30 @@ export type Database = {
       }
     }
     Views: {
+      drop_performance_stats: {
+        Row: {
+          bot_blocks: number | null
+          drop_id: string | null
+          drop_type: string | null
+          entry_count: number | null
+          first_sold_at: string | null
+          intent_to_purchase_pct: number | null
+          name: string | null
+          purchase_count: number | null
+          reservation_count: number | null
+          reserved_count: number | null
+          sellout_at: string | null
+          sellout_seconds: number | null
+          slug: string | null
+          sold_count: number | null
+          starts_at: string | null
+          status: string | null
+          total_units: number | null
+          view_count: number | null
+          view_to_intent_pct: number | null
+        }
+        Relationships: []
+      }
       product_polls_public: {
         Row: {
           last_vote_at: string | null
@@ -9405,6 +9457,12 @@ export type Database = {
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
+      }
+      finalize_drop_reservation_for_order: {
+        Args: { p_order_id: string }
+        Returns: {
+          finalized_count: number
+        }[]
       }
       generate_invoice_number: { Args: never; Returns: string }
       generate_share_code: { Args: never; Returns: string }
