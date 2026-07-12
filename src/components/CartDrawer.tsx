@@ -59,12 +59,6 @@ const CartDrawer = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items.length, isCartOpen]);
 
-  // Upsell suggestions (simple mock)
-  const upsellItems = useMemo(() => [
-    { name: "Alap póló", price: 4990, img: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200&h=200&fit=crop" },
-    { name: "Zokni csomag", price: 2490, img: "https://images.unsplash.com/photo-1586350977771-b3b0abd50c82?w=200&h=200&fit=crop" },
-    { name: "Sapka", price: 3990, img: "https://images.unsplash.com/photo-1588850561407-ed78c334e67a?w=200&h=200&fit=crop" },
-  ], []);
 
   return (
     <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
