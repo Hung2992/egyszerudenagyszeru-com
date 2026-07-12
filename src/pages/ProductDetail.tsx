@@ -9,6 +9,7 @@ import Layout from "@/components/Layout";
 import SizeQuiz from "@/components/SizeQuiz";
 import ProductWaitlist from "@/components/ProductWaitlist";
 import PersonalizedOffers from "@/components/PersonalizedOffers";
+import AiPriceNegotiateButton from "@/components/AiPriceNegotiateButton";
 import {
   ShoppingCart, Heart, Star, BellRing, Share2, Copy, Bell,
   UserPlus, UserMinus, Ruler, PackagePlus, MessageCircle,
