@@ -17,25 +17,54 @@ const FN_NAME = 'shopping-assistant'
 const DAILY_LIMIT = 50
 
 const SYSTEM = `Te egy segítőkész vásárlási asszisztens vagy az "Egyszerű de Nagyszerű" webshopon.
-Feladatod: a felhasználó természetes nyelvű kérése alapján használd a search_products toolt,
-majd max 4-5 termékkel válaszolj röviden magyarul. Legyél barátságos, tegezz.
-Ha nincs pontos találat, javasolj hasonlót. Válaszod legyen rövid, tömör, jól olvasható mobilon.`
+Feladataid:
+- Termékkeresés: használd a search_products toolt, max 4-5 termékkel válaszolj.
+- Rendelés-információk: ha a vásárló SAJÁT rendeléséről kérdez ("hol a rendelésem", "mikor érkezik", "milyen méretet vettem", "cserélhetem"), használd a get_my_orders toolt. Ha konkrét rendelés részlete kell, get_order_details tool.
+- Csere/visszaküldés kérdésre magyarázd el: 14 napon belül lehet, /profile oldalon indítható.
+- Ha a felhasználó nincs belépve (a tool ezt jelzi), kérd meg hogy jelentkezzen be és irányítsd a /auth oldalra.
+Legyél barátságos, tegezz, rövid, mobilra optimalizált válaszokat adj magyarul.
+SOHA ne találj ki rendelési adatokat, kizárólag a tool által visszaadottakat használd.`
 
-const TOOLS = [{
-  type: 'function',
-  function: {
-    name: 'search_products',
-    description: 'Termékek keresése a webshopban szűrőkkel',
-    parameters: {
-      type: 'object',
-      properties: {
-        query: { type: 'string' }, category: { type: 'string' }, color: { type: 'string' },
-        size: { type: 'string' }, max_price: { type: 'number' }, min_price: { type: 'number' },
-        limit: { type: 'number' },
+const TOOLS = [
+  {
+    type: 'function',
+    function: {
+      name: 'search_products',
+      description: 'Termékek keresése a webshopban szűrőkkel',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string' }, category: { type: 'string' }, color: { type: 'string' },
+          size: { type: 'string' }, max_price: { type: 'number' }, min_price: { type: 'number' },
+          limit: { type: 'number' },
+        },
       },
     },
   },
-}]
+  {
+    type: 'function',
+    function: {
+      name: 'get_my_orders',
+      description: 'A bejelentkezett vásárló utolsó rendeléseit adja vissza (státusz, dátum, tételek, szállítási követés). CSAK a saját rendelését látja.',
+      parameters: {
+        type: 'object',
+        properties: { limit: { type: 'number', description: 'max 10, alapértelmezés 5' } },
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_order_details',
+      description: 'Egy konkrét rendelés részletei (a bejelentkezett vásárló saját rendelése).',
+      parameters: {
+        type: 'object',
+        properties: { order_id: { type: 'string', description: 'A rendelés UUID-ja' } },
+        required: ['order_id'],
+      },
+    },
+  },
+]
 
 async function searchProducts(supabase: any, args: any) {
   let q = supabase.from('shop_products')
@@ -49,6 +78,101 @@ async function searchProducts(supabase: any, args: any) {
   if (args.min_price) q = q.gte('price', args.min_price)
   const { data } = await q
   return data || []
+}
+
+const STATUS_HU: Record<string, string> = {
+  pending: 'Feldolgozás alatt',
+  paid: 'Kifizetve',
+  processing: 'Előkészítés alatt',
+  shipped: 'Feladva',
+  delivered: 'Kézbesítve',
+  cancelled: 'Törölve',
+  refunded: 'Visszatérítve',
+  failed: 'Sikertelen fizetés',
+}
+
+async function getMyOrders(admin: any, authedUserId: string | null, args: any) {
+  if (!authedUserId) return { error: 'not_authenticated', message: 'A vásárlónak be kell jelentkeznie a rendelései megtekintéséhez.' }
+  const limit = Math.min(Math.max(1, args?.limit ?? 5), 10)
+  const { data: orders, error } = await admin
+    .from('orders')
+    .select('id, status, total_amount, created_at, items, payment_method, procurement_status, shipping_name, shipping_city')
+    .eq('user_id', authedUserId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) return { error: 'db_error', message: error.message }
+  if (!orders?.length) return { orders: [], message: 'Még nincs rendelésed.' }
+
+  const ids = orders.map((o: any) => o.id)
+  const { data: shipments } = await admin
+    .from('shipments')
+    .select('order_id, carrier_code, tracking_number, tracking_url, status, shipped_at, delivered_at')
+    .in('order_id', ids)
+  const shipMap = new Map<string, any>()
+  ;(shipments ?? []).forEach((s: any) => shipMap.set(s.order_id, s))
+
+  return {
+    orders: orders.map((o: any) => ({
+      id: o.id,
+      short_id: o.id.slice(0, 8).toUpperCase(),
+      status: STATUS_HU[o.status] ?? o.status,
+      status_code: o.status,
+      total: o.total_amount,
+      created_at: o.created_at,
+      created_days_ago: Math.floor((Date.now() - new Date(o.created_at).getTime()) / 86400000),
+      items_summary: Array.isArray(o.items)
+        ? o.items.map((it: any) => ({ name: it.name, qty: it.quantity ?? it.qty ?? 1, size: it.size, color: it.color })).slice(0, 6)
+        : [],
+      shipping_city: o.shipping_city,
+      shipment: shipMap.get(o.id) ? {
+        carrier: shipMap.get(o.id).carrier_code,
+        tracking_number: shipMap.get(o.id).tracking_number,
+        tracking_url: shipMap.get(o.id).tracking_url,
+        status: shipMap.get(o.id).status,
+        shipped_at: shipMap.get(o.id).shipped_at,
+        delivered_at: shipMap.get(o.id).delivered_at,
+      } : null,
+    })),
+  }
+}
+
+async function getOrderDetails(admin: any, authedUserId: string | null, args: any) {
+  if (!authedUserId) return { error: 'not_authenticated', message: 'A vásárlónak be kell jelentkeznie.' }
+  if (!args?.order_id) return { error: 'missing_order_id' }
+  const { data: order, error } = await admin
+    .from('orders')
+    .select('id, user_id, status, total_amount, discount_amount, coupon_code, created_at, items, payment_method, procurement_status, shipping_name, shipping_address, shipping_city, shipping_zip')
+    .eq('id', args.order_id)
+    .maybeSingle()
+  if (error) return { error: 'db_error', message: error.message }
+  if (!order) return { error: 'not_found', message: 'Nincs ilyen rendelés.' }
+  // 🔒 tulajdonos-ellenőrzés
+  if (order.user_id !== authedUserId) return { error: 'forbidden', message: 'Ez nem a te rendelésed.' }
+
+  const { data: shipment } = await admin
+    .from('shipments')
+    .select('carrier_code, tracking_number, tracking_url, status, shipped_at, delivered_at')
+    .eq('order_id', order.id)
+    .maybeSingle()
+
+  return {
+    id: order.id,
+    short_id: order.id.slice(0, 8).toUpperCase(),
+    status: STATUS_HU[order.status] ?? order.status,
+    status_code: order.status,
+    total: order.total_amount,
+    discount: order.discount_amount,
+    coupon: order.coupon_code,
+    created_at: order.created_at,
+    items: order.items,
+    payment_method: order.payment_method,
+    shipping: {
+      name: order.shipping_name, address: order.shipping_address,
+      city: order.shipping_city, zip: order.shipping_zip,
+    },
+    shipment,
+    return_deadline_days: Math.max(0, 14 - Math.floor((Date.now() - new Date(order.created_at).getTime()) / 86400000)),
+  }
 }
 
 Deno.serve(async (req) => {
