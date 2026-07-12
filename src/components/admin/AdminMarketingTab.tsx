@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Trash2, X, Check, Send, Users, Mail, Clock } from "lucide-react";
 import MarketingAuditLog from "./MarketingAuditLog";
+import AdminAiMarketingSegments from "./AdminAiMarketingSegments";
 
 interface Campaign {
   id: string;
