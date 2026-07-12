@@ -1137,6 +1137,39 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_shopping_conversations: {
+        Row: {
+          assistant_message: string | null
+          created_at: string
+          filters: Json | null
+          id: string
+          recommended_product_ids: string[] | null
+          session_id: string | null
+          user_id: string | null
+          user_message: string
+        }
+        Insert: {
+          assistant_message?: string | null
+          created_at?: string
+          filters?: Json | null
+          id?: string
+          recommended_product_ids?: string[] | null
+          session_id?: string | null
+          user_id?: string | null
+          user_message: string
+        }
+        Update: {
+          assistant_message?: string | null
+          created_at?: string
+          filters?: Json | null
+          id?: string
+          recommended_product_ids?: string[] | null
+          session_id?: string | null
+          user_id?: string | null
+          user_message?: string
+        }
+        Relationships: []
+      }
       ai_strategy_versions: {
         Row: {
           change_reason: string | null
@@ -2112,6 +2145,45 @@ export type Database = {
           },
         ]
       }
+      daily_quests: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string
+          icon: string | null
+          key: string
+          points_reward: number
+          quest_type: string
+          sort_order: number
+          title: string
+          xp_reward: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description: string
+          icon?: string | null
+          key: string
+          points_reward?: number
+          quest_type?: string
+          sort_order?: number
+          title: string
+          xp_reward?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string
+          icon?: string | null
+          key?: string
+          points_reward?: number
+          quest_type?: string
+          sort_order?: number
+          title?: string
+          xp_reward?: number
+        }
+        Relationships: []
+      }
       early_access_codes: {
         Row: {
           code: string
@@ -2688,6 +2760,42 @@ export type Database = {
           subject?: string | null
           target_segment?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      marketing_segments: {
+        Row: {
+          criteria: Json
+          description: string | null
+          generated_at: string
+          id: string
+          name: string
+          segment_key: string
+          suggested_campaign: Json | null
+          updated_at: string
+          user_count: number
+        }
+        Insert: {
+          criteria?: Json
+          description?: string | null
+          generated_at?: string
+          id?: string
+          name: string
+          segment_key: string
+          suggested_campaign?: Json | null
+          updated_at?: string
+          user_count?: number
+        }
+        Update: {
+          criteria?: Json
+          description?: string | null
+          generated_at?: string
+          id?: string
+          name?: string
+          segment_key?: string
+          suggested_campaign?: Json | null
+          updated_at?: string
+          user_count?: number
         }
         Relationships: []
       }
@@ -5061,6 +5169,42 @@ export type Database = {
           },
         ]
       }
+      product_bundles: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string | null
+          discount_percent: number
+          id: string
+          min_items: number
+          name: string
+          product_ids: string[]
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          discount_percent?: number
+          id?: string
+          min_items?: number
+          name: string
+          product_ids?: string[]
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          discount_percent?: number
+          id?: string
+          min_items?: number
+          name?: string
+          product_ids?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       product_categories: {
         Row: {
           id: string
@@ -5085,6 +5229,30 @@ export type Database = {
           name?: string
           slug?: string
           sort_order?: number
+        }
+        Relationships: []
+      }
+      product_frequent_pairs: {
+        Row: {
+          co_occurrence: number
+          id: string
+          product_a: string
+          product_b: string
+          updated_at: string
+        }
+        Insert: {
+          co_occurrence?: number
+          id?: string
+          product_a: string
+          product_b: string
+          updated_at?: string
+        }
+        Update: {
+          co_occurrence?: number
+          id?: string
+          product_a?: string
+          product_b?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -5568,6 +5736,33 @@ export type Database = {
           promo_type?: string
           valid_from?: string | null
           valid_until?: string | null
+        }
+        Relationships: []
+      }
+      quest_completions: {
+        Row: {
+          completed_at: string
+          completed_date: string
+          id: string
+          quest_key: string
+          user_id: string
+          xp_earned: number
+        }
+        Insert: {
+          completed_at?: string
+          completed_date?: string
+          id?: string
+          quest_key: string
+          user_id: string
+          xp_earned?: number
+        }
+        Update: {
+          completed_at?: string
+          completed_date?: string
+          id?: string
+          quest_key?: string
+          user_id?: string
+          xp_earned?: number
         }
         Relationships: []
       }
@@ -7421,6 +7616,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_badges: {
+        Row: {
+          badge_key: string
+          id: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          badge_key: string
+          id?: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          badge_key?: string
+          id?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_gamification: {
+        Row: {
+          created_at: string
+          last_login_date: string | null
+          level: number
+          longest_streak: number
+          streak_days: number
+          total_xp: number
+          updated_at: string
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          created_at?: string
+          last_login_date?: string | null
+          level?: number
+          longest_streak?: number
+          streak_days?: number
+          total_xp?: number
+          updated_at?: string
+          user_id: string
+          xp?: number
+        }
+        Update: {
+          created_at?: string
+          last_login_date?: string | null
+          level?: number
+          longest_streak?: number
+          streak_days?: number
+          total_xp?: number
+          updated_at?: string
+          user_id?: string
+          xp?: number
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
