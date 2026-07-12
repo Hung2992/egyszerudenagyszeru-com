@@ -282,10 +282,10 @@ Deno.serve(async (req) => {
           recommended_product_ids: recommendedIds, filters,
         }).then(() => {}, () => {})
 
-        const responsePayload = { reply: message.content || '', products: recommendedProducts }
+        const responsePayload = { reply: message.content || '', products: recommendedProducts, order_lookup: orderToolUsed }
 
-        // Cache mentés (csak egyszerű kérdésre)
-        if (userMessages.length === 1) {
+        // Cache mentés — csak amikor NEM néztünk rendelést és eleve engedélyezett volt
+        if (cacheEligible && !orderToolUsed) {
           saveToCache(supabase, FN_NAME, lastUserMsg, responsePayload).catch(() => {})
         }
         // Kvóta növelés
