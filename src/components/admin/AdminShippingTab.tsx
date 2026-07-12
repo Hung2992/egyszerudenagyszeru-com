@@ -238,12 +238,21 @@ const AdminShippingTab = () => {
                   {s.recipient_name || "N/A"} • {new Date(s.created_at).toLocaleString("hu-HU")}
                 </p>
               </div>
-              {s.tracking_url && (
-                <a href={s.tracking_url} target="_blank" rel="noopener noreferrer"
-                  className="text-accent hover:opacity-70" title="Nyomkövetés">
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              )}
+              <div className="flex items-center gap-1.5">
+                <button onClick={() => refreshShipment(s.id)} disabled={refreshingId === s.id}
+                  className="text-muted-foreground hover:text-accent" title="Státusz frissítés">
+                  {refreshingId === s.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCw className="w-3.5 h-3.5" />}
+                </button>
+                <button onClick={() => downloadLabel(s)} className="text-muted-foreground hover:text-accent" title="Címke letöltés">
+                  <Download className="w-3.5 h-3.5" />
+                </button>
+                {s.tracking_url && (
+                  <a href={s.tracking_url} target="_blank" rel="noopener noreferrer"
+                    className="text-accent hover:opacity-70" title="Nyomkövetés">
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                )}
+              </div>
             </div>
           ))}
         </div>
