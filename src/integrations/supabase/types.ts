@@ -9379,6 +9379,7 @@ export type Database = {
           velocity: number
         }[]
       }
+      can_manage_drops: { Args: { _user_id: string }; Returns: boolean }
       check_and_bump_learn_quota: { Args: { _kind?: string }; Returns: boolean }
       cleanup_expired_ai_cache: { Args: never; Returns: number }
       cleanup_expired_drop_holds: {
@@ -9824,7 +9825,13 @@ export type Database = {
       welcome20_status: { Args: { _user_id: string }; Returns: Json }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user" | "accountant" | "partner"
+      app_role:
+        | "admin"
+        | "moderator"
+        | "user"
+        | "accountant"
+        | "partner"
+        | "drops_manager"
       drop_reservation_status_enum:
         | "queued"
         | "active"
@@ -9973,7 +9980,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user", "accountant", "partner"],
+      app_role: [
+        "admin",
+        "moderator",
+        "user",
+        "accountant",
+        "partner",
+        "drops_manager",
+      ],
       drop_reservation_status_enum: [
         "queued",
         "active",
