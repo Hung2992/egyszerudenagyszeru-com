@@ -6,6 +6,7 @@ import { Sparkles, Send, X, Loader2, ShoppingBag, MessageCircle } from "lucide-r
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/hooks/use-toast";
+import { trackAiEvent } from "@/lib/ai-analytics";
 
 type Msg = { role: "user" | "assistant"; content: string; products?: any[] };
 
