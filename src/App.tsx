@@ -70,6 +70,7 @@ const PartnerLanding = lazy(() => import("./pages/PartnerLanding.tsx"));
 const PartnerShareRedirect = lazy(() => import("./pages/PartnerShareRedirect.tsx"));
 const Jutalmak = lazy(() => import("./pages/Jutalmak.tsx"));
 const AiShoppingAssistant = lazy(() => import("./components/AiShoppingAssistant"));
+const TrackShipment = lazy(() => import("./pages/TrackShipment.tsx"));
 
 const queryClient = new QueryClient();
 
