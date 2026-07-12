@@ -1581,22 +1581,7 @@ const Admin = () => {
 
   const renderMarketingStudio = () => {
     const current = marketingStudioTabs.find((t) => t.key === marketingStudioTab) || marketingStudioTabs[0];
-    const renderCurrent = () => {
-      switch (marketingStudioTab) {
-        case "ig_studio": return <AdminInstagramStudioTab />;
-        case "tt_studio": return <AdminTiktokStudioTab />;
-        case "yt_studio": return <AdminYoutubeStudioTab />;
-        case "yts_studio": return <AdminYoutubeShortsStudioTab />;
-        case "gads_studio": return <AdminGoogleAdsStudioTab />;
-        case "pin_studio": return <AdminPinterestStudioTab />;
-        case "li_studio": return <AdminLinkedinStudioTab />;
-        case "x_studio": return <AdminTwitterStudioTab />;
-        case "ai_studio_recorder": return <AdminAiStudioRecorder />;
-        case "fb_studio":
-        default:
-          return <AdminFacebookStudioTab />;
-      }
-    };
+
 
     return (
       <div className="space-y-4">
