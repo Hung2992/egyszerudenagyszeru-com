@@ -72,6 +72,8 @@ const Jutalmak = lazy(() => import("./pages/Jutalmak.tsx"));
 const AiShoppingAssistant = lazy(() => import("./components/AiShoppingAssistant"));
 const TrackShipment = lazy(() => import("./pages/TrackShipment.tsx"));
 
+const OAuthConsent = lazy(() => import("./pages/OAuthConsent.tsx"));
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -146,6 +148,7 @@ const App = () => (
             <Route path="/p/:partnerSlug/:landingSlug" element={<PartnerLanding />} />
             <Route path="/csomagkovetes" element={<TrackShipment />} />
             <Route path="/track" element={<TrackShipment />} />
+            <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
