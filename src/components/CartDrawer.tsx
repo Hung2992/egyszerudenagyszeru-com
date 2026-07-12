@@ -199,21 +199,9 @@ const CartDrawer = () => {
               })}
             </div>
 
-            {/* UPSELL */}
-            <div className="px-5 py-3 border-t">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-2 flex items-center gap-1.5">
-                <Sparkles className="h-3 w-3 text-accent" />
-                Ezt is szokták hozzávenni
-              </p>
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {upsellItems.map((upsell, i) => (
-                  <div key={i} className="flex-shrink-0 w-24 border bg-card p-2 text-center">
-                    <img src={upsell.img} alt={upsell.name} className="h-16 w-full object-cover mb-1" />
-                    <p className="text-[10px] font-semibold text-foreground truncate">{upsell.name}</p>
-                    <p className="text-[10px] text-accent font-bold">{upsell.price.toLocaleString()} Ft</p>
-                  </div>
-                ))}
-              </div>
+            {/* AI SMART CART SUGGESTIONS */}
+            <div className="border-t">
+              <SmartCartSuggestions />
             </div>
 
             {/* TOTALS */}
