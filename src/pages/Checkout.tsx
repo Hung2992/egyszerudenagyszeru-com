@@ -170,6 +170,34 @@ const Checkout = () => {
     setCouponLoading(true);
     const code = sourceCode.toUpperCase();
 
+    // === Kupon-ütközés kezelés ===
+    // Olvassuk ki az AI ajánlat policy-jét (ha van pending)
+    let aiPolicy: "override" | "block" | "ask" = "ask";
+    try {
+      const raw = sessionStorage.getItem("pending_ai_coupon");
+      if (raw) aiPolicy = (JSON.parse(raw)?.coupon_conflict_policy as any) ?? "ask";
+    } catch { /* ignore */ }
+
+    if (code.startsWith("AI-") && appliedCoupon && !appliedCoupon.startsWith("AI-")) {
+      // AI kupon jön, de már van sima kupon
+      if (aiPolicy === "block") {
+        toast({ title: "AI ajánlat nem alkalmazható a jelenlegi kupon mellé.", variant: "destructive" });
+        setCouponLoading(false); return;
+      }
+      if (aiPolicy === "ask" && !window.confirm(
+        `Az AI ajánlat felülírja a jelenlegi kupont: ${appliedCoupon} (-${couponDiscount.toLocaleString()} Ft). Folytatod?`
+      )) { setCouponLoading(false); return; }
+      // override -> töröljük a régit, folytatjuk
+      setCouponDiscount(0); setAppliedCoupon("");
+    } else if (!code.startsWith("AI-") && appliedCoupon.startsWith("AI-")) {
+      // Sima kupon jön, AI aktív
+      if (!window.confirm(
+        `A jelenlegi AI ajánlat (${appliedCoupon}) elveszik, ha másik kupont alkalmazol. Folytatod?`
+      )) { setCouponLoading(false); return; }
+      setCouponDiscount(0); setAppliedCoupon(""); setAiOfferId(null);
+      try { sessionStorage.removeItem("pending_ai_coupon"); } catch { /* ignore */ }
+    }
+
     // === AI áralku kupon (AI- prefix) — szerveroldali validáció az ai_price_offers ellen
     if (code.startsWith("AI-")) {
       const { data: aiRes, error: aiErr } = await supabase.rpc("validate_ai_price_offer" as any, {
