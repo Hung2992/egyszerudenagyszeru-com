@@ -1,7 +1,7 @@
 // Admin AI Dashboard - KPI-k, konverziós arányok, cache hit, kvóta, kérdések
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/untyped-client";
-import { Sparkles, MessageCircle, ShoppingCart, TrendingUp, Zap, DollarSign, RefreshCw, Loader2 } from "lucide-react";
+import { Sparkles, MessageCircle, ShoppingCart, TrendingUp, Zap, DollarSign, RefreshCw, Loader2, Clock, AlertOctagon, Megaphone, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Kpis {
@@ -16,7 +16,12 @@ interface Kpis {
   totalQuotaRequests: number;
   totalCost: number;
   segmentsGenerated: number;
+  avgLatencyMs: number;
+  failedCalls: number;
+  aiRevenue: number;
+  aiConversionRate: number;
 }
+interface TopCampaign { name: string; sent: number; opens: number; clicks: number }
 
 const RANGES = [
   { key: "24h", label: "24 óra", ms: 24 * 3600_000 },
