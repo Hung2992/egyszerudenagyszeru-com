@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -8,8 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
   Save, Wand2, ShoppingCart, Vote, Plus, Trash2, Upload, Image as ImageIcon,
-  Ruler, Layers, Info, GripVertical, Star, X, Package
+  Ruler, Layers, Info, GripVertical, Star, X, Package, Sparkles
 } from "lucide-react";
+
+const AiProductStudioModal = lazy(() => import("./AiProductStudioModal"));
 
 interface ProductImage {
   id?: string;
