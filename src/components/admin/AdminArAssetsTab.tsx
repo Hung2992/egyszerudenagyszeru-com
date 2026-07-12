@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2, Plus, Trash2, View, Eye } from "lucide-react";
 import ArConversionFunnel from "@/components/admin/ArConversionFunnel";
 import ArCommerceOptimizer from "@/components/admin/ArCommerceOptimizer";
+import TryOnFunnel from "@/components/admin/TryOnFunnel";
 
 type Asset = {
   id: string;
@@ -151,6 +152,8 @@ export default function AdminArAssetsTab() {
       </Card>
 
       <ArConversionFunnel />
+
+      <TryOnFunnel />
 
       <ArCommerceOptimizer />
 
