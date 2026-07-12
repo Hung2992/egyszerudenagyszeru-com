@@ -33,7 +33,7 @@ interface Props {
  * KIZÁRÓLAG a szerveroldali Rules Engine dönti el (`price-negotiate` edge fn).
  * A frontend semmit nem befolyásol az árban.
  */
-export default function AiPriceNegotiateButton({ productId, productName, price, cartValue, className }: Props) {
+export default function AiPriceNegotiateButton({ productId, productName, price, cartValue, className, onAccept }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [userMessage, setUserMessage] = useState("");
