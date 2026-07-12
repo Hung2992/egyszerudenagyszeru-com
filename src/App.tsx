@@ -1,8 +1,10 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-const Sonner = lazy(() => import("@/components/ui/sonner").then(m => ({ default: m.Toaster })));
-const Toaster = lazy(() => import("@/components/ui/toaster").then(m => ({ default: m.Toaster })));
+import { lazyRetry } from "@/lib/lazy-retry";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+const Sonner = lazy(lazyRetry(() => import("@/components/ui/sonner").then(m => ({ default: m.Toaster }))));
+const Toaster = lazy(lazyRetry(() => import("@/components/ui/toaster").then(m => ({ default: m.Toaster }))));
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/contexts/CartContext";
 import Index from "./pages/Index.tsx";
