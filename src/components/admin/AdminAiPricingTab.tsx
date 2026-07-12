@@ -96,7 +96,11 @@ export default function AdminAiPricingTab() {
         allow_on_clearance: r.allow_on_clearance,
         allowed_categories: r.allowed_categories,
         blocked_categories: r.blocked_categories,
-      })
+        max_offers_per_product_per_day: r.max_offers_per_product_per_day,
+        max_attempts_per_hour: r.max_attempts_per_hour,
+        max_rejected_per_hour: r.max_rejected_per_hour,
+        coupon_conflict_policy: r.coupon_conflict_policy,
+      } as any)
       .eq("id", r.id);
     setSaving(null);
     if (error) toast.error("Mentés sikertelen: " + error.message);
