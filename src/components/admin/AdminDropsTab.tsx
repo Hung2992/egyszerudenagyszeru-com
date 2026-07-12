@@ -12,6 +12,7 @@ import { Loader2, Plus, Trophy, Users, Trash2, ExternalLink, Play, Activity, Che
 import DropLiveDashboard from "./DropLiveDashboard";
 import DropPerformanceReport from "./DropPerformanceReport";
 import DropAiInsightsPanel from "./DropAiInsightsPanel";
+import DropCopilotPanel from "./DropCopilotPanel";
 
 interface Drop {
   id: string; name: string; slug: string; drop_type: string; status: string;
@@ -196,7 +197,10 @@ export default function AdminDropsTab() {
         </Card>
       )}
 
+      <DropCopilotPanel />
+
       <DropPerformanceReport />
+
 
 
 
@@ -249,6 +253,7 @@ export default function AdminDropsTab() {
                 <div className="mt-4 space-y-4">
                   <DropLiveDashboard dropId={d.id} />
                   <DropAiInsightsPanel dropId={d.id} />
+                  <DropCopilotPanel focusDropId={d.id} />
                 </div>
               )}
             </Card>
