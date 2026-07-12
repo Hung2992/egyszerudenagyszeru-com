@@ -53,7 +53,7 @@ const AdminSalesRulesTab = lazy(lazyRetry(() => import("@/components/admin/Admin
 const AdminProductAttributesTab = lazy(lazyRetry(() => import("@/components/admin/AdminProductAttributesTab")));
 const AdminWishlistTab = lazy(lazyRetry(() => import("@/components/admin/AdminWishlistTab")));
 const AdminProcurementTab = lazy(lazyRetry(() => import("@/components/admin/AdminProcurementTab")));
-import AdminBulkProductImport from "@/components/admin/AdminBulkProductImport";
+const AdminProductsTab = lazy(lazyRetry(() => import("@/components/admin/AdminProductsTab")));
 const AdminCustomerSegmentationTab = lazy(lazyRetry(() => import("@/components/admin/AdminCustomerSegmentationTab")));
 import GiveawayWheel from "@/components/admin/GiveawayWheel";
 import GiveawayPrizeManager from "@/components/admin/GiveawayPrizeManager";
