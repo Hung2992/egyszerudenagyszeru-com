@@ -56,10 +56,8 @@ export function useRealtimeSubscription({
       );
     }
 
-    const ch: RealtimeChannel = supabase
-      .channel(channel)
+    const ch: RealtimeChannel = (supabase.channel(channel) as any)
       .on(
-        // @ts-expect-error - supabase types szűk stringet várnak, de futásidőben stringet fogad
         "postgres_changes",
         { event, schema: "public", table, ...(filter ? { filter } : {}) },
         (payload: any) => cbRef.current(payload),
