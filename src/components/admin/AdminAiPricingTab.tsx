@@ -280,6 +280,36 @@ export default function AdminAiPricingTab() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2 border-t">
+                  <div>
+                    <Label className="text-xs">Max ajánlat / termék / 24h</Label>
+                    <Input type="number" min={1} value={r.max_offers_per_product_per_day}
+                      onChange={e => updateLocal(r.id, { max_offers_per_product_per_day: +e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Max lekérdezés / óra</Label>
+                    <Input type="number" min={1} value={r.max_attempts_per_hour}
+                      onChange={e => updateLocal(r.id, { max_attempts_per_hour: +e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Elutasítás limit / óra</Label>
+                    <Input type="number" min={1} value={r.max_rejected_per_hour}
+                      onChange={e => updateLocal(r.id, { max_rejected_per_hour: +e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Kupon-ütközés kezelése</Label>
+                    <select
+                      className="w-full h-10 px-3 border bg-background text-sm"
+                      value={r.coupon_conflict_policy}
+                      onChange={e => updateLocal(r.id, { coupon_conflict_policy: e.target.value as any })}
+                    >
+                      <option value="ask">Rákérdez a checkoutban</option>
+                      <option value="override">AI kupon felülír</option>
+                      <option value="block">AI kupont tiltja</option>
+                    </select>
+                  </div>
+                </div>
+
                 <Button onClick={() => saveRule(r)} disabled={saving === r.id} size="sm">
                   {saving === r.id ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
                   Mentés
