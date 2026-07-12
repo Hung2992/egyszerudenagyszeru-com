@@ -197,7 +197,10 @@ export default function AdminDropsTab() {
         </Card>
       )}
 
+      <DropCopilotPanel />
+
       <DropPerformanceReport />
+
 
 
 
