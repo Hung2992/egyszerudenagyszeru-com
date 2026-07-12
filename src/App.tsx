@@ -75,6 +75,7 @@ const AiShoppingAssistant = lazy(lazyRetry(() => import("./components/AiShopping
 const VisualSearch = lazy(lazyRetry(() => import("./components/VisualSearch")));
 const VoiceShopping = lazy(lazyRetry(() => import("./components/VoiceShopping")));
 const TrackShipment = lazy(lazyRetry(() => import("./pages/TrackShipment.tsx")));
+const DropDetail = lazy(lazyRetry(() => import("./pages/DropDetail.tsx")));
 
 const OAuthConsent = lazy(lazyRetry(() => import("./pages/OAuthConsent.tsx")));
 
