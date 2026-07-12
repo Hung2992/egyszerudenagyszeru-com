@@ -103,11 +103,15 @@ Deno.serve(async (req) => {
   try {
     // Elfogadja: admin JWT-t vagy X-Cron-Secret-et.
     const cronSecret = req.headers.get("x-cron-secret");
-    const isCron = cronSecret && cronSecret === Deno.env.get("SHIPMENT_CRON_SECRET");
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+    let isCron = false;
+    if (cronSecret) {
+      const { data: cfg } = await supabase.from("internal_cron_config").select("value").eq("key", "shipment_cron_secret").maybeSingle();
+      if (cfg?.value && cfg.value === cronSecret) isCron = true;
+    }
 
     if (!isCron) {
       const authHeader = req.headers.get("Authorization");
