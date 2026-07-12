@@ -55,6 +55,7 @@ const ProductDetail = () => {
   const [images, setImages] = useState<ProductImage[]>([]);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
+  const [styleOpen, setStyleOpen] = useState(false);
 
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
