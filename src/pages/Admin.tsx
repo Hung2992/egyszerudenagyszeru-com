@@ -1343,6 +1343,7 @@ const Admin = () => {
     { key: "returns", label: "Visszáru", icon: RotateCcw },
     { key: "dynamic_pricing", label: "Árazás", icon: Zap },
     { key: "drops_center", label: "🚀 Drop Center", icon: Rocket },
+    { key: "ar_3d_center", label: "👟 AR / 3D Center", icon: View },
     { key: "marketing", label: "Kampányok", icon: Megaphone },
     { key: "ai_marketing_studio", label: "AI Marketing Stúdió", icon: Brain },
     { key: "fb_studio", label: "Facebook Stúdió", icon: FacebookIcon },
