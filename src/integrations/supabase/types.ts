@@ -983,6 +983,194 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_price_offers: {
+        Row: {
+          accepted: boolean
+          accepted_at: string | null
+          cart_value: number | null
+          coupon_code: string | null
+          created_at: string
+          discount_percent: number
+          expires_at: string
+          id: string
+          offered_price: number
+          order_id: string | null
+          original_price: number
+          product_id: string | null
+          product_name: string | null
+          reasoning: string | null
+          rule_id: string | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          accepted?: boolean
+          accepted_at?: string | null
+          cart_value?: number | null
+          coupon_code?: string | null
+          created_at?: string
+          discount_percent: number
+          expires_at: string
+          id?: string
+          offered_price: number
+          order_id?: string | null
+          original_price: number
+          product_id?: string | null
+          product_name?: string | null
+          reasoning?: string | null
+          rule_id?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          accepted?: boolean
+          accepted_at?: string | null
+          cart_value?: number | null
+          coupon_code?: string | null
+          created_at?: string
+          discount_percent?: number
+          expires_at?: string
+          id?: string
+          offered_price?: number
+          order_id?: string | null
+          original_price?: number
+          product_id?: string | null
+          product_name?: string | null
+          reasoning?: string | null
+          rule_id?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_price_offers_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "ai_pricing_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_pricing_events: {
+        Row: {
+          context: Json
+          created_at: string
+          granted: boolean
+          id: string
+          offer_id: string | null
+          product_id: string | null
+          reason: string | null
+          requested_discount_percent: number | null
+          rule_id: string | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          granted?: boolean
+          id?: string
+          offer_id?: string | null
+          product_id?: string | null
+          reason?: string | null
+          requested_discount_percent?: number | null
+          rule_id?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          granted?: boolean
+          id?: string
+          offer_id?: string | null
+          product_id?: string | null
+          reason?: string | null
+          requested_discount_percent?: number | null
+          rule_id?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_pricing_events_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "ai_price_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_pricing_events_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "ai_pricing_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_pricing_rules: {
+        Row: {
+          allow_on_clearance: boolean
+          allow_on_new_products: boolean
+          allow_on_sale_products: boolean
+          allowed_categories: string[]
+          blocked_categories: string[]
+          conditions: Json
+          created_at: string
+          description: string | null
+          eligible_customer_tags: string[]
+          id: string
+          is_active: boolean
+          max_discount_percent: number
+          min_cart_value: number
+          min_margin_percent: number
+          name: string
+          offer_ttl_minutes: number
+          priority: number
+          updated_at: string
+        }
+        Insert: {
+          allow_on_clearance?: boolean
+          allow_on_new_products?: boolean
+          allow_on_sale_products?: boolean
+          allowed_categories?: string[]
+          blocked_categories?: string[]
+          conditions?: Json
+          created_at?: string
+          description?: string | null
+          eligible_customer_tags?: string[]
+          id?: string
+          is_active?: boolean
+          max_discount_percent?: number
+          min_cart_value?: number
+          min_margin_percent?: number
+          name: string
+          offer_ttl_minutes?: number
+          priority?: number
+          updated_at?: string
+        }
+        Update: {
+          allow_on_clearance?: boolean
+          allow_on_new_products?: boolean
+          allow_on_sale_products?: boolean
+          allowed_categories?: string[]
+          blocked_categories?: string[]
+          conditions?: Json
+          created_at?: string
+          description?: string | null
+          eligible_customer_tags?: string[]
+          id?: string
+          is_active?: boolean
+          max_discount_percent?: number
+          min_cart_value?: number
+          min_margin_percent?: number
+          name?: string
+          offer_ttl_minutes?: number
+          priority?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_product_generations: {
         Row: {
           admin_user_id: string
