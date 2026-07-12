@@ -207,7 +207,7 @@ serve(async (req) => {
         user_id: userId,
         status: "pending",
         total_amount: finalTotal,
-        shipping_cost: shippingCost > 0 ? shippingCost : null,
+
         shipping_name,
         shipping_phone,
         shipping_zip,
