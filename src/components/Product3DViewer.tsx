@@ -138,7 +138,7 @@ export default function Product3DViewer({
 
   return (
     <div className="relative border border-border bg-background" style={{ height }}>
-      {/* @ts-expect-error web component */}
+      {/* model-viewer web component */}
       <model-viewer
         ref={viewerRef}
         src={asset.glb_url}
