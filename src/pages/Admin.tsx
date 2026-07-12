@@ -24,16 +24,7 @@ const AdminTranslationsTab = lazy(lazyRetry(() => import("@/components/admin/Adm
 const AdminReturnsTab = lazy(lazyRetry(() => import("@/components/admin/AdminReturnsTab")));
 const AdminDynamicPricingTab = lazy(lazyRetry(() => import("@/components/admin/AdminDynamicPricingTab")));
 const AdminMarketingTab = lazy(lazyRetry(() => import("@/components/admin/AdminMarketingTab")));
-const AdminFacebookStudioTab = lazy(lazyRetry(() => import("@/components/admin/AdminFacebookStudioTab")));
-const AdminInstagramStudioTab = lazy(lazyRetry(() => import("@/components/admin/AdminInstagramStudioTab")));
-const AdminTiktokStudioTab = lazy(lazyRetry(() => import("@/components/admin/AdminTiktokStudioTab")));
-const AdminYoutubeStudioTab = lazy(lazyRetry(() => import("@/components/admin/AdminYoutubeStudioTab")));
-const AdminYoutubeShortsStudioTab = lazy(lazyRetry(() => import("@/components/admin/AdminYoutubeShortsStudioTab")));
-const AdminGoogleAdsStudioTab = lazy(lazyRetry(() => import("@/components/admin/AdminGoogleAdsStudioTab")));
-const AdminPinterestStudioTab = lazy(lazyRetry(() => import("@/components/admin/AdminPinterestStudioTab")));
-const AdminLinkedinStudioTab = lazy(lazyRetry(() => import("@/components/admin/AdminLinkedinStudioTab")));
-const AdminTwitterStudioTab = lazy(lazyRetry(() => import("@/components/admin/AdminTwitterStudioTab")));
-import AdminAiStudioRecorder from "@/components/admin/AdminAiStudioRecorder";
+const MarketingStudioRouter = lazy(lazyRetry(() => import("@/components/admin/MarketingStudioRouter")));
 import { Facebook as FacebookIcon, Instagram as InstagramIcon, Youtube as YoutubeIcon, Music2, Linkedin as LinkedinIcon, Twitter as TwitterIcon } from "lucide-react";
 const AdminGdprTab = lazy(lazyRetry(() => import("@/components/admin/AdminGdprTab")));
 const AdminSupportTab = lazy(lazyRetry(() => import("@/components/admin/AdminSupportTab")));
