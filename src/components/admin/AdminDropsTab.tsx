@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Loader2, Plus, Trophy, Users, Trash2, ExternalLink, Play, Activity, ChevronDown, ChevronUp } from "lucide-react";
 import DropLiveDashboard from "./DropLiveDashboard";
+import DropPerformanceReport from "./DropPerformanceReport";
 
 interface Drop {
   id: string; name: string; slug: string; drop_type: string; status: string;
@@ -193,6 +194,10 @@ export default function AdminDropsTab() {
           </div>
         </Card>
       )}
+
+      <DropPerformanceReport />
+
+
 
       {loading ? (
         <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin" /></div>
