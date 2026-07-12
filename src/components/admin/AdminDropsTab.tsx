@@ -253,6 +253,7 @@ export default function AdminDropsTab() {
                 <div className="mt-4 space-y-4">
                   <DropLiveDashboard dropId={d.id} />
                   <DropAiInsightsPanel dropId={d.id} />
+                  <DropCopilotPanel focusDropId={d.id} />
                 </div>
               )}
             </Card>
