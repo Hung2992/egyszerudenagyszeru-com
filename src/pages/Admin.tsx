@@ -1610,7 +1610,7 @@ const Admin = () => {
             </div>
           </div>
         </div>
-        {renderCurrent()}
+        <MarketingStudioRouter tab={marketingStudioTab} />
       </div>
     );
   };
