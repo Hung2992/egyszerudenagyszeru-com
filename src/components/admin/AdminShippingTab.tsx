@@ -142,6 +142,12 @@ const AdminShippingTab = () => {
           <h2 className="text-sm font-bold uppercase tracking-wider">Logisztika & Futárok</h2>
         </div>
         <div className="flex gap-1.5">
+          <Button size="sm" variant="outline" onClick={syncPickupPoints} disabled={syncing} className="rounded-none h-7 text-[10px]">
+            {syncing ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <MapPin className="w-3 h-3 mr-1" />} Átvevőpont sync
+          </Button>
+          <Button size="sm" variant="outline" onClick={refreshAll} disabled={refreshingId === "all"} className="rounded-none h-7 text-[10px]">
+            {refreshingId === "all" ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <RotateCw className="w-3 h-3 mr-1" />} Státusz frissítés
+          </Button>
           <Button size="sm" onClick={() => setShowCreate(v => !v)} className="rounded-none h-7 text-[10px]">
             <Plus className="w-3 h-3 mr-1" /> Új címke
           </Button>
