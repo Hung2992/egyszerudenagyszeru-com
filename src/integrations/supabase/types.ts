@@ -2572,6 +2572,238 @@ export type Database = {
         }
         Relationships: []
       }
+      drop_events: {
+        Row: {
+          created_at: string
+          drop_id: string
+          event_type: string
+          fingerprint_hash: string | null
+          id: string
+          ip_hash: string | null
+          payload: Json
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          drop_id: string
+          event_type: string
+          fingerprint_hash?: string | null
+          id?: string
+          ip_hash?: string | null
+          payload?: Json
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          drop_id?: string
+          event_type?: string
+          fingerprint_hash?: string | null
+          id?: string
+          ip_hash?: string | null
+          payload?: Json
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drop_events_drop_id_fkey"
+            columns: ["drop_id"]
+            isOneToOne: false
+            referencedRelation: "product_drops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drop_notifications: {
+        Row: {
+          channels: string[]
+          created_at: string
+          drop_id: string
+          email: string
+          id: string
+          ip_hash: string | null
+          notified_at: string | null
+          phone: string | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          channels?: string[]
+          created_at?: string
+          drop_id: string
+          email: string
+          id?: string
+          ip_hash?: string | null
+          notified_at?: string | null
+          phone?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          channels?: string[]
+          created_at?: string
+          drop_id?: string
+          email?: string
+          id?: string
+          ip_hash?: string | null
+          notified_at?: string | null
+          phone?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drop_notifications_drop_id_fkey"
+            columns: ["drop_id"]
+            isOneToOne: false
+            referencedRelation: "product_drops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drop_raffle_entries: {
+        Row: {
+          captcha_verified: boolean
+          checkout_completed_at: string | null
+          checkout_deadline: string | null
+          drop_id: string
+          email: string
+          entered_at: string
+          fingerprint_hash: string | null
+          id: string
+          ip_hash: string | null
+          is_winner: boolean
+          metadata: Json
+          order_id: string | null
+          user_agent: string | null
+          user_id: string | null
+          winner_position: number | null
+          won_at: string | null
+        }
+        Insert: {
+          captcha_verified?: boolean
+          checkout_completed_at?: string | null
+          checkout_deadline?: string | null
+          drop_id: string
+          email: string
+          entered_at?: string
+          fingerprint_hash?: string | null
+          id?: string
+          ip_hash?: string | null
+          is_winner?: boolean
+          metadata?: Json
+          order_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          winner_position?: number | null
+          won_at?: string | null
+        }
+        Update: {
+          captcha_verified?: boolean
+          checkout_completed_at?: string | null
+          checkout_deadline?: string | null
+          drop_id?: string
+          email?: string
+          entered_at?: string
+          fingerprint_hash?: string | null
+          id?: string
+          ip_hash?: string | null
+          is_winner?: boolean
+          metadata?: Json
+          order_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+          winner_position?: number | null
+          won_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drop_raffle_entries_drop_id_fkey"
+            columns: ["drop_id"]
+            isOneToOne: false
+            referencedRelation: "product_drops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drop_raffle_entries_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drop_reservations: {
+        Row: {
+          created_at: string
+          drop_id: string
+          expires_at: string
+          fingerprint_hash: string | null
+          id: string
+          ip_hash: string | null
+          metadata: Json
+          order_id: string | null
+          quantity: number
+          queue_position: number | null
+          reserved_at: string
+          session_id: string | null
+          status: Database["public"]["Enums"]["drop_reservation_status_enum"]
+          user_id: string | null
+          variant_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          drop_id: string
+          expires_at: string
+          fingerprint_hash?: string | null
+          id?: string
+          ip_hash?: string | null
+          metadata?: Json
+          order_id?: string | null
+          quantity?: number
+          queue_position?: number | null
+          reserved_at?: string
+          session_id?: string | null
+          status?: Database["public"]["Enums"]["drop_reservation_status_enum"]
+          user_id?: string | null
+          variant_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          drop_id?: string
+          expires_at?: string
+          fingerprint_hash?: string | null
+          id?: string
+          ip_hash?: string | null
+          metadata?: Json
+          order_id?: string | null
+          quantity?: number
+          queue_position?: number | null
+          reserved_at?: string
+          session_id?: string | null
+          status?: Database["public"]["Enums"]["drop_reservation_status_enum"]
+          user_id?: string | null
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drop_reservations_drop_id_fkey"
+            columns: ["drop_id"]
+            isOneToOne: false
+            referencedRelation: "product_drops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drop_reservations_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       early_access_codes: {
         Row: {
           code: string
@@ -5694,6 +5926,112 @@ export type Database = {
           sort_order?: number
         }
         Relationships: []
+      }
+      product_drops: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          drop_type: Database["public"]["Enums"]["drop_type_enum"]
+          ends_at: string | null
+          hero_image_url: string | null
+          hold_minutes: number
+          id: string
+          max_per_user: number
+          metadata: Json
+          name: string
+          partner_id: string | null
+          partner_product_id: string | null
+          price_override: number | null
+          product_id: string | null
+          raffle_draw_at: string | null
+          require_captcha: boolean
+          reserved_count: number
+          slug: string
+          sold_count: number
+          starts_at: string
+          status: Database["public"]["Enums"]["drop_status_enum"]
+          teaser_text: string | null
+          total_units: number
+          updated_at: string
+          winner_checkout_minutes: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          drop_type?: Database["public"]["Enums"]["drop_type_enum"]
+          ends_at?: string | null
+          hero_image_url?: string | null
+          hold_minutes?: number
+          id?: string
+          max_per_user?: number
+          metadata?: Json
+          name: string
+          partner_id?: string | null
+          partner_product_id?: string | null
+          price_override?: number | null
+          product_id?: string | null
+          raffle_draw_at?: string | null
+          require_captcha?: boolean
+          reserved_count?: number
+          slug: string
+          sold_count?: number
+          starts_at: string
+          status?: Database["public"]["Enums"]["drop_status_enum"]
+          teaser_text?: string | null
+          total_units: number
+          updated_at?: string
+          winner_checkout_minutes?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          drop_type?: Database["public"]["Enums"]["drop_type_enum"]
+          ends_at?: string | null
+          hero_image_url?: string | null
+          hold_minutes?: number
+          id?: string
+          max_per_user?: number
+          metadata?: Json
+          name?: string
+          partner_id?: string | null
+          partner_product_id?: string | null
+          price_override?: number | null
+          product_id?: string | null
+          raffle_draw_at?: string | null
+          require_captcha?: boolean
+          reserved_count?: number
+          slug?: string
+          sold_count?: number
+          starts_at?: string
+          status?: Database["public"]["Enums"]["drop_status_enum"]
+          teaser_text?: string | null
+          total_units?: number
+          updated_at?: string
+          winner_checkout_minutes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_drops_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_drops_partner_product_id_fkey"
+            columns: ["partner_product_id"]
+            isOneToOne: false
+            referencedRelation: "partner_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_drops_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "shop_products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_embeddings: {
         Row: {
@@ -9043,10 +9381,25 @@ export type Database = {
       }
       check_and_bump_learn_quota: { Args: { _kind?: string }; Returns: boolean }
       cleanup_expired_ai_cache: { Args: never; Returns: number }
+      cleanup_expired_drop_holds: {
+        Args: never
+        Returns: {
+          expired_reservations: number
+          expired_winners: number
+          opened_scheduled: number
+        }[]
+      }
       decay_ai_knowledge_quality: { Args: never; Returns: number }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
+      }
+      draw_raffle_winners: {
+        Args: { p_drop_id: string }
+        Returns: {
+          error: string
+          winner_count: number
+        }[]
       }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
@@ -9400,6 +9753,22 @@ export type Database = {
         Args: { _notes?: string; _partner_id: string }
         Returns: string
       }
+      reserve_drop_slot: {
+        Args: {
+          p_drop_id: string
+          p_fingerprint_hash?: string
+          p_ip_hash?: string
+          p_quantity?: number
+          p_session_id: string
+          p_user_id: string
+          p_variant_id?: string
+        }
+        Returns: {
+          error: string
+          expires_at: string
+          reservation_id: string
+        }[]
+      }
       revert_meta_action: { Args: { _action_id: string }; Returns: Json }
       revoke_accountant: { Args: { _user_id: string }; Returns: boolean }
       rollback_ai_knowledge: { Args: { _doc_id: string }; Returns: boolean }
@@ -9456,6 +9825,20 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "accountant" | "partner"
+      drop_reservation_status_enum:
+        | "queued"
+        | "active"
+        | "expired"
+        | "purchased"
+        | "cancelled"
+      drop_status_enum:
+        | "draft"
+        | "scheduled"
+        | "open"
+        | "closed"
+        | "drawn"
+        | "sold_out"
+      drop_type_enum: "first_come" | "raffle"
       partner_product_status:
         | "draft"
         | "pending_review"
@@ -9591,6 +9974,22 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user", "accountant", "partner"],
+      drop_reservation_status_enum: [
+        "queued",
+        "active",
+        "expired",
+        "purchased",
+        "cancelled",
+      ],
+      drop_status_enum: [
+        "draft",
+        "scheduled",
+        "open",
+        "closed",
+        "drawn",
+        "sold_out",
+      ],
+      drop_type_enum: ["first_come", "raffle"],
       partner_product_status: [
         "draft",
         "pending_review",
