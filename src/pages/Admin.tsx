@@ -155,6 +155,8 @@ import AdminPersonalizedRecommendationsTab from "@/components/admin/AdminPersona
 import ProductImageGallery from "@/components/admin/ProductImageGallery";
 import ProductLinkImport from "@/components/admin/ProductLinkImport";
 import AdminAiAssistant from "@/components/admin/AdminAiAssistant";
+import AdminAiDashboard from "@/components/admin/AdminAiDashboard";
+import AdminAiMonitoring from "@/components/admin/AdminAiMonitoring";
 import AdminDashboardEnhanced from "@/components/admin/AdminDashboardEnhanced";
 import AdminVisitorAnalytics from "@/components/admin/AdminVisitorAnalytics";
 import AdminOrderDetail from "@/components/admin/AdminOrderDetail";
