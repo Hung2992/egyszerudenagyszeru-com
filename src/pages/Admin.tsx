@@ -2934,6 +2934,7 @@ const Admin = () => {
         {tab === "translations" && <AdminTranslationsTab />}
         {tab === "returns" && <AdminReturnsTab />}
         {tab === "dynamic_pricing" && <AdminDynamicPricingTab />}
+        {tab === "ai_pricing" && <AdminAiPricingTab />}
         {tab === "marketing" && <AdminMarketingTab />}
         {tab === "ai_marketing_studio" && renderMarketingStudio()}
         {tab === "gdpr" && <AdminGdprTab />}
