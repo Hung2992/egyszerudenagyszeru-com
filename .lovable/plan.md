@@ -1,71 +1,125 @@
-# Fejlesztési Terv - 8 Kiválasztott Modul
+## Sprint A — Drop / Raffle Engine
 
-Nagy scope. Reálisan több hét munka. Fázisokra bontva, hogy minden fázis után használható legyen a rendszer.
+Streetwear-alap: időzített dropok, várósor, raffle sorsolás, botvédelem, ideiglenes kosárfoglalás. A meglévő `shop_products` + `partner_products` + `orders` rendszerre épül.
 
-## FÁZIS 1 - Most azonnal (ebben a menetben)
-Kis-közepes komplexitású, gyorsan élesíthető funkciók.
+### 1. Adatbázis (migration)
 
-**1.1 AI Shopping Assistant** 🤖
-- Új `AiShoppingAssistant.tsx` komponens (floating chat widget minden vásárló oldalon)
-- Új edge function: `shopping-assistant` - természetes nyelvű termékkeresés
-- Lovable AI (google/gemini-3-flash-preview) + tool calling: `search_products`, `filter_by_price`, `get_recommendations`
-- Termék kártyák a chatben (nem csak szöveg)
+Új táblák a `public` sémában (RLS + GRANT-tel):
 
-**1.2 Intelligens Kosár** 🛍️
-- `CartDrawer.tsx` bővítése: "Gyakran együtt vásárolt" szekció
-- Új edge function: `smart-cart-suggestions` - AI ajánlások a kosár tartalma alapján
-- Bundle kedvezmény logika (2+ termék = X% kedvezmény)
-- Táblák: `product_bundles`, `frequently_bought_together`
+**`product_drops`** — a drop maga
+- `product_id`, `partner_id?`, `name`, `slug`
+- `starts_at`, `ends_at` — mikor nyílik/zár
+- `drop_type`: `first_come` (érkezési sorrend) vagy `raffle` (sorsolás)
+- `total_units`, `max_per_user` (alap: 1)
+- `raffle_draw_at` — mikor sorsolunk (csak raffle)
+- `hold_minutes` (alap: 10) — kosárfoglalás ideje
+- `require_captcha` (bool, alap: true)
+- `status`: `scheduled` / `open` / `closed` / `drawn` / `sold_out`
+- `hero_image_url`, `teaser_text`
 
-**1.3 Gamification** 🎁
-- Táblák: `user_gamification` (level, xp, streak_days), `user_badges`, `daily_quests`, `quest_completions`
-- Új oldal: `/jutalmak` - napi bejelentkezés, küldetések, jelvények
-- Profilba integráció: szint bar, XP, streak counter
-- Hűségpont már van (`Loyalty.tsx`) - összekötés az új rendszerrel
-- 15+ jelvény (első vásárlás, 5 értékelés, hűséges vásárló, stb.)
+**`drop_notifications`** — „értesíts indulás előtt"
+- `drop_id`, `user_id?`, `email`, `phone?`, `notified_at?`, `channels[]`
 
-**1.4 AI Marketing Automation** 🧠
-- `AdminMarketingTab.tsx` bővítése: "AI Kampány Generátor"
-- Új edge function: `ai-marketing-auto` - vásárlói szegmentáció + auto kampány készítés
-- Cron job: heti auto-szegmentáció (VIP, alvó, új, kockázatos)
-- Auto kupon optimalizáció: rossz teljesítmény esetén kedvezmény növelése
+**`drop_raffle_entries`** — raffle jelentkezők
+- `drop_id`, `user_id`, `email`, `entered_at`
+- `captcha_verified` (bool), `ip_hash`, `fingerprint_hash`
+- `is_winner` (bool), `winner_position?`, `won_at?`
+- `checkout_deadline?` — meddig kell fizetnie a nyertesnek
+- `checkout_completed_at?`, `order_id?`
+- UNIQUE(`drop_id`, `user_id`) — egy user egy jelentkezés
 
-## FÁZIS 2 - Következő menet
-**2.1 Logisztika** 🚚 (GLS, Foxpost, MPL, Packeta, DPD)
-- Minden szállítónál külön szerződés+API kulcs kell TŐLED
-- Edge functions szállítónként: címke generálás, tracking
-- Először a legfontosabbat kérdezem meg (melyikkel van szerződésed?)
+**`drop_reservations`** — first_come várósor / kosárfoglalás
+- `drop_id`, `user_id?`, `session_id`, `queue_position`
+- `reserved_at`, `expires_at` (reserved_at + hold_minutes)
+- `status`: `queued` / `active` / `expired` / `purchased`
+- `variant_id?`, `quantity`
+- `order_id?`
 
-**2.2 Nemzetközi értékesítés** 🌍
-- `LocalePreferences.tsx` már megvan (nyelv/pénznem választó)
-- Kell: teljes UI fordítás (i18n), régiós ÁFA szabályok, régiós árazás táblák
-- Currency conversion API (fixer.io vagy hasonló)
+**`drop_events`** — audit napló
+- `drop_id`, `event_type` (`viewed` / `entered_raffle` / `won` / `reserved` / `expired` / `purchased` / `bot_blocked`)
+- `user_id?`, `session_id?`, `ip_hash?`, `payload jsonb`
 
-## FÁZIS 3 - Utolsó menet
-**3.1 Natív Mobilapp** 📱
-- Capacitor setup (iOS + Android)
-- Push notifications (Firebase Cloud Messaging vagy OneSignal connector)
-- **FONTOS**: buildhez Mac + Xcode (iOS) és Android Studio kell a te oldaladon!
-- Build config csak - a tényleges native build a te gépeden fut
+### 2. Edge functions
 
-**3.2 AI Virtuális Próba** 🎥
-- Legkomplexebb feature. Cipőméret becslés fotó alapján (Gemini vision)
-- Ruha overlay - komplex, valószínűleg 3rd party API kell (pl. AILabTools, custom model)
-- AI stílustanácsadó - meglévő AI kiterjesztése
+- **`drop-enter-raffle`** — raffle jelentkezés, captcha-t ellenőrzi, duplikációt blokkolja, IP+fingerprint alapján gyanús mintázatot log-ol
+- **`drop-reserve`** — first_come kosárfoglalás: atomikus SELECT FOR UPDATE + `total_units` csökkentés, `expires_at` beállítás
+- **`drop-draw-raffle`** — cron: raffle_draw_at időpontban lefut, véletlen `winner_position`-t oszt, e-mailt küld, `checkout_deadline`-t állít
+- **`drop-cleanup`** — 1 perces cron: lejárt reservation-öket visszaad a készletbe, nem fizető raffle nyerteseket kiléptet, kioszt új nyerteseket a várólistából
+- **`drop-notify-launch`** — 15 perccel a `starts_at` előtt push+email értesítés
 
----
+### 3. Botvédelem
 
-## Kérésem előtte
+**Cloudflare Turnstile** — ingyenes, invisible captcha:
+- Frontend: `@marsidev/react-turnstile` widget
+- Backend: token ellenőrzés `https://challenges.cloudflare.com/turnstile/v0/siteverify`-nél
+- Secret: `TURNSTILE_SECRET_KEY` és `VITE_TURNSTILE_SITE_KEY` (add_secret-tel bekérem, ha még nincs)
+- Rate limit: user_id/session_id/ip_hash alapján, dynamic a `product_drops`-ról olvasva
+- Gyanús fingerprint duplikációk (több user_id ugyanazzal az fp_hash-sel) → `fraud_signals` bejegyzés
 
-Mielőtt Fázis 1-et elkezdem, egy kérdés:
-- **Van már meglévő shopping assistant chat?** Az `AdminAiAssistant.tsx` az admin panelnek szól. Új, publikus, vásárlóknak szóló asszisztenst kell építeni.
-- **Gamification stílusa**: játékos/színes VAGY minimalista fekete-fehér+arany (a meglévő brand)?
+### 4. Frontend
 
-## Ha jóváhagyod
+**Public (vásárló):**
+- `src/pages/DropDetail.tsx` (útvonal: `/drop/:slug`)
+  - Nagy hero + countdown (`react-countdown` vagy saját)
+  - Az állapot szerint váltakozik:
+    - `scheduled` → „Értesítést kérek" gomb + Turnstile
+    - `open` + `first_come` → „Kosárba" gomb → átirányít checkoutra a foglalással
+    - `open` + `raffle` → „Jelentkezem" gomb + captcha
+    - `drawn` → „Nyertem/Nem nyertem" állapot, nyerteseknek fizetési gomb visszaszámlálóval
+    - `sold_out` / `closed` → várólistára feliratkozás
+- `src/components/DropCountdown.tsx` — live countdown, óra:perc:mp
+- `src/components/DropQueueStatus.tsx` — várósor / foglalás állapota realtime
+- Home banner integráció: aktív dropok kártyája `Index.tsx`-en
 
-Elkezdem a **Fázis 1-et most, egyben** (4 modul, ~15-20 fájl változás, 3-4 új tábla, 3 új edge function). Utána szólj hogy melyik fázisra megyünk tovább.
+**Admin/Partner:**
+- `src/components/admin/AdminDropsTab.tsx` — dropok listája + szerkesztő
+  - Termék választó, dátum-idő, type, mennyiség, hold_minutes
+  - Élő statisztikák: raffle jelentkezők, foglalások, konverzió
+  - Manuális raffle húzás gomb (ha `raffle_draw_at` nincs elérve)
+  - Résztvevők listája CSV export
+- Bekerül az admin panel routing-jába lazy import-tal
+- Partner portál: `PartnerDropsTab.tsx` a saját termékeikre
 
-**Válaszolj**: 
-- "Menjen a Fázis 1" → elkezdem
-- "Kezdj csak X-szel" → csak azt csinálom
-- "Módosítsd a tervet" → mondd mit
+### 5. Emailek
+
+Új tranzakciós template-ek (`supabase/functions/_shared/transactional-email-templates/`):
+- `drop-launch-reminder.tsx` — indulás előtt
+- `drop-raffle-entered.tsx` — sikeres jelentkezés
+- `drop-raffle-winner.tsx` — nyertél! + fizetési link + deadline
+- `drop-raffle-not-selected.tsx` — sajnos nem
+- `drop-reservation-expiring.tsx` — 2 perc a lejáratig
+
+### 6. Cron job-ok
+
+`pg_cron` (nem migration, hanem az insert eszközzel, mert URL/anon key kell):
+- Percenkénti `drop-cleanup`
+- 5 percenkénti `drop-draw-raffle` (a raffle_draw_at időpontokhoz)
+- 5 percenkénti `drop-notify-launch` (T-15 perc értesítők)
+
+### 7. Végrehajtási sorrend
+
+1. **Titkok**: `TURNSTILE_SECRET_KEY` + `VITE_TURNSTILE_SITE_KEY` bekérése (add_secret)
+2. **Migration**: 5 új tábla + GRANT + RLS + policy + trigger-ek
+3. **Edge functions**: enter-raffle, reserve, draw, cleanup, notify-launch
+4. **Cron beállítás** insert eszközzel
+5. **Email template-ek** + `send-transactional-email` bővítése
+6. **Frontend**: DropDetail oldal + komponensek + admin tab + partner tab
+7. **Integráció**: Homepage banner, `App.tsx` routing, `Checkout.tsx` foglalás-tudatos flow
+8. **Teszt**: E2E — 1 első-jött-elsőt-kap drop + 1 raffle drop end-to-end
+
+### Technikai megjegyzések
+
+- `drop_reservations`.`total_units` decrement race condition ellen: `UPDATE product_drops SET reserved_count = reserved_count + 1 WHERE reserved_count < total_units RETURNING *` (soronkénti lock)
+- Raffle húzás: `ORDER BY random()` a `captcha_verified = true`-ra szűrt jelentkezőkre, `LIMIT total_units`
+- Nyertes lejárat után új húzás a maradék jelentkezőkből (waitlist)
+- `session_id` a `sessionStorage`-ból, kliens-oldali fingerprint egy `@fingerprintjs/fingerprintjs` open-source verzióval (`fingerprintjs-pro-react` nélkül)
+- Realtime: `product_drops`, `drop_reservations` táblákra REPLICA IDENTITY FULL + publikáció → live queue status
+- A meglévő `AI Rules Engine` NEM ad árualkut drop termékre (új szabály: `blocked_categories += 'drop'`)
+
+### Nem-technikai összefoglaló
+
+- Az admin időzíthet exkluzív drop-okat, elsőjöttelső vagy sorsolásos módon.
+- A vásárlók kérhetnek értesítést az indulás előtt, jelentkezhetnek raffle-re, vagy azonnal foglalhatnak.
+- Bot-védelem védi a drop-okat automatizált vásárlástól.
+- Nyertesnek van egy fix idő fizetni, különben új nyertest húzunk.
+- Minden esemény naplózásra kerül későbbi elemzéshez.
