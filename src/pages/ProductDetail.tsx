@@ -615,7 +615,24 @@ const ProductDetail = () => {
                 ))}
               </div>
             )}
+
+            {/* 3D / AR viewer — csak akkor jelenik meg, ha van feltöltött 3D model */}
+            <Product3DViewer
+              productId={product.id}
+              productSource="shop_products"
+              onStyleRecommend={() => setStyleOpen(true)}
+            />
+
+            <AiStyleRecommender
+              open={styleOpen}
+              onClose={() => setStyleOpen(false)}
+              productId={product.id}
+              productName={product.name}
+              productCategory={product.category}
+              productColors={product.colors || undefined}
+            />
           </div>
+
 
           {/* Product Info */}
           <div className="space-y-5">
