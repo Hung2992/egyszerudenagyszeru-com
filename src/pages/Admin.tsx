@@ -3540,6 +3540,8 @@ const Admin = () => {
         {tab === "ai_brain_review" && <AdminAiBrainReviewTab />}
         {tab === "ai_meta_learn" && <AdminAiMetaLearnTab />}
         {tab === "multilang" && <AdminMultilangTab />}
+        {tab === "ai_dashboard" && <AdminAiDashboard />}
+        {tab === "ai_monitoring" && <AdminAiMonitoring />}
         {tab === "email_templates_custom" && <AdminEmailCenterTab />}
         {tab === "attribution" && <AdminAttributionTab />}
         {tab === "popup_banners" && <AdminPopupBannerTab />}
