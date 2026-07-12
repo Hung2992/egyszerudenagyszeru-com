@@ -191,6 +191,7 @@ export default function AdminAiPricingTab() {
           <TabsTrigger value="rules">Szabályok</TabsTrigger>
           <TabsTrigger value="offers">Kiadott ajánlatok</TabsTrigger>
           <TabsTrigger value="audit">Audit log</TabsTrigger>
+          <TabsTrigger value="analytics"><BarChart3 className="w-4 h-4 mr-1" /> Analitika</TabsTrigger>
         </TabsList>
 
         <TabsContent value="rules" className="space-y-4">
