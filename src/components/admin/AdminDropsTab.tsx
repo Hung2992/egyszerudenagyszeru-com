@@ -12,6 +12,7 @@ import { Loader2, Plus, Trophy, Users, Trash2, ExternalLink, Play, Activity, Che
 import DropLiveDashboard from "./DropLiveDashboard";
 import DropPerformanceReport from "./DropPerformanceReport";
 import DropAiInsightsPanel from "./DropAiInsightsPanel";
+import DropCopilotPanel from "./DropCopilotPanel";
 
 interface Drop {
   id: string; name: string; slug: string; drop_type: string; status: string;
