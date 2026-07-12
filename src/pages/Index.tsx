@@ -44,6 +44,9 @@ const Index = () => {
           <Flame className="h-4 w-4" />
         </p>
       </div>
+      <Suspense fallback={null}>
+        <PersonalizedHero />
+      </Suspense>
 
       {/* HERO */}
       <section className="relative min-h-[85vh] md:min-h-[90vh] flex items-center overflow-hidden">
