@@ -39,6 +39,8 @@ const AdminShippingTab = () => {
   const [serviceType, setServiceType] = useState<"home" | "pickup">("home");
   const [weight, setWeight] = useState("1");
   const [creating, setCreating] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [refreshingId, setRefreshingId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
