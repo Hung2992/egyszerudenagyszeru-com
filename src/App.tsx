@@ -113,6 +113,7 @@ const App = () => (
             <Route path="/orders" element={<Orders />} />
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/loyalty" element={<Loyalty />} />
+            <Route path="/jutalmak" element={<Jutalmak />} />
             <Route path="/gift-cards" element={<GiftCards />} />
             <Route path="/community" element={<Community />} />
             <Route path="/wishlist/shared/:token" element={<SharedWishlist />} />
