@@ -8992,6 +8992,14 @@ export type Database = {
         Args: { _code: string; _order_total: number }
         Returns: Json
       }
+      validate_preview_token: {
+        Args: { _token: string }
+        Returns: {
+          expires_at: string
+          partner_id: string
+          storefront_id: string
+        }[]
+      }
       verify_maintenance_password: {
         Args: { _password: string }
         Returns: boolean
