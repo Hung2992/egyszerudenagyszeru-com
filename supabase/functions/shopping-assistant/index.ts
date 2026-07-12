@@ -300,8 +300,10 @@ Deno.serve(async (req) => {
       }
 
       for (const tc of toolCalls) {
-        if (tc.function?.name === 'search_products') {
-          const args = JSON.parse(tc.function.arguments || '{}')
+        const fnName = tc.function?.name
+        const args = (() => { try { return JSON.parse(tc.function?.arguments || '{}') } catch { return {} } })()
+
+        if (fnName === 'search_products') {
           filters = args
           const products = await searchProducts(supabase, args)
           recommendedProducts = products
@@ -313,6 +315,21 @@ Deno.serve(async (req) => {
               colors: p.colors, sizes: p.sizes, stock: p.stock,
             }))),
           })
+        } else if (fnName === 'get_my_orders') {
+          orderToolUsed = true
+          const result = await getMyOrders(supabase, userId, args)
+          await logMonitoring(supabase, FN_NAME, 'info', 'order_lookup',
+            `get_my_orders user=${userId ?? 'anon'}`, { userId, args }).catch(() => {})
+          messages.push({ role: 'tool', tool_call_id: tc.id, content: JSON.stringify(result) })
+        } else if (fnName === 'get_order_details') {
+          orderToolUsed = true
+          const result = await getOrderDetails(supabase, userId, args)
+          await logMonitoring(supabase, FN_NAME, 'info', 'order_details_lookup',
+            `get_order_details user=${userId ?? 'anon'} order=${args?.order_id ?? '?'} result=${(result as any).error ?? 'ok'}`,
+            { userId, orderId: args?.order_id, error: (result as any).error ?? null }).catch(() => {})
+          messages.push({ role: 'tool', tool_call_id: tc.id, content: JSON.stringify(result) })
+        } else {
+          messages.push({ role: 'tool', tool_call_id: tc.id, content: JSON.stringify({ error: 'unknown_tool' }) })
         }
       }
     }
