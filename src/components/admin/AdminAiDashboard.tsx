@@ -34,6 +34,7 @@ const AdminAiDashboard = () => {
   const [kpis, setKpis] = useState<Kpis | null>(null);
   const [loading, setLoading] = useState(false);
   const [topQuestions, setTopQuestions] = useState<{ q: string; count: number }[]>([]);
+  const [topCampaigns, setTopCampaigns] = useState<TopCampaign[]>([]);
 
   const load = async () => {
     setLoading(true);
@@ -59,6 +60,38 @@ const AdminAiDashboard = () => {
     const quotaTotal = (quota || []).reduce((s: number, q: any) => s + (q.request_count || 0), 0);
     const costTotal = (quota || []).reduce((s: number, q: any) => s + Number(q.estimated_cost_credits || 0), 0);
 
+    // Monitoring - avg latency + failed calls
+    const { data: mon } = await (supabase.from("ai_monitoring_events" as any) as any)
+      .select("severity, event_type, metadata").gte("created_at", from).limit(2000);
+    const latencies = (mon || [])
+      .map((m: any) => Number(m?.metadata?.latency_ms || m?.metadata?.duration_ms || 0))
+      .filter((v: number) => v > 0);
+    const avgLatency = latencies.length ? latencies.reduce((s: number, v: number) => s + v, 0) / latencies.length : 0;
+    const failedCalls = (mon || []).filter((m: any) => ["error", "critical"].includes(m.severity)).length;
+
+    // AI-generated revenue (rough): avg order value × purchases from AI suggestions
+    const purchasedCount = count("cart_suggestion_purchased");
+    const { data: recentOrders } = await (supabase.from("orders" as any) as any)
+      .select("total_amount").gte("created_at", from).limit(500);
+    const avgOrder = (recentOrders || []).length
+      ? (recentOrders || []).reduce((s: number, o: any) => s + Number(o.total_amount || 0), 0) / (recentOrders || []).length
+      : 0;
+    const aiRevenue = purchasedCount * avgOrder;
+    const shownCount = count("cart_suggestion_shown") + count("assistant_recommend");
+    const purchasedFromAi = purchasedCount + count("assistant_product_click");
+    const aiConversionRate = shownCount > 0 ? (purchasedFromAi / shownCount) * 100 : 0;
+
+    // Top campaigns
+    const { data: camps } = await (supabase.from("marketing_campaigns" as any) as any)
+      .select("name, sent_count, open_count, click_count")
+      .gte("created_at", from).order("click_count", { ascending: false }).limit(5);
+    setTopCampaigns((camps || []).map((c: any) => ({
+      name: c.name || "—",
+      sent: c.sent_count || 0,
+      opens: c.open_count || 0,
+      clicks: c.click_count || 0,
+    })));
+
     // Top questions from conversations
     const { data: convos } = await (supabase.from("ai_shopping_conversations" as any) as any)
       .select("user_message").gte("created_at", from).limit(500);
@@ -77,12 +110,16 @@ const AdminAiDashboard = () => {
       suggestionsShown: count("cart_suggestion_shown"),
       suggestionsClicked: count("cart_suggestion_click"),
       suggestionsAdded: count("cart_suggestion_added"),
-      suggestionsPurchased: count("cart_suggestion_purchased"),
+      suggestionsPurchased: purchasedCount,
       cacheHitRate: hitRate,
       cacheEntries,
       totalQuotaRequests: quotaTotal,
       totalCost: costTotal,
       segmentsGenerated: count("marketing_segment_generated"),
+      avgLatencyMs: avgLatency,
+      failedCalls,
+      aiRevenue,
+      aiConversionRate,
     });
     setLoading(false);
   };
