@@ -1,4 +1,5 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, lazy, Suspense } from "react";
+import { lazyRetry } from "@/lib/lazy-retry";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
