@@ -68,6 +68,8 @@ const BrandProductDetail = lazy(() => import("./pages/BrandProductDetail.tsx"));
 const PartnerApprovals = lazy(() => import("./pages/PartnerApprovals.tsx"));
 const PartnerLanding = lazy(() => import("./pages/PartnerLanding.tsx"));
 const PartnerShareRedirect = lazy(() => import("./pages/PartnerShareRedirect.tsx"));
+const Jutalmak = lazy(() => import("./pages/Jutalmak.tsx"));
+const AiShoppingAssistant = lazy(() => import("./components/AiShoppingAssistant"));
 
 const queryClient = new QueryClient();
 
