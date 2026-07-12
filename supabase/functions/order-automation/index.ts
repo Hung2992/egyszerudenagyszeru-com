@@ -14,6 +14,27 @@ Deno.serve(async (req) => {
 
   try {
     const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+
+    // AUTH: service_role bearer, admin user JWT, or cron secret from internal_cron_config
+    const auth = req.headers.get("Authorization") || "";
+    const token = auth.replace(/^Bearer\s+/i, "");
+    const cronHeader = req.headers.get("x-cron-secret");
+    let authorized = token && token === SERVICE_KEY;
+    if (!authorized && cronHeader) {
+      const { data: cfg } = await supabase.from("internal_cron_config").select("value").eq("key", "order_automation_secret").maybeSingle();
+      if (cfg?.value && cfg.value === cronHeader) authorized = true;
+    }
+    if (!authorized && token) {
+      const { data: u } = await supabase.auth.getUser(token);
+      if (u?.user) {
+        const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", u.user.id);
+        authorized = (roles || []).some((r: any) => r.role === "admin");
+      }
+    }
+    if (!authorized) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     const { data: settings } = await supabase.from("store_settings").select("*").limit(1).maybeSingle();
     if (!settings) throw new Error("Nincs store_settings");
 
