@@ -149,6 +149,8 @@ export default function AdminArAssetsTab() {
         </CardContent>
       </Card>
 
+      <ArConversionFunnel />
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
