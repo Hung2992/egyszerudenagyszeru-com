@@ -94,7 +94,11 @@ Deno.serve(async (req) => {
     );
 
     const cronSecret = req.headers.get("x-cron-secret");
-    const isCron = cronSecret && cronSecret === Deno.env.get("SHIPMENT_CRON_SECRET");
+    let isCron = false;
+    if (cronSecret) {
+      const { data: cfg } = await supabase.from("internal_cron_config").select("value").eq("key", "shipment_cron_secret").maybeSingle();
+      if (cfg?.value && cfg.value === cronSecret) isCron = true;
+    }
 
     let shipmentId: string | null = null;
     if (req.method === "POST") {
