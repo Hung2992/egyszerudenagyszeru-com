@@ -97,6 +97,8 @@ const Checkout = () => {
   const [appliedCoupon, setAppliedCoupon] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
   const [referralAutoApplied, setReferralAutoApplied] = useState(false);
+  const [aiOfferId, setAiOfferId] = useState<string | null>(null);
+
 
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
