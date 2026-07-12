@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { Sparkles, Package, Plus } from "lucide-react";
+import { trackAiEvent } from "@/lib/ai-analytics";
 
 interface Suggestion {
   id: string;
