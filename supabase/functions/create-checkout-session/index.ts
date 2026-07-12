@@ -164,8 +164,24 @@ serve(async (req) => {
       }
     }
 
+    // ── 3.5 Server-side shipping fee ─────────────────────────────────
+    let shippingCost = 0;
+    {
+      const { data: settings } = await supabase
+        .from("store_settings")
+        .select("shipping_fee, free_shipping_above")
+        .limit(1)
+        .maybeSingle();
+      const fee = Number(settings?.shipping_fee || 0);
+      const threshold = Number(settings?.free_shipping_above || 0);
+      const subtotalAfterDiscount = serverTotal - discountHuf;
+      if (fee > 0 && (threshold <= 0 || subtotalAfterDiscount < threshold)) {
+        shippingCost = fee;
+      }
+    }
+
     // ── 4. Calculate server-side total ───────────────────────────────
-    const netTotalHuf = serverTotal - discountHuf + giftWrapPrice;
+    const netTotalHuf = serverTotal - discountHuf + giftWrapPrice + shippingCost;
 
     // Stripe minimum for HUF is 175
     if (netTotalHuf < 175) {
@@ -218,6 +234,18 @@ serve(async (req) => {
         quantity: 1,
       });
     }
+
+    if (shippingCost > 0) {
+      lineItems.push({
+        price_data: {
+          currency: "huf",
+          product_data: { name: "Szállítási díj", description: undefined },
+          unit_amount: toStripeAmount(shippingCost),
+        },
+        quantity: 1,
+      });
+    }
+
 
     const discounts: any[] = [];
     if (discountHuf > 0) {

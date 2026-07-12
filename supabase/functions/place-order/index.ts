@@ -177,20 +177,37 @@ serve(async (req) => {
       }
     }
 
-    // ── 5. Calculate final total ────────────────────────────────────
-    const finalTotal = serverTotal - discountAmount + giftWrapPrice;
+    // ── 5. Calculate shipping fee server-side ───────────────────────
+    let shippingCost = 0;
+    {
+      const { data: settings } = await supabase
+        .from("store_settings")
+        .select("shipping_fee, free_shipping_above")
+        .limit(1)
+        .maybeSingle();
+      const fee = Number(settings?.shipping_fee || 0);
+      const threshold = Number(settings?.free_shipping_above || 0);
+      const subtotalAfterDiscount = serverTotal - discountAmount;
+      if (fee > 0 && (threshold <= 0 || subtotalAfterDiscount < threshold)) {
+        shippingCost = fee;
+      }
+    }
+
+    // ── 6. Calculate final total ────────────────────────────────────
+    const finalTotal = serverTotal - discountAmount + giftWrapPrice + shippingCost;
 
     if (finalTotal < 0) {
       return json({ error: "Érvénytelen végösszeg." }, 400);
     }
 
-    // ── 6. Insert order (service role — bypasses RLS) ───────────────
+    // ── 7. Insert order (service role — bypasses RLS) ───────────────
     const { data: order, error: orderErr } = await supabase
       .from("orders")
       .insert({
         user_id: userId,
         status: "pending",
         total_amount: finalTotal,
+
         shipping_name,
         shipping_phone,
         shipping_zip,
@@ -205,6 +222,7 @@ serve(async (req) => {
       })
       .select("id")
       .single();
+
 
     if (orderErr) {
       return json({ error: `Rendelés létrehozási hiba: ${orderErr.message}` }, 500);
