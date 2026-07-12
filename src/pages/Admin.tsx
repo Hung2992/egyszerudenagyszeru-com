@@ -1341,6 +1341,7 @@ const Admin = () => {
     { key: "translations", label: "Nyelvek", icon: Globe },
     { key: "returns", label: "Visszáru", icon: RotateCcw },
     { key: "dynamic_pricing", label: "Árazás", icon: Zap },
+    { key: "drops_center", label: "🚀 Drop Center", icon: Rocket },
     { key: "marketing", label: "Kampányok", icon: Megaphone },
     { key: "ai_marketing_studio", label: "AI Marketing Stúdió", icon: Brain },
     { key: "fb_studio", label: "Facebook Stúdió", icon: FacebookIcon },
