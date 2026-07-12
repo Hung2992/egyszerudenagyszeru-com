@@ -72,6 +72,7 @@ const PartnerLanding = lazy(lazyRetry(() => import("./pages/PartnerLanding.tsx")
 const PartnerShareRedirect = lazy(lazyRetry(() => import("./pages/PartnerShareRedirect.tsx")));
 const Jutalmak = lazy(lazyRetry(() => import("./pages/Jutalmak.tsx")));
 const AiShoppingAssistant = lazy(lazyRetry(() => import("./components/AiShoppingAssistant")));
+const VisualSearch = lazy(lazyRetry(() => import("./components/VisualSearch")));
 const TrackShipment = lazy(lazyRetry(() => import("./pages/TrackShipment.tsx")));
 
 const OAuthConsent = lazy(lazyRetry(() => import("./pages/OAuthConsent.tsx")));
@@ -106,6 +107,7 @@ const App = () => (
             <GiveawayPopup />
             <CookieConsentBanner />
             <AiShoppingAssistant />
+            <VisualSearch />
           </Suspense>
           <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-background text-foreground"><div className="h-6 w-6 animate-spin rounded-none border-2 border-foreground border-t-transparent" /></div>}>
           <Routes>
