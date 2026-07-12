@@ -237,8 +237,9 @@ Deno.serve(async (req) => {
     let recommendedProducts: any[] = []
     let filters: any = null
     let totalTokens = 0
+    let orderToolUsed = false
 
-    for (let step = 0; step < 3; step++) {
+    for (let step = 0; step < 4; step++) {
       const startTs = Date.now()
       const aiResp = await fetch(AI_URL, {
         method: 'POST',
