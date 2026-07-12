@@ -15,6 +15,11 @@ interface Offer {
   coupon_code: string;
   expires_at: string;
   reasoning: string;
+  rule_name?: string;
+  min_margin_percent?: number;
+  hard_cap_percent?: number;
+  offer_ttl_minutes?: number;
+  coupon_conflict_policy?: "override" | "block" | "ask";
 }
 
 interface Props {
