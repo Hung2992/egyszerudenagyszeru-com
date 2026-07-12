@@ -596,6 +596,13 @@ const Checkout = () => {
           )}
         </div>
 
+        {/* AI ajánlat megerősítő kártya — a rendelés véglegesítése előtt */}
+        {appliedCoupon.startsWith("AI-") && aiOfferDetails && (
+          <AiOfferConfirmationCard details={aiOfferDetails} onRemove={removeCoupon} />
+        )}
+
+
+
         {/* Gift wrap */}
         {giftWrapOptions.length > 0 && (
           <div className="border bg-card p-5 space-y-3">
