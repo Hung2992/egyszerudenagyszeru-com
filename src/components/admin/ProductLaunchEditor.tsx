@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -8,8 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
   Save, Wand2, ShoppingCart, Vote, Plus, Trash2, Upload, Image as ImageIcon,
-  Ruler, Layers, Info, GripVertical, Star, X, Package
+  Ruler, Layers, Info, GripVertical, Star, X, Package, Sparkles
 } from "lucide-react";
+
+const AiProductStudioModal = lazy(() => import("./AiProductStudioModal"));
 
 interface ProductImage {
   id?: string;
@@ -61,6 +63,7 @@ const ProductLaunchEditor = ({ productId, onClose }: { productId: string; onClos
   const [pickedColors, setPickedColors] = useState<string[]>([]);
   const [customSize, setCustomSize] = useState("");
   const [customColor, setCustomColor] = useState("");
+  const [aiStudioOpen, setAiStudioOpen] = useState(false);
 
   const SIZE_PRESETS = ["XS", "S", "M", "L", "XL", "XXL", "XXXL", "One Size", "34", "36", "38", "40", "42", "44"];
   const COLOR_PRESETS = ["Fekete", "Fehér", "Szürke", "Bézs", "Barna", "Kék", "Piros", "Zöld", "Sárga", "Rózsaszín"];
@@ -295,14 +298,26 @@ const ProductLaunchEditor = ({ productId, onClose }: { productId: string; onClos
       <div className="max-w-5xl mx-auto p-4 md:p-8">
         <div className="border bg-card">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b">
-            <div>
-              <h2 className="text-base font-bold uppercase tracking-wider">{product.name}</h2>
+          <div className="flex items-center justify-between p-4 border-b gap-2">
+            <div className="min-w-0">
+              <h2 className="text-base font-bold uppercase tracking-wider truncate">{product.name}</h2>
               <p className="text-[10px] text-muted-foreground">Launch termék szerkesztő · {product.category}</p>
             </div>
-            <Button variant="ghost" size="sm" onClick={onClose} className="rounded-none">
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setAiStudioOpen(true)}
+                className="rounded-none gap-2"
+                title="AI Product Studio – SEO szöveg + hero kép generálása"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline text-xs">AI Studio</span>
+              </Button>
+              <Button variant="ghost" size="sm" onClick={onClose} className="rounded-none">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           {/* Tabs */}
@@ -704,6 +719,24 @@ const ProductLaunchEditor = ({ productId, onClose }: { productId: string; onClos
           </div>
         </div>
       </div>
+
+      {aiStudioOpen && (
+        <Suspense fallback={null}>
+          <AiProductStudioModal
+            productId={productId}
+            seed={{
+              name: product?.name,
+              category: product?.category,
+              brand: product?.manufacturer,
+              material: product?.material,
+            }}
+            onClose={() => setAiStudioOpen(false)}
+            onApplied={(fields) => {
+              setProduct((p: any) => ({ ...p, ...fields }));
+            }}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };
