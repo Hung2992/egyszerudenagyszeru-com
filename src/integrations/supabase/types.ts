@@ -5495,6 +5495,53 @@ export type Database = {
         }
         Relationships: []
       }
+      product_embeddings: {
+        Row: {
+          created_at: string
+          embedding: string | null
+          error: string | null
+          id: string
+          image_url: string
+          model: string
+          product_id: string
+          status: string
+          updated_at: string
+          visual_tags: Json | null
+        }
+        Insert: {
+          created_at?: string
+          embedding?: string | null
+          error?: string | null
+          id?: string
+          image_url: string
+          model?: string
+          product_id: string
+          status?: string
+          updated_at?: string
+          visual_tags?: Json | null
+        }
+        Update: {
+          created_at?: string
+          embedding?: string | null
+          error?: string | null
+          id?: string
+          image_url?: string
+          model?: string
+          product_id?: string
+          status?: string
+          updated_at?: string
+          visual_tags?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_embeddings_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "shop_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_frequent_pairs: {
         Row: {
           co_occurrence: number
@@ -8190,6 +8237,60 @@ export type Database = {
         }
         Relationships: []
       }
+      visual_search_queries: {
+        Row: {
+          ai_description: string | null
+          clicked_product_id: string | null
+          created_at: string
+          detected_category: string | null
+          detected_colors: Json | null
+          id: string
+          latency_ms: number | null
+          no_results: boolean | null
+          result_count: number | null
+          session_id: string | null
+          top_matches: Json | null
+          top_similarity: number | null
+          uploaded_image_url: string | null
+          user_id: string | null
+          visual_tags: Json | null
+        }
+        Insert: {
+          ai_description?: string | null
+          clicked_product_id?: string | null
+          created_at?: string
+          detected_category?: string | null
+          detected_colors?: Json | null
+          id?: string
+          latency_ms?: number | null
+          no_results?: boolean | null
+          result_count?: number | null
+          session_id?: string | null
+          top_matches?: Json | null
+          top_similarity?: number | null
+          uploaded_image_url?: string | null
+          user_id?: string | null
+          visual_tags?: Json | null
+        }
+        Update: {
+          ai_description?: string | null
+          clicked_product_id?: string | null
+          created_at?: string
+          detected_category?: string | null
+          detected_colors?: Json | null
+          id?: string
+          latency_ms?: number | null
+          no_results?: boolean | null
+          result_count?: number | null
+          session_id?: string | null
+          top_matches?: Json | null
+          top_similarity?: number | null
+          uploaded_image_url?: string | null
+          user_id?: string | null
+          visual_tags?: Json | null
+        }
+        Relationships: []
+      }
       welcome20_send_log: {
         Row: {
           coupon_code: string
@@ -8970,6 +9071,19 @@ export type Database = {
           document_id: string
           document_title: string
           similarity: number
+        }[]
+      }
+      match_product_images: {
+        Args: {
+          match_count?: number
+          min_similarity?: number
+          query_embedding: string
+        }
+        Returns: {
+          image_url: string
+          product_id: string
+          similarity: number
+          visual_tags: Json
         }[]
       }
       move_to_dlq: {
