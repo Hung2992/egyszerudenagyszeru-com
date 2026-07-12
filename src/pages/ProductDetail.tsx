@@ -11,6 +11,7 @@ import ProductWaitlist from "@/components/ProductWaitlist";
 import PersonalizedOffers from "@/components/PersonalizedOffers";
 import AiPriceNegotiateButton from "@/components/AiPriceNegotiateButton";
 import Product3DViewer from "@/components/Product3DViewer";
+import VirtualTryOn from "@/components/VirtualTryOn";
 import AiStyleRecommender from "@/components/AiStyleRecommender";
 import {
   ShoppingCart, Heart, Star, BellRing, Share2, Copy, Bell,
@@ -622,6 +623,16 @@ const ProductDetail = () => {
               productSource="shop_products"
               onStyleRecommend={() => setStyleOpen(true)}
             />
+
+            <div className="mt-3">
+              <VirtualTryOn
+                productId={product.id}
+                productSource="shop_products"
+                productName={product.name}
+                productImageUrl={product.image_url || undefined}
+                onAddToCart={handleAddToCart}
+              />
+            </div>
 
             <AiStyleRecommender
               open={styleOpen}
