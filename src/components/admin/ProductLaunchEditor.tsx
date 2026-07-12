@@ -63,6 +63,7 @@ const ProductLaunchEditor = ({ productId, onClose }: { productId: string; onClos
   const [pickedColors, setPickedColors] = useState<string[]>([]);
   const [customSize, setCustomSize] = useState("");
   const [customColor, setCustomColor] = useState("");
+  const [aiStudioOpen, setAiStudioOpen] = useState(false);
 
   const SIZE_PRESETS = ["XS", "S", "M", "L", "XL", "XXL", "XXXL", "One Size", "34", "36", "38", "40", "42", "44"];
   const COLOR_PRESETS = ["Fekete", "Fehér", "Szürke", "Bézs", "Barna", "Kék", "Piros", "Zöld", "Sárga", "Rózsaszín"];
