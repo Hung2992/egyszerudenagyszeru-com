@@ -403,6 +403,39 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          product_id: string | null
+          session_id: string | null
+          source: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          product_id?: string | null
+          session_id?: string | null
+          source?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          product_id?: string | null
+          session_id?: string | null
+          source?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       ai_knowledge_chunks: {
         Row: {
           chunk_index: number
@@ -827,6 +860,39 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_monitoring_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          function_name: string
+          id: string
+          message: string | null
+          metadata: Json | null
+          resolved: boolean
+          severity: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          function_name: string
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          resolved?: boolean
+          severity: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          function_name?: string
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          resolved?: boolean
+          severity?: string
+        }
+        Relationships: []
+      }
       ai_owner_profile: {
         Row: {
           bio: string | null
@@ -947,6 +1013,39 @@ export type Database = {
           id?: string
           is_active?: boolean
           keywords?: string[]
+        }
+        Relationships: []
+      }
+      ai_response_cache: {
+        Row: {
+          cache_key: string
+          created_at: string
+          expires_at: string
+          function_name: string
+          hit_count: number
+          id: string
+          prompt_hash: string
+          response_data: Json
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string
+          expires_at: string
+          function_name: string
+          hit_count?: number
+          id?: string
+          prompt_hash: string
+          response_data: Json
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string
+          expires_at?: string
+          function_name?: string
+          hit_count?: number
+          id?: string
+          prompt_hash?: string
+          response_data?: Json
         }
         Relationships: []
       }
@@ -1845,6 +1944,39 @@ export type Database = {
           sample_storage_path?: string | null
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_usage_quota: {
+        Row: {
+          estimated_cost_credits: number
+          function_name: string
+          id: string
+          request_count: number
+          token_count: number
+          updated_at: string
+          usage_date: string
+          user_id: string
+        }
+        Insert: {
+          estimated_cost_credits?: number
+          function_name: string
+          id?: string
+          request_count?: number
+          token_count?: number
+          updated_at?: string
+          usage_date?: string
+          user_id: string
+        }
+        Update: {
+          estimated_cost_credits?: number
+          function_name?: string
+          id?: string
+          request_count?: number
+          token_count?: number
+          updated_at?: string
+          usage_date?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -8198,6 +8330,7 @@ export type Database = {
         }[]
       }
       check_and_bump_learn_quota: { Args: { _kind?: string }; Returns: boolean }
+      cleanup_expired_ai_cache: { Args: never; Returns: number }
       decay_ai_knowledge_quality: { Args: never; Returns: number }
       delete_email: {
         Args: { message_id: number; queue_name: string }

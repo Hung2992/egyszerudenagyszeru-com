@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { Sparkles, Package, Plus } from "lucide-react";
+import { trackAiEvent } from "@/lib/ai-analytics";
 
 interface Suggestion {
   id: string;
@@ -37,6 +38,9 @@ const SmartCartSuggestions = () => {
       if (data) {
         setSuggestions(data.suggestions || []);
         setBundles(data.bundles || []);
+        if ((data.suggestions || []).length) {
+          trackAiEvent("cart_suggestion_shown", "smart_cart", { count: data.suggestions.length });
+        }
       }
     }).catch(() => {}).finally(() => setLoading(false));
   }, [items.length]);
@@ -78,14 +82,17 @@ const SmartCartSuggestions = () => {
                   <p className="text-[10px] font-semibold text-foreground truncate">{s.name}</p>
                   <p className="text-[10px] text-accent font-bold">{Number(s.price).toLocaleString()} Ft</p>
                   <button
-                    onClick={() => addItem({
-                      productId: s.id,
-                      name: s.name,
-                      price: Number(s.price),
-                      image_url: s.image_url,
-                      size: "M",
-                      color: "fekete",
-                    }, 1)}
+                    onClick={() => {
+                      trackAiEvent("cart_suggestion_added", "smart_cart", {}, s.id);
+                      addItem({
+                        productId: s.id,
+                        name: s.name,
+                        price: Number(s.price),
+                        image_url: s.image_url,
+                        size: "M",
+                        color: "fekete",
+                      }, 1);
+                    }}
                     className="mt-1 w-full text-[9px] uppercase tracking-wider bg-foreground text-background py-1 flex items-center justify-center gap-0.5 hover:bg-accent hover:text-accent-foreground transition-all"
                   >
                     <Plus className="w-2.5 h-2.5" /> Kosárba

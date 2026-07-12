@@ -6,6 +6,7 @@ import { Sparkles, Send, X, Loader2, ShoppingBag, MessageCircle } from "lucide-r
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/hooks/use-toast";
+import { trackAiEvent } from "@/lib/ai-analytics";
 
 type Msg = { role: "user" | "assistant"; content: string; products?: any[] };
 
@@ -32,7 +33,7 @@ const AiShoppingAssistant = () => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
 
-  useEffect(() => { if (open) inputRef.current?.focus(); }, [open]);
+  useEffect(() => { if (open) { inputRef.current?.focus(); trackAiEvent("assistant_open", "shopping_assistant"); } }, [open]);
 
   const send = async (text: string) => {
     if (!text.trim() || loading) return;
@@ -41,6 +42,7 @@ const AiShoppingAssistant = () => {
     setMessages(all);
     setInput("");
     setLoading(true);
+    trackAiEvent("assistant_message", "shopping_assistant", { length: text.length });
 
     try {
       const resp = await fetch(API_URL, {
@@ -62,11 +64,15 @@ const AiShoppingAssistant = () => {
       }
 
       const data = await resp.json();
+      const products = data.products || [];
       setMessages(prev => [...prev, {
         role: "assistant",
         content: data.reply || "Nem sikerült választ generálni.",
-        products: data.products || [],
+        products,
       }]);
+      if (products.length) {
+        trackAiEvent("assistant_recommend", "shopping_assistant", { count: products.length });
+      }
     } catch (err: any) {
       toast({ title: "Hiba", description: err.message, variant: "destructive" });
     } finally {
@@ -75,6 +81,7 @@ const AiShoppingAssistant = () => {
   };
 
   const handleProductClick = (p: any) => {
+    trackAiEvent("assistant_product_click", "shopping_assistant", {}, p.id);
     navigate(`/product/${p.id}`);
     setOpen(false);
   };
@@ -90,6 +97,7 @@ const AiShoppingAssistant = () => {
       image_url: p.image_url,
       size, color,
     }, 1);
+    trackAiEvent("assistant_product_click", "shopping_assistant", { action: "cart_add" }, p.id);
     toast({ title: "Kosárba téve!", description: p.name });
   };
 
