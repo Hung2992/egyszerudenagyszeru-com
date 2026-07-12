@@ -207,6 +207,7 @@ const AdminMarketingTab = () => {
         )}
       </div>
 
+      <AdminAiMarketingSegments />
       <MarketingAuditLog />
     </div>
   );
