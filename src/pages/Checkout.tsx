@@ -170,6 +170,33 @@ const Checkout = () => {
     setCouponLoading(true);
     const code = sourceCode.toUpperCase();
 
+    // === AI áralku kupon (AI- prefix) — szerveroldali validáció az ai_price_offers ellen
+    if (code.startsWith("AI-")) {
+      const { data: aiRes, error: aiErr } = await supabase.rpc("validate_ai_price_offer" as any, {
+        _code: code,
+        _user_id: user?.id ?? null,
+        _order_total: totalPrice,
+      });
+      const parsed = aiRes as { valid: boolean; discount_amount?: number; offer_id?: string; error?: string } | null;
+      if (!aiErr && parsed?.valid) {
+        const discount = Math.min(parsed.discount_amount ?? 0, totalPrice);
+        setCouponDiscount(discount);
+        setAppliedCoupon(code);
+        setAiOfferId(parsed.offer_id ?? null);
+        toast({ title: `AI ajánlat aktiválva: -${discount.toLocaleString()} Ft` });
+      } else {
+        const map: Record<string, string> = {
+          expired: "Ez az AI ajánlat már lejárt.",
+          already_used: "Ezt az AI kupont már beváltottad.",
+          wrong_user: "Ez az AI kupon másik fiókra érvényes.",
+          not_found: "Érvénytelen AI kuponkód.",
+        };
+        toast({ title: map[parsed?.error ?? ""] ?? "Érvénytelen AI kupon", variant: "destructive" });
+      }
+      setCouponLoading(false);
+      return;
+    }
+
     // Server-side coupon validation (kód nem szivárog ki)
     const { data: result, error } = await supabase.rpc("validate_coupon", {
       _code: code,
