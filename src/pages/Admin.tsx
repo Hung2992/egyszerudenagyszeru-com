@@ -1820,6 +1820,7 @@ const Admin = () => {
       <div className="mx-auto max-w-6xl px-4 py-6">
 
         {/* ─── DASHBOARD TAB ─── */}
+        <Suspense fallback={<div className="py-12 text-center text-sm text-muted-foreground uppercase tracking-wider">Betöltés…</div>}>
         {tab === "dashboard" && (
           <>
             <AdminDashboardEnhanced
