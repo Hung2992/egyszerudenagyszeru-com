@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { Progress } from "@/components/ui/progress";
 import Welcome20StatusBanner from "@/components/Welcome20StatusBanner";
+import SmartCartSuggestions from "@/components/SmartCartSuggestions";
 
 const LAUNCH_DATE = new Date("2026-06-05T10:00:00+02:00").getTime();
 const FREE_SHIPPING_THRESHOLD = 15000;
@@ -58,12 +59,6 @@ const CartDrawer = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items.length, isCartOpen]);
 
-  // Upsell suggestions (simple mock)
-  const upsellItems = useMemo(() => [
-    { name: "Alap póló", price: 4990, img: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200&h=200&fit=crop" },
-    { name: "Zokni csomag", price: 2490, img: "https://images.unsplash.com/photo-1586350977771-b3b0abd50c82?w=200&h=200&fit=crop" },
-    { name: "Sapka", price: 3990, img: "https://images.unsplash.com/photo-1588850561407-ed78c334e67a?w=200&h=200&fit=crop" },
-  ], []);
 
   return (
     <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
@@ -198,21 +193,9 @@ const CartDrawer = () => {
               })}
             </div>
 
-            {/* UPSELL */}
-            <div className="px-5 py-3 border-t">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-2 flex items-center gap-1.5">
-                <Sparkles className="h-3 w-3 text-accent" />
-                Ezt is szokták hozzávenni
-              </p>
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {upsellItems.map((upsell, i) => (
-                  <div key={i} className="flex-shrink-0 w-24 border bg-card p-2 text-center">
-                    <img src={upsell.img} alt={upsell.name} className="h-16 w-full object-cover mb-1" />
-                    <p className="text-[10px] font-semibold text-foreground truncate">{upsell.name}</p>
-                    <p className="text-[10px] text-accent font-bold">{upsell.price.toLocaleString()} Ft</p>
-                  </div>
-                ))}
-              </div>
+            {/* AI SMART CART SUGGESTIONS */}
+            <div className="border-t">
+              <SmartCartSuggestions />
             </div>
 
             {/* TOTALS */}

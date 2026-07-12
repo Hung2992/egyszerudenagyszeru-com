@@ -68,6 +68,8 @@ const BrandProductDetail = lazy(() => import("./pages/BrandProductDetail.tsx"));
 const PartnerApprovals = lazy(() => import("./pages/PartnerApprovals.tsx"));
 const PartnerLanding = lazy(() => import("./pages/PartnerLanding.tsx"));
 const PartnerShareRedirect = lazy(() => import("./pages/PartnerShareRedirect.tsx"));
+const Jutalmak = lazy(() => import("./pages/Jutalmak.tsx"));
+const AiShoppingAssistant = lazy(() => import("./components/AiShoppingAssistant"));
 
 const queryClient = new QueryClient();
 
@@ -87,6 +89,7 @@ const App = () => (
             <AbandonedCartReminder />
             <GiveawayPopup />
             <CookieConsentBanner />
+            <AiShoppingAssistant />
           </Suspense>
           <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-background text-foreground"><div className="h-6 w-6 animate-spin rounded-none border-2 border-foreground border-t-transparent" /></div>}>
           <Routes>
@@ -110,6 +113,7 @@ const App = () => (
             <Route path="/orders" element={<Orders />} />
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/loyalty" element={<Loyalty />} />
+            <Route path="/jutalmak" element={<Jutalmak />} />
             <Route path="/gift-cards" element={<GiftCards />} />
             <Route path="/community" element={<Community />} />
             <Route path="/wishlist/shared/:token" element={<SharedWishlist />} />

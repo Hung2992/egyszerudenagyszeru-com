@@ -1,43 +1,71 @@
-## Terv: Domain bizonyíték verziózás, auto DNS recheck, audit szűrés/CSV, e-mail értesítések
+# Fejlesztési Terv - 8 Kiválasztott Modul
 
-### 1. DNS bizonyíték + státusz verziózás (timeline)
-- Új tábla: `partner_domain_proof_versions` (id, request_id, partner_id, version_no, dns_proof_url, partner_self_reported_status, dns_check_status, dns_check_result jsonb, note, created_at, created_by).
-- Trigger `partner_domain_requests` UPDATE-re: ha `dns_proof_url`, `dns_check_status`, `dns_check_result` vagy `partner_self_reported` változik → új sor a verzió táblába (auto-increment `version_no` per request).
-- `PartnerDomainTab`: új "Bizonyíték verziók" collapsible — lista időponttal, állapot badge-ekkel, proof letöltés link.
-- Admin (`PartnerApprovalsPanel` domain szekció): timeline komponens (egymás melletti két verzió kiválaszthatóan, diff: status / proof preview / result jsonb). Jóváhagyás gomb előtt látható.
+Nagy scope. Reálisan több hét munka. Fázisokra bontva, hogy minden fázis után használható legyen a rendszer.
 
-### 2. Automatikus DNS recheck + változás-értesítés
-- `pg_cron` job: 30 percenként hívja a `verify-partner-domain-dns` edge functiont minden `pending` vagy `verifying` státuszú request-re (warmup mód: `{ scheduled: true }` body, függvény végigiterál).
-- `verify-partner-domain-dns` bővítés: scheduled módban listázza a nyitott kéréseket, futtatja a checket, ha a `dns_check_status` MEGVÁLTOZIK (pl. `failed` → `verified` vagy fordítva), beír egy `admin_notifications` sort + meghívja `send-transactional-email`-t a partnernek (`domain-dns-status-changed` template).
-- Új mező `partner_domain_requests.last_auto_check_at`, `auto_check_enabled` (default true, partner kikapcsolhatja).
+## FÁZIS 1 - Most azonnal (ebben a menetben)
+Kis-közepes komplexitású, gyorsan élesíthető funkciók.
 
-### 3. Audit napló keresés/szűrés + CSV export (admin)
-- Új admin oldal-szekció vagy bővítés a `PartnerApprovalsPanel`-ben: "Audit napló" tab.
-- Szűrők: partner select (autocomplete), domain szöveg, akció multi-select, dátum tartomány (from/to), aktor user.
-- Lekérdezés `partner_storefront_audit_log` + join `partners` és `partner_domain_requests` a `requested_domain`-ért (vagy az audit log `note`/`changed_fields`-ből).
-- Eredmény táblázat lapozással (50/oldal).
-- "CSV letöltés" gomb: kliens oldalon összeállítja a szűrt találatokból a CSV-t (`Blob` + `URL.createObjectURL`), oszlopok: created_at, action, partner_id, partner_name, storefront_id, actor_user_id, actor_role, ip, changed_fields, note.
+**1.1 AI Shopping Assistant** 🤖
+- Új `AiShoppingAssistant.tsx` komponens (floating chat widget minden vásárló oldalon)
+- Új edge function: `shopping-assistant` - természetes nyelvű termékkeresés
+- Lovable AI (google/gemini-3-flash-preview) + tool calling: `search_products`, `filter_by_price`, `get_recommendations`
+- Termék kártyák a chatben (nem csak szöveg)
 
-### 4. E-mail értesítések partnernek
-- Új transactional template-ek (`supabase/functions/_shared/transactional-email-templates/`):
-  - `partner-domain-approved.tsx` — domain jóváhagyva (CTA: portál link).
-  - `partner-domain-rejected.tsx` — domain elutasítva + admin indoklás.
-  - `partner-domain-dns-status-changed.tsx` — DNS státusz változás (verified/failed) automata check-ből.
-  - `partner-storefront-version-submitted.tsx` — partner új verziót küldött be jóváhagyásra (megerősítés a partnernek).
-- Registry frissítése.
-- Trigger pontok:
-  - Admin a `PartnerApprovalsPanel`-ben jóváhagy/elutasít domaint → meghívja a `send-transactional-email`-t a megfelelő template-tel (partner e-mail a `partners.contact_email`-ből).
-  - `StorefrontEditorTab` "Publikálás kérés" gomb → submit után `partner-storefront-version-submitted` küldés.
-  - `verify-partner-domain-dns` scheduled módban státusz változáskor `partner-domain-dns-status-changed`.
+**1.2 Intelligens Kosár** 🛍️
+- `CartDrawer.tsx` bővítése: "Gyakran együtt vásárolt" szekció
+- Új edge function: `smart-cart-suggestions` - AI ajánlások a kosár tartalma alapján
+- Bundle kedvezmény logika (2+ termék = X% kedvezmény)
+- Táblák: `product_bundles`, `frequently_bought_together`
 
-### Technikai részletek
-- **1 migráció**: új tábla `partner_domain_proof_versions` (RLS + GRANT), új oszlopok `partner_domain_requests`-en, trigger, pg_cron job a recheck-re.
-- **1 edge function módosítás**: `verify-partner-domain-dns` (scheduled batch mód + state-change értesítés).
-- **4 új e-mail template** + registry frissítés.
-- **~5 frontend fájl**: `PartnerDomainTab.tsx` (verzió lista, auto_check toggle), `PartnerApprovalsPanel.tsx` (timeline + audit szűrő tab + e-mail trigger jóváhagyáskor), új `DomainProofTimeline.tsx`, új `AuditLogSearchTab.tsx`, `StorefrontEditorTab.tsx` (publikálás kéréskor e-mail).
-- Prereq: email infra már létezik (`send-transactional-email` deployed).
+**1.3 Gamification** 🎁
+- Táblák: `user_gamification` (level, xp, streak_days), `user_badges`, `daily_quests`, `quest_completions`
+- Új oldal: `/jutalmak` - napi bejelentkezés, küldetések, jelvények
+- Profilba integráció: szint bar, XP, streak counter
+- Hűségpont már van (`Loyalty.tsx`) - összekötés az új rendszerrel
+- 15+ jelvény (első vásárlás, 5 értékelés, hűséges vásárló, stb.)
 
-### Amit NEM csinálunk
-- Nem építünk vizuális diff-et a proof képekhez (csak egymás mellé jelenít meg).
-- Auto-check nem fut sűrűbben 30 percnél (rate-limit / DNS lookup költség).
-- Marketing/bulk e-mail nincs — kizárólag tranzakciós, egy esemény → egy címzett.
+**1.4 AI Marketing Automation** 🧠
+- `AdminMarketingTab.tsx` bővítése: "AI Kampány Generátor"
+- Új edge function: `ai-marketing-auto` - vásárlói szegmentáció + auto kampány készítés
+- Cron job: heti auto-szegmentáció (VIP, alvó, új, kockázatos)
+- Auto kupon optimalizáció: rossz teljesítmény esetén kedvezmény növelése
+
+## FÁZIS 2 - Következő menet
+**2.1 Logisztika** 🚚 (GLS, Foxpost, MPL, Packeta, DPD)
+- Minden szállítónál külön szerződés+API kulcs kell TŐLED
+- Edge functions szállítónként: címke generálás, tracking
+- Először a legfontosabbat kérdezem meg (melyikkel van szerződésed?)
+
+**2.2 Nemzetközi értékesítés** 🌍
+- `LocalePreferences.tsx` már megvan (nyelv/pénznem választó)
+- Kell: teljes UI fordítás (i18n), régiós ÁFA szabályok, régiós árazás táblák
+- Currency conversion API (fixer.io vagy hasonló)
+
+## FÁZIS 3 - Utolsó menet
+**3.1 Natív Mobilapp** 📱
+- Capacitor setup (iOS + Android)
+- Push notifications (Firebase Cloud Messaging vagy OneSignal connector)
+- **FONTOS**: buildhez Mac + Xcode (iOS) és Android Studio kell a te oldaladon!
+- Build config csak - a tényleges native build a te gépeden fut
+
+**3.2 AI Virtuális Próba** 🎥
+- Legkomplexebb feature. Cipőméret becslés fotó alapján (Gemini vision)
+- Ruha overlay - komplex, valószínűleg 3rd party API kell (pl. AILabTools, custom model)
+- AI stílustanácsadó - meglévő AI kiterjesztése
+
+---
+
+## Kérésem előtte
+
+Mielőtt Fázis 1-et elkezdem, egy kérdés:
+- **Van már meglévő shopping assistant chat?** Az `AdminAiAssistant.tsx` az admin panelnek szól. Új, publikus, vásárlóknak szóló asszisztenst kell építeni.
+- **Gamification stílusa**: játékos/színes VAGY minimalista fekete-fehér+arany (a meglévő brand)?
+
+## Ha jóváhagyod
+
+Elkezdem a **Fázis 1-et most, egyben** (4 modul, ~15-20 fájl változás, 3-4 új tábla, 3 új edge function). Utána szólj hogy melyik fázisra megyünk tovább.
+
+**Válaszolj**: 
+- "Menjen a Fázis 1" → elkezdem
+- "Kezdj csak X-szel" → csak azt csinálom
+- "Módosítsd a tervet" → mondd mit
