@@ -1287,16 +1287,7 @@ const Admin = () => {
     setSavingSettings(false);
   };
 
-  // Wrapper for product image gallery with its own state
-  const ProductImageGalleryWrapper = ({ productId }: { productId: string }) => {
-    const [images, setImages] = useState<any[]>([]);
-    const fetchImgs = async () => {
-      const { data } = await supabase.from("product_images").select("*").eq("product_id", productId).order("sort_order");
-      if (data) setImages(data);
-    };
-    useEffect(() => { fetchImgs(); }, [productId]);
-    return <ProductImageGallery productId={productId} images={images} onImagesChange={fetchImgs} />;
-  };
+
 
   useEffect(() => {
     if (isAdmin) {
