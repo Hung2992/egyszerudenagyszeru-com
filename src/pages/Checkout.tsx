@@ -98,6 +98,19 @@ const Checkout = () => {
   const [couponLoading, setCouponLoading] = useState(false);
   const [referralAutoApplied, setReferralAutoApplied] = useState(false);
   const [aiOfferId, setAiOfferId] = useState<string | null>(null);
+  const [aiOfferDetails, setAiOfferDetails] = useState<any | null>(null);
+
+  // Sync AI offer részletek a pending_ai_coupon-ból
+  useEffect(() => {
+    if (!appliedCoupon.startsWith("AI-")) { setAiOfferDetails(null); return; }
+    try {
+      const raw = sessionStorage.getItem("pending_ai_coupon");
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (p.code === appliedCoupon) setAiOfferDetails(p);
+      }
+    } catch { /* ignore */ }
+  }, [appliedCoupon]);
 
 
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
@@ -169,6 +182,34 @@ const Checkout = () => {
     if (!sourceCode.trim()) return;
     setCouponLoading(true);
     const code = sourceCode.toUpperCase();
+
+    // === Kupon-ütközés kezelés ===
+    // Olvassuk ki az AI ajánlat policy-jét (ha van pending)
+    let aiPolicy: "override" | "block" | "ask" = "ask";
+    try {
+      const raw = sessionStorage.getItem("pending_ai_coupon");
+      if (raw) aiPolicy = (JSON.parse(raw)?.coupon_conflict_policy as any) ?? "ask";
+    } catch { /* ignore */ }
+
+    if (code.startsWith("AI-") && appliedCoupon && !appliedCoupon.startsWith("AI-")) {
+      // AI kupon jön, de már van sima kupon
+      if (aiPolicy === "block") {
+        toast({ title: "AI ajánlat nem alkalmazható a jelenlegi kupon mellé.", variant: "destructive" });
+        setCouponLoading(false); return;
+      }
+      if (aiPolicy === "ask" && !window.confirm(
+        `Az AI ajánlat felülírja a jelenlegi kupont: ${appliedCoupon} (-${couponDiscount.toLocaleString()} Ft). Folytatod?`
+      )) { setCouponLoading(false); return; }
+      // override -> töröljük a régit, folytatjuk
+      setCouponDiscount(0); setAppliedCoupon("");
+    } else if (!code.startsWith("AI-") && appliedCoupon.startsWith("AI-")) {
+      // Sima kupon jön, AI aktív
+      if (!window.confirm(
+        `A jelenlegi AI ajánlat (${appliedCoupon}) elveszik, ha másik kupont alkalmazol. Folytatod?`
+      )) { setCouponLoading(false); return; }
+      setCouponDiscount(0); setAppliedCoupon(""); setAiOfferId(null);
+      try { sessionStorage.removeItem("pending_ai_coupon"); } catch { /* ignore */ }
+    }
 
     // === AI áralku kupon (AI- prefix) — szerveroldali validáció az ai_price_offers ellen
     if (code.startsWith("AI-")) {
@@ -555,6 +596,13 @@ const Checkout = () => {
           )}
         </div>
 
+        {/* AI ajánlat megerősítő kártya — a rendelés véglegesítése előtt */}
+        {appliedCoupon.startsWith("AI-") && aiOfferDetails && (
+          <AiOfferConfirmationCard details={aiOfferDetails} onRemove={removeCoupon} />
+        )}
+
+
+
         {/* Gift wrap */}
         {giftWrapOptions.length > 0 && (
           <div className="border bg-card p-5 space-y-3">
@@ -740,5 +788,68 @@ const Checkout = () => {
     </Layout>
   );
 };
+
+function AiOfferConfirmationCard({ details, onRemove }: { details: any; onRemove: () => void }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const expiresAt = new Date(details.expires_at).getTime();
+  const msLeft = Math.max(0, expiresAt - now);
+  const mins = Math.floor(msLeft / 60000);
+  const secs = Math.floor((msLeft % 60000) / 1000);
+  const expired = msLeft <= 0;
+  const orig = Number(details.original_price ?? 0);
+  const offered = Number(details.offered_price ?? 0);
+  const discountFt = orig - offered;
+  const marginPct = Number(details.min_margin_percent ?? 0);
+  const hardCap = Number(details.hard_cap_percent ?? 0);
+
+  return (
+    <div className={`border-2 p-5 space-y-3 ${expired ? "border-destructive bg-destructive/5" : "border-primary bg-primary/5"}`}>
+      <div className="flex items-center justify-between">
+        <h3 className="text-xs font-bold uppercase tracking-wider">💰 AI ajánlat megerősítés</h3>
+        <span className={`text-xs font-mono ${expired ? "text-destructive" : "text-primary"}`}>
+          {expired ? "LEJÁRT" : `⏱ ${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        <div className="text-muted-foreground">Termék</div><div className="font-semibold truncate">{details.product_name}</div>
+        <div className="text-muted-foreground">Eredeti ár</div><div className="line-through">{orig.toLocaleString()} Ft</div>
+        <div className="text-muted-foreground">Számolt ajánlat</div><div className="font-bold text-primary">{offered.toLocaleString()} Ft (-{details.discount_percent}%)</div>
+        <div className="text-muted-foreground">Megtakarítás</div><div className="font-semibold">-{discountFt.toLocaleString()} Ft</div>
+        <div className="text-muted-foreground">Kuponkód</div><div className="font-mono">{details.code}</div>
+        {details.rule_name && (<><div className="text-muted-foreground">Szabály</div><div>{details.rule_name}</div></>)}
+      </div>
+
+      <div className="border-t pt-3 space-y-1 text-xs">
+        <div className="flex items-center gap-2">
+          <span className="text-green-600">✓</span>
+          <span>Margin védelem ellenőrizve — min. {marginPct}% profit megtartva</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-green-600">✓</span>
+          <span>Hard cap érvényesítve — max {hardCap}% engedmény</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={expired ? "text-destructive" : "text-green-600"}>{expired ? "✕" : "✓"}</span>
+          <span>{expired ? "Az ajánlat lejárt — távolítsd el és kérj újat." : `Érvényesség: ${new Date(details.expires_at).toLocaleString("hu-HU")}`}</span>
+        </div>
+      </div>
+
+      {details.reasoning && (
+        <p className="text-xs italic text-muted-foreground border-t pt-2">„{details.reasoning}"</p>
+      )}
+
+      {expired && (
+        <Button variant="destructive" size="sm" onClick={onRemove} className="w-full">
+          AI kupon eltávolítása
+        </Button>
+      )}
+    </div>
+  );
+}
 
 export default Checkout;

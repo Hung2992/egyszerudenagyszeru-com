@@ -15,6 +15,11 @@ interface Offer {
   coupon_code: string;
   expires_at: string;
   reasoning: string;
+  rule_name?: string;
+  min_margin_percent?: number;
+  hard_cap_percent?: number;
+  offer_ttl_minutes?: number;
+  coupon_conflict_policy?: "override" | "block" | "ask";
 }
 
 interface Props {
@@ -142,7 +147,17 @@ export default function AiPriceNegotiateButton({ productId, productName, price, 
                         code: result.offer!.coupon_code,
                         offer_id: result.offer!.id,
                         product_id: productId,
+                        product_name: result.offer!.product_name,
+                        original_price: result.offer!.original_price,
+                        offered_price: result.offer!.offered_price,
+                        discount_percent: result.offer!.discount_percent,
                         expires_at: result.offer!.expires_at,
+                        reasoning: result.offer!.reasoning,
+                        rule_name: result.offer!.rule_name,
+                        min_margin_percent: result.offer!.min_margin_percent,
+                        hard_cap_percent: result.offer!.hard_cap_percent,
+                        offer_ttl_minutes: result.offer!.offer_ttl_minutes,
+                        coupon_conflict_policy: result.offer!.coupon_conflict_policy ?? "ask",
                       }));
                     } catch { /* ignore */ }
                     if (onAccept) onAccept(result.offer!);

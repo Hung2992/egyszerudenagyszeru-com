@@ -27,6 +27,10 @@ interface Rule {
   allow_on_clearance: boolean;
   allowed_categories: string[];
   blocked_categories: string[];
+  max_offers_per_product_per_day: number;
+  max_attempts_per_hour: number;
+  max_rejected_per_hour: number;
+  coupon_conflict_policy: "override" | "block" | "ask";
 }
 
 interface Event {
@@ -92,7 +96,11 @@ export default function AdminAiPricingTab() {
         allow_on_clearance: r.allow_on_clearance,
         allowed_categories: r.allowed_categories,
         blocked_categories: r.blocked_categories,
-      })
+        max_offers_per_product_per_day: r.max_offers_per_product_per_day,
+        max_attempts_per_hour: r.max_attempts_per_hour,
+        max_rejected_per_hour: r.max_rejected_per_hour,
+        coupon_conflict_policy: r.coupon_conflict_policy,
+      } as any)
       .eq("id", r.id);
     setSaving(null);
     if (error) toast.error("Mentés sikertelen: " + error.message);
@@ -272,6 +280,36 @@ export default function AdminAiPricingTab() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2 border-t">
+                  <div>
+                    <Label className="text-xs">Max ajánlat / termék / 24h</Label>
+                    <Input type="number" min={1} value={r.max_offers_per_product_per_day}
+                      onChange={e => updateLocal(r.id, { max_offers_per_product_per_day: +e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Max lekérdezés / óra</Label>
+                    <Input type="number" min={1} value={r.max_attempts_per_hour}
+                      onChange={e => updateLocal(r.id, { max_attempts_per_hour: +e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Elutasítás limit / óra</Label>
+                    <Input type="number" min={1} value={r.max_rejected_per_hour}
+                      onChange={e => updateLocal(r.id, { max_rejected_per_hour: +e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Kupon-ütközés kezelése</Label>
+                    <select
+                      className="w-full h-10 px-3 border bg-background text-sm"
+                      value={r.coupon_conflict_policy}
+                      onChange={e => updateLocal(r.id, { coupon_conflict_policy: e.target.value as any })}
+                    >
+                      <option value="ask">Rákérdez a checkoutban</option>
+                      <option value="override">AI kupon felülír</option>
+                      <option value="block">AI kupont tiltja</option>
+                    </select>
+                  </div>
+                </div>
+
                 <Button onClick={() => saveRule(r)} disabled={saving === r.id} size="sm">
                   {saving === r.id ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
                   Mentés
@@ -308,27 +346,7 @@ export default function AdminAiPricingTab() {
         </TabsContent>
 
         <TabsContent value="audit">
-          <Card><CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-muted">
-                  <tr><th className="p-2 text-left">Dátum</th><th className="p-2">Eredmény</th><th className="p-2 text-right">%</th><th className="p-2 text-left">Ok</th></tr>
-                </thead>
-                <tbody>
-                  {events.map(e => (
-                    <tr key={e.id} className="border-t">
-                      <td className="p-2 text-xs">{new Date(e.created_at).toLocaleString("hu-HU")}</td>
-                      <td className="p-2 text-center">
-                        {e.granted ? <Badge className="bg-green-600"><TrendingUp className="w-3 h-3 mr-1" />OK</Badge> : <Badge variant="destructive">✕</Badge>}
-                      </td>
-                      <td className="p-2 text-right">{e.requested_discount_percent ?? "—"}</td>
-                      <td className="p-2 text-xs">{e.reason}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent></Card>
+          <AuditLogTable events={events} />
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
@@ -428,5 +446,96 @@ export default function AdminAiPricingTab() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+const VIOLATION_META: Record<string, { label: string; className: string }> = {
+  none: { label: "OK", className: "bg-green-600 text-white" },
+  hard_cap: { label: "Hard cap", className: "bg-orange-600 text-white" },
+  margin: { label: "Margin védelem", className: "bg-red-700 text-white" },
+  category_block: { label: "Tiltott kategória", className: "bg-red-600 text-white" },
+  category_not_allowed: { label: "Nem engedett kat.", className: "bg-red-600 text-white" },
+  cart_minimum: { label: "Kosárminimum", className: "bg-yellow-600 text-white" },
+  on_sale: { label: "Akciós termék", className: "bg-yellow-600 text-white" },
+  rate_limit_product: { label: "Rate limit (termék)", className: "bg-purple-600 text-white" },
+  rate_limit_abuse: { label: "Visszaélés blokk", className: "bg-red-800 text-white" },
+  ai_declined: { label: "AI 0%", className: "bg-slate-600 text-white" },
+  no_rule: { label: "Nincs szabály", className: "bg-slate-500 text-white" },
+  expired: { label: "Lejárt", className: "bg-slate-500 text-white" },
+};
+
+function AuditLogTable({ events }: { events: Event[] }) {
+  const [expanded, setExpanded] = useState<string | null>(null);
+  return (
+    <Card><CardContent className="p-0">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-muted">
+            <tr>
+              <th className="p-2 text-left">Dátum</th>
+              <th className="p-2">Eredmény</th>
+              <th className="p-2 text-left">Szabálysértés</th>
+              <th className="p-2 text-right">%</th>
+              <th className="p-2 text-left">Ok / részletek</th>
+            </tr>
+          </thead>
+          <tbody>
+            {events.map(e => {
+              const code = (e.context?.violation_code as string) ?? (e.granted ? "none" : "no_rule");
+              const meta = VIOLATION_META[code] ?? { label: code, className: "bg-slate-500 text-white" };
+              const isOpen = expanded === e.id;
+              const inputs = e.context?.inputs;
+              return (
+                <>
+                  <tr key={e.id} className="border-t cursor-pointer hover:bg-muted/40"
+                      onClick={() => setExpanded(isOpen ? null : e.id)}>
+                    <td className="p-2 text-xs whitespace-nowrap">{new Date(e.created_at).toLocaleString("hu-HU")}</td>
+                    <td className="p-2 text-center">
+                      {e.granted ? <Badge className="bg-green-600"><TrendingUp className="w-3 h-3 mr-1" />OK</Badge> : <Badge variant="destructive">✕</Badge>}
+                    </td>
+                    <td className="p-2"><Badge className={meta.className}>{meta.label}</Badge></td>
+                    <td className="p-2 text-right">{e.requested_discount_percent ?? "—"}</td>
+                    <td className="p-2 text-xs">{e.reason} <span className="text-muted-foreground">[{isOpen ? "−" : "+"}]</span></td>
+                  </tr>
+                  {isOpen && (
+                    <tr key={e.id + "-details"} className="bg-muted/30">
+                      <td colSpan={5} className="p-3 text-xs">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <div className="font-bold uppercase text-[10px] tracking-wider mb-1">Bevitt adatok</div>
+                            {inputs ? (
+                              <ul className="space-y-0.5">
+                                <li>Termék: <b>{inputs.product?.name}</b> ({inputs.product?.category || "–"})</li>
+                                <li>Ár: {Number(inputs.product?.price ?? 0).toLocaleString()} Ft {inputs.product?.original_price ? <span className="text-muted-foreground">(eredeti {Number(inputs.product.original_price).toLocaleString()})</span> : null}</li>
+                                <li>Készlet: {inputs.product?.stock} db {inputs.flags?.is_low_stock ? "⚠️" : ""}</li>
+                                <li>Kosárérték: {Number(inputs.cart_value ?? 0).toLocaleString()} Ft</li>
+                                <li>Akciós: {inputs.flags?.is_on_sale ? "IGEN" : "nem"} · Visszatérő: {inputs.flags?.is_returning ? `IGEN (${inputs.past_orders})` : "új"}</li>
+                                {inputs.user_message && <li>Üzenet: „{inputs.user_message}"</li>}
+                              </ul>
+                            ) : <div className="text-muted-foreground italic">Nincs input adat</div>}
+                          </div>
+                          <div>
+                            <div className="font-bold uppercase text-[10px] tracking-wider mb-1">Motor döntés</div>
+                            <ul className="space-y-0.5">
+                              {e.context?.rule && <li>Szabály: <b>{e.context.rule.name}</b></li>}
+                              {typeof e.context?.hard_cap === "number" && <li>Hard cap: {e.context.hard_cap}%</li>}
+                              {typeof e.context?.min_margin_percent === "number" && <li>Min margin: {e.context.min_margin_percent}%</li>}
+                              {e.context?.offer && <li>Ajánlat: {e.context.offer.discount_percent}% ({Number(e.context.offer.offered_price).toLocaleString()} Ft) · kupon: <code>{e.context.offer.coupon_code}</code></li>}
+                              {e.context?.ai_reasoning && <li className="italic text-muted-foreground">AI: {e.context.ai_reasoning}</li>}
+                              {e.context?.limits && <li>Rate limit: max {e.context.limits.attempts}/h, {e.context.limits.rejected} elutasítás</li>}
+                              {typeof e.context?.attempts === "number" && <li>Regisztrált próbálkozás: {e.context.attempts} (elutasítva: {e.context.rejected ?? 0})</li>}
+                            </ul>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </CardContent></Card>
   );
 }

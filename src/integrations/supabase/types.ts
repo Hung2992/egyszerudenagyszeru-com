@@ -1116,12 +1116,16 @@ export type Database = {
           allowed_categories: string[]
           blocked_categories: string[]
           conditions: Json
+          coupon_conflict_policy: string
           created_at: string
           description: string | null
           eligible_customer_tags: string[]
           id: string
           is_active: boolean
+          max_attempts_per_hour: number
           max_discount_percent: number
+          max_offers_per_product_per_day: number
+          max_rejected_per_hour: number
           min_cart_value: number
           min_margin_percent: number
           name: string
@@ -1136,12 +1140,16 @@ export type Database = {
           allowed_categories?: string[]
           blocked_categories?: string[]
           conditions?: Json
+          coupon_conflict_policy?: string
           created_at?: string
           description?: string | null
           eligible_customer_tags?: string[]
           id?: string
           is_active?: boolean
+          max_attempts_per_hour?: number
           max_discount_percent?: number
+          max_offers_per_product_per_day?: number
+          max_rejected_per_hour?: number
           min_cart_value?: number
           min_margin_percent?: number
           name: string
@@ -1156,12 +1164,16 @@ export type Database = {
           allowed_categories?: string[]
           blocked_categories?: string[]
           conditions?: Json
+          coupon_conflict_policy?: string
           created_at?: string
           description?: string | null
           eligible_customer_tags?: string[]
           id?: string
           is_active?: boolean
+          max_attempts_per_hour?: number
           max_discount_percent?: number
+          max_offers_per_product_per_day?: number
+          max_rejected_per_hour?: number
           min_cart_value?: number
           min_margin_percent?: number
           name?: string

@@ -31,6 +31,28 @@ interface Rule {
   allow_on_clearance: boolean
   allowed_categories: string[]
   blocked_categories: string[]
+  max_offers_per_product_per_day?: number
+  max_attempts_per_hour?: number
+  max_rejected_per_hour?: number
+  coupon_conflict_policy?: 'override' | 'block' | 'ask'
+}
+
+// Strukturált input-összefoglaló minden audit sorhoz
+function buildInputs(product: any, opts: {
+  cart_value: number; is_on_sale: boolean; is_low_stock: boolean;
+  is_returning: boolean; past_orders: number; user_message?: string;
+}) {
+  return {
+    product: {
+      id: product.id, name: product.name, category: product.category,
+      price: Number(product.price), original_price: product.original_price ? Number(product.original_price) : null,
+      stock: Number(product.stock ?? 0),
+    },
+    cart_value: opts.cart_value,
+    flags: { is_on_sale: opts.is_on_sale, is_low_stock: opts.is_low_stock, is_returning: opts.is_returning },
+    past_orders: opts.past_orders,
+    user_message: opts.user_message ?? null,
+  }
 }
 
 function json(body: unknown, status = 200) {
@@ -90,11 +112,29 @@ Deno.serve(async (req) => {
     }
     const isReturning = pastOrders > 0
 
+    // === Szabályok betöltése (rate-limit értékek is innen jönnek) ===
+    const { data: rulesRaw } = await admin
+      .from('ai_pricing_rules')
+      .select('*')
+      .eq('is_active', true)
+      .order('priority', { ascending: true })
+    const rules = (rulesRaw as Rule[]) ?? []
+    const topRule = rules[0]
+    const maxPerProduct = topRule?.max_offers_per_product_per_day ?? 3
+    const maxAttemptsHour = topRule?.max_attempts_per_hour ?? 10
+    const maxRejectedHour = topRule?.max_rejected_per_hour ?? 6
+
+    const cartValue = body.cart_value ?? price
+    const inputs = buildInputs(product, {
+      cart_value: cartValue, is_on_sale: !!isOnSale, is_low_stock: isLowStock,
+      is_returning: isReturning, past_orders: pastOrders, user_message: body.user_message,
+    })
+
     // === 3. Rate limit + visszaélés-védelem ===
     const since24h = new Date(Date.now() - 24 * 3600 * 1000).toISOString()
     const since1h = new Date(Date.now() - 3600 * 1000).toISOString()
 
-    // 3a. Termék-szintű rate limit (max 3 sikeres ajánlat / 24h)
+    // 3a. Termék-szintű rate limit
     if (userId) {
       const { count } = await admin
         .from('ai_price_offers')
@@ -102,17 +142,17 @@ Deno.serve(async (req) => {
         .eq('user_id', userId)
         .eq('product_id', body.product_id)
         .gte('created_at', since24h)
-      if ((count ?? 0) >= 3) {
+      if ((count ?? 0) >= maxPerProduct) {
         await admin.from('ai_pricing_events').insert({
           user_id: userId, session_id: body.session_id, product_id: body.product_id,
-          granted: false, reason: 'Rate limit: 3 ajánlat/24h ugyanarra a termékre',
-          context: { past_offers_24h: count },
+          granted: false, reason: `Rate limit: ${maxPerProduct} ajánlat/24h ugyanarra a termékre`,
+          context: { violation_code: 'rate_limit_product', past_offers_24h: count, limit: maxPerProduct, inputs },
         })
         return json({ granted: false, message: 'Ma már kaptál ajánlatot erre a termékre. Próbáld holnap újra! 😊' })
       }
     }
 
-    // 3b. Globális próbálkozás-limit (user vagy session): max 10 lekérdezés/óra
+    // 3b. Globális próbálkozás-limit
     const idFilter = userId
       ? admin.from('ai_pricing_events').select('id, granted', { count: 'exact' }).eq('user_id', userId).gte('created_at', since1h)
       : body.session_id
@@ -122,41 +162,33 @@ Deno.serve(async (req) => {
       const { data: recent, count: recentCount } = await idFilter
       const attempts = recentCount ?? 0
       const rejected = (recent ?? []).filter((r: any) => !r.granted).length
-      // Suspicious: >10 total or >6 rejected in 1h -> block + fraud signal
-      if (attempts >= 10 || rejected >= 6) {
+      if (attempts >= maxAttemptsHour || rejected >= maxRejectedHour) {
         try {
           await admin.from('fraud_signals').insert({
             user_id: userId, session_id: body.session_id,
             signal_type: 'ai_pricing_abuse',
-            severity: rejected >= 6 ? 'high' : 'medium',
+            severity: rejected >= maxRejectedHour ? 'high' : 'medium',
             details: { attempts, rejected, product_id: body.product_id, window: '1h' },
           })
         } catch (_e) { /* fraud_signals opcionális */ }
         await admin.from('ai_pricing_events').insert({
           user_id: userId, session_id: body.session_id, product_id: body.product_id,
           granted: false, reason: 'Gyanús próbálkozás: túl sok lekérdezés (blokkolva)',
-          context: { attempts, rejected },
+          context: { violation_code: 'rate_limit_abuse', attempts, rejected, limits: { attempts: maxAttemptsHour, rejected: maxRejectedHour }, inputs },
         })
         return json({ granted: false, message: 'Túl sok próbálkozás. Próbáld később újra. 🚫' })
       }
     }
 
-    // === 4. Alkalmazható szabály kiválasztása (legalacsonyabb priority = legerősebb) ===
-    const { data: rules } = await admin
-      .from('ai_pricing_rules')
-      .select('*')
-      .eq('is_active', true)
-      .order('priority', { ascending: true })
-
-    const cartValue = body.cart_value ?? price
-
+    // === 4. Alkalmazható szabály kiválasztása ===
     let selectedRule: Rule | null = null
     let rejectReason = ''
-    for (const r of (rules as Rule[]) ?? []) {
-      if (cartValue < r.min_cart_value) { rejectReason = `Kosárérték túl alacsony (min ${r.min_cart_value} Ft)`; continue }
-      if (isOnSale && !r.allow_on_sale_products) { rejectReason = 'Akciós termékre nem adható további kedvezmény'; continue }
-      if (r.blocked_categories?.some(c => category.includes(c.toLowerCase()))) { rejectReason = 'Termékkategória tiltott áralku szempontjából'; continue }
-      if (r.allowed_categories?.length && !r.allowed_categories.some(c => category.includes(c.toLowerCase()))) { rejectReason = 'Termékkategória nem szerepel az engedélyezett listán'; continue }
+    let rejectViolation = 'no_rule'
+    for (const r of rules) {
+      if (cartValue < r.min_cart_value) { rejectReason = `Kosárérték túl alacsony (min ${r.min_cart_value} Ft)`; rejectViolation = 'cart_minimum'; continue }
+      if (isOnSale && !r.allow_on_sale_products) { rejectReason = 'Akciós termékre nem adható további kedvezmény'; rejectViolation = 'on_sale'; continue }
+      if (r.blocked_categories?.some(c => category.includes(c.toLowerCase()))) { rejectReason = 'Termékkategória tiltott áralku szempontjából'; rejectViolation = 'category_block'; continue }
+      if (r.allowed_categories?.length && !r.allowed_categories.some(c => category.includes(c.toLowerCase()))) { rejectReason = 'Termékkategória nem szerepel az engedélyezett listán'; rejectViolation = 'category_not_allowed'; continue }
       selectedRule = r
       break
     }
@@ -165,13 +197,14 @@ Deno.serve(async (req) => {
       await admin.from('ai_pricing_events').insert({
         user_id: userId, session_id: body.session_id, product_id: body.product_id,
         granted: false, reason: rejectReason || 'Nincs alkalmazható szabály',
-        context: { is_on_sale: isOnSale, category, cart_value: cartValue },
+        context: { violation_code: rejectViolation, inputs },
       })
       return json({
         granted: false,
         message: 'Sajnos erre a termékre most nem tudok személyes kedvezményt adni. 🙏',
       })
     }
+
 
     // === 5. Hard cap: min(max_discount, 100 - min_margin) ===
     const hardCap = Math.min(
@@ -182,8 +215,8 @@ Deno.serve(async (req) => {
       await admin.from('ai_pricing_events').insert({
         user_id: userId, session_id: body.session_id, product_id: body.product_id,
         rule_id: selectedRule.id, granted: false,
-        reason: 'Margin védelem tiltja a kedvezményt (hard cap ≤ 0)',
-        context: { hard_cap: hardCap },
+        reason: `Margin védelem tiltja a kedvezményt (min margin ${selectedRule.min_margin_percent}%, hard cap ${hardCap}%)`,
+        context: { violation_code: 'margin', hard_cap: hardCap, min_margin_percent: selectedRule.min_margin_percent, max_discount_percent: selectedRule.max_discount_percent, inputs },
       })
       return json({ granted: false, message: 'Erre a termékre most nem tudok kedvezményt ajánlani.' })
     }
@@ -245,7 +278,7 @@ Add vissza CSAK ezt a JSON-t:
         rule_id: selectedRule.id, granted: false,
         requested_discount_percent: aiPercent,
         reason: 'AI 0%-ot javasolt (nem éri meg ajánlatot adni)',
-        context: { ai_reasoning: aiReasoning },
+        context: { violation_code: 'ai_declined', ai_reasoning: aiReasoning, hard_cap: hardCap, inputs },
       })
       return json({ granted: false, message: 'Sajnos most nem tudok kedvezményt adni erre. 🙏' })
     }
@@ -286,9 +319,33 @@ Add vissza CSAK ezt a JSON-t:
       requested_discount_percent: aiPercent,
       reason: `Ajánlat engedélyezve "${selectedRule.name}" szabály alapján (hard cap ${hardCap}%)`,
       context: {
-        ai_reasoning: aiReasoning, is_on_sale: isOnSale, is_low_stock: isLowStock,
-        is_returning: isReturning, past_orders: pastOrders, cart_value: cartValue,
+        violation_code: 'none',
+        ai_reasoning: aiReasoning,
+        hard_cap: hardCap,
+        rule: { id: selectedRule.id, name: selectedRule.name, max_discount_percent: selectedRule.max_discount_percent, min_margin_percent: selectedRule.min_margin_percent, offer_ttl_minutes: selectedRule.offer_ttl_minutes },
+        offer: { discount_percent: aiPercent, offered_price: offeredPrice, original_price: price, coupon_code: couponCode, expires_at: expiresAt },
+        inputs,
       },
+    })
+
+    return json({
+      granted: true,
+      offer: {
+        id: offer.id,
+        product_name: product.name,
+        original_price: price,
+        offered_price: offeredPrice,
+        discount_percent: aiPercent,
+        coupon_code: couponCode,
+        expires_at: expiresAt,
+        reasoning: aiReasoning,
+        rule_name: selectedRule.name,
+        min_margin_percent: selectedRule.min_margin_percent,
+        hard_cap_percent: hardCap,
+        offer_ttl_minutes: selectedRule.offer_ttl_minutes,
+        coupon_conflict_policy: selectedRule.coupon_conflict_policy ?? 'ask',
+      },
+      message: `Megnéztem a lehetőségeket. Erre a termékre ${aiPercent}% személyes kedvezményt tudok ajánlani, ami ${selectedRule.offer_ttl_minutes} percig érvényes. Kuponkód: ${couponCode}`,
     })
 
     return json({
