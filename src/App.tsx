@@ -70,6 +70,7 @@ const PartnerLanding = lazy(() => import("./pages/PartnerLanding.tsx"));
 const PartnerShareRedirect = lazy(() => import("./pages/PartnerShareRedirect.tsx"));
 const Jutalmak = lazy(() => import("./pages/Jutalmak.tsx"));
 const AiShoppingAssistant = lazy(() => import("./components/AiShoppingAssistant"));
+const TrackShipment = lazy(() => import("./pages/TrackShipment.tsx"));
 
 const queryClient = new QueryClient();
 
@@ -143,6 +144,8 @@ const App = () => (
             <Route path="/b/:slug/termek/:productSlug" element={<BrandProductDetail />} />
             <Route path="/s/:code" element={<PartnerShareRedirect />} />
             <Route path="/p/:partnerSlug/:landingSlug" element={<PartnerLanding />} />
+            <Route path="/csomagkovetes" element={<TrackShipment />} />
+            <Route path="/track" element={<TrackShipment />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
