@@ -330,6 +330,102 @@ export default function AdminAiPricingTab() {
             </div>
           </CardContent></Card>
         </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Card><CardContent className="p-4">
+              <div className="text-xs text-muted-foreground">Elfogadási arány</div>
+              <div className="text-2xl font-bold text-primary">{acceptRate}%</div>
+              <div className="text-[10px] text-muted-foreground">{acceptedOffers} / {offers.length} ajánlat</div>
+            </CardContent></Card>
+            <Card><CardContent className="p-4">
+              <div className="text-xs text-muted-foreground">Átlagos kedvezmény</div>
+              <div className="text-2xl font-bold">{avgDiscount}%</div>
+            </CardContent></Card>
+            <Card><CardContent className="p-4">
+              <div className="text-xs text-muted-foreground">Margin hatás (beváltott)</div>
+              <div className="text-2xl font-bold text-red-600">-{marginImpact.toLocaleString("hu-HU")} Ft</div>
+              <div className="text-[10px] text-muted-foreground">összes engedmény</div>
+            </CardContent></Card>
+            <Card><CardContent className="p-4">
+              <div className="text-xs text-muted-foreground">Engedélyezés / elutasítás</div>
+              <div className="text-2xl font-bold">
+                <span className="text-green-600">{grantedCount}</span>
+                <span className="text-muted-foreground mx-1">/</span>
+                <span className="text-red-600">{rejectedCount}</span>
+              </div>
+            </CardContent></Card>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader><CardTitle className="text-sm">Napi trend</CardTitle></CardHeader>
+              <CardContent className="h-[260px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={dailyTrend}>
+                    <XAxis dataKey="day" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="granted" name="Engedélyezett" fill="hsl(var(--primary))" />
+                    <Bar dataKey="rejected" name="Elutasított" fill="hsl(var(--destructive))" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle className="text-sm">Elfogadás / elutasítás arány</CardTitle></CardHeader>
+              <CardContent className="h-[260px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: "Engedélyezett", value: grantedCount },
+                        { name: "Elutasított", value: rejectedCount },
+                      ]}
+                      dataKey="value"
+                      nameKey="name"
+                      outerRadius={90}
+                      label
+                    >
+                      {[0, 1].map(i => <Cell key={i} fill={pieColors[i]} />)}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader><CardTitle className="text-sm">Elutasítási okok (top 8)</CardTitle></CardHeader>
+            <CardContent>
+              {rejectionByReason.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Még nincs elutasítás.</p>
+              ) : (
+                <div className="space-y-2">
+                  {rejectionByReason.map(r => {
+                    const max = rejectionByReason[0].count;
+                    const pct = Math.round((r.count / max) * 100);
+                    return (
+                      <div key={r.reason}>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="truncate mr-2">{r.reason}</span>
+                          <span className="font-mono">{r.count}</span>
+                        </div>
+                        <div className="h-2 bg-muted rounded overflow-hidden">
+                          <div className="h-full bg-destructive/70" style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
