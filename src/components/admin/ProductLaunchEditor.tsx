@@ -298,14 +298,26 @@ const ProductLaunchEditor = ({ productId, onClose }: { productId: string; onClos
       <div className="max-w-5xl mx-auto p-4 md:p-8">
         <div className="border bg-card">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b">
-            <div>
-              <h2 className="text-base font-bold uppercase tracking-wider">{product.name}</h2>
+          <div className="flex items-center justify-between p-4 border-b gap-2">
+            <div className="min-w-0">
+              <h2 className="text-base font-bold uppercase tracking-wider truncate">{product.name}</h2>
               <p className="text-[10px] text-muted-foreground">Launch termék szerkesztő · {product.category}</p>
             </div>
-            <Button variant="ghost" size="sm" onClick={onClose} className="rounded-none">
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setAiStudioOpen(true)}
+                className="rounded-none gap-2"
+                title="AI Product Studio – SEO szöveg + hero kép generálása"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline text-xs">AI Studio</span>
+              </Button>
+              <Button variant="ghost" size="sm" onClick={onClose} className="rounded-none">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           {/* Tabs */}
