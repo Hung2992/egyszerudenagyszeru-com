@@ -23,6 +23,8 @@ interface Props {
   price: number;
   cartValue?: number;
   className?: string;
+  /** Ha meg van adva, ez fut le a "Elfogadom és kosárba" gombra – itt kell hívni az addItem-et. */
+  onAccept?: (offer: Offer) => void;
 }
 
 /**
