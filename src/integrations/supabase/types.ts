@@ -5301,6 +5301,63 @@ export type Database = {
           },
         ]
       }
+      pickup_points: {
+        Row: {
+          active: boolean
+          address: string
+          carrier_code: string
+          city: string | null
+          code: string
+          country: string | null
+          created_at: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          name: string
+          opening_hours: Json | null
+          raw: Json | null
+          synced_at: string | null
+          updated_at: string
+          zip: string | null
+        }
+        Insert: {
+          active?: boolean
+          address: string
+          carrier_code: string
+          city?: string | null
+          code: string
+          country?: string | null
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          opening_hours?: Json | null
+          raw?: Json | null
+          synced_at?: string | null
+          updated_at?: string
+          zip?: string | null
+        }
+        Update: {
+          active?: boolean
+          address?: string
+          carrier_code?: string
+          city?: string | null
+          code?: string
+          country?: string | null
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          opening_hours?: Json | null
+          raw?: Json | null
+          synced_at?: string | null
+          updated_at?: string
+          zip?: string | null
+        }
+        Relationships: []
+      }
       product_bundles: {
         Row: {
           active: boolean
@@ -6104,6 +6161,217 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      shipment_events: {
+        Row: {
+          created_at: string
+          event_time: string
+          id: string
+          location: string | null
+          message: string | null
+          raw: Json | null
+          shipment_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          event_time?: string
+          id?: string
+          location?: string | null
+          message?: string | null
+          raw?: Json | null
+          shipment_id: string
+          status: string
+        }
+        Update: {
+          created_at?: string
+          event_time?: string
+          id?: string
+          location?: string | null
+          message?: string | null
+          raw?: Json | null
+          shipment_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipment_events_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "shipments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shipments: {
+        Row: {
+          carrier_code: string
+          carrier_id: string | null
+          cod_amount: number | null
+          created_at: string
+          created_by: string | null
+          delivered_at: string | null
+          dimensions: Json | null
+          external_id: string | null
+          id: string
+          label_url: string | null
+          last_status_check: string | null
+          order_id: string
+          pickup_point_code: string | null
+          pickup_point_name: string | null
+          price: number | null
+          raw_response: Json | null
+          recipient_address: Json | null
+          recipient_email: string | null
+          recipient_name: string | null
+          recipient_phone: string | null
+          service_type: string | null
+          shipped_at: string | null
+          status: string
+          tracking_number: string | null
+          tracking_url: string | null
+          updated_at: string
+          weight_kg: number | null
+        }
+        Insert: {
+          carrier_code: string
+          carrier_id?: string | null
+          cod_amount?: number | null
+          created_at?: string
+          created_by?: string | null
+          delivered_at?: string | null
+          dimensions?: Json | null
+          external_id?: string | null
+          id?: string
+          label_url?: string | null
+          last_status_check?: string | null
+          order_id: string
+          pickup_point_code?: string | null
+          pickup_point_name?: string | null
+          price?: number | null
+          raw_response?: Json | null
+          recipient_address?: Json | null
+          recipient_email?: string | null
+          recipient_name?: string | null
+          recipient_phone?: string | null
+          service_type?: string | null
+          shipped_at?: string | null
+          status?: string
+          tracking_number?: string | null
+          tracking_url?: string | null
+          updated_at?: string
+          weight_kg?: number | null
+        }
+        Update: {
+          carrier_code?: string
+          carrier_id?: string | null
+          cod_amount?: number | null
+          created_at?: string
+          created_by?: string | null
+          delivered_at?: string | null
+          dimensions?: Json | null
+          external_id?: string | null
+          id?: string
+          label_url?: string | null
+          last_status_check?: string | null
+          order_id?: string
+          pickup_point_code?: string | null
+          pickup_point_name?: string | null
+          price?: number | null
+          raw_response?: Json | null
+          recipient_address?: Json | null
+          recipient_email?: string | null
+          recipient_name?: string | null
+          recipient_phone?: string | null
+          service_type?: string | null
+          shipped_at?: string | null
+          status?: string
+          tracking_number?: string | null
+          tracking_url?: string | null
+          updated_at?: string
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipments_carrier_id_fkey"
+            columns: ["carrier_id"]
+            isOneToOne: false
+            referencedRelation: "shipping_carriers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shipping_carriers: {
+        Row: {
+          active: boolean
+          api_credentials: Json
+          api_endpoint: string | null
+          base_price: number
+          code: string
+          config: Json
+          created_at: string
+          delivery_days_max: number | null
+          delivery_days_min: number | null
+          id: string
+          logo_url: string | null
+          max_weight_kg: number | null
+          min_weight_kg: number | null
+          name: string
+          sort_order: number
+          supports_cod: boolean
+          supports_home_delivery: boolean
+          supports_pickup_points: boolean
+          test_mode: boolean
+          tracking_url_template: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          api_credentials?: Json
+          api_endpoint?: string | null
+          base_price?: number
+          code: string
+          config?: Json
+          created_at?: string
+          delivery_days_max?: number | null
+          delivery_days_min?: number | null
+          id?: string
+          logo_url?: string | null
+          max_weight_kg?: number | null
+          min_weight_kg?: number | null
+          name: string
+          sort_order?: number
+          supports_cod?: boolean
+          supports_home_delivery?: boolean
+          supports_pickup_points?: boolean
+          test_mode?: boolean
+          tracking_url_template?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          api_credentials?: Json
+          api_endpoint?: string | null
+          base_price?: number
+          code?: string
+          config?: Json
+          created_at?: string
+          delivery_days_max?: number | null
+          delivery_days_min?: number | null
+          id?: string
+          logo_url?: string | null
+          max_weight_kg?: number | null
+          min_weight_kg?: number | null
+          name?: string
+          sort_order?: number
+          supports_cod?: boolean
+          supports_home_delivery?: boolean
+          supports_pickup_points?: boolean
+          test_mode?: boolean
+          tracking_url_template?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       shop_products: {
         Row: {

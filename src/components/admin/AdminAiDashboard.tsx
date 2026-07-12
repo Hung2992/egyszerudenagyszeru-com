@@ -1,7 +1,7 @@
 // Admin AI Dashboard - KPI-k, konverziós arányok, cache hit, kvóta, kérdések
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/untyped-client";
-import { Sparkles, MessageCircle, ShoppingCart, TrendingUp, Zap, DollarSign, RefreshCw, Loader2 } from "lucide-react";
+import { Sparkles, MessageCircle, ShoppingCart, TrendingUp, Zap, DollarSign, RefreshCw, Loader2, Clock, AlertOctagon, Megaphone, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Kpis {
@@ -16,7 +16,12 @@ interface Kpis {
   totalQuotaRequests: number;
   totalCost: number;
   segmentsGenerated: number;
+  avgLatencyMs: number;
+  failedCalls: number;
+  aiRevenue: number;
+  aiConversionRate: number;
 }
+interface TopCampaign { name: string; sent: number; opens: number; clicks: number }
 
 const RANGES = [
   { key: "24h", label: "24 óra", ms: 24 * 3600_000 },
@@ -29,6 +34,7 @@ const AdminAiDashboard = () => {
   const [kpis, setKpis] = useState<Kpis | null>(null);
   const [loading, setLoading] = useState(false);
   const [topQuestions, setTopQuestions] = useState<{ q: string; count: number }[]>([]);
+  const [topCampaigns, setTopCampaigns] = useState<TopCampaign[]>([]);
 
   const load = async () => {
     setLoading(true);
@@ -54,6 +60,38 @@ const AdminAiDashboard = () => {
     const quotaTotal = (quota || []).reduce((s: number, q: any) => s + (q.request_count || 0), 0);
     const costTotal = (quota || []).reduce((s: number, q: any) => s + Number(q.estimated_cost_credits || 0), 0);
 
+    // Monitoring - avg latency + failed calls
+    const { data: mon } = await (supabase.from("ai_monitoring_events" as any) as any)
+      .select("severity, event_type, metadata").gte("created_at", from).limit(2000);
+    const latencies = (mon || [])
+      .map((m: any) => Number(m?.metadata?.latency_ms || m?.metadata?.duration_ms || 0))
+      .filter((v: number) => v > 0);
+    const avgLatency = latencies.length ? latencies.reduce((s: number, v: number) => s + v, 0) / latencies.length : 0;
+    const failedCalls = (mon || []).filter((m: any) => ["error", "critical"].includes(m.severity)).length;
+
+    // AI-generated revenue (rough): avg order value × purchases from AI suggestions
+    const purchasedCount = count("cart_suggestion_purchased");
+    const { data: recentOrders } = await (supabase.from("orders" as any) as any)
+      .select("total_amount").gte("created_at", from).limit(500);
+    const avgOrder = (recentOrders || []).length
+      ? (recentOrders || []).reduce((s: number, o: any) => s + Number(o.total_amount || 0), 0) / (recentOrders || []).length
+      : 0;
+    const aiRevenue = purchasedCount * avgOrder;
+    const shownCount = count("cart_suggestion_shown") + count("assistant_recommend");
+    const purchasedFromAi = purchasedCount + count("assistant_product_click");
+    const aiConversionRate = shownCount > 0 ? (purchasedFromAi / shownCount) * 100 : 0;
+
+    // Top campaigns
+    const { data: camps } = await (supabase.from("marketing_campaigns" as any) as any)
+      .select("name, sent_count, open_count, click_count")
+      .gte("created_at", from).order("click_count", { ascending: false }).limit(5);
+    setTopCampaigns((camps || []).map((c: any) => ({
+      name: c.name || "—",
+      sent: c.sent_count || 0,
+      opens: c.open_count || 0,
+      clicks: c.click_count || 0,
+    })));
+
     // Top questions from conversations
     const { data: convos } = await (supabase.from("ai_shopping_conversations" as any) as any)
       .select("user_message").gte("created_at", from).limit(500);
@@ -72,12 +110,16 @@ const AdminAiDashboard = () => {
       suggestionsShown: count("cart_suggestion_shown"),
       suggestionsClicked: count("cart_suggestion_click"),
       suggestionsAdded: count("cart_suggestion_added"),
-      suggestionsPurchased: count("cart_suggestion_purchased"),
+      suggestionsPurchased: purchasedCount,
       cacheHitRate: hitRate,
       cacheEntries,
       totalQuotaRequests: quotaTotal,
       totalCost: costTotal,
       segmentsGenerated: count("marketing_segment_generated"),
+      avgLatencyMs: avgLatency,
+      failedCalls,
+      aiRevenue,
+      aiConversionRate,
     });
     setLoading(false);
   };
@@ -127,6 +169,41 @@ const AdminAiDashboard = () => {
         <KpiCard icon={DollarSign} label="Becs. költség (kredit)"
           value={kpis ? kpis.totalCost.toFixed(2) : "-"} sub="tokenalapú becslés" />
       </div>
+
+      {/* Vállalati KPI-k */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <KpiCard icon={TrendingUp} label="AI konverziós arány"
+          value={`${kpis?.aiConversionRate.toFixed(1) ?? "-"}%`} highlight />
+        <KpiCard icon={Wallet} label="AI generált bevétel"
+          value={kpis ? `${Math.round(kpis.aiRevenue).toLocaleString("hu-HU")} Ft` : "-"}
+          sub="becslés: ajánlások × átlag rendelés" highlight />
+        <KpiCard icon={Clock} label="Átlagos AI válaszidő"
+          value={kpis ? `${Math.round(kpis.avgLatencyMs)} ms` : "-"} />
+        <KpiCard icon={AlertOctagon} label="Sikertelen AI hívások"
+          value={kpis?.failedCalls ?? "-"} sub="hiba + kritikus" />
+      </div>
+
+      {/* Top kampányok */}
+      {topCampaigns.length > 0 && (
+        <div className="border border-border p-4 bg-card space-y-2">
+          <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground flex items-center gap-1.5">
+            <Megaphone className="w-3 h-3 text-accent" /> Legjobban teljesítő AI kampányok
+          </p>
+          <div className="space-y-1">
+            {topCampaigns.map((c, i) => {
+              const ctr = c.sent > 0 ? ((c.clicks / c.sent) * 100).toFixed(1) : "0.0";
+              return (
+                <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-border/50">
+                  <span className="truncate mr-2 font-medium">{c.name}</span>
+                  <span className="text-muted-foreground text-[10px] shrink-0">
+                    {c.sent} küld • {c.opens} nyit • <span className="text-accent font-bold">{c.clicks} katt ({ctr}%)</span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Konverziós tölcsér */}
       {kpis && kpis.suggestionsShown > 0 && (
