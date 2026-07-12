@@ -10,6 +10,8 @@ import SizeQuiz from "@/components/SizeQuiz";
 import ProductWaitlist from "@/components/ProductWaitlist";
 import PersonalizedOffers from "@/components/PersonalizedOffers";
 import AiPriceNegotiateButton from "@/components/AiPriceNegotiateButton";
+import Product3DViewer from "@/components/Product3DViewer";
+import AiStyleRecommender from "@/components/AiStyleRecommender";
 import {
   ShoppingCart, Heart, Star, BellRing, Share2, Copy, Bell,
   UserPlus, UserMinus, Ruler, PackagePlus, MessageCircle,
