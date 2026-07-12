@@ -195,6 +195,10 @@ export default function AdminDropsTab() {
         </Card>
       )}
 
+      <DropPerformanceReport />
+
+
+
       {loading ? (
         <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin" /></div>
       ) : drops.length === 0 ? (
