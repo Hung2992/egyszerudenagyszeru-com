@@ -144,8 +144,6 @@ export default function VoiceShopping() {
 
   const openProduct = async (p: Product) => {
     if (queryIdRef.current) {
-      await supabase.rpc("array_append_uuid", { p_id: queryIdRef.current, p_val: p.id }).catch(() => {});
-      // fallback: simple update
       await supabase
         .from("voice_shopping_queries")
         .update({ clicked_product_ids: [p.id] })
