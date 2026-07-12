@@ -25,6 +25,31 @@ const DEFAULT: GiveawayStatus = {
   endDate: null,
 };
 
+const CACHE_KEY = "lovable:giveaway_settings_cache";
+
+type CachedSettings = {
+  is_enabled: boolean;
+  start_date: string | null;
+  end_date: string | null;
+};
+
+const readCache = (): CachedSettings | null => {
+  try {
+    const raw = window.localStorage.getItem(CACHE_KEY);
+    return raw ? (JSON.parse(raw) as CachedSettings) : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeCache = (v: CachedSettings) => {
+  try {
+    window.localStorage.setItem(CACHE_KEY, JSON.stringify(v));
+  } catch {
+    /* noop */
+  }
+};
+
 export const useGiveawayStatus = (): GiveawayStatus => {
   const [status, setStatus] = useState<GiveawayStatus>(DEFAULT);
 
@@ -51,19 +76,43 @@ export const useGiveawayStatus = (): GiveawayStatus => {
       };
     };
 
-    const load = async () => {
-      const { data } = await supabase
-        .from("giveaway_settings")
-        .select("is_enabled, start_date, end_date")
-        .eq("id", 1)
-        .maybeSingle();
-
-      if (cancelled) return;
-
-      const isEnabled = data?.is_enabled ?? true;
-      const startDate = data?.start_date ? new Date(data.start_date) : null;
-      const endDate = data?.end_date ? new Date(data.end_date) : null;
+    const applySettings = (s: CachedSettings) => {
+      const isEnabled = s.is_enabled ?? true;
+      const startDate = s.start_date ? new Date(s.start_date) : null;
+      const endDate = s.end_date ? new Date(s.end_date) : null;
       setStatus(compute(isEnabled, startDate, endDate));
+    };
+
+    // Warm from localStorage cache immediately (avoids UI flicker on flaky mobile networks)
+    const cached = readCache();
+    if (cached) applySettings(cached);
+
+    const load = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("giveaway_settings")
+          .select("is_enabled, start_date, end_date")
+          .eq("id", 1)
+          .maybeSingle();
+
+        if (cancelled) return;
+        if (error) throw error;
+
+        const settings: CachedSettings = {
+          is_enabled: data?.is_enabled ?? true,
+          start_date: data?.start_date ?? null,
+          end_date: data?.end_date ?? null,
+        };
+        writeCache(settings);
+        applySettings(settings);
+      } catch (err) {
+        if (cancelled) return;
+        console.warn("[giveaway] fetch failed, using cache/default", err);
+        // If we already applied cache above, keep it. Otherwise fall back to safe default (disabled).
+        if (!cached) {
+          setStatus({ ...DEFAULT, loading: false });
+        }
+      }
     };
 
     load();
