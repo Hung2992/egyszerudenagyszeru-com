@@ -24,16 +24,7 @@ const AdminTranslationsTab = lazy(lazyRetry(() => import("@/components/admin/Adm
 const AdminReturnsTab = lazy(lazyRetry(() => import("@/components/admin/AdminReturnsTab")));
 const AdminDynamicPricingTab = lazy(lazyRetry(() => import("@/components/admin/AdminDynamicPricingTab")));
 const AdminMarketingTab = lazy(lazyRetry(() => import("@/components/admin/AdminMarketingTab")));
-const AdminFacebookStudioTab = lazy(lazyRetry(() => import("@/components/admin/AdminFacebookStudioTab")));
-const AdminInstagramStudioTab = lazy(lazyRetry(() => import("@/components/admin/AdminInstagramStudioTab")));
-const AdminTiktokStudioTab = lazy(lazyRetry(() => import("@/components/admin/AdminTiktokStudioTab")));
-const AdminYoutubeStudioTab = lazy(lazyRetry(() => import("@/components/admin/AdminYoutubeStudioTab")));
-const AdminYoutubeShortsStudioTab = lazy(lazyRetry(() => import("@/components/admin/AdminYoutubeShortsStudioTab")));
-const AdminGoogleAdsStudioTab = lazy(lazyRetry(() => import("@/components/admin/AdminGoogleAdsStudioTab")));
-const AdminPinterestStudioTab = lazy(lazyRetry(() => import("@/components/admin/AdminPinterestStudioTab")));
-const AdminLinkedinStudioTab = lazy(lazyRetry(() => import("@/components/admin/AdminLinkedinStudioTab")));
-const AdminTwitterStudioTab = lazy(lazyRetry(() => import("@/components/admin/AdminTwitterStudioTab")));
-import AdminAiStudioRecorder from "@/components/admin/AdminAiStudioRecorder";
+const MarketingStudioRouter = lazy(lazyRetry(() => import("@/components/admin/MarketingStudioRouter")));
 import { Facebook as FacebookIcon, Instagram as InstagramIcon, Youtube as YoutubeIcon, Music2, Linkedin as LinkedinIcon, Twitter as TwitterIcon } from "lucide-react";
 const AdminGdprTab = lazy(lazyRetry(() => import("@/components/admin/AdminGdprTab")));
 const AdminSupportTab = lazy(lazyRetry(() => import("@/components/admin/AdminSupportTab")));
@@ -156,10 +147,10 @@ const AdminPersonalizedRecommendationsTab = lazy(lazyRetry(() => import("@/compo
 import ProductImageGallery from "@/components/admin/ProductImageGallery";
 import ProductLinkImport from "@/components/admin/ProductLinkImport";
 import AdminAiAssistant from "@/components/admin/AdminAiAssistant";
-import AdminAiDashboard from "@/components/admin/AdminAiDashboard";
-import AdminAiMonitoring from "@/components/admin/AdminAiMonitoring";
-import AdminDashboardEnhanced from "@/components/admin/AdminDashboardEnhanced";
-import AdminVisitorAnalytics from "@/components/admin/AdminVisitorAnalytics";
+const AdminAiDashboard = lazy(lazyRetry(() => import("@/components/admin/AdminAiDashboard")));
+const AdminAiMonitoring = lazy(lazyRetry(() => import("@/components/admin/AdminAiMonitoring")));
+const AdminDashboardEnhanced = lazy(lazyRetry(() => import("@/components/admin/AdminDashboardEnhanced")));
+const AdminVisitorAnalytics = lazy(lazyRetry(() => import("@/components/admin/AdminVisitorAnalytics")));
 import AdminOrderDetail from "@/components/admin/AdminOrderDetail";
 import AdminUserProfile from "@/components/admin/AdminUserProfile";
 import { Textarea } from "@/components/ui/textarea";
@@ -1590,22 +1581,7 @@ const Admin = () => {
 
   const renderMarketingStudio = () => {
     const current = marketingStudioTabs.find((t) => t.key === marketingStudioTab) || marketingStudioTabs[0];
-    const renderCurrent = () => {
-      switch (marketingStudioTab) {
-        case "ig_studio": return <AdminInstagramStudioTab />;
-        case "tt_studio": return <AdminTiktokStudioTab />;
-        case "yt_studio": return <AdminYoutubeStudioTab />;
-        case "yts_studio": return <AdminYoutubeShortsStudioTab />;
-        case "gads_studio": return <AdminGoogleAdsStudioTab />;
-        case "pin_studio": return <AdminPinterestStudioTab />;
-        case "li_studio": return <AdminLinkedinStudioTab />;
-        case "x_studio": return <AdminTwitterStudioTab />;
-        case "ai_studio_recorder": return <AdminAiStudioRecorder />;
-        case "fb_studio":
-        default:
-          return <AdminFacebookStudioTab />;
-      }
-    };
+
 
     return (
       <div className="space-y-4">
@@ -1634,7 +1610,7 @@ const Admin = () => {
             </div>
           </div>
         </div>
-        {renderCurrent()}
+        <MarketingStudioRouter tab={marketingStudioTab} />
       </div>
     );
   };
