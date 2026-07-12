@@ -49,10 +49,7 @@ const TrackShipment = () => {
     else if (o.trim() && e.trim()) { q.set("order_id", o.trim()); q.set("email", e.trim()); }
     else { setError("Add meg a követési számot VAGY a rendelés ID + emailt."); setLoading(false); return; }
 
-    const { data: res, error: fnErr } = await supabase.functions.invoke("track-shipment", {
-      method: "GET",
-    } as any);
-    // supabase-js nem támogatja query params-t GET-hez, ezért fetch-el:
+    // supabase-js nem támogatja query params-t GET-hez, közvetlen fetch:
     try {
       const url = `${(supabase as any).functionsUrl || `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1`}/track-shipment?${q.toString()}`;
       const r = await fetch(url, { headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string } });
