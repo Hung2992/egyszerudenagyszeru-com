@@ -217,8 +217,10 @@ Deno.serve(async (req) => {
       })
     }
 
-    // 🎯 CACHE ELLENŐRZÉS (csak egyetlen user üzenet esetén, folytatásoknál nem)
-    if (userMessages.length === 1) {
+    // 🎯 CACHE ELLENŐRZÉS — csak név-nélküli, egyszeri kérdésekre (rendelés-lekérdezésnél NEM)
+    const RESTRICTED_PATTERNS = /(rendel|csomag|szállít|követés|tracking|cser[eé]|visszakü|méret|order)/i
+    const cacheEligible = userMessages.length === 1 && !RESTRICTED_PATTERNS.test(lastUserMsg)
+    if (cacheEligible) {
       const cached = await getFromCache(supabase, FN_NAME, lastUserMsg)
       if (cached) {
         return new Response(JSON.stringify(cached), {
