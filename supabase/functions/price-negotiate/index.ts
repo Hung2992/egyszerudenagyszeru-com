@@ -215,8 +215,8 @@ Deno.serve(async (req) => {
       await admin.from('ai_pricing_events').insert({
         user_id: userId, session_id: body.session_id, product_id: body.product_id,
         rule_id: selectedRule.id, granted: false,
-        reason: 'Margin védelem tiltja a kedvezményt (hard cap ≤ 0)',
-        context: { hard_cap: hardCap },
+        reason: `Margin védelem tiltja a kedvezményt (min margin ${selectedRule.min_margin_percent}%, hard cap ${hardCap}%)`,
+        context: { violation_code: 'margin', hard_cap: hardCap, min_margin_percent: selectedRule.min_margin_percent, max_discount_percent: selectedRule.max_discount_percent, inputs },
       })
       return json({ granted: false, message: 'Erre a termékre most nem tudok kedvezményt ajánlani.' })
     }
