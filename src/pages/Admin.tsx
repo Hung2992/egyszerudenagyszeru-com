@@ -147,10 +147,10 @@ const AdminPersonalizedRecommendationsTab = lazy(lazyRetry(() => import("@/compo
 import ProductImageGallery from "@/components/admin/ProductImageGallery";
 import ProductLinkImport from "@/components/admin/ProductLinkImport";
 import AdminAiAssistant from "@/components/admin/AdminAiAssistant";
-import AdminAiDashboard from "@/components/admin/AdminAiDashboard";
-import AdminAiMonitoring from "@/components/admin/AdminAiMonitoring";
-import AdminDashboardEnhanced from "@/components/admin/AdminDashboardEnhanced";
-import AdminVisitorAnalytics from "@/components/admin/AdminVisitorAnalytics";
+const AdminAiDashboard = lazy(lazyRetry(() => import("@/components/admin/AdminAiDashboard")));
+const AdminAiMonitoring = lazy(lazyRetry(() => import("@/components/admin/AdminAiMonitoring")));
+const AdminDashboardEnhanced = lazy(lazyRetry(() => import("@/components/admin/AdminDashboardEnhanced")));
+const AdminVisitorAnalytics = lazy(lazyRetry(() => import("@/components/admin/AdminVisitorAnalytics")));
 import AdminOrderDetail from "@/components/admin/AdminOrderDetail";
 import AdminUserProfile from "@/components/admin/AdminUserProfile";
 import { Textarea } from "@/components/ui/textarea";
