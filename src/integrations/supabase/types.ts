@@ -8291,6 +8291,51 @@ export type Database = {
         }
         Relationships: []
       }
+      voice_shopping_queries: {
+        Row: {
+          added_to_cart: boolean | null
+          clicked_product_ids: string[] | null
+          created_at: string
+          duration_ms: number | null
+          id: string
+          intent_category: string | null
+          intent_color: string | null
+          intent_max_price: number | null
+          intent_size: string | null
+          response_text: string | null
+          transcript: string
+          user_id: string | null
+        }
+        Insert: {
+          added_to_cart?: boolean | null
+          clicked_product_ids?: string[] | null
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          intent_category?: string | null
+          intent_color?: string | null
+          intent_max_price?: number | null
+          intent_size?: string | null
+          response_text?: string | null
+          transcript: string
+          user_id?: string | null
+        }
+        Update: {
+          added_to_cart?: boolean | null
+          clicked_product_ids?: string[] | null
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          intent_category?: string | null
+          intent_color?: string | null
+          intent_max_price?: number | null
+          intent_size?: string | null
+          response_text?: string | null
+          transcript?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       welcome20_send_log: {
         Row: {
           coupon_code: string
