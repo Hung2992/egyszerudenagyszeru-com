@@ -62,7 +62,7 @@ const Auth = () => {
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email, password,
-      options: { emailRedirectTo: window.location.origin, data: { display_name: displayName } },
+      options: { emailRedirectTo: `${window.location.origin}${redirectPath}`, data: { display_name: displayName } },
     });
     setLoading(false);
     if (error) toast({ title: "Hiba", description: translateAuthError(error.message), variant: "destructive" });
