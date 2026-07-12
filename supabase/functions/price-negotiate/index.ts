@@ -90,28 +90,54 @@ Deno.serve(async (req) => {
     }
     const isReturning = pastOrders > 0
 
-    // === 3. Rate limit: user max 3 sikeres ajánlat / 24h / termék ===
+    // === 3. Rate limit + visszaélés-védelem ===
+    const since24h = new Date(Date.now() - 24 * 3600 * 1000).toISOString()
+    const since1h = new Date(Date.now() - 3600 * 1000).toISOString()
+
+    // 3a. Termék-szintű rate limit (max 3 sikeres ajánlat / 24h)
     if (userId) {
-      const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString()
       const { count } = await admin
         .from('ai_price_offers')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', userId)
         .eq('product_id', body.product_id)
-        .gte('created_at', since)
+        .gte('created_at', since24h)
       if ((count ?? 0) >= 3) {
         await admin.from('ai_pricing_events').insert({
-          user_id: userId,
-          session_id: body.session_id,
-          product_id: body.product_id,
-          granted: false,
-          reason: 'Rate limit: 3 ajánlat/24h ugyanarra a termékre',
+          user_id: userId, session_id: body.session_id, product_id: body.product_id,
+          granted: false, reason: 'Rate limit: 3 ajánlat/24h ugyanarra a termékre',
           context: { past_offers_24h: count },
         })
-        return json({
-          granted: false,
-          message: 'Ma már kaptál ajánlatot erre a termékre. Próbáld holnap újra! 😊',
+        return json({ granted: false, message: 'Ma már kaptál ajánlatot erre a termékre. Próbáld holnap újra! 😊' })
+      }
+    }
+
+    // 3b. Globális próbálkozás-limit (user vagy session): max 10 lekérdezés/óra
+    const idFilter = userId
+      ? admin.from('ai_pricing_events').select('id, granted', { count: 'exact' }).eq('user_id', userId).gte('created_at', since1h)
+      : body.session_id
+      ? admin.from('ai_pricing_events').select('id, granted', { count: 'exact' }).eq('session_id', body.session_id).gte('created_at', since1h)
+      : null
+    if (idFilter) {
+      const { data: recent, count: recentCount } = await idFilter
+      const attempts = recentCount ?? 0
+      const rejected = (recent ?? []).filter((r: any) => !r.granted).length
+      // Suspicious: >10 total or >6 rejected in 1h -> block + fraud signal
+      if (attempts >= 10 || rejected >= 6) {
+        try {
+          await admin.from('fraud_signals').insert({
+            user_id: userId, session_id: body.session_id,
+            signal_type: 'ai_pricing_abuse',
+            severity: rejected >= 6 ? 'high' : 'medium',
+            details: { attempts, rejected, product_id: body.product_id, window: '1h' },
+          })
+        } catch (_e) { /* fraud_signals opcionális */ }
+        await admin.from('ai_pricing_events').insert({
+          user_id: userId, session_id: body.session_id, product_id: body.product_id,
+          granted: false, reason: 'Gyanús próbálkozás: túl sok lekérdezés (blokkolva)',
+          context: { attempts, rejected },
         })
+        return json({ granted: false, message: 'Túl sok próbálkozás. Próbáld később újra. 🚫' })
       }
     }
 

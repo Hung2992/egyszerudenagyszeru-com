@@ -841,6 +841,7 @@ const ProductDetail = () => {
                     productName={product.name}
                     price={Number(product.price)}
                     className="w-full rounded-none h-11 text-xs uppercase tracking-widest"
+                    onAccept={() => handleAddToCart()}
                   />
                 )}
               </div>

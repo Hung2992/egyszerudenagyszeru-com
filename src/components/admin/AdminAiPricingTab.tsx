@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, Plus, Save, Trash2, Shield, TrendingUp, Ban } from "lucide-react";
+import { Loader2, Plus, Save, Trash2, Shield, TrendingUp, Ban, BarChart3 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 
 interface Rule {
   id: string;
@@ -127,6 +128,34 @@ export default function AdminAiPricingTab() {
   const rejectedCount = events.length - grantedCount;
   const acceptedOffers = offers.filter(o => o.accepted).length;
 
+  // === Analitika számítások ===
+  const acceptRate = offers.length > 0 ? Math.round((acceptedOffers / offers.length) * 100) : 0;
+  const avgDiscount = offers.length > 0
+    ? Math.round((offers.reduce((s, o) => s + Number(o.discount_percent || 0), 0) / offers.length) * 10) / 10
+    : 0;
+  const marginImpact = offers.filter(o => o.accepted).reduce(
+    (s, o) => s + (Number(o.original_price) - Number(o.offered_price)), 0
+  );
+  const rejectionByReason = useMemo(() => {
+    const map = new Map<string, number>();
+    events.filter(e => !e.granted).forEach(e => {
+      const key = (e.reason ?? "Ismeretlen").slice(0, 60);
+      map.set(key, (map.get(key) ?? 0) + 1);
+    });
+    return Array.from(map, ([reason, count]) => ({ reason, count })).sort((a, b) => b.count - a.count).slice(0, 8);
+  }, [events]);
+  const dailyTrend = useMemo(() => {
+    const map = new Map<string, { day: string; granted: number; rejected: number }>();
+    events.forEach(e => {
+      const day = new Date(e.created_at).toLocaleDateString("hu-HU");
+      const row = map.get(day) ?? { day, granted: 0, rejected: 0 };
+      if (e.granted) row.granted++; else row.rejected++;
+      map.set(day, row);
+    });
+    return Array.from(map.values()).reverse();
+  }, [events]);
+  const pieColors = ["hsl(var(--primary))", "hsl(var(--destructive))"];
+
   return (
     <div className="space-y-6">
       <div>
@@ -162,6 +191,7 @@ export default function AdminAiPricingTab() {
           <TabsTrigger value="rules">Szabályok</TabsTrigger>
           <TabsTrigger value="offers">Kiadott ajánlatok</TabsTrigger>
           <TabsTrigger value="audit">Audit log</TabsTrigger>
+          <TabsTrigger value="analytics"><BarChart3 className="w-4 h-4 mr-1" /> Analitika</TabsTrigger>
         </TabsList>
 
         <TabsContent value="rules" className="space-y-4">
@@ -299,6 +329,102 @@ export default function AdminAiPricingTab() {
               </table>
             </div>
           </CardContent></Card>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Card><CardContent className="p-4">
+              <div className="text-xs text-muted-foreground">Elfogadási arány</div>
+              <div className="text-2xl font-bold text-primary">{acceptRate}%</div>
+              <div className="text-[10px] text-muted-foreground">{acceptedOffers} / {offers.length} ajánlat</div>
+            </CardContent></Card>
+            <Card><CardContent className="p-4">
+              <div className="text-xs text-muted-foreground">Átlagos kedvezmény</div>
+              <div className="text-2xl font-bold">{avgDiscount}%</div>
+            </CardContent></Card>
+            <Card><CardContent className="p-4">
+              <div className="text-xs text-muted-foreground">Margin hatás (beváltott)</div>
+              <div className="text-2xl font-bold text-red-600">-{marginImpact.toLocaleString("hu-HU")} Ft</div>
+              <div className="text-[10px] text-muted-foreground">összes engedmény</div>
+            </CardContent></Card>
+            <Card><CardContent className="p-4">
+              <div className="text-xs text-muted-foreground">Engedélyezés / elutasítás</div>
+              <div className="text-2xl font-bold">
+                <span className="text-green-600">{grantedCount}</span>
+                <span className="text-muted-foreground mx-1">/</span>
+                <span className="text-red-600">{rejectedCount}</span>
+              </div>
+            </CardContent></Card>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader><CardTitle className="text-sm">Napi trend</CardTitle></CardHeader>
+              <CardContent className="h-[260px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={dailyTrend}>
+                    <XAxis dataKey="day" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="granted" name="Engedélyezett" fill="hsl(var(--primary))" />
+                    <Bar dataKey="rejected" name="Elutasított" fill="hsl(var(--destructive))" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle className="text-sm">Elfogadás / elutasítás arány</CardTitle></CardHeader>
+              <CardContent className="h-[260px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: "Engedélyezett", value: grantedCount },
+                        { name: "Elutasított", value: rejectedCount },
+                      ]}
+                      dataKey="value"
+                      nameKey="name"
+                      outerRadius={90}
+                      label
+                    >
+                      {[0, 1].map(i => <Cell key={i} fill={pieColors[i]} />)}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader><CardTitle className="text-sm">Elutasítási okok (top 8)</CardTitle></CardHeader>
+            <CardContent>
+              {rejectionByReason.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Még nincs elutasítás.</p>
+              ) : (
+                <div className="space-y-2">
+                  {rejectionByReason.map(r => {
+                    const max = rejectionByReason[0].count;
+                    const pct = Math.round((r.count / max) * 100);
+                    return (
+                      <div key={r.reason}>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="truncate mr-2">{r.reason}</span>
+                          <span className="font-mono">{r.count}</span>
+                        </div>
+                        <div className="h-2 bg-muted rounded overflow-hidden">
+                          <div className="h-full bg-destructive/70" style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

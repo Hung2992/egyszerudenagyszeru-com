@@ -23,6 +23,8 @@ interface Props {
   price: number;
   cartValue?: number;
   className?: string;
+  /** Ha meg van adva, ez fut le a "Elfogadom és kosárba" gombra – itt kell hívni az addItem-et. */
+  onAccept?: (offer: Offer) => void;
 }
 
 /**
@@ -31,7 +33,7 @@ interface Props {
  * KIZÁRÓLAG a szerveroldali Rules Engine dönti el (`price-negotiate` edge fn).
  * A frontend semmit nem befolyásol az árban.
  */
-export default function AiPriceNegotiateButton({ productId, productName, price, cartValue, className }: Props) {
+export default function AiPriceNegotiateButton({ productId, productName, price, cartValue, className, onAccept }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [userMessage, setUserMessage] = useState("");
@@ -130,6 +132,30 @@ export default function AiPriceNegotiateButton({ productId, productName, price, 
               </div>
 
               <p className="text-xs italic text-muted-foreground">{result.offer.reasoning}</p>
+
+              <div className="pt-2 border-t space-y-2">
+                <Button
+                  className="w-full"
+                  onClick={() => {
+                    try {
+                      sessionStorage.setItem("pending_ai_coupon", JSON.stringify({
+                        code: result.offer!.coupon_code,
+                        offer_id: result.offer!.id,
+                        product_id: productId,
+                        expires_at: result.offer!.expires_at,
+                      }));
+                    } catch { /* ignore */ }
+                    if (onAccept) onAccept(result.offer!);
+                    toast.success("Kedvezmény aktiválva – tedd kosárba!");
+                    setOpen(false);
+                  }}
+                >
+                  ✅ Elfogadom és kosárba teszem
+                </Button>
+                <p className="text-[10px] text-muted-foreground text-center">
+                  Az ár csak akkor érvényesül, ha a rendelést véglegesíted a lejárati időn belül.
+                </p>
+              </div>
             </div>
           )}
 

@@ -9292,6 +9292,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      mark_ai_offer_accepted: {
+        Args: { _offer_id: string; _order_id: string }
+        Returns: boolean
+      }
       match_ai_knowledge: {
         Args: {
           match_count?: number
@@ -9414,6 +9418,10 @@ export type Database = {
           _user_rating?: number
         }
         Returns: undefined
+      }
+      validate_ai_price_offer: {
+        Args: { _code: string; _order_total: number; _user_id: string }
+        Returns: Json
       }
       validate_coupon: {
         Args: { _code: string; _order_total: number }

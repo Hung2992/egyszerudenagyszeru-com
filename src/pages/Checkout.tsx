@@ -97,6 +97,8 @@ const Checkout = () => {
   const [appliedCoupon, setAppliedCoupon] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
   const [referralAutoApplied, setReferralAutoApplied] = useState(false);
+  const [aiOfferId, setAiOfferId] = useState<string | null>(null);
+
 
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
@@ -167,6 +169,33 @@ const Checkout = () => {
     if (!sourceCode.trim()) return;
     setCouponLoading(true);
     const code = sourceCode.toUpperCase();
+
+    // === AI áralku kupon (AI- prefix) — szerveroldali validáció az ai_price_offers ellen
+    if (code.startsWith("AI-")) {
+      const { data: aiRes, error: aiErr } = await supabase.rpc("validate_ai_price_offer" as any, {
+        _code: code,
+        _user_id: user?.id ?? null,
+        _order_total: totalPrice,
+      });
+      const parsed = aiRes as { valid: boolean; discount_amount?: number; offer_id?: string; error?: string } | null;
+      if (!aiErr && parsed?.valid) {
+        const discount = Math.min(parsed.discount_amount ?? 0, totalPrice);
+        setCouponDiscount(discount);
+        setAppliedCoupon(code);
+        setAiOfferId(parsed.offer_id ?? null);
+        toast({ title: `AI ajánlat aktiválva: -${discount.toLocaleString()} Ft` });
+      } else {
+        const map: Record<string, string> = {
+          expired: "Ez az AI ajánlat már lejárt.",
+          already_used: "Ezt az AI kupont már beváltottad.",
+          wrong_user: "Ez az AI kupon másik fiókra érvényes.",
+          not_found: "Érvénytelen AI kuponkód.",
+        };
+        toast({ title: map[parsed?.error ?? ""] ?? "Érvénytelen AI kupon", variant: "destructive" });
+      }
+      setCouponLoading(false);
+      return;
+    }
 
     // Server-side coupon validation (kód nem szivárog ki)
     const { data: result, error } = await supabase.rpc("validate_coupon", {
@@ -267,6 +296,29 @@ const Checkout = () => {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, items.length, totalPrice, appliedCoupon, welcome20Checked]);
+
+  // Auto-apply pending AI áralku kupon (a "Elfogadom és kosárba" gombból)
+  const [aiAutoApplied, setAiAutoApplied] = useState(false);
+  useEffect(() => {
+    if (aiAutoApplied || appliedCoupon || items.length === 0 || totalPrice <= 0) return;
+    try {
+      const raw = sessionStorage.getItem("pending_ai_coupon");
+      if (!raw) return;
+      const pending = JSON.parse(raw) as { code: string; product_id: string; expires_at: string };
+      if (new Date(pending.expires_at) < new Date()) {
+        sessionStorage.removeItem("pending_ai_coupon");
+        return;
+      }
+      // csak akkor alkalmazzuk, ha a termék a kosárban van
+      const inCart = items.some(i => i.productId === pending.product_id);
+      if (!inCart) return;
+      setAiAutoApplied(true);
+      setCouponCode(pending.code);
+      applyCoupon(pending.code);
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, totalPrice, appliedCoupon, aiAutoApplied]);
+
 
 
   const giftWrapPrice = selectedGiftWrap ? (giftWrapOptions.find(g => g.id === selectedGiftWrap)?.price || 0) : 0;
@@ -375,6 +427,13 @@ const Checkout = () => {
 
       clearCart();
       if (appliedCoupon) clearStoredReferralCode();
+      if (aiOfferId && data?.order_id) {
+        await supabase.rpc("mark_ai_offer_accepted" as any, {
+          _offer_id: aiOfferId,
+          _order_id: data.order_id,
+        });
+        try { sessionStorage.removeItem("pending_ai_coupon"); } catch { /* ignore */ }
+      }
       toast({ title: "Rendelés leadva! 🎉", description: "Hamarosan feldolgozzuk." });
       navigate("/orders");
     } catch (err: any) {
