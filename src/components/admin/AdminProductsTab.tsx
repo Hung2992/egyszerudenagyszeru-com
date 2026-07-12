@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import AdminBulkProductImport from "@/components/admin/AdminBulkProductImport";
 import ProductLinkImport from "@/components/admin/ProductLinkImport";
 import ProductImageGallery from "@/components/admin/ProductImageGallery";
+import Product3DUploader from "@/components/admin/Product3DUploader";
 import { supabase } from "@/integrations/supabase/client";
 import { CATEGORIES, createEmptyProductDraft, type ShopProduct } from "@/types/admin-shop-product";
 
@@ -479,7 +480,10 @@ export default function AdminProductsTab({
 
           {/* Multi-image gallery for existing products */}
           {editProduct.id && (
-            <ProductImageGalleryWrapper productId={editProduct.id} />
+            <>
+              <ProductImageGalleryWrapper productId={editProduct.id} />
+              <Product3DUploader productId={editProduct.id} productName={editProduct.name} />
+            </>
           )}
         </div>
       )}
