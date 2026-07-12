@@ -427,6 +427,13 @@ const Checkout = () => {
 
       clearCart();
       if (appliedCoupon) clearStoredReferralCode();
+      if (aiOfferId && data?.order_id) {
+        await supabase.rpc("mark_ai_offer_accepted" as any, {
+          _offer_id: aiOfferId,
+          _order_id: data.order_id,
+        });
+        try { sessionStorage.removeItem("pending_ai_coupon"); } catch { /* ignore */ }
+      }
       toast({ title: "Rendelés leadva! 🎉", description: "Hamarosan feldolgozzuk." });
       navigate("/orders");
     } catch (err: any) {
