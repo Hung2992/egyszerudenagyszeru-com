@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Loader2, Plus, Trophy, Users, Trash2, ExternalLink, Play, Activity, ChevronDown, ChevronUp } from "lucide-react";
 import DropLiveDashboard from "./DropLiveDashboard";
 import DropPerformanceReport from "./DropPerformanceReport";
+import DropAiInsightsPanel from "./DropAiInsightsPanel";
 
 interface Drop {
   id: string; name: string; slug: string; drop_type: string; status: string;
@@ -245,8 +246,9 @@ export default function AdminDropsTab() {
               </div>
               <ParticipantsSummary dropId={d.id} type={d.drop_type} />
               {expanded[d.id] && (
-                <div className="mt-4">
+                <div className="mt-4 space-y-4">
                   <DropLiveDashboard dropId={d.id} />
+                  <DropAiInsightsPanel dropId={d.id} />
                 </div>
               )}
             </Card>
