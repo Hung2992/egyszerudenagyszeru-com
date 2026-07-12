@@ -128,6 +128,34 @@ export default function AdminAiPricingTab() {
   const rejectedCount = events.length - grantedCount;
   const acceptedOffers = offers.filter(o => o.accepted).length;
 
+  // === Analitika számítások ===
+  const acceptRate = offers.length > 0 ? Math.round((acceptedOffers / offers.length) * 100) : 0;
+  const avgDiscount = offers.length > 0
+    ? Math.round((offers.reduce((s, o) => s + Number(o.discount_percent || 0), 0) / offers.length) * 10) / 10
+    : 0;
+  const marginImpact = offers.filter(o => o.accepted).reduce(
+    (s, o) => s + (Number(o.original_price) - Number(o.offered_price)), 0
+  );
+  const rejectionByReason = useMemo(() => {
+    const map = new Map<string, number>();
+    events.filter(e => !e.granted).forEach(e => {
+      const key = (e.reason ?? "Ismeretlen").slice(0, 60);
+      map.set(key, (map.get(key) ?? 0) + 1);
+    });
+    return Array.from(map, ([reason, count]) => ({ reason, count })).sort((a, b) => b.count - a.count).slice(0, 8);
+  }, [events]);
+  const dailyTrend = useMemo(() => {
+    const map = new Map<string, { day: string; granted: number; rejected: number }>();
+    events.forEach(e => {
+      const day = new Date(e.created_at).toLocaleDateString("hu-HU");
+      const row = map.get(day) ?? { day, granted: 0, rejected: 0 };
+      if (e.granted) row.granted++; else row.rejected++;
+      map.set(day, row);
+    });
+    return Array.from(map.values()).reverse();
+  }, [events]);
+  const pieColors = ["hsl(var(--primary))", "hsl(var(--destructive))"];
+
   return (
     <div className="space-y-6">
       <div>
