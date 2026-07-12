@@ -9,6 +9,7 @@ import Layout from "@/components/Layout";
 import SizeQuiz from "@/components/SizeQuiz";
 import ProductWaitlist from "@/components/ProductWaitlist";
 import PersonalizedOffers from "@/components/PersonalizedOffers";
+import AiPriceNegotiateButton from "@/components/AiPriceNegotiateButton";
 import {
   ShoppingCart, Heart, Star, BellRing, Share2, Copy, Bell,
   UserPlus, UserMinus, Ruler, PackagePlus, MessageCircle,
@@ -833,6 +834,15 @@ const ProductDetail = () => {
                     <Heart className={`h-5 w-5 ${isWishlisted ? "fill-current" : ""}`} />
                   </button>
                 </div>
+
+                {product?.id && (
+                  <AiPriceNegotiateButton
+                    productId={product.id}
+                    productName={product.name}
+                    price={Number(product.price)}
+                    className="w-full rounded-none h-11 text-xs uppercase tracking-widest"
+                  />
+                )}
               </div>
             ) : (
               <div className="space-y-2">
