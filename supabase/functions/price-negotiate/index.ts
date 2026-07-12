@@ -31,6 +31,28 @@ interface Rule {
   allow_on_clearance: boolean
   allowed_categories: string[]
   blocked_categories: string[]
+  max_offers_per_product_per_day?: number
+  max_attempts_per_hour?: number
+  max_rejected_per_hour?: number
+  coupon_conflict_policy?: 'override' | 'block' | 'ask'
+}
+
+// Strukturált input-összefoglaló minden audit sorhoz
+function buildInputs(product: any, opts: {
+  cart_value: number; is_on_sale: boolean; is_low_stock: boolean;
+  is_returning: boolean; past_orders: number; user_message?: string;
+}) {
+  return {
+    product: {
+      id: product.id, name: product.name, category: product.category,
+      price: Number(product.price), original_price: product.original_price ? Number(product.original_price) : null,
+      stock: Number(product.stock ?? 0),
+    },
+    cart_value: opts.cart_value,
+    flags: { is_on_sale: opts.is_on_sale, is_low_stock: opts.is_low_stock, is_returning: opts.is_returning },
+    past_orders: opts.past_orders,
+    user_message: opts.user_message ?? null,
+  }
 }
 
 function json(body: unknown, status = 200) {
