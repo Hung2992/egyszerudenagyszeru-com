@@ -42,3 +42,15 @@ project_id = "meyxhsgnryuupwpddxav"
 
   [functions.partner-ai-marketing]
     verify_jwt = true
+
+  [functions.shipment-webhook]
+    verify_jwt = false
+
+  [functions.poll-shipment-status]
+    verify_jwt = false
+
+  [functions.sync-pickup-points]
+    verify_jwt = false
+
+  [functions.shipment-label]
+    verify_jwt = true

@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/untyped-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Truck, Package, RefreshCw, Loader2, ExternalLink, Plus, ToggleLeft, ToggleRight } from "lucide-react";
+import { Truck, Package, RefreshCw, Loader2, ExternalLink, Plus, ToggleLeft, ToggleRight, Download, MapPin, RotateCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface Carrier {
@@ -39,6 +39,8 @@ const AdminShippingTab = () => {
   const [serviceType, setServiceType] = useState<"home" | "pickup">("home");
   const [weight, setWeight] = useState("1");
   const [creating, setCreating] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [refreshingId, setRefreshingId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -84,6 +86,54 @@ const AdminShippingTab = () => {
     load();
   };
 
+  const syncPickupPoints = async () => {
+    setSyncing(true);
+    const { data, error } = await supabase.functions.invoke("sync-pickup-points", { body: {} });
+    setSyncing(false);
+    if (error) { toast({ title: "Szinkronizálás sikertelen", description: error.message, variant: "destructive" }); return; }
+    const r = (data as any)?.results || {};
+    const total = Object.values(r).reduce((a: number, x: any) => a + (x?.count || 0), 0);
+    toast({ title: "Átvevőpontok szinkronizálva ✓", description: `${total} pont mentve` });
+  };
+
+  const refreshShipment = async (id: string) => {
+    setRefreshingId(id);
+    const { data, error } = await supabase.functions.invoke("poll-shipment-status", { body: { shipment_id: id } });
+    setRefreshingId(null);
+    if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Frissítve", description: (data as any)?.summary?.[0]?.status || "OK" });
+    load();
+  };
+
+  const refreshAll = async () => {
+    setRefreshingId("all");
+    const { data, error } = await supabase.functions.invoke("poll-shipment-status", { body: {} });
+    setRefreshingId(null);
+    if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Csomagok frissítve ✓", description: `${(data as any)?.processed || 0} db` });
+    load();
+  };
+
+  const downloadLabel = async (s: Shipment) => {
+    // Ha data URI, közvetlen letöltés; egyébként edge functionből.
+    if ((s as any).label_url?.startsWith("data:")) {
+      const a = document.createElement("a");
+      a.href = (s as any).label_url;
+      a.download = `cimke-${s.tracking_number || s.id}.${(s as any).label_url.includes("pdf") ? "pdf" : "txt"}`;
+      a.click();
+      return;
+    }
+    const { data: sess } = await supabase.auth.getSession();
+    const url = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/shipment-label?id=${s.id}`;
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${sess.session?.access_token}` } });
+    if (!r.ok) { toast({ title: "Letöltés sikertelen", variant: "destructive" }); return; }
+    const blob = await r.blob();
+    const objUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = objUrl; a.download = `cimke-${s.tracking_number || s.id}.pdf`; a.click();
+    URL.revokeObjectURL(objUrl);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -92,6 +142,12 @@ const AdminShippingTab = () => {
           <h2 className="text-sm font-bold uppercase tracking-wider">Logisztika & Futárok</h2>
         </div>
         <div className="flex gap-1.5">
+          <Button size="sm" variant="outline" onClick={syncPickupPoints} disabled={syncing} className="rounded-none h-7 text-[10px]">
+            {syncing ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <MapPin className="w-3 h-3 mr-1" />} Átvevőpont sync
+          </Button>
+          <Button size="sm" variant="outline" onClick={refreshAll} disabled={refreshingId === "all"} className="rounded-none h-7 text-[10px]">
+            {refreshingId === "all" ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <RotateCw className="w-3 h-3 mr-1" />} Státusz frissítés
+          </Button>
           <Button size="sm" onClick={() => setShowCreate(v => !v)} className="rounded-none h-7 text-[10px]">
             <Plus className="w-3 h-3 mr-1" /> Új címke
           </Button>
@@ -182,12 +238,21 @@ const AdminShippingTab = () => {
                   {s.recipient_name || "N/A"} • {new Date(s.created_at).toLocaleString("hu-HU")}
                 </p>
               </div>
-              {s.tracking_url && (
-                <a href={s.tracking_url} target="_blank" rel="noopener noreferrer"
-                  className="text-accent hover:opacity-70" title="Nyomkövetés">
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              )}
+              <div className="flex items-center gap-1.5">
+                <button onClick={() => refreshShipment(s.id)} disabled={refreshingId === s.id}
+                  className="text-muted-foreground hover:text-accent" title="Státusz frissítés">
+                  {refreshingId === s.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCw className="w-3.5 h-3.5" />}
+                </button>
+                <button onClick={() => downloadLabel(s)} className="text-muted-foreground hover:text-accent" title="Címke letöltés">
+                  <Download className="w-3.5 h-3.5" />
+                </button>
+                {s.tracking_url && (
+                  <a href={s.tracking_url} target="_blank" rel="noopener noreferrer"
+                    className="text-accent hover:opacity-70" title="Nyomkövetés">
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                )}
+              </div>
             </div>
           ))}
         </div>
