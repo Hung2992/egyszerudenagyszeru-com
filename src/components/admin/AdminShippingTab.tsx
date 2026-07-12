@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/untyped-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Truck, Package, RefreshCw, Loader2, ExternalLink, Plus, ToggleLeft, ToggleRight } from "lucide-react";
+import { Truck, Package, RefreshCw, Loader2, ExternalLink, Plus, ToggleLeft, ToggleRight, Download, MapPin, RotateCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface Carrier {
