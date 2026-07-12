@@ -8,7 +8,8 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Loader2, Plus, Trophy, Users, Trash2, ExternalLink, Play } from "lucide-react";
+import { Loader2, Plus, Trophy, Users, Trash2, ExternalLink, Play, Activity, ChevronDown, ChevronUp } from "lucide-react";
+import DropLiveDashboard from "./DropLiveDashboard";
 
 interface Drop {
   id: string; name: string; slug: string; drop_type: string; status: string;
