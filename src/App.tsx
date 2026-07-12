@@ -72,6 +72,8 @@ const Jutalmak = lazy(() => import("./pages/Jutalmak.tsx"));
 const AiShoppingAssistant = lazy(() => import("./components/AiShoppingAssistant"));
 const TrackShipment = lazy(() => import("./pages/TrackShipment.tsx"));
 
+const OAuthConsent = lazy(() => import("./pages/OAuthConsent.tsx"));
+
 const queryClient = new QueryClient();
 
 const App = () => (
