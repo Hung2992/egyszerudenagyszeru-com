@@ -278,7 +278,7 @@ Add vissza CSAK ezt a JSON-t:
         rule_id: selectedRule.id, granted: false,
         requested_discount_percent: aiPercent,
         reason: 'AI 0%-ot javasolt (nem éri meg ajánlatot adni)',
-        context: { ai_reasoning: aiReasoning },
+        context: { violation_code: 'ai_declined', ai_reasoning: aiReasoning, hard_cap: hardCap, inputs },
       })
       return json({ granted: false, message: 'Sajnos most nem tudok kedvezményt adni erre. 🙏' })
     }
@@ -319,9 +319,33 @@ Add vissza CSAK ezt a JSON-t:
       requested_discount_percent: aiPercent,
       reason: `Ajánlat engedélyezve "${selectedRule.name}" szabály alapján (hard cap ${hardCap}%)`,
       context: {
-        ai_reasoning: aiReasoning, is_on_sale: isOnSale, is_low_stock: isLowStock,
-        is_returning: isReturning, past_orders: pastOrders, cart_value: cartValue,
+        violation_code: 'none',
+        ai_reasoning: aiReasoning,
+        hard_cap: hardCap,
+        rule: { id: selectedRule.id, name: selectedRule.name, max_discount_percent: selectedRule.max_discount_percent, min_margin_percent: selectedRule.min_margin_percent, offer_ttl_minutes: selectedRule.offer_ttl_minutes },
+        offer: { discount_percent: aiPercent, offered_price: offeredPrice, original_price: price, coupon_code: couponCode, expires_at: expiresAt },
+        inputs,
       },
+    })
+
+    return json({
+      granted: true,
+      offer: {
+        id: offer.id,
+        product_name: product.name,
+        original_price: price,
+        offered_price: offeredPrice,
+        discount_percent: aiPercent,
+        coupon_code: couponCode,
+        expires_at: expiresAt,
+        reasoning: aiReasoning,
+        rule_name: selectedRule.name,
+        min_margin_percent: selectedRule.min_margin_percent,
+        hard_cap_percent: hardCap,
+        offer_ttl_minutes: selectedRule.offer_ttl_minutes,
+        coupon_conflict_policy: selectedRule.coupon_conflict_policy ?? 'ask',
+      },
+      message: `Megnéztem a lehetőségeket. Erre a termékre ${aiPercent}% személyes kedvezményt tudok ajánlani, ami ${selectedRule.offer_ttl_minutes} percig érvényes. Kuponkód: ${couponCode}`,
     })
 
     return json({
