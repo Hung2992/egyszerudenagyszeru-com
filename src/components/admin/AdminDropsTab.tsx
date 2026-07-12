@@ -231,10 +231,19 @@ export default function AdminDropsTab() {
                   {d.status === "scheduled" && (
                     <Button size="sm" variant="outline" onClick={() => setStatus(d.id, "open")}><Play className="h-3 w-3 mr-1" />Kinyit</Button>
                   )}
+                  <Button size="sm" variant="outline" onClick={() => setExpanded(s => ({ ...s, [d.id]: !s[d.id] }))}>
+                    <Activity className="h-3 w-3 mr-1" />
+                    {expanded[d.id] ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                  </Button>
                   <Button size="sm" variant="ghost" onClick={() => deleteDrop(d.id)}><Trash2 className="h-3 w-3" /></Button>
                 </div>
               </div>
               <ParticipantsSummary dropId={d.id} type={d.drop_type} />
+              {expanded[d.id] && (
+                <div className="mt-4">
+                  <DropLiveDashboard dropId={d.id} />
+                </div>
+              )}
             </Card>
           ))}
         </div>
