@@ -49,9 +49,6 @@ project_id = "meyxhsgnryuupwpddxav"
   [functions.shipment-webhook]
     verify_jwt = false
 
-  [functions.shipment-webhook]
-    verify_jwt = false
-
   [functions.poll-shipment-status]
     verify_jwt = false
 
