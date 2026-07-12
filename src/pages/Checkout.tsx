@@ -297,6 +297,29 @@ const Checkout = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, items.length, totalPrice, appliedCoupon, welcome20Checked]);
 
+  // Auto-apply pending AI áralku kupon (a "Elfogadom és kosárba" gombból)
+  const [aiAutoApplied, setAiAutoApplied] = useState(false);
+  useEffect(() => {
+    if (aiAutoApplied || appliedCoupon || items.length === 0 || totalPrice <= 0) return;
+    try {
+      const raw = sessionStorage.getItem("pending_ai_coupon");
+      if (!raw) return;
+      const pending = JSON.parse(raw) as { code: string; product_id: string; expires_at: string };
+      if (new Date(pending.expires_at) < new Date()) {
+        sessionStorage.removeItem("pending_ai_coupon");
+        return;
+      }
+      // csak akkor alkalmazzuk, ha a termék a kosárban van
+      const inCart = items.some(i => i.productId === pending.product_id);
+      if (!inCart) return;
+      setAiAutoApplied(true);
+      setCouponCode(pending.code);
+      applyCoupon(pending.code);
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, totalPrice, appliedCoupon, aiAutoApplied]);
+
+
 
   const giftWrapPrice = selectedGiftWrap ? (giftWrapOptions.find(g => g.id === selectedGiftWrap)?.price || 0) : 0;
   const finalTotal = totalPrice - couponDiscount + giftWrapPrice;
