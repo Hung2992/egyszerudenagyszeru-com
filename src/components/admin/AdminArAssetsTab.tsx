@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Plus, Trash2, View, Eye } from "lucide-react";
+import ArConversionFunnel from "@/components/admin/ArConversionFunnel";
 
 type Asset = {
   id: string;
