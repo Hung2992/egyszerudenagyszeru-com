@@ -480,7 +480,10 @@ export default function AdminProductsTab({
 
           {/* Multi-image gallery for existing products */}
           {editProduct.id && (
-            <ProductImageGalleryWrapper productId={editProduct.id} />
+            <>
+              <ProductImageGalleryWrapper productId={editProduct.id} />
+              <Product3DUploader productId={editProduct.id} productName={editProduct.name} />
+            </>
           )}
         </div>
       )}
