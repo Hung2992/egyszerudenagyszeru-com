@@ -148,6 +148,7 @@ const App = () => (
             <Route path="/p/:partnerSlug/:landingSlug" element={<PartnerLanding />} />
             <Route path="/csomagkovetes" element={<TrackShipment />} />
             <Route path="/track" element={<TrackShipment />} />
+            <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
