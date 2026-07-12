@@ -170,6 +170,41 @@ const AdminAiDashboard = () => {
           value={kpis ? kpis.totalCost.toFixed(2) : "-"} sub="tokenalapú becslés" />
       </div>
 
+      {/* Vállalati KPI-k */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <KpiCard icon={TrendingUp} label="AI konverziós arány"
+          value={`${kpis?.aiConversionRate.toFixed(1) ?? "-"}%`} highlight />
+        <KpiCard icon={Wallet} label="AI generált bevétel"
+          value={kpis ? `${Math.round(kpis.aiRevenue).toLocaleString("hu-HU")} Ft` : "-"}
+          sub="becslés: ajánlások × átlag rendelés" highlight />
+        <KpiCard icon={Clock} label="Átlagos AI válaszidő"
+          value={kpis ? `${Math.round(kpis.avgLatencyMs)} ms` : "-"} />
+        <KpiCard icon={AlertOctagon} label="Sikertelen AI hívások"
+          value={kpis?.failedCalls ?? "-"} sub="hiba + kritikus" />
+      </div>
+
+      {/* Top kampányok */}
+      {topCampaigns.length > 0 && (
+        <div className="border border-border p-4 bg-card space-y-2">
+          <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground flex items-center gap-1.5">
+            <Megaphone className="w-3 h-3 text-accent" /> Legjobban teljesítő AI kampányok
+          </p>
+          <div className="space-y-1">
+            {topCampaigns.map((c, i) => {
+              const ctr = c.sent > 0 ? ((c.clicks / c.sent) * 100).toFixed(1) : "0.0";
+              return (
+                <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-border/50">
+                  <span className="truncate mr-2 font-medium">{c.name}</span>
+                  <span className="text-muted-foreground text-[10px] shrink-0">
+                    {c.sent} küld • {c.opens} nyit • <span className="text-accent font-bold">{c.clicks} katt ({ctr}%)</span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Konverziós tölcsér */}
       {kpis && kpis.suggestionsShown > 0 && (
         <div className="border border-border p-4 bg-card space-y-2">
