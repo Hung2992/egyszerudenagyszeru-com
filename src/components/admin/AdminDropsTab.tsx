@@ -21,6 +21,7 @@ interface Drop {
 }
 
 export default function AdminDropsTab() {
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [drops, setDrops] = useState<Drop[]>([]);
   const [products, setProducts] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
