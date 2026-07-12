@@ -8590,6 +8590,90 @@ export type Database = {
         }
         Relationships: []
       }
+      tryon_events: {
+        Row: {
+          created_at: string
+          device_type: string | null
+          event_type: string
+          id: string
+          metadata: Json
+          product_id: string | null
+          product_source: string | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_type?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json
+          product_id?: string | null
+          product_source?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_type?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json
+          product_id?: string | null
+          product_source?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      tryon_generations: {
+        Row: {
+          ai_model: string | null
+          created_at: string
+          error: string | null
+          id: string
+          input_photo_url: string | null
+          output_image_url: string | null
+          product_id: string | null
+          product_source: string | null
+          prompt: string | null
+          session_id: string | null
+          status: string
+          tokens_used: number | null
+          user_id: string | null
+        }
+        Insert: {
+          ai_model?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          input_photo_url?: string | null
+          output_image_url?: string | null
+          product_id?: string | null
+          product_source?: string | null
+          prompt?: string | null
+          session_id?: string | null
+          status?: string
+          tokens_used?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          ai_model?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          input_photo_url?: string | null
+          output_image_url?: string | null
+          product_id?: string | null
+          product_source?: string | null
+          prompt?: string | null
+          session_id?: string | null
+          status?: string
+          tokens_used?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       tts_generations_v2: {
         Row: {
           audio_storage_path: string | null
