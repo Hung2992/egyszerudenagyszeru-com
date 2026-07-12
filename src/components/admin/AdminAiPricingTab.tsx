@@ -346,27 +346,7 @@ export default function AdminAiPricingTab() {
         </TabsContent>
 
         <TabsContent value="audit">
-          <Card><CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-muted">
-                  <tr><th className="p-2 text-left">Dátum</th><th className="p-2">Eredmény</th><th className="p-2 text-right">%</th><th className="p-2 text-left">Ok</th></tr>
-                </thead>
-                <tbody>
-                  {events.map(e => (
-                    <tr key={e.id} className="border-t">
-                      <td className="p-2 text-xs">{new Date(e.created_at).toLocaleString("hu-HU")}</td>
-                      <td className="p-2 text-center">
-                        {e.granted ? <Badge className="bg-green-600"><TrendingUp className="w-3 h-3 mr-1" />OK</Badge> : <Badge variant="destructive">✕</Badge>}
-                      </td>
-                      <td className="p-2 text-right">{e.requested_discount_percent ?? "—"}</td>
-                      <td className="p-2 text-xs">{e.reason}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent></Card>
+          <AuditLogTable events={events} />
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
