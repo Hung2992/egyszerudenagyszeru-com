@@ -719,6 +719,24 @@ const ProductLaunchEditor = ({ productId, onClose }: { productId: string; onClos
           </div>
         </div>
       </div>
+
+      {aiStudioOpen && (
+        <Suspense fallback={null}>
+          <AiProductStudioModal
+            productId={productId}
+            seed={{
+              name: product?.name,
+              category: product?.category,
+              brand: product?.manufacturer,
+              material: product?.material,
+            }}
+            onClose={() => setAiStudioOpen(false)}
+            onApplied={(fields) => {
+              setProduct((p: any) => ({ ...p, ...fields }));
+            }}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };
