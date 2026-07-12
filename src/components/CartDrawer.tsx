@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { Progress } from "@/components/ui/progress";
 import Welcome20StatusBanner from "@/components/Welcome20StatusBanner";
+import SmartCartSuggestions from "@/components/SmartCartSuggestions";
 
 const LAUNCH_DATE = new Date("2026-06-05T10:00:00+02:00").getTime();
 const FREE_SHIPPING_THRESHOLD = 15000;
