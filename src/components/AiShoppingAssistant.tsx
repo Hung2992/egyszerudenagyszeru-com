@@ -33,7 +33,7 @@ const AiShoppingAssistant = () => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
 
-  useEffect(() => { if (open) { inputRef.current?.focus(); trackAiEvent("assistant_opened"); } }, [open]);
+  useEffect(() => { if (open) { inputRef.current?.focus(); trackAiEvent("assistant_open", "shopping_assistant"); } }, [open]);
 
   const send = async (text: string) => {
     if (!text.trim() || loading) return;
@@ -42,7 +42,7 @@ const AiShoppingAssistant = () => {
     setMessages(all);
     setInput("");
     setLoading(true);
-    trackAiEvent("assistant_message", { length: text.length });
+    trackAiEvent("assistant_message", "shopping_assistant", { length: text.length });
 
     try {
       const resp = await fetch(API_URL, {
