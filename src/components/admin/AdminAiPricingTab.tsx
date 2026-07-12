@@ -27,6 +27,10 @@ interface Rule {
   allow_on_clearance: boolean;
   allowed_categories: string[];
   blocked_categories: string[];
+  max_offers_per_product_per_day: number;
+  max_attempts_per_hour: number;
+  max_rejected_per_hour: number;
+  coupon_conflict_policy: "override" | "block" | "ask";
 }
 
 interface Event {
