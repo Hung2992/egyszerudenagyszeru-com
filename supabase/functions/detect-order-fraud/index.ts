@@ -83,7 +83,22 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // AUTH: service_role OR admin user
+    const auth = req.headers.get("Authorization") || "";
+    const token = auth.replace(/^Bearer\s+/i, "");
     const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+    let authorized = token && token === SERVICE_KEY;
+    if (!authorized && token) {
+      const { data: u } = await supabase.auth.getUser(token);
+      if (u?.user) {
+        const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", u.user.id);
+        authorized = (roles || []).some((r: any) => r.role === "admin");
+      }
+    }
+    if (!authorized) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     const body = await req.json().catch(() => ({}));
     const orderId: string | undefined = body.orderId;
 

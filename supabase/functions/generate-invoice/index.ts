@@ -154,10 +154,30 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const auth = req.headers.get("Authorization") || "";
+    const token = auth.replace(/^Bearer\s+/i, "");
     const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+    let authorized = token && token === SERVICE_KEY;
+    let requesterUserId: string | null = null;
+    if (!authorized && token) {
+      const { data: u } = await supabase.auth.getUser(token);
+      if (u?.user) {
+        requesterUserId = u.user.id;
+        const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", u.user.id);
+        authorized = (roles || []).some((r: any) => r.role === "admin");
+      }
+    }
     const { orderId, force } = await req.json();
     if (!orderId) {
       return new Response(JSON.stringify({ error: "orderId required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    // Allow non-admin authenticated user only if it's their own order
+    if (!authorized && requesterUserId) {
+      const { data: ownCheck } = await supabase.from("orders").select("user_id").eq("id", orderId).maybeSingle();
+      if (ownCheck?.user_id === requesterUserId) authorized = true;
+    }
+    if (!authorized) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // Ha már van számla és nem force, visszaadjuk
