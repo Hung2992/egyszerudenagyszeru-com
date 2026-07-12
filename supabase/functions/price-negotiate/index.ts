@@ -112,11 +112,29 @@ Deno.serve(async (req) => {
     }
     const isReturning = pastOrders > 0
 
+    // === Szabályok betöltése (rate-limit értékek is innen jönnek) ===
+    const { data: rulesRaw } = await admin
+      .from('ai_pricing_rules')
+      .select('*')
+      .eq('is_active', true)
+      .order('priority', { ascending: true })
+    const rules = (rulesRaw as Rule[]) ?? []
+    const topRule = rules[0]
+    const maxPerProduct = topRule?.max_offers_per_product_per_day ?? 3
+    const maxAttemptsHour = topRule?.max_attempts_per_hour ?? 10
+    const maxRejectedHour = topRule?.max_rejected_per_hour ?? 6
+
+    const cartValue = body.cart_value ?? price
+    const inputs = buildInputs(product, {
+      cart_value: cartValue, is_on_sale: !!isOnSale, is_low_stock: isLowStock,
+      is_returning: isReturning, past_orders: pastOrders, user_message: body.user_message,
+    })
+
     // === 3. Rate limit + visszaélés-védelem ===
     const since24h = new Date(Date.now() - 24 * 3600 * 1000).toISOString()
     const since1h = new Date(Date.now() - 3600 * 1000).toISOString()
 
-    // 3a. Termék-szintű rate limit (max 3 sikeres ajánlat / 24h)
+    // 3a. Termék-szintű rate limit
     if (userId) {
       const { count } = await admin
         .from('ai_price_offers')
@@ -124,17 +142,17 @@ Deno.serve(async (req) => {
         .eq('user_id', userId)
         .eq('product_id', body.product_id)
         .gte('created_at', since24h)
-      if ((count ?? 0) >= 3) {
+      if ((count ?? 0) >= maxPerProduct) {
         await admin.from('ai_pricing_events').insert({
           user_id: userId, session_id: body.session_id, product_id: body.product_id,
-          granted: false, reason: 'Rate limit: 3 ajánlat/24h ugyanarra a termékre',
-          context: { past_offers_24h: count },
+          granted: false, reason: `Rate limit: ${maxPerProduct} ajánlat/24h ugyanarra a termékre`,
+          context: { violation_code: 'rate_limit_product', past_offers_24h: count, limit: maxPerProduct, inputs },
         })
         return json({ granted: false, message: 'Ma már kaptál ajánlatot erre a termékre. Próbáld holnap újra! 😊' })
       }
     }
 
-    // 3b. Globális próbálkozás-limit (user vagy session): max 10 lekérdezés/óra
+    // 3b. Globális próbálkozás-limit
     const idFilter = userId
       ? admin.from('ai_pricing_events').select('id, granted', { count: 'exact' }).eq('user_id', userId).gte('created_at', since1h)
       : body.session_id
@@ -144,41 +162,33 @@ Deno.serve(async (req) => {
       const { data: recent, count: recentCount } = await idFilter
       const attempts = recentCount ?? 0
       const rejected = (recent ?? []).filter((r: any) => !r.granted).length
-      // Suspicious: >10 total or >6 rejected in 1h -> block + fraud signal
-      if (attempts >= 10 || rejected >= 6) {
+      if (attempts >= maxAttemptsHour || rejected >= maxRejectedHour) {
         try {
           await admin.from('fraud_signals').insert({
             user_id: userId, session_id: body.session_id,
             signal_type: 'ai_pricing_abuse',
-            severity: rejected >= 6 ? 'high' : 'medium',
+            severity: rejected >= maxRejectedHour ? 'high' : 'medium',
             details: { attempts, rejected, product_id: body.product_id, window: '1h' },
           })
         } catch (_e) { /* fraud_signals opcionális */ }
         await admin.from('ai_pricing_events').insert({
           user_id: userId, session_id: body.session_id, product_id: body.product_id,
           granted: false, reason: 'Gyanús próbálkozás: túl sok lekérdezés (blokkolva)',
-          context: { attempts, rejected },
+          context: { violation_code: 'rate_limit_abuse', attempts, rejected, limits: { attempts: maxAttemptsHour, rejected: maxRejectedHour }, inputs },
         })
         return json({ granted: false, message: 'Túl sok próbálkozás. Próbáld később újra. 🚫' })
       }
     }
 
-    // === 4. Alkalmazható szabály kiválasztása (legalacsonyabb priority = legerősebb) ===
-    const { data: rules } = await admin
-      .from('ai_pricing_rules')
-      .select('*')
-      .eq('is_active', true)
-      .order('priority', { ascending: true })
-
-    const cartValue = body.cart_value ?? price
-
+    // === 4. Alkalmazható szabály kiválasztása ===
     let selectedRule: Rule | null = null
     let rejectReason = ''
-    for (const r of (rules as Rule[]) ?? []) {
-      if (cartValue < r.min_cart_value) { rejectReason = `Kosárérték túl alacsony (min ${r.min_cart_value} Ft)`; continue }
-      if (isOnSale && !r.allow_on_sale_products) { rejectReason = 'Akciós termékre nem adható további kedvezmény'; continue }
-      if (r.blocked_categories?.some(c => category.includes(c.toLowerCase()))) { rejectReason = 'Termékkategória tiltott áralku szempontjából'; continue }
-      if (r.allowed_categories?.length && !r.allowed_categories.some(c => category.includes(c.toLowerCase()))) { rejectReason = 'Termékkategória nem szerepel az engedélyezett listán'; continue }
+    let rejectViolation = 'no_rule'
+    for (const r of rules) {
+      if (cartValue < r.min_cart_value) { rejectReason = `Kosárérték túl alacsony (min ${r.min_cart_value} Ft)`; rejectViolation = 'cart_minimum'; continue }
+      if (isOnSale && !r.allow_on_sale_products) { rejectReason = 'Akciós termékre nem adható további kedvezmény'; rejectViolation = 'on_sale'; continue }
+      if (r.blocked_categories?.some(c => category.includes(c.toLowerCase()))) { rejectReason = 'Termékkategória tiltott áralku szempontjából'; rejectViolation = 'category_block'; continue }
+      if (r.allowed_categories?.length && !r.allowed_categories.some(c => category.includes(c.toLowerCase()))) { rejectReason = 'Termékkategória nem szerepel az engedélyezett listán'; rejectViolation = 'category_not_allowed'; continue }
       selectedRule = r
       break
     }
@@ -187,13 +197,14 @@ Deno.serve(async (req) => {
       await admin.from('ai_pricing_events').insert({
         user_id: userId, session_id: body.session_id, product_id: body.product_id,
         granted: false, reason: rejectReason || 'Nincs alkalmazható szabály',
-        context: { is_on_sale: isOnSale, category, cart_value: cartValue },
+        context: { violation_code: rejectViolation, inputs },
       })
       return json({
         granted: false,
         message: 'Sajnos erre a termékre most nem tudok személyes kedvezményt adni. 🙏',
       })
     }
+
 
     // === 5. Hard cap: min(max_discount, 100 - min_margin) ===
     const hardCap = Math.min(
