@@ -144,8 +144,6 @@ const AdminFeedbackCampaignsTab = lazy(lazyRetry(() => import("@/components/admi
 const AdminBundleDealsMgmtTab = lazy(lazyRetry(() => import("@/components/admin/AdminBundleDealsMgmtTab")));
 const AdminInvoiceGeneratorTab = lazy(lazyRetry(() => import("@/components/admin/AdminInvoiceGeneratorTab")));
 const AdminPersonalizedRecommendationsTab = lazy(lazyRetry(() => import("@/components/admin/AdminPersonalizedRecommendationsTab")));
-import ProductImageGallery from "@/components/admin/ProductImageGallery";
-import ProductLinkImport from "@/components/admin/ProductLinkImport";
 import AdminAiAssistant from "@/components/admin/AdminAiAssistant";
 const AdminAiDashboard = lazy(lazyRetry(() => import("@/components/admin/AdminAiDashboard")));
 const AdminAiMonitoring = lazy(lazyRetry(() => import("@/components/admin/AdminAiMonitoring")));
