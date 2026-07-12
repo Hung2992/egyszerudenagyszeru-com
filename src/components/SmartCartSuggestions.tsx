@@ -38,6 +38,9 @@ const SmartCartSuggestions = () => {
       if (data) {
         setSuggestions(data.suggestions || []);
         setBundles(data.bundles || []);
+        if ((data.suggestions || []).length) {
+          trackAiEvent("cart_suggestion_shown", "smart_cart", { count: data.suggestions.length });
+        }
       }
     }).catch(() => {}).finally(() => setLoading(false));
   }, [items.length]);
