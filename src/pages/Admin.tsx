@@ -14,7 +14,7 @@ import {
   Palette, Clock, FileText, SearchIcon, Star, MessageSquare, Gift, ListChecks, Ruler,
   Truck, Bell, AlertTriangle, Receipt, RotateCcw, Zap, Megaphone, Shield, Headphones, Lock, FileDown, CreditCard as CreditCardIcon,
   Link2, MousePointerClick, Globe as GlobeIcon, Wrench, Key, HelpCircle, BarChart3 as BarChart3Icon, Heart, SlidersHorizontal,
-  MonitorSmartphone, Factory, Trophy, Rss, Database, RefreshCw, Globe as Globe2, ShieldCheck, Sparkles, Layers, Wallet, Rocket, Brain, Calculator, Building2
+  MonitorSmartphone, Factory, Trophy, Rss, Database, RefreshCw, Globe as Globe2, ShieldCheck, Sparkles, Layers, Wallet, Rocket, Brain, Calculator, Building2,
   View,
 } from "lucide-react";
 const AdminShippingTab = lazy(lazyRetry(() => import("@/components/admin/AdminShippingTab")));
