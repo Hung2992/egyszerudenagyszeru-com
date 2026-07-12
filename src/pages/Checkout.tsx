@@ -98,6 +98,19 @@ const Checkout = () => {
   const [couponLoading, setCouponLoading] = useState(false);
   const [referralAutoApplied, setReferralAutoApplied] = useState(false);
   const [aiOfferId, setAiOfferId] = useState<string | null>(null);
+  const [aiOfferDetails, setAiOfferDetails] = useState<any | null>(null);
+
+  // Sync AI offer részletek a pending_ai_coupon-ból
+  useEffect(() => {
+    if (!appliedCoupon.startsWith("AI-")) { setAiOfferDetails(null); return; }
+    try {
+      const raw = sessionStorage.getItem("pending_ai_coupon");
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (p.code === appliedCoupon) setAiOfferDetails(p);
+      }
+    } catch { /* ignore */ }
+  }, [appliedCoupon]);
 
 
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
