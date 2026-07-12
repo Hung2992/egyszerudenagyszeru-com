@@ -2572,6 +2572,60 @@ export type Database = {
         }
         Relationships: []
       }
+      drop_ai_insights: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          drop_id: string | null
+          generated_at: string
+          id: string
+          input_snapshot: Json | null
+          insight_type: string
+          model_version: string | null
+          prediction: Json
+          summary: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          drop_id?: string | null
+          generated_at?: string
+          id?: string
+          input_snapshot?: Json | null
+          insight_type: string
+          model_version?: string | null
+          prediction?: Json
+          summary?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          drop_id?: string | null
+          generated_at?: string
+          id?: string
+          input_snapshot?: Json | null
+          insight_type?: string
+          model_version?: string | null
+          prediction?: Json
+          summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drop_ai_insights_drop_id_fkey"
+            columns: ["drop_id"]
+            isOneToOne: false
+            referencedRelation: "drop_performance_stats"
+            referencedColumns: ["drop_id"]
+          },
+          {
+            foreignKeyName: "drop_ai_insights_drop_id_fkey"
+            columns: ["drop_id"]
+            isOneToOne: false
+            referencedRelation: "product_drops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drop_events: {
         Row: {
           created_at: string
