@@ -983,6 +983,62 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_product_generations: {
+        Row: {
+          admin_user_id: string
+          applied: boolean
+          applied_fields: string[] | null
+          created_at: string
+          error: string | null
+          id: string
+          image_url: string | null
+          input: Json | null
+          kind: string
+          model: string | null
+          output: Json | null
+          product_id: string | null
+          prompt: string | null
+        }
+        Insert: {
+          admin_user_id: string
+          applied?: boolean
+          applied_fields?: string[] | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          image_url?: string | null
+          input?: Json | null
+          kind: string
+          model?: string | null
+          output?: Json | null
+          product_id?: string | null
+          prompt?: string | null
+        }
+        Update: {
+          admin_user_id?: string
+          applied?: boolean
+          applied_fields?: string[] | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          image_url?: string | null
+          input?: Json | null
+          kind?: string
+          model?: string | null
+          output?: Json | null
+          product_id?: string | null
+          prompt?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_product_generations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "shop_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_question_context_rules: {
         Row: {
           context_name: string
@@ -6393,7 +6449,10 @@ export type Database = {
       }
       shop_products: {
         Row: {
+          ai_content_meta: Json | null
+          ai_hero_image_url: string | null
           auto_launch_enabled: boolean | null
+          bullet_points: Json | null
           care_instructions: string | null
           category: string
           colors: string[] | null
@@ -6412,8 +6471,10 @@ export type Database = {
           launch_date: string | null
           launch_status: string
           launched_at: string | null
+          long_description: string | null
           manufacturer: string | null
           material: string | null
+          meta_description: string | null
           name: string
           origin_country: string | null
           original_price: number | null
@@ -6423,9 +6484,12 @@ export type Database = {
           preorder_enabled: boolean
           preorder_limit: number | null
           price: number
+          seo_title: string | null
           share_count: number | null
+          short_description: string | null
           size_chart_type: string | null
           sizes: string[] | null
+          social_posts: Json | null
           stock: number
           teaser_description: string | null
           teaser_image_url: string | null
@@ -6433,7 +6497,10 @@ export type Database = {
           weight_grams: number | null
         }
         Insert: {
+          ai_content_meta?: Json | null
+          ai_hero_image_url?: string | null
           auto_launch_enabled?: boolean | null
+          bullet_points?: Json | null
           care_instructions?: string | null
           category?: string
           colors?: string[] | null
@@ -6452,8 +6519,10 @@ export type Database = {
           launch_date?: string | null
           launch_status?: string
           launched_at?: string | null
+          long_description?: string | null
           manufacturer?: string | null
           material?: string | null
+          meta_description?: string | null
           name: string
           origin_country?: string | null
           original_price?: number | null
@@ -6463,9 +6532,12 @@ export type Database = {
           preorder_enabled?: boolean
           preorder_limit?: number | null
           price?: number
+          seo_title?: string | null
           share_count?: number | null
+          short_description?: string | null
           size_chart_type?: string | null
           sizes?: string[] | null
+          social_posts?: Json | null
           stock?: number
           teaser_description?: string | null
           teaser_image_url?: string | null
@@ -6473,7 +6545,10 @@ export type Database = {
           weight_grams?: number | null
         }
         Update: {
+          ai_content_meta?: Json | null
+          ai_hero_image_url?: string | null
           auto_launch_enabled?: boolean | null
+          bullet_points?: Json | null
           care_instructions?: string | null
           category?: string
           colors?: string[] | null
@@ -6492,8 +6567,10 @@ export type Database = {
           launch_date?: string | null
           launch_status?: string
           launched_at?: string | null
+          long_description?: string | null
           manufacturer?: string | null
           material?: string | null
+          meta_description?: string | null
           name?: string
           origin_country?: string | null
           original_price?: number | null
@@ -6503,9 +6580,12 @@ export type Database = {
           preorder_enabled?: boolean
           preorder_limit?: number | null
           price?: number
+          seo_title?: string | null
           share_count?: number | null
+          short_description?: string | null
           size_chart_type?: string | null
           sizes?: string[] | null
+          social_posts?: Json | null
           stock?: number
           teaser_description?: string | null
           teaser_image_url?: string | null
