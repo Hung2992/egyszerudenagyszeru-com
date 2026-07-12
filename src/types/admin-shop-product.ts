@@ -45,10 +45,10 @@ export const createEmptyProductDraft = (): Partial<ShopProduct> => ({
   teaser_description: null,
   teaser_image_url: null,
   is_sneak_peek: false,
-  material: null,
-  care_instructions: null,
-  origin_country: null,
-  manufacturer: null,
+  material: "",
+  care_instructions: "",
+  origin_country: "",
+  manufacturer: "",
   weight_grams: null,
 });
 
