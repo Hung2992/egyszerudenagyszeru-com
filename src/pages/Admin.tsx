@@ -157,6 +157,7 @@ import ProductLinkImport from "@/components/admin/ProductLinkImport";
 import AdminAiAssistant from "@/components/admin/AdminAiAssistant";
 import AdminAiDashboard from "@/components/admin/AdminAiDashboard";
 import AdminAiMonitoring from "@/components/admin/AdminAiMonitoring";
+import AdminShippingTab from "@/components/admin/AdminShippingTab";
 import AdminDashboardEnhanced from "@/components/admin/AdminDashboardEnhanced";
 import AdminVisitorAnalytics from "@/components/admin/AdminVisitorAnalytics";
 import AdminOrderDetail from "@/components/admin/AdminOrderDetail";
