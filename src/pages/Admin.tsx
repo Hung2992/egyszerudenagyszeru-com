@@ -146,6 +146,7 @@ const AdminInvoiceGeneratorTab = lazy(lazyRetry(() => import("@/components/admin
 const AdminPersonalizedRecommendationsTab = lazy(lazyRetry(() => import("@/components/admin/AdminPersonalizedRecommendationsTab")));
 import AdminAiAssistant from "@/components/admin/AdminAiAssistant";
 const AdminAiDashboard = lazy(lazyRetry(() => import("@/components/admin/AdminAiDashboard")));
+const AdminVisualSearchTab = lazy(lazyRetry(() => import("@/components/admin/AdminVisualSearchTab")));
 const AdminAiMonitoring = lazy(lazyRetry(() => import("@/components/admin/AdminAiMonitoring")));
 const AdminDashboardEnhanced = lazy(lazyRetry(() => import("@/components/admin/AdminDashboardEnhanced")));
 const AdminVisitorAnalytics = lazy(lazyRetry(() => import("@/components/admin/AdminVisitorAnalytics")));
@@ -2984,6 +2985,7 @@ const Admin = () => {
         {tab === "multilang" && <AdminMultilangTab />}
         {tab === "ai_dashboard" && <AdminAiDashboard />}
         {tab === "ai_monitoring" && <AdminAiMonitoring />}
+        {tab === "visual_search" && <AdminVisualSearchTab />}
         {tab === "email_templates_custom" && <AdminEmailCenterTab />}
         {tab === "attribution" && <AdminAttributionTab />}
         {tab === "popup_banners" && <AdminPopupBannerTab />}
