@@ -6002,14 +6002,17 @@ export type Database = {
           created_at: string
           created_by: string | null
           file_size_bytes: number | null
+          glb_storage_path: string | null
           glb_url: string | null
           id: string
           is_active: boolean
+          poster_storage_path: string | null
           poster_url: string | null
           product_id: string
           product_source: string
           style_ai_prompt: string | null
           updated_at: string
+          usdz_storage_path: string | null
           usdz_url: string | null
         }
         Insert: {
@@ -6020,14 +6023,17 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           file_size_bytes?: number | null
+          glb_storage_path?: string | null
           glb_url?: string | null
           id?: string
           is_active?: boolean
+          poster_storage_path?: string | null
           poster_url?: string | null
           product_id: string
           product_source?: string
           style_ai_prompt?: string | null
           updated_at?: string
+          usdz_storage_path?: string | null
           usdz_url?: string | null
         }
         Update: {
@@ -6038,14 +6044,17 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           file_size_bytes?: number | null
+          glb_storage_path?: string | null
           glb_url?: string | null
           id?: string
           is_active?: boolean
+          poster_storage_path?: string | null
           poster_url?: string | null
           product_id?: string
           product_source?: string
           style_ai_prompt?: string | null
           updated_at?: string
+          usdz_storage_path?: string | null
           usdz_url?: string | null
         }
         Relationships: []
