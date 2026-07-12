@@ -43,6 +43,15 @@ project_id = "meyxhsgnryuupwpddxav"
   [functions.partner-ai-marketing]
     verify_jwt = true
 
+  [functions.detect-order-fraud]
+    verify_jwt = true
+
+  [functions.generate-invoice]
+    verify_jwt = true
+
+  [functions.order-automation]
+    verify_jwt = false
+
   [functions.track-shipment]
     verify_jwt = false
 
