@@ -86,6 +86,54 @@ const AdminShippingTab = () => {
     load();
   };
 
+  const syncPickupPoints = async () => {
+    setSyncing(true);
+    const { data, error } = await supabase.functions.invoke("sync-pickup-points", { body: {} });
+    setSyncing(false);
+    if (error) { toast({ title: "Szinkronizálás sikertelen", description: error.message, variant: "destructive" }); return; }
+    const r = (data as any)?.results || {};
+    const total = Object.values(r).reduce((a: number, x: any) => a + (x?.count || 0), 0);
+    toast({ title: "Átvevőpontok szinkronizálva ✓", description: `${total} pont mentve` });
+  };
+
+  const refreshShipment = async (id: string) => {
+    setRefreshingId(id);
+    const { data, error } = await supabase.functions.invoke("poll-shipment-status", { body: { shipment_id: id } });
+    setRefreshingId(null);
+    if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Frissítve", description: (data as any)?.summary?.[0]?.status || "OK" });
+    load();
+  };
+
+  const refreshAll = async () => {
+    setRefreshingId("all");
+    const { data, error } = await supabase.functions.invoke("poll-shipment-status", { body: {} });
+    setRefreshingId(null);
+    if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Csomagok frissítve ✓", description: `${(data as any)?.processed || 0} db` });
+    load();
+  };
+
+  const downloadLabel = async (s: Shipment) => {
+    // Ha data URI, közvetlen letöltés; egyébként edge functionből.
+    if ((s as any).label_url?.startsWith("data:")) {
+      const a = document.createElement("a");
+      a.href = (s as any).label_url;
+      a.download = `cimke-${s.tracking_number || s.id}.${(s as any).label_url.includes("pdf") ? "pdf" : "txt"}`;
+      a.click();
+      return;
+    }
+    const { data: sess } = await supabase.auth.getSession();
+    const url = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/shipment-label?id=${s.id}`;
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${sess.session?.access_token}` } });
+    if (!r.ok) { toast({ title: "Letöltés sikertelen", variant: "destructive" }); return; }
+    const blob = await r.blob();
+    const objUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = objUrl; a.download = `cimke-${s.tracking_number || s.id}.pdf`; a.click();
+    URL.revokeObjectURL(objUrl);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
