@@ -71,14 +71,12 @@ export default function AdminInboxTab() {
     setLoading(false);
   };
 
-  useEffect(() => {
-    loadMessages();
-    const channel = supabase
-      .channel("contact_messages_inbox")
-      .on("postgres_changes", { event: "*", schema: "public", table: "contact_messages" }, () => loadMessages())
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, []);
+  useEffect(() => { loadMessages(); }, []);
+  useRealtimeSubscription({
+    channel: "contact_messages_inbox",
+    table: "contact_messages",
+    onChange: () => loadMessages(),
+  });
 
   const filtered = useMemo(() => {
     let list = messages;
