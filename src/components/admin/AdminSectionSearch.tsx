@@ -36,6 +36,7 @@ const KEYWORD_MAP: Record<string, string[]> = {
   inventory: ["készlet", "raktár", "stock"],
   seo_marketing: ["seo", "marketing", "google", "kereső"],
   ai_marketing_studio: ["ai", "mesterséges", "stúdió", "reklám", "videó", "kreatív"],
+  visual_search: ["vizuális", "kép", "fotó", "keresés", "camera", "visual", "photo", "search"],
   fb_studio: ["facebook", "meta", "fb"],
   ig_studio: ["instagram", "ig", "reel"],
   tt_studio: ["tiktok", "tt"],
