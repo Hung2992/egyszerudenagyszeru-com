@@ -41,7 +41,6 @@ Deno.serve(async (req) => {
     } else if (body.batch) {
       // find products without ready embedding
       const limit = body.limit ?? 20;
-      const { data } = await admin.rpc('exec', {}).then(() => ({ data: null })).catch(() => ({ data: null }));
       // Fallback simple query
       const { data: allP } = await admin
         .from('shop_products')
