@@ -10,6 +10,8 @@ import SizeQuiz from "@/components/SizeQuiz";
 import ProductWaitlist from "@/components/ProductWaitlist";
 import PersonalizedOffers from "@/components/PersonalizedOffers";
 import AiPriceNegotiateButton from "@/components/AiPriceNegotiateButton";
+import Product3DViewer from "@/components/Product3DViewer";
+import AiStyleRecommender from "@/components/AiStyleRecommender";
 import {
   ShoppingCart, Heart, Star, BellRing, Share2, Copy, Bell,
   UserPlus, UserMinus, Ruler, PackagePlus, MessageCircle,
@@ -53,6 +55,7 @@ const ProductDetail = () => {
   const [images, setImages] = useState<ProductImage[]>([]);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
+  const [styleOpen, setStyleOpen] = useState(false);
 
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
@@ -612,7 +615,24 @@ const ProductDetail = () => {
                 ))}
               </div>
             )}
+
+            {/* 3D / AR viewer — csak akkor jelenik meg, ha van feltöltött 3D model */}
+            <Product3DViewer
+              productId={product.id}
+              productSource="shop_products"
+              onStyleRecommend={() => setStyleOpen(true)}
+            />
+
+            <AiStyleRecommender
+              open={styleOpen}
+              onClose={() => setStyleOpen(false)}
+              productId={product.id}
+              productName={product.name}
+              productCategory={product.category}
+              productColors={product.colors || undefined}
+            />
           </div>
+
 
           {/* Product Info */}
           <div className="space-y-5">

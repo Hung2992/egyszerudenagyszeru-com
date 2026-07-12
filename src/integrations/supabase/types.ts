@@ -2316,6 +2316,53 @@ export type Database = {
           },
         ]
       }
+      ar_events: {
+        Row: {
+          asset_id: string | null
+          created_at: string
+          device_type: string | null
+          duration_ms: number | null
+          event_type: string
+          id: string
+          metadata: Json
+          product_id: string | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          asset_id?: string | null
+          created_at?: string
+          device_type?: string | null
+          duration_ms?: number | null
+          event_type: string
+          id?: string
+          metadata?: Json
+          product_id?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          asset_id?: string | null
+          created_at?: string
+          device_type?: string | null
+          duration_ms?: number | null
+          event_type?: string
+          id?: string
+          metadata?: Json
+          product_id?: string | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ar_events_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "product_3d_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       auto_procurement_log: {
         Row: {
           created_at: string
@@ -5943,6 +5990,63 @@ export type Database = {
           synced_at?: string | null
           updated_at?: string
           zip?: string | null
+        }
+        Relationships: []
+      }
+      product_3d_assets: {
+        Row: {
+          alt_text: string | null
+          ar_enabled: boolean
+          auto_rotate: boolean
+          camera_orbit: string | null
+          created_at: string
+          created_by: string | null
+          file_size_bytes: number | null
+          glb_url: string | null
+          id: string
+          is_active: boolean
+          poster_url: string | null
+          product_id: string
+          product_source: string
+          style_ai_prompt: string | null
+          updated_at: string
+          usdz_url: string | null
+        }
+        Insert: {
+          alt_text?: string | null
+          ar_enabled?: boolean
+          auto_rotate?: boolean
+          camera_orbit?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_size_bytes?: number | null
+          glb_url?: string | null
+          id?: string
+          is_active?: boolean
+          poster_url?: string | null
+          product_id: string
+          product_source?: string
+          style_ai_prompt?: string | null
+          updated_at?: string
+          usdz_url?: string | null
+        }
+        Update: {
+          alt_text?: string | null
+          ar_enabled?: boolean
+          auto_rotate?: boolean
+          camera_orbit?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_size_bytes?: number | null
+          glb_url?: string | null
+          id?: string
+          is_active?: boolean
+          poster_url?: string | null
+          product_id?: string
+          product_source?: string
+          style_ai_prompt?: string | null
+          updated_at?: string
+          usdz_url?: string | null
         }
         Relationships: []
       }
