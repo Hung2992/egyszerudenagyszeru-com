@@ -3616,6 +3616,8 @@ const Admin = () => {
         {tab === "invoice_generator" && <AdminInvoiceGeneratorTab />}
         {tab === "personalized_recommendations" && <AdminPersonalizedRecommendationsTab />}
         {tab === "subscribers" && <AdminSubscribersTab />}
+        </Suspense>
+
 
         {tab === "settings" && settings && (
           <div className="space-y-6">
