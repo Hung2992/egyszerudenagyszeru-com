@@ -2203,6 +2203,69 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_stylist_sessions: {
+        Row: {
+          added_to_cart: boolean
+          ai_outfit: Json | null
+          budget_max: number | null
+          created_at: string
+          error: string | null
+          gender: string | null
+          id: string
+          matched_products: Json | null
+          occasion: string | null
+          purchased: boolean
+          session_id: string | null
+          size: string | null
+          status: string
+          style: string | null
+          tokens_used: number | null
+          total_price: number | null
+          user_id: string | null
+          user_prompt: string | null
+        }
+        Insert: {
+          added_to_cart?: boolean
+          ai_outfit?: Json | null
+          budget_max?: number | null
+          created_at?: string
+          error?: string | null
+          gender?: string | null
+          id?: string
+          matched_products?: Json | null
+          occasion?: string | null
+          purchased?: boolean
+          session_id?: string | null
+          size?: string | null
+          status?: string
+          style?: string | null
+          tokens_used?: number | null
+          total_price?: number | null
+          user_id?: string | null
+          user_prompt?: string | null
+        }
+        Update: {
+          added_to_cart?: boolean
+          ai_outfit?: Json | null
+          budget_max?: number | null
+          created_at?: string
+          error?: string | null
+          gender?: string | null
+          id?: string
+          matched_products?: Json | null
+          occasion?: string | null
+          purchased?: boolean
+          session_id?: string | null
+          size?: string | null
+          status?: string
+          style?: string | null
+          tokens_used?: number | null
+          total_price?: number | null
+          user_id?: string | null
+          user_prompt?: string | null
+        }
+        Relationships: []
+      }
       ai_usage_quota: {
         Row: {
           estimated_cost_credits: number
