@@ -182,17 +182,35 @@ export default function FashionStylist({ open, onClose }: Props) {
                     </div>
                     <div className="text-xs text-muted-foreground mb-2">{it.why}</div>
                     {it.products.length ? (
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {it.products.slice(0, 3).map(p => (
-                          <Link key={p.id} to={`/termek/${p.id}`} className="border border-border p-2 hover:bg-muted/50">
-                            {p.image_url && (
-                              <img src={p.image_url} alt={p.name} className="w-full aspect-square object-cover mb-1" loading="lazy" />
-                            )}
-                            <div className="text-xs font-medium line-clamp-2">{p.name}</div>
-                            <div className="text-xs text-muted-foreground">{Number(p.price).toLocaleString("hu-HU")} Ft</div>
-                          </Link>
-                        ))}
-                      </div>
+                      <>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                          {it.products.slice(0, 3).map(p => (
+                            <Link key={p.id} to={`/termek/${p.id}`} className="border border-border p-2 hover:bg-muted/50">
+                              {p.image_url && (
+                                <img src={p.image_url} alt={p.name} className="w-full aspect-square object-cover mb-1" loading="lazy" />
+                              )}
+                              <div className="text-xs font-medium line-clamp-2">{p.name}</div>
+                              <div className="text-xs text-muted-foreground">{Number(p.price).toLocaleString("hu-HU")} Ft</div>
+                            </Link>
+                          ))}
+                        </div>
+                        {it.products[0] && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            <Button size="sm" variant="outline" onClick={() => addSingleToCart(it.products[0])}>
+                              <ShoppingBag className="h-3 w-3 mr-1" />Kosárba
+                            </Button>
+                            <Suspense fallback={null}>
+                              <VirtualTryOn
+                                productId={it.products[0].id}
+                                productName={it.products[0].name}
+                                productImageUrl={it.products[0].image_url ?? undefined}
+                                stylistSessionId={result.session_id ?? null}
+                                onAddToCart={() => addSingleToCart(it.products[0])}
+                              />
+                            </Suspense>
+                          </div>
+                        )}
+                      </>
                     ) : (
                       <div className="text-xs text-muted-foreground italic">Erre a darabra nincs jelenleg passzoló termék a boltban.</div>
                     )}
