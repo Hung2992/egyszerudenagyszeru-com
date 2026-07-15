@@ -3690,6 +3690,7 @@ export type Database = {
           shipping_zip: string | null
           status: string
           stripe_session_id: string | null
+          stylist_session_id: string | null
           total_amount: number
           user_id: string | null
         }
@@ -3712,6 +3713,7 @@ export type Database = {
           shipping_zip?: string | null
           status?: string
           stripe_session_id?: string | null
+          stylist_session_id?: string | null
           total_amount?: number
           user_id?: string | null
         }
@@ -3734,6 +3736,7 @@ export type Database = {
           shipping_zip?: string | null
           status?: string
           stripe_session_id?: string | null
+          stylist_session_id?: string | null
           total_amount?: number
           user_id?: string | null
         }
@@ -8663,6 +8666,7 @@ export type Database = {
           product_id: string | null
           product_source: string | null
           session_id: string | null
+          stylist_session_id: string | null
           user_id: string | null
         }
         Insert: {
@@ -8674,6 +8678,7 @@ export type Database = {
           product_id?: string | null
           product_source?: string | null
           session_id?: string | null
+          stylist_session_id?: string | null
           user_id?: string | null
         }
         Update: {
@@ -8685,6 +8690,7 @@ export type Database = {
           product_id?: string | null
           product_source?: string | null
           session_id?: string | null
+          stylist_session_id?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -8702,6 +8708,7 @@ export type Database = {
           prompt: string | null
           session_id: string | null
           status: string
+          stylist_session_id: string | null
           tokens_used: number | null
           user_id: string | null
         }
@@ -8717,6 +8724,7 @@ export type Database = {
           prompt?: string | null
           session_id?: string | null
           status?: string
+          stylist_session_id?: string | null
           tokens_used?: number | null
           user_id?: string | null
         }
@@ -8732,6 +8740,7 @@ export type Database = {
           prompt?: string | null
           session_id?: string | null
           status?: string
+          stylist_session_id?: string | null
           tokens_used?: number | null
           user_id?: string | null
         }
