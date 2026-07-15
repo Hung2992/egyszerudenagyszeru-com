@@ -448,6 +448,8 @@ const Checkout = () => {
 
     // Non-card payment: validate server-side via edge function
     try {
+      const { getActiveStylistSession, clearActiveStylistSession } = await import("@/lib/stylist-session");
+      const stylistSessionId = getActiveStylistSession();
       const data = await invokeCheckoutFunction<CheckoutSessionResponse>("place-order", {
           items: orderItems,
           coupon_code: appliedCoupon || null,
@@ -460,6 +462,7 @@ const Checkout = () => {
           payment_method: paymentMethod,
           notes: notes || null,
           gift_wrap_id: selectedGiftWrap || null,
+          stylist_session_id: stylistSessionId,
       });
 
       if (!data || data.error) {
@@ -467,6 +470,7 @@ const Checkout = () => {
       }
 
       clearCart();
+      clearActiveStylistSession();
       if (appliedCoupon) clearStoredReferralCode();
       if (aiOfferId && data?.order_id) {
         await supabase.rpc("mark_ai_offer_accepted" as any, {

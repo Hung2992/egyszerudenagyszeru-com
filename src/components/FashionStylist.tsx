@@ -1,6 +1,6 @@
 // Sprint B.5 — Fashion Stylist AI kliens komponens
 // Chat-szerű felület: alkalom + stílus + budget → teljes outfit valós termékekkel + "mind kosárba" + try-on link
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,9 @@ import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { trackAiEvent } from "@/lib/ai-analytics";
+import { setActiveStylistSession } from "@/lib/stylist-session";
+
+const VirtualTryOn = lazy(() => import("./VirtualTryOn"));
 
 type StylistItem = {
   slot: string;
@@ -83,9 +86,23 @@ export default function FashionStylist({ open, onClose }: Props) {
     }
     if (result.session_id) {
       await supabase.from("ai_stylist_sessions").update({ added_to_cart: true }).eq("id", result.session_id);
+      setActiveStylistSession(result.session_id);
     }
-    trackAiEvent("cart_suggestion_added" as any, "fashion_stylist", { count: added });
-    toast({ title: `${added} termék hozzáadva a kosárhoz`, description: "AI stylist szett aktív." });
+    trackAiEvent("cart_suggestion_added" as any, "fashion_stylist", { count: added, stylist_session_id: result.session_id });
+    toast({ title: `${added} termék hozzáadva a kosárhoz`, description: "AI stylist szett aktív — a rendelésed hozzá lesz kapcsolva." });
+  };
+
+  const addSingleToCart = (p: { id: string; name: string; price: number; image_url: string | null }) => {
+    addItem({
+      productId: p.id,
+      name: p.name,
+      price: Number(p.price),
+      image_url: p.image_url,
+      size: "M",
+      color: "-",
+    }, 1);
+    if (result?.session_id) setActiveStylistSession(result.session_id);
+    trackAiEvent("cart_suggestion_added" as any, "fashion_stylist_item", { product_id: p.id, stylist_session_id: result?.session_id });
   };
 
   return (
@@ -165,17 +182,35 @@ export default function FashionStylist({ open, onClose }: Props) {
                     </div>
                     <div className="text-xs text-muted-foreground mb-2">{it.why}</div>
                     {it.products.length ? (
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {it.products.slice(0, 3).map(p => (
-                          <Link key={p.id} to={`/termek/${p.id}`} className="border border-border p-2 hover:bg-muted/50">
-                            {p.image_url && (
-                              <img src={p.image_url} alt={p.name} className="w-full aspect-square object-cover mb-1" loading="lazy" />
-                            )}
-                            <div className="text-xs font-medium line-clamp-2">{p.name}</div>
-                            <div className="text-xs text-muted-foreground">{Number(p.price).toLocaleString("hu-HU")} Ft</div>
-                          </Link>
-                        ))}
-                      </div>
+                      <>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                          {it.products.slice(0, 3).map(p => (
+                            <Link key={p.id} to={`/termek/${p.id}`} className="border border-border p-2 hover:bg-muted/50">
+                              {p.image_url && (
+                                <img src={p.image_url} alt={p.name} className="w-full aspect-square object-cover mb-1" loading="lazy" />
+                              )}
+                              <div className="text-xs font-medium line-clamp-2">{p.name}</div>
+                              <div className="text-xs text-muted-foreground">{Number(p.price).toLocaleString("hu-HU")} Ft</div>
+                            </Link>
+                          ))}
+                        </div>
+                        {it.products[0] && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            <Button size="sm" variant="outline" onClick={() => addSingleToCart(it.products[0])}>
+                              <ShoppingBag className="h-3 w-3 mr-1" />Kosárba
+                            </Button>
+                            <Suspense fallback={null}>
+                              <VirtualTryOn
+                                productId={it.products[0].id}
+                                productName={it.products[0].name}
+                                productImageUrl={it.products[0].image_url ?? undefined}
+                                stylistSessionId={result.session_id ?? null}
+                                onAddToCart={() => addSingleToCart(it.products[0])}
+                              />
+                            </Suspense>
+                          </div>
+                        )}
+                      </>
                     ) : (
                       <div className="text-xs text-muted-foreground italic">Erre a darabra nincs jelenleg passzoló termék a boltban.</div>
                     )}

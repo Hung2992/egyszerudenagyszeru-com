@@ -12,6 +12,7 @@ import ArConversionFunnel from "@/components/admin/ArConversionFunnel";
 import ArCommerceOptimizer from "@/components/admin/ArCommerceOptimizer";
 import TryOnFunnel from "@/components/admin/TryOnFunnel";
 import FashionStylistPanel from "@/components/admin/FashionStylistPanel";
+import StylistFunnelPanel from "@/components/admin/StylistFunnelPanel";
 
 type Asset = {
   id: string;
@@ -155,6 +156,8 @@ export default function AdminArAssetsTab() {
       <ArConversionFunnel />
 
       <TryOnFunnel />
+
+      <StylistFunnelPanel />
 
       <FashionStylistPanel />
 
