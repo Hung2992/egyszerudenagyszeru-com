@@ -1,6 +1,6 @@
 // Sprint B.5 — Fashion Stylist AI kliens komponens
 // Chat-szerű felület: alkalom + stílus + budget → teljes outfit valós termékekkel + "mind kosárba" + try-on link
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,9 @@ import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { trackAiEvent } from "@/lib/ai-analytics";
+import { setActiveStylistSession } from "@/lib/stylist-session";
+
+const VirtualTryOn = lazy(() => import("./VirtualTryOn"));
 
 type StylistItem = {
   slot: string;
