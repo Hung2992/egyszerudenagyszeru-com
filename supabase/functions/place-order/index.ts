@@ -67,6 +67,7 @@ serve(async (req) => {
       payment_method,
       notes,
       gift_wrap_id,
+      stylist_session_id,
     } = await req.json();
 
     // ── 1. Input validation ─────────────────────────────────────────
@@ -201,6 +202,7 @@ serve(async (req) => {
     }
 
     // ── 7. Insert order (service role — bypasses RLS) ───────────────
+    const validStylistSessionId = typeof stylist_session_id === "string" && UUID_RE.test(stylist_session_id) ? stylist_session_id : null;
     const { data: order, error: orderErr } = await supabase
       .from("orders")
       .insert({
@@ -219,6 +221,7 @@ serve(async (req) => {
         discount_amount: discountAmount > 0 ? discountAmount : null,
         notes: typeof notes === "string" ? notes.slice(0, 1000) : null,
         items: validatedItems,
+        stylist_session_id: validStylistSessionId,
       })
       .select("id")
       .single();
