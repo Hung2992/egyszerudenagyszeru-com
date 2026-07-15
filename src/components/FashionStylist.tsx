@@ -86,9 +86,23 @@ export default function FashionStylist({ open, onClose }: Props) {
     }
     if (result.session_id) {
       await supabase.from("ai_stylist_sessions").update({ added_to_cart: true }).eq("id", result.session_id);
+      setActiveStylistSession(result.session_id);
     }
-    trackAiEvent("cart_suggestion_added" as any, "fashion_stylist", { count: added });
-    toast({ title: `${added} termék hozzáadva a kosárhoz`, description: "AI stylist szett aktív." });
+    trackAiEvent("cart_suggestion_added" as any, "fashion_stylist", { count: added, stylist_session_id: result.session_id });
+    toast({ title: `${added} termék hozzáadva a kosárhoz`, description: "AI stylist szett aktív — a rendelésed hozzá lesz kapcsolva." });
+  };
+
+  const addSingleToCart = (p: { id: string; name: string; price: number; image_url: string | null }) => {
+    addItem({
+      productId: p.id,
+      name: p.name,
+      price: Number(p.price),
+      image_url: p.image_url,
+      size: "M",
+      color: "-",
+    }, 1);
+    if (result?.session_id) setActiveStylistSession(result.session_id);
+    trackAiEvent("cart_suggestion_added" as any, "fashion_stylist_item", { product_id: p.id, stylist_session_id: result?.session_id });
   };
 
   return (
