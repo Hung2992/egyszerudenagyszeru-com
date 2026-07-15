@@ -157,6 +157,8 @@ export default function AdminArAssetsTab() {
 
       <TryOnFunnel />
 
+      <StylistFunnelPanel />
+
       <FashionStylistPanel />
 
       <ArCommerceOptimizer />
