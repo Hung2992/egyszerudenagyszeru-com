@@ -11,6 +11,7 @@ type Props = {
   productSource?: string;
   productName: string;
   productImageUrl?: string;
+  stylistSessionId?: string | null;
   onAddToCart?: () => void;
 };
 
@@ -22,12 +23,13 @@ function getSessionId() {
   } catch { return null; }
 }
 
-async function logEvent(event_type: string, extra: Record<string, unknown> = {}) {
+async function logEvent(event_type: string, extra: Record<string, unknown> = {}, stylistSessionId?: string | null) {
   try {
     await supabase.from("tryon_events").insert({
       event_type,
       session_id: getSessionId(),
       device_type: /Mobi/.test(navigator.userAgent) ? "mobile" : "desktop",
+      stylist_session_id: stylistSessionId ?? null,
       ...extra,
     } as any);
   } catch { /* silent */ }
@@ -42,7 +44,7 @@ async function fileToBase64(file: File): Promise<string> {
   });
 }
 
-export default function VirtualTryOn({ productId, productSource, productName, productImageUrl, onAddToCart }: Props) {
+export default function VirtualTryOn({ productId, productSource, productName, productImageUrl, stylistSessionId, onAddToCart }: Props) {
   const [open, setOpen] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
@@ -51,7 +53,7 @@ export default function VirtualTryOn({ productId, productSource, productName, pr
 
   const openDialog = async () => {
     setOpen(true);
-    await logEvent("tryon_open", { product_id: productId ?? null, product_source: productSource ?? null });
+    await logEvent("tryon_open", { product_id: productId ?? null, product_source: productSource ?? null }, stylistSessionId);
   };
 
   const pick = () => inputRef.current?.click();
@@ -66,7 +68,7 @@ export default function VirtualTryOn({ productId, productSource, productName, pr
     const b64 = await fileToBase64(f);
     setPhoto(b64);
     setResult(null);
-    await logEvent("tryon_photo_upload", { product_id: productId ?? null });
+    await logEvent("tryon_photo_upload", { product_id: productId ?? null }, stylistSessionId);
   };
 
   const generate = async () => {
@@ -86,6 +88,7 @@ export default function VirtualTryOn({ productId, productSource, productName, pr
           product_name: productName,
           product_image_url: productImageUrl,
           session_id: getSessionId(),
+          stylist_session_id: stylistSessionId ?? null,
         },
       });
       if (error) throw error;
@@ -103,12 +106,12 @@ export default function VirtualTryOn({ productId, productSource, productName, pr
     if (!result) return;
     const a = document.createElement("a");
     a.href = result; a.download = `tryon-${productName}.png`; a.click();
-    await logEvent("tryon_download", { product_id: productId ?? null });
+    await logEvent("tryon_download", { product_id: productId ?? null }, stylistSessionId);
   };
 
   const share = async () => {
     if (!result) return;
-    await logEvent("tryon_share", { product_id: productId ?? null });
+    await logEvent("tryon_share", { product_id: productId ?? null }, stylistSessionId);
     try {
       const blob = await (await fetch(result)).blob();
       const file = new File([blob], "tryon.png", { type: "image/png" });
@@ -122,7 +125,7 @@ export default function VirtualTryOn({ productId, productSource, productName, pr
   };
 
   const addCart = async () => {
-    await logEvent("tryon_add_to_cart", { product_id: productId ?? null });
+    await logEvent("tryon_add_to_cart", { product_id: productId ?? null }, stylistSessionId);
     onAddToCart?.();
   };
 

@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const {
       photo_base64, photo_mime, product_id, product_source,
-      product_name, product_image_url, session_id,
+      product_name, product_image_url, session_id, stylist_session_id,
     } = body;
 
     if (!photo_base64 || !product_name) {
@@ -65,6 +65,7 @@ Deno.serve(async (req) => {
       .insert({
         user_id: userId,
         session_id: session_id ?? null,
+        stylist_session_id: stylist_session_id ?? null,
         product_id: product_id ?? null,
         product_source: product_source ?? null,
         status: 'pending',
@@ -138,6 +139,7 @@ Deno.serve(async (req) => {
     // Log event
     await supabase.from('tryon_events').insert({
       session_id: session_id ?? null,
+      stylist_session_id: stylist_session_id ?? null,
       user_id: userId,
       product_id: product_id ?? null,
       product_source: product_source ?? null,
