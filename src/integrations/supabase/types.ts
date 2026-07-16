@@ -4826,6 +4826,105 @@ export type Database = {
           },
         ]
       }
+      partner_recruitment_agent_config: {
+        Row: {
+          created_at: string
+          custom_instructions: string | null
+          enabled: boolean
+          id: string
+          last_run_at: string | null
+          posts_per_run: number
+          target_audience: string
+          tone: string
+          updated_at: string
+          value_props: string
+        }
+        Insert: {
+          created_at?: string
+          custom_instructions?: string | null
+          enabled?: boolean
+          id?: string
+          last_run_at?: string | null
+          posts_per_run?: number
+          target_audience?: string
+          tone?: string
+          updated_at?: string
+          value_props?: string
+        }
+        Update: {
+          created_at?: string
+          custom_instructions?: string | null
+          enabled?: boolean
+          id?: string
+          last_run_at?: string | null
+          posts_per_run?: number
+          target_audience?: string
+          tone?: string
+          updated_at?: string
+          value_props?: string
+        }
+        Relationships: []
+      }
+      partner_recruitment_posts: {
+        Row: {
+          angle: string | null
+          body: string
+          created_at: string
+          cta: string | null
+          generated_by: string | null
+          hashtags: string[]
+          hook: string | null
+          id: string
+          image_prompt: string | null
+          image_url: string | null
+          platform: string
+          published_at: string | null
+          scheduled_at: string | null
+          status: string
+          title: string | null
+          updated_at: string
+          video_script: string | null
+        }
+        Insert: {
+          angle?: string | null
+          body: string
+          created_at?: string
+          cta?: string | null
+          generated_by?: string | null
+          hashtags?: string[]
+          hook?: string | null
+          id?: string
+          image_prompt?: string | null
+          image_url?: string | null
+          platform: string
+          published_at?: string | null
+          scheduled_at?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+          video_script?: string | null
+        }
+        Update: {
+          angle?: string | null
+          body?: string
+          created_at?: string
+          cta?: string | null
+          generated_by?: string | null
+          hashtags?: string[]
+          hook?: string | null
+          id?: string
+          image_prompt?: string | null
+          image_url?: string | null
+          platform?: string
+          published_at?: string | null
+          scheduled_at?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+          video_script?: string | null
+        }
+        Relationships: []
+      }
       partner_referral_status_history: {
         Row: {
           changed_by: string | null
