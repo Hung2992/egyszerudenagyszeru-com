@@ -313,6 +313,267 @@ export type Database = {
           },
         ]
       }
+      ai_agent_briefings: {
+        Row: {
+          brief_date: string
+          created_at: string
+          headline: string | null
+          highlights: Json
+          id: string
+          metrics: Json
+          pending_approvals: number
+          read_at: string | null
+          read_by_admin: boolean
+          summary: string | null
+        }
+        Insert: {
+          brief_date?: string
+          created_at?: string
+          headline?: string | null
+          highlights?: Json
+          id?: string
+          metrics?: Json
+          pending_approvals?: number
+          read_at?: string | null
+          read_by_admin?: boolean
+          summary?: string | null
+        }
+        Update: {
+          brief_date?: string
+          created_at?: string
+          headline?: string | null
+          highlights?: Json
+          id?: string
+          metrics?: Json
+          pending_approvals?: number
+          read_at?: string | null
+          read_by_admin?: boolean
+          summary?: string | null
+        }
+        Relationships: []
+      }
+      ai_agent_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          from_agent: string
+          id: string
+          payload: Json
+          processed: boolean
+          processed_at: string | null
+          to_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          from_agent: string
+          id?: string
+          payload?: Json
+          processed?: boolean
+          processed_at?: string | null
+          to_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          from_agent?: string
+          id?: string
+          payload?: Json
+          processed?: boolean
+          processed_at?: string | null
+          to_agent?: string | null
+        }
+        Relationships: []
+      }
+      ai_agent_runs: {
+        Row: {
+          agent_slug: string
+          completed_at: string | null
+          cost_credits: number
+          created_at: string
+          duration_ms: number | null
+          error_message: string | null
+          id: string
+          metadata: Json
+          started_at: string
+          status: string
+          summary: string | null
+          tasks_completed: number
+          tasks_created: number
+          tokens_used: number
+          trigger: string
+        }
+        Insert: {
+          agent_slug: string
+          completed_at?: string | null
+          cost_credits?: number
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json
+          started_at?: string
+          status?: string
+          summary?: string | null
+          tasks_completed?: number
+          tasks_created?: number
+          tokens_used?: number
+          trigger?: string
+        }
+        Update: {
+          agent_slug?: string
+          completed_at?: string | null
+          cost_credits?: number
+          created_at?: string
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json
+          started_at?: string
+          status?: string
+          summary?: string | null
+          tasks_completed?: number
+          tasks_created?: number
+          tokens_used?: number
+          trigger?: string
+        }
+        Relationships: []
+      }
+      ai_agent_tasks: {
+        Row: {
+          agent_slug: string
+          approved_at: string | null
+          approved_by: string | null
+          assigned_by: string | null
+          auto_executed: boolean
+          completed_at: string | null
+          cost_credits: number | null
+          created_at: string
+          description: string | null
+          error_message: string | null
+          id: string
+          input: Json
+          output: Json | null
+          priority: number
+          requires_approval: boolean
+          started_at: string | null
+          status: string
+          task_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          agent_slug: string
+          approved_at?: string | null
+          approved_by?: string | null
+          assigned_by?: string | null
+          auto_executed?: boolean
+          completed_at?: string | null
+          cost_credits?: number | null
+          created_at?: string
+          description?: string | null
+          error_message?: string | null
+          id?: string
+          input?: Json
+          output?: Json | null
+          priority?: number
+          requires_approval?: boolean
+          started_at?: string | null
+          status?: string
+          task_type: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          agent_slug?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          assigned_by?: string | null
+          auto_executed?: boolean
+          completed_at?: string | null
+          cost_credits?: number | null
+          created_at?: string
+          description?: string | null
+          error_message?: string | null
+          id?: string
+          input?: Json
+          output?: Json | null
+          priority?: number
+          requires_approval?: boolean
+          started_at?: string | null
+          status?: string
+          task_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_agents: {
+        Row: {
+          autonomy_level: string
+          capabilities: Json
+          config: Json
+          created_at: string
+          description: string | null
+          emoji: string | null
+          id: string
+          is_active: boolean
+          last_run_at: string | null
+          last_run_status: string | null
+          model: string | null
+          name: string
+          role: string
+          schedule_cron: string | null
+          slug: string
+          system_prompt: string | null
+          total_runs: number
+          total_tasks_completed: number
+          updated_at: string
+        }
+        Insert: {
+          autonomy_level?: string
+          capabilities?: Json
+          config?: Json
+          created_at?: string
+          description?: string | null
+          emoji?: string | null
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          last_run_status?: string | null
+          model?: string | null
+          name: string
+          role: string
+          schedule_cron?: string | null
+          slug: string
+          system_prompt?: string | null
+          total_runs?: number
+          total_tasks_completed?: number
+          updated_at?: string
+        }
+        Update: {
+          autonomy_level?: string
+          capabilities?: Json
+          config?: Json
+          created_at?: string
+          description?: string | null
+          emoji?: string | null
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          last_run_status?: string | null
+          model?: string | null
+          name?: string
+          role?: string
+          schedule_cron?: string | null
+          slug?: string
+          system_prompt?: string | null
+          total_runs?: number
+          total_tasks_completed?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_bulk_ingest_jobs: {
         Row: {
           completed_at: string | null
