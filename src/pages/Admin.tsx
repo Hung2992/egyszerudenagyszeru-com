@@ -1349,6 +1349,7 @@ const Admin = () => {
     { key: "ar_3d_center", label: "👟 AR / 3D Center", icon: View },
     { key: "marketing", label: "Kampányok", icon: Megaphone },
     { key: "ai_marketing_studio", label: "AI Marketing Stúdió", icon: Brain },
+    { key: "ai_command_center", label: "🧠 AI Command Center", icon: Sparkles },
     { key: "partner_recruitment_agent", label: "🤖 Partner Toborzó AI", icon: Sparkles },
     { key: "fb_studio", label: "Facebook Stúdió", icon: FacebookIcon },
     { key: "ig_studio", label: "Instagram Stúdió", icon: InstagramIcon },
