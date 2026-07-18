@@ -1352,6 +1352,7 @@ const Admin = () => {
     { key: "ai_marketing_studio", label: "AI Marketing Stúdió", icon: Brain },
     { key: "ai_command_center", label: "🧠 AI Command Center", icon: Sparkles },
     { key: "partner_recruitment_agent", label: "🤖 Partner Toborzó AI", icon: Sparkles },
+    { key: "partner_acquisition_engine", label: "🤝 Partner Acquisition Engine", icon: Sparkles },
     { key: "fb_studio", label: "Facebook Stúdió", icon: FacebookIcon },
     { key: "ig_studio", label: "Instagram Stúdió", icon: InstagramIcon },
     { key: "tt_studio", label: "TikTok Stúdió", icon: Music2 },
