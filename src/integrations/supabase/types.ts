@@ -4187,6 +4187,131 @@ export type Database = {
           },
         ]
       }
+      partner_ai_insights: {
+        Row: {
+          applied: boolean
+          campaign_id: string | null
+          confidence: number | null
+          created_at: string
+          data: Json
+          id: string
+          metric: string
+          observed_from: string | null
+          observed_to: string | null
+          recommendation: string | null
+          sample_size: number | null
+          scope: string
+          scope_key: string | null
+          value: number | null
+        }
+        Insert: {
+          applied?: boolean
+          campaign_id?: string | null
+          confidence?: number | null
+          created_at?: string
+          data?: Json
+          id?: string
+          metric: string
+          observed_from?: string | null
+          observed_to?: string | null
+          recommendation?: string | null
+          sample_size?: number | null
+          scope: string
+          scope_key?: string | null
+          value?: number | null
+        }
+        Update: {
+          applied?: boolean
+          campaign_id?: string | null
+          confidence?: number | null
+          created_at?: string
+          data?: Json
+          id?: string
+          metric?: string
+          observed_from?: string | null
+          observed_to?: string | null
+          recommendation?: string | null
+          sample_size?: number | null
+          scope?: string
+          scope_key?: string | null
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_ai_insights_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "partner_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_campaigns: {
+        Row: {
+          channels: string[]
+          created_at: string
+          created_by: string | null
+          daily_target: number
+          end_date: string | null
+          goal: string | null
+          id: string
+          ideal_profile: Json
+          metrics: Json
+          name: string
+          offer: Json
+          partner_type: string | null
+          start_date: string | null
+          status: string
+          strategy: Json
+          target_categories: string[]
+          target_countries: string[]
+          target_languages: string[]
+          updated_at: string
+        }
+        Insert: {
+          channels?: string[]
+          created_at?: string
+          created_by?: string | null
+          daily_target?: number
+          end_date?: string | null
+          goal?: string | null
+          id?: string
+          ideal_profile?: Json
+          metrics?: Json
+          name: string
+          offer?: Json
+          partner_type?: string | null
+          start_date?: string | null
+          status?: string
+          strategy?: Json
+          target_categories?: string[]
+          target_countries?: string[]
+          target_languages?: string[]
+          updated_at?: string
+        }
+        Update: {
+          channels?: string[]
+          created_at?: string
+          created_by?: string | null
+          daily_target?: number
+          end_date?: string | null
+          goal?: string | null
+          id?: string
+          ideal_profile?: Json
+          metrics?: Json
+          name?: string
+          offer?: Json
+          partner_type?: string | null
+          start_date?: string | null
+          status?: string
+          strategy?: Json
+          target_categories?: string[]
+          target_countries?: string[]
+          target_languages?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       partner_contract_audit_log: {
         Row: {
           actor_id: string | null
@@ -4668,6 +4793,143 @@ export type Database = {
           },
         ]
       }
+      partner_lead_status_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          from_status: string | null
+          id: string
+          lead_id: string
+          reason: string | null
+          to_status: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          lead_id: string
+          reason?: string | null
+          to_status: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          lead_id?: string
+          reason?: string | null
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_lead_status_history_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "partner_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_leads: {
+        Row: {
+          ai_analysis: Json
+          ai_notes: string | null
+          ai_score: number | null
+          campaign_id: string | null
+          category: string | null
+          company_name: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          converted_partner_id: string | null
+          country: string | null
+          created_at: string
+          discovered_via: string | null
+          facebook_url: string | null
+          id: string
+          instagram_handle: string | null
+          language: string | null
+          last_contacted_at: string | null
+          linkedin_url: string | null
+          metadata: Json
+          status: string
+          tags: string[]
+          tiktok_handle: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          ai_analysis?: Json
+          ai_notes?: string | null
+          ai_score?: number | null
+          campaign_id?: string | null
+          category?: string | null
+          company_name: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          converted_partner_id?: string | null
+          country?: string | null
+          created_at?: string
+          discovered_via?: string | null
+          facebook_url?: string | null
+          id?: string
+          instagram_handle?: string | null
+          language?: string | null
+          last_contacted_at?: string | null
+          linkedin_url?: string | null
+          metadata?: Json
+          status?: string
+          tags?: string[]
+          tiktok_handle?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          ai_analysis?: Json
+          ai_notes?: string | null
+          ai_score?: number | null
+          campaign_id?: string | null
+          category?: string | null
+          company_name?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          converted_partner_id?: string | null
+          country?: string | null
+          created_at?: string
+          discovered_via?: string | null
+          facebook_url?: string | null
+          id?: string
+          instagram_handle?: string | null
+          language?: string | null
+          last_contacted_at?: string | null
+          linkedin_url?: string | null
+          metadata?: Json
+          status?: string
+          tags?: string[]
+          tiktok_handle?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_leads_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "partner_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_leads_converted_partner_id_fkey"
+            columns: ["converted_partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_marketing_assets: {
         Row: {
           active: boolean
@@ -4876,6 +5138,84 @@ export type Database = {
             columns: ["partner_id"]
             isOneToOne: false
             referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_outreach: {
+        Row: {
+          ai_generated: boolean
+          ai_model: string | null
+          campaign_id: string | null
+          channel: string
+          created_at: string
+          created_by: string | null
+          id: string
+          lead_id: string
+          message: string
+          metadata: Json
+          opened_at: string | null
+          replied_at: string | null
+          reply_text: string | null
+          sent_at: string | null
+          status: string
+          subject: string | null
+          updated_at: string
+          variant: string | null
+        }
+        Insert: {
+          ai_generated?: boolean
+          ai_model?: string | null
+          campaign_id?: string | null
+          channel: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lead_id: string
+          message: string
+          metadata?: Json
+          opened_at?: string | null
+          replied_at?: string | null
+          reply_text?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+          variant?: string | null
+        }
+        Update: {
+          ai_generated?: boolean
+          ai_model?: string | null
+          campaign_id?: string | null
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lead_id?: string
+          message?: string
+          metadata?: Json
+          opened_at?: string | null
+          replied_at?: string | null
+          reply_text?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+          variant?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_outreach_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "partner_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_outreach_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "partner_leads"
             referencedColumns: ["id"]
           },
         ]
