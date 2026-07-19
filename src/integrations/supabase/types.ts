@@ -5469,60 +5469,114 @@ export type Database = {
       partner_recruitment_posts: {
         Row: {
           angle: string | null
+          best_time_hint: string | null
           body: string
+          campaign_group: string | null
           created_at: string
           cta: string | null
           generated_by: string | null
           hashtags: string[]
           hook: string | null
+          hook_variants: Json | null
           id: string
           image_prompt: string | null
           image_url: string | null
           platform: string
           published_at: string | null
           scheduled_at: string | null
+          scheduled_for: string | null
           status: string
           title: string | null
           updated_at: string
           video_script: string | null
+          viral_analysis: Json | null
+          viral_score: number | null
         }
         Insert: {
           angle?: string | null
+          best_time_hint?: string | null
           body: string
+          campaign_group?: string | null
           created_at?: string
           cta?: string | null
           generated_by?: string | null
           hashtags?: string[]
           hook?: string | null
+          hook_variants?: Json | null
           id?: string
           image_prompt?: string | null
           image_url?: string | null
           platform: string
           published_at?: string | null
           scheduled_at?: string | null
+          scheduled_for?: string | null
           status?: string
           title?: string | null
           updated_at?: string
           video_script?: string | null
+          viral_analysis?: Json | null
+          viral_score?: number | null
         }
         Update: {
           angle?: string | null
+          best_time_hint?: string | null
           body?: string
+          campaign_group?: string | null
           created_at?: string
           cta?: string | null
           generated_by?: string | null
           hashtags?: string[]
           hook?: string | null
+          hook_variants?: Json | null
           id?: string
           image_prompt?: string | null
           image_url?: string | null
           platform?: string
           published_at?: string | null
           scheduled_at?: string | null
+          scheduled_for?: string | null
           status?: string
           title?: string | null
           updated_at?: string
           video_script?: string | null
+          viral_analysis?: Json | null
+          viral_score?: number | null
+        }
+        Relationships: []
+      }
+      partner_recruitment_trends: {
+        Row: {
+          audience_note: string | null
+          created_at: string
+          hashtags: string[] | null
+          hook_examples: string[] | null
+          id: string
+          platform: string
+          raw: Json | null
+          score: number | null
+          topic: string
+        }
+        Insert: {
+          audience_note?: string | null
+          created_at?: string
+          hashtags?: string[] | null
+          hook_examples?: string[] | null
+          id?: string
+          platform: string
+          raw?: Json | null
+          score?: number | null
+          topic: string
+        }
+        Update: {
+          audience_note?: string | null
+          created_at?: string
+          hashtags?: string[] | null
+          hook_examples?: string[] | null
+          id?: string
+          platform?: string
+          raw?: Json | null
+          score?: number | null
+          topic?: string
         }
         Relationships: []
       }
