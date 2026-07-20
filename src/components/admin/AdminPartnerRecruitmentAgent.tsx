@@ -349,6 +349,7 @@ export default function AdminPartnerRecruitmentAgent() {
           { k: "weekly", l: "📅 Heti terv", i: CalendarDays },
           { k: "trends", l: "🔥 Trendek", i: TrendingUp },
           { k: "analytics", l: "📊 Analitika", i: BarChart3 },
+          { k: "pro", l: "🏆 Pro Suite", i: Rocket },
         ].map((t) => (
           <button key={t.k} onClick={() => setTab(t.k as any)}
             className={`px-4 py-3 text-xs font-black uppercase tracking-widest whitespace-nowrap ${tab === t.k ? "border-b-2 border-primary text-primary" : "text-muted-foreground"}`}>
