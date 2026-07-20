@@ -622,6 +622,7 @@ export default function AdminPartnerRecruitmentAgent() {
           </div>
         </div>
       )}
+      {tab === "pro" && <AdminPartnerRecruitmentPro />}
     </div>
   );
 }
