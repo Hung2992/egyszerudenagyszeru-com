@@ -59,7 +59,7 @@ function scoreColor(s: number | null) {
 }
 
 export default function AdminPartnerRecruitmentAgent() {
-  const [tab, setTab] = useState<"generator" | "weekly" | "trends" | "analytics">("generator");
+  const [tab, setTab] = useState<"generator" | "weekly" | "trends" | "analytics" | "pro">("generator");
   const [cfg, setCfg] = useState<any>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [trends, setTrends] = useState<Trend[]>([]);
