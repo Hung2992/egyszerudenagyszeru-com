@@ -5466,12 +5466,64 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_recruitment_campaigns: {
+        Row: {
+          ai_suggestions: Json | null
+          budget_huf: number | null
+          created_at: string
+          created_by: string | null
+          end_date: string | null
+          goal: string | null
+          id: string
+          kpis: Json | null
+          name: string
+          platforms: string[] | null
+          start_date: string | null
+          status: string
+          target_audience: string | null
+          updated_at: string
+        }
+        Insert: {
+          ai_suggestions?: Json | null
+          budget_huf?: number | null
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          goal?: string | null
+          id?: string
+          kpis?: Json | null
+          name: string
+          platforms?: string[] | null
+          start_date?: string | null
+          status?: string
+          target_audience?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ai_suggestions?: Json | null
+          budget_huf?: number | null
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          goal?: string | null
+          id?: string
+          kpis?: Json | null
+          name?: string
+          platforms?: string[] | null
+          start_date?: string | null
+          status?: string
+          target_audience?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       partner_recruitment_posts: {
         Row: {
           angle: string | null
           best_time_hint: string | null
           body: string
           campaign_group: string | null
+          campaign_id: string | null
           created_at: string
           cta: string | null
           generated_by: string | null
@@ -5481,6 +5533,7 @@ export type Database = {
           id: string
           image_prompt: string | null
           image_url: string | null
+          language: string | null
           platform: string
           published_at: string | null
           scheduled_at: string | null
@@ -5497,6 +5550,7 @@ export type Database = {
           best_time_hint?: string | null
           body: string
           campaign_group?: string | null
+          campaign_id?: string | null
           created_at?: string
           cta?: string | null
           generated_by?: string | null
@@ -5506,6 +5560,7 @@ export type Database = {
           id?: string
           image_prompt?: string | null
           image_url?: string | null
+          language?: string | null
           platform: string
           published_at?: string | null
           scheduled_at?: string | null
@@ -5522,6 +5577,7 @@ export type Database = {
           best_time_hint?: string | null
           body?: string
           campaign_group?: string | null
+          campaign_id?: string | null
           created_at?: string
           cta?: string | null
           generated_by?: string | null
@@ -5531,6 +5587,7 @@ export type Database = {
           id?: string
           image_prompt?: string | null
           image_url?: string | null
+          language?: string | null
           platform?: string
           published_at?: string | null
           scheduled_at?: string | null
@@ -5542,7 +5599,112 @@ export type Database = {
           viral_analysis?: Json | null
           viral_score?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "partner_recruitment_posts_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "partner_recruitment_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_recruitment_predictions: {
+        Row: {
+          campaign_id: string | null
+          confidence: number | null
+          created_at: string
+          created_by: string | null
+          id: string
+          predicted_conversion: number | null
+          predicted_leads: number | null
+          predicted_reach: number | null
+          predicted_signups: number | null
+          raw: Json | null
+          reasoning: string | null
+          recommended_posts_per_day: number | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          predicted_conversion?: number | null
+          predicted_leads?: number | null
+          predicted_reach?: number | null
+          predicted_signups?: number | null
+          raw?: Json | null
+          reasoning?: string | null
+          recommended_posts_per_day?: number | null
+        }
+        Update: {
+          campaign_id?: string | null
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          predicted_conversion?: number | null
+          predicted_leads?: number | null
+          predicted_reach?: number | null
+          predicted_signups?: number | null
+          raw?: Json | null
+          reasoning?: string | null
+          recommended_posts_per_day?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_recruitment_predictions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "partner_recruitment_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_recruitment_translations: {
+        Row: {
+          body: string | null
+          created_at: string
+          created_by: string | null
+          cta: string | null
+          hashtags: string[] | null
+          hook: string | null
+          id: string
+          post_id: string | null
+          target_lang: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          cta?: string | null
+          hashtags?: string[] | null
+          hook?: string | null
+          id?: string
+          post_id?: string | null
+          target_lang: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          cta?: string | null
+          hashtags?: string[] | null
+          hook?: string | null
+          id?: string
+          post_id?: string | null
+          target_lang?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_recruitment_translations_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "partner_recruitment_posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       partner_recruitment_trends: {
         Row: {
@@ -5579,6 +5741,68 @@ export type Database = {
           topic?: string
         }
         Relationships: []
+      }
+      partner_recruitment_videos: {
+        Row: {
+          captions: string | null
+          created_at: string
+          created_by: string | null
+          duration_seconds: number | null
+          id: string
+          music_suggestion: string | null
+          narration: string | null
+          platform: string
+          post_id: string | null
+          script: Json | null
+          status: string
+          storyboard: Json | null
+          thumbnail_prompt: string | null
+          thumbnail_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          captions?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_seconds?: number | null
+          id?: string
+          music_suggestion?: string | null
+          narration?: string | null
+          platform: string
+          post_id?: string | null
+          script?: Json | null
+          status?: string
+          storyboard?: Json | null
+          thumbnail_prompt?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          captions?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_seconds?: number | null
+          id?: string
+          music_suggestion?: string | null
+          narration?: string | null
+          platform?: string
+          post_id?: string | null
+          script?: Json | null
+          status?: string
+          storyboard?: Json | null
+          thumbnail_prompt?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_recruitment_videos_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "partner_recruitment_posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       partner_referral_status_history: {
         Row: {

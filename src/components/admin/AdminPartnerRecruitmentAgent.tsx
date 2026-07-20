@@ -8,8 +8,9 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import {
   Loader2, Sparkles, Copy, Trash2, Check, Facebook, Instagram, Music2, RefreshCw,
-  Image as ImageIcon, TrendingUp, CalendarDays, BarChart3, Zap, Flame, Wand2, Clock,
+  Image as ImageIcon, TrendingUp, CalendarDays, BarChart3, Zap, Flame, Wand2, Clock, Rocket,
 } from "lucide-react";
+import AdminPartnerRecruitmentPro from "./AdminPartnerRecruitmentPro";
 
 type Post = {
   id: string;
@@ -59,7 +60,7 @@ function scoreColor(s: number | null) {
 }
 
 export default function AdminPartnerRecruitmentAgent() {
-  const [tab, setTab] = useState<"generator" | "weekly" | "trends" | "analytics">("generator");
+  const [tab, setTab] = useState<"generator" | "weekly" | "trends" | "analytics" | "pro">("generator");
   const [cfg, setCfg] = useState<any>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [trends, setTrends] = useState<Trend[]>([]);
@@ -348,6 +349,7 @@ export default function AdminPartnerRecruitmentAgent() {
           { k: "weekly", l: "📅 Heti terv", i: CalendarDays },
           { k: "trends", l: "🔥 Trendek", i: TrendingUp },
           { k: "analytics", l: "📊 Analitika", i: BarChart3 },
+          { k: "pro", l: "🏆 Pro Suite", i: Rocket },
         ].map((t) => (
           <button key={t.k} onClick={() => setTab(t.k as any)}
             className={`px-4 py-3 text-xs font-black uppercase tracking-widest whitespace-nowrap ${tab === t.k ? "border-b-2 border-primary text-primary" : "text-muted-foreground"}`}>
@@ -620,6 +622,7 @@ export default function AdminPartnerRecruitmentAgent() {
           </div>
         </div>
       )}
+      {tab === "pro" && <AdminPartnerRecruitmentPro />}
     </div>
   );
 }

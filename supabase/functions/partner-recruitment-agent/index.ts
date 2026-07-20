@@ -313,6 +313,116 @@ Adj minden napra minden platformra egy posztot. Ez ${days * platforms.length} po
       return json({ ok: true, image_url: url });
     }
 
+    // ============ CAMPAIGN MANAGER ============
+    if (action === "create_campaign") {
+      const { name, goal, budget_huf, target_audience, platforms, start_date, end_date } = body;
+      if (!name) return json({ error: "name required" }, 400);
+      const sys = `Te egy top marketing stratéga vagy. Adj vissza JSON-t: {"kpis":{"target_reach":0,"target_leads":0,"target_signups":0,"target_conversion":0.0},"ai_suggestions":{"optimizations":[""],"channel_mix":{"facebook":0.0,"instagram":0.0,"tiktok":0.0},"cadence":"napi X poszt","risk":""}}`;
+      const usr = `Kampány: ${name}. Cél: ${goal || "partner-toborzás"}. Költségkeret: ${budget_huf || 0} HUF. Célközönség: ${target_audience || cfg.target_audience}. Platformok: ${(platforms || ["facebook","instagram","tiktok"]).join(",")}. Kezdés: ${start_date || "most"}. Vége: ${end_date || "nincs"}.`;
+      let ai: any = {};
+      try { ai = await aiJson(LOVABLE_API_KEY, sys, usr); } catch (e) { console.error("campaign ai", e); }
+      const { data: ins, error } = await supabase.from("partner_recruitment_campaigns").insert({
+        name, goal: goal || null, budget_huf: budget_huf || 0,
+        target_audience: target_audience || cfg.target_audience,
+        platforms: platforms || ["facebook","instagram","tiktok"],
+        kpis: ai.kpis || {}, ai_suggestions: ai.ai_suggestions || {},
+        start_date: start_date || null, end_date: end_date || null,
+        status: "draft", created_by: userId,
+      }).select().single();
+      if (error) return json({ error: error.message }, 500);
+      return json({ ok: true, campaign: ins });
+    }
+
+    // ============ VIDEO STUDIO ============
+    if (action === "video_studio") {
+      const { topic, platform = "tiktok", duration = 30, post_id } = body;
+      const sys = `Te egy virális rövid videó rendező vagy. Készíts komplett videó csomagot. Válasz CSAK JSON:
+{
+  "script": [{"scene":1,"seconds":"0-2","visual":"","voiceover":"","text_overlay":""}],
+  "storyboard": [{"scene":1,"shot":"","camera":"close-up|medium|wide","mood":""}],
+  "narration": "teljes narráció szöveg",
+  "captions": "sortört felirat (SRT-szerű, egyszerű)",
+  "music_suggestion": "hangulat + BPM + kulcsszavak (pl. 'upbeat corporate 120bpm')",
+  "thumbnail_prompt": "angol nyelvű vonzó thumbnail prompt"
+}`;
+      const usr = `Platform: ${platform}. Hossz: ${duration} mp. Téma: ${topic || "Egyszerű de Nagyszerű webshop partnerprogram"}. Hangnem: ${cfg.tone}. Érték: ${cfg.value_props}.`;
+      let v: any = {};
+      try { v = await aiJson(LOVABLE_API_KEY, sys, usr); } catch (e: any) { return json({ error: e.message }, 500); }
+      const thumbUrl = v.thumbnail_prompt ? await generateImage(LOVABLE_API_KEY, v.thumbnail_prompt, platform, supabase) : null;
+      const { data: ins, error } = await supabase.from("partner_recruitment_videos").insert({
+        post_id: post_id || null, platform,
+        script: v.script || [], storyboard: v.storyboard || [],
+        narration: v.narration || null, captions: v.captions || null,
+        music_suggestion: v.music_suggestion || null,
+        thumbnail_prompt: v.thumbnail_prompt || null, thumbnail_url: thumbUrl,
+        duration_seconds: duration, status: "draft", created_by: userId,
+      }).select().single();
+      if (error) return json({ error: error.message }, 500);
+      return json({ ok: true, video: ins });
+    }
+
+    // ============ MULTI-LANGUAGE TRANSLATE ============
+    if (action === "translate_post") {
+      const { post_id, langs } = body;
+      if (!post_id || !Array.isArray(langs) || !langs.length) return json({ error: "post_id + langs required" }, 400);
+      const { data: post } = await supabase.from("partner_recruitment_posts").select("*").eq("id", post_id).maybeSingle();
+      if (!post) return json({ error: "not found" }, 404);
+      const LANG_NAMES: Record<string,string> = { en: "angol", de: "német", ro: "román", sk: "szlovák", hu: "magyar" };
+      const out: any[] = [];
+      for (const lang of langs) {
+        const sys = `Te egy natív ${LANG_NAMES[lang] || lang} copywriter vagy. Fordítsd le a posztot NATURÁLISAN (nem szó szerint), lokalizáld a hashtageket és CTA-t. Válasz CSAK JSON: {"hook":"","body":"","hashtags":["#..."],"cta":""}`;
+        const usr = `Eredeti (HU) hook: ${post.hook}\nBody: ${post.body}\nHashtags: ${(post.hashtags||[]).join(" ")}\nCTA: ${post.cta}`;
+        try {
+          const t = await aiJson(LOVABLE_API_KEY, sys, usr);
+          const { data: ins } = await supabase.from("partner_recruitment_translations").upsert({
+            post_id, target_lang: lang,
+            hook: t.hook || null, body: t.body || "",
+            hashtags: Array.isArray(t.hashtags) ? t.hashtags : [],
+            cta: t.cta || null, created_by: userId,
+          }, { onConflict: "post_id,target_lang" }).select().single();
+          if (ins) out.push(ins);
+        } catch (e) { console.error("translate", lang, e); }
+      }
+      return json({ ok: true, translations: out });
+    }
+
+    // ============ GROWTH PREDICTOR ============
+    if (action === "growth_predict") {
+      const { campaign_id } = body;
+      let campaign: any = null;
+      if (campaign_id) {
+        const { data } = await supabase.from("partner_recruitment_campaigns").select("*").eq("id", campaign_id).maybeSingle();
+        campaign = data;
+      }
+      // Historical stats: last 30 days posts
+      const since = new Date(Date.now() - 30*24*3600*1000).toISOString();
+      const { data: recent } = await supabase.from("partner_recruitment_posts")
+        .select("platform, viral_score, status").gte("created_at", since);
+      const stats = { total: recent?.length || 0, avg_viral: 0, published: 0 };
+      if (recent?.length) {
+        stats.avg_viral = Math.round(recent.reduce((s,p:any)=>s+(p.viral_score||0),0) / recent.length);
+        stats.published = recent.filter((p:any)=>p.status==="published").length;
+      }
+      const sys = `Te egy adatvezérelt growth marketing analitikus vagy. Előrejelzést készíts REÁLIS számokkal magyar KKV partnertoborzó kampányra. Válasz CSAK JSON:
+{"predicted_reach": 0, "predicted_leads": 0, "predicted_signups": 0, "predicted_conversion": 0.0, "recommended_posts_per_day": 0, "reasoning": "1-2 mondat", "confidence": 0.0}`;
+      const usr = `Kampány: ${campaign?.name || "általános toborzás"}. Költségkeret: ${campaign?.budget_huf || 0} HUF. Platformok: ${(campaign?.platforms||["facebook","instagram","tiktok"]).join(",")}. Célközönség: ${campaign?.target_audience || cfg.target_audience}. Előző 30 nap: ${stats.total} poszt, ${stats.published} publikált, átlag virális score ${stats.avg_viral}/100. Adj konzervatív, de bátor előrejelzést.`;
+      let p: any = {};
+      try { p = await aiJson(LOVABLE_API_KEY, sys, usr); } catch (e: any) { return json({ error: e.message }, 500); }
+      const { data: ins } = await supabase.from("partner_recruitment_predictions").insert({
+        campaign_id: campaign_id || null,
+        predicted_reach: Number(p.predicted_reach) || 0,
+        predicted_leads: Number(p.predicted_leads) || 0,
+        predicted_signups: Number(p.predicted_signups) || 0,
+        predicted_conversion: Number(p.predicted_conversion) || 0,
+        recommended_posts_per_day: Number(p.recommended_posts_per_day) || 0,
+        reasoning: p.reasoning || null,
+        confidence: Number(p.confidence) || 0,
+        raw: { ai: p, stats },
+        created_by: userId,
+      }).select().single();
+      return json({ ok: true, prediction: ins, historical: stats });
+    }
+
     return json({ error: "unknown action" }, 400);
   } catch (e: any) {
     if (e?.message === "rate_limit") return json({ error: "Túl sok AI kérés." }, 429);
