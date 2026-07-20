@@ -8,8 +8,9 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import {
   Loader2, Sparkles, Copy, Trash2, Check, Facebook, Instagram, Music2, RefreshCw,
-  Image as ImageIcon, TrendingUp, CalendarDays, BarChart3, Zap, Flame, Wand2, Clock,
+  Image as ImageIcon, TrendingUp, CalendarDays, BarChart3, Zap, Flame, Wand2, Clock, Rocket,
 } from "lucide-react";
+import AdminPartnerRecruitmentPro from "./AdminPartnerRecruitmentPro";
 
 type Post = {
   id: string;
