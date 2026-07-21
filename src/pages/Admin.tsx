@@ -32,6 +32,7 @@ const MarketingStudioRouter = lazy(lazyRetry(() => import("@/components/admin/Ma
 const AdminPartnerRecruitmentAgent = lazy(lazyRetry(() => import("@/components/admin/AdminPartnerRecruitmentAgent")));
 const AdminPartnerAcquisitionEngine = lazy(lazyRetry(() => import("@/components/admin/AdminPartnerAcquisitionEngine")));
 const AdminAiCommandCenter = lazy(lazyRetry(() => import("@/components/admin/AdminAiCommandCenter")));
+const AdminSocialAutoPublish = lazy(lazyRetry(() => import("@/components/admin/AdminSocialAutoPublish")));
 import { Facebook as FacebookIcon, Instagram as InstagramIcon, Youtube as YoutubeIcon, Music2, Linkedin as LinkedinIcon, Twitter as TwitterIcon } from "lucide-react";
 const AdminGdprTab = lazy(lazyRetry(() => import("@/components/admin/AdminGdprTab")));
 const AdminSupportTab = lazy(lazyRetry(() => import("@/components/admin/AdminSupportTab")));
