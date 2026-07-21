@@ -66,3 +66,7 @@ project_id = "meyxhsgnryuupwpddxav"
 
   [functions.shipment-label]
     verify_jwt = true
+
+  [functions.social-publisher]
+    verify_jwt = false
+
