@@ -8418,6 +8418,185 @@ export type Database = {
         }
         Relationships: []
       }
+      social_auto_publish_settings: {
+        Row: {
+          autopilot_enabled: boolean
+          created_at: string
+          daily_limit_facebook: number
+          daily_limit_instagram: number
+          daily_limit_tiktok: number
+          default_hashtags: string[]
+          facebook_enabled: boolean
+          facebook_page_id: string | null
+          id: string
+          instagram_business_id: string | null
+          instagram_enabled: boolean
+          quiet_hours_end: number
+          quiet_hours_start: number
+          singleton: boolean
+          tiktok_enabled: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          autopilot_enabled?: boolean
+          created_at?: string
+          daily_limit_facebook?: number
+          daily_limit_instagram?: number
+          daily_limit_tiktok?: number
+          default_hashtags?: string[]
+          facebook_enabled?: boolean
+          facebook_page_id?: string | null
+          id?: string
+          instagram_business_id?: string | null
+          instagram_enabled?: boolean
+          quiet_hours_end?: number
+          quiet_hours_start?: number
+          singleton?: boolean
+          tiktok_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          autopilot_enabled?: boolean
+          created_at?: string
+          daily_limit_facebook?: number
+          daily_limit_instagram?: number
+          daily_limit_tiktok?: number
+          default_hashtags?: string[]
+          facebook_enabled?: boolean
+          facebook_page_id?: string | null
+          id?: string
+          instagram_business_id?: string | null
+          instagram_enabled?: boolean
+          quiet_hours_end?: number
+          quiet_hours_start?: number
+          singleton?: boolean
+          tiktok_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      social_publish_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          payload: Json
+          platform: string | null
+          queue_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          payload?: Json
+          platform?: string | null
+          queue_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          platform?: string | null
+          queue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_publish_events_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "social_publish_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_publish_queue: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          autopilot: boolean
+          campaign_id: string | null
+          content: string
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          external_permalink: string | null
+          external_post_id: string | null
+          hashtags: string[]
+          id: string
+          max_retries: number
+          media_type: string | null
+          media_urls: string[]
+          metrics: Json
+          metrics_updated_at: string | null
+          platform: string
+          published_at: string | null
+          retry_count: number
+          scheduled_at: string
+          source: string | null
+          source_ref: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          autopilot?: boolean
+          campaign_id?: string | null
+          content: string
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          external_permalink?: string | null
+          external_post_id?: string | null
+          hashtags?: string[]
+          id?: string
+          max_retries?: number
+          media_type?: string | null
+          media_urls?: string[]
+          metrics?: Json
+          metrics_updated_at?: string | null
+          platform: string
+          published_at?: string | null
+          retry_count?: number
+          scheduled_at?: string
+          source?: string | null
+          source_ref?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          autopilot?: boolean
+          campaign_id?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          external_permalink?: string | null
+          external_post_id?: string | null
+          hashtags?: string[]
+          id?: string
+          max_retries?: number
+          media_type?: string | null
+          media_urls?: string[]
+          metrics?: Json
+          metrics_updated_at?: string | null
+          platform?: string
+          published_at?: string | null
+          retry_count?: number
+          scheduled_at?: string
+          source?: string | null
+          source_ref?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       store_settings: {
         Row: {
           accounting_auto_invoice: boolean | null
