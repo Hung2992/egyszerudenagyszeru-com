@@ -864,6 +864,102 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_marketing_briefings: {
+        Row: {
+          ai_model: string | null
+          briefing_date: string
+          created_at: string
+          highlights: Json
+          id: string
+          metrics: Json
+          next_actions: Json
+          period: string
+          recommendations: Json
+          summary: string
+        }
+        Insert: {
+          ai_model?: string | null
+          briefing_date?: string
+          created_at?: string
+          highlights?: Json
+          id?: string
+          metrics?: Json
+          next_actions?: Json
+          period?: string
+          recommendations?: Json
+          summary: string
+        }
+        Update: {
+          ai_model?: string | null
+          briefing_date?: string
+          created_at?: string
+          highlights?: Json
+          id?: string
+          metrics?: Json
+          next_actions?: Json
+          period?: string
+          recommendations?: Json
+          summary?: string
+        }
+        Relationships: []
+      }
+      ai_marketing_insights: {
+        Row: {
+          applied_at: string | null
+          auto_applied: boolean
+          category: string
+          confidence: number | null
+          created_at: string
+          evidence: Json | null
+          id: string
+          insight: string
+          platform: string | null
+          recommendation: string | null
+          scope: string
+          status: string
+          title: string
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          applied_at?: string | null
+          auto_applied?: boolean
+          category: string
+          confidence?: number | null
+          created_at?: string
+          evidence?: Json | null
+          id?: string
+          insight: string
+          platform?: string | null
+          recommendation?: string | null
+          scope?: string
+          status?: string
+          title: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          applied_at?: string | null
+          auto_applied?: boolean
+          category?: string
+          confidence?: number | null
+          created_at?: string
+          evidence?: Json | null
+          id?: string
+          insight?: string
+          platform?: string | null
+          recommendation?: string | null
+          scope?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       ai_meta_actions: {
         Row: {
           action_type: string
@@ -8478,6 +8574,121 @@ export type Database = {
         }
         Relationships: []
       }
+      social_post_approvals: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_id: string | null
+          created_at: string
+          id: string
+          note: string | null
+          queue_id: string
+          snapshot: Json | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          queue_id: string
+          snapshot?: Json | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          queue_id?: string
+          snapshot?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_post_approvals_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "social_publish_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_post_metrics: {
+        Row: {
+          clicks: number | null
+          collected_at: string
+          comments: number | null
+          conversion_leads: number | null
+          conversion_signups: number | null
+          created_at: string
+          engagement_rate: number | null
+          external_post_id: string | null
+          id: string
+          impressions: number | null
+          likes: number | null
+          link_clicks: number | null
+          platform: string
+          queue_id: string
+          raw_payload: Json | null
+          reach: number | null
+          saves: number | null
+          shares: number | null
+          views: number | null
+        }
+        Insert: {
+          clicks?: number | null
+          collected_at?: string
+          comments?: number | null
+          conversion_leads?: number | null
+          conversion_signups?: number | null
+          created_at?: string
+          engagement_rate?: number | null
+          external_post_id?: string | null
+          id?: string
+          impressions?: number | null
+          likes?: number | null
+          link_clicks?: number | null
+          platform: string
+          queue_id: string
+          raw_payload?: Json | null
+          reach?: number | null
+          saves?: number | null
+          shares?: number | null
+          views?: number | null
+        }
+        Update: {
+          clicks?: number | null
+          collected_at?: string
+          comments?: number | null
+          conversion_leads?: number | null
+          conversion_signups?: number | null
+          created_at?: string
+          engagement_rate?: number | null
+          external_post_id?: string | null
+          id?: string
+          impressions?: number | null
+          likes?: number | null
+          link_clicks?: number | null
+          platform?: string
+          queue_id?: string
+          raw_payload?: Json | null
+          reach?: number | null
+          saves?: number | null
+          shares?: number | null
+          views?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_post_metrics_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "social_publish_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_publish_events: {
         Row: {
           created_at: string
@@ -8515,6 +8726,7 @@ export type Database = {
       }
       social_publish_queue: {
         Row: {
+          ai_score: number | null
           approved_at: string | null
           approved_by: string | null
           autopilot: boolean
@@ -8532,16 +8744,23 @@ export type Database = {
           media_urls: string[]
           metrics: Json
           metrics_updated_at: string | null
+          parent_post_id: string | null
           platform: string
+          predicted_engagement: number | null
+          predicted_reach: number | null
+          priority: number
           published_at: string | null
+          requires_approval: boolean
           retry_count: number
           scheduled_at: string
           source: string | null
           source_ref: string | null
           status: string
           updated_at: string
+          version: number
         }
         Insert: {
+          ai_score?: number | null
           approved_at?: string | null
           approved_by?: string | null
           autopilot?: boolean
@@ -8559,16 +8778,23 @@ export type Database = {
           media_urls?: string[]
           metrics?: Json
           metrics_updated_at?: string | null
+          parent_post_id?: string | null
           platform: string
+          predicted_engagement?: number | null
+          predicted_reach?: number | null
+          priority?: number
           published_at?: string | null
+          requires_approval?: boolean
           retry_count?: number
           scheduled_at?: string
           source?: string | null
           source_ref?: string | null
           status?: string
           updated_at?: string
+          version?: number
         }
         Update: {
+          ai_score?: number | null
           approved_at?: string | null
           approved_by?: string | null
           autopilot?: boolean
@@ -8586,16 +8812,30 @@ export type Database = {
           media_urls?: string[]
           metrics?: Json
           metrics_updated_at?: string | null
+          parent_post_id?: string | null
           platform?: string
+          predicted_engagement?: number | null
+          predicted_reach?: number | null
+          priority?: number
           published_at?: string | null
+          requires_approval?: boolean
           retry_count?: number
           scheduled_at?: string
           source?: string | null
           source_ref?: string | null
           status?: string
           updated_at?: string
+          version?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "social_publish_queue_parent_post_id_fkey"
+            columns: ["parent_post_id"]
+            isOneToOne: false
+            referencedRelation: "social_publish_queue"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       store_settings: {
         Row: {
