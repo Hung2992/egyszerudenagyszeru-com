@@ -70,3 +70,9 @@ project_id = "meyxhsgnryuupwpddxav"
   [functions.social-publisher]
     verify_jwt = false
 
+  [functions.social-metrics-collector]
+    verify_jwt = false
+
+  [functions.ai-marketing-ceo]
+    verify_jwt = false
+
