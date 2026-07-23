@@ -59,6 +59,36 @@ function scoreColor(s: number | null) {
   return "bg-red-500 text-white";
 }
 
+async function getFunctionErrorMessage(error: any) {
+  if (!error) return "Ismeretlen hiba";
+  const context = error.context;
+  if (context && typeof context.json === "function") {
+    try {
+      const payload = await context.clone().json();
+      if (payload?.error) return payload.error;
+      if (payload?.message) return payload.message;
+    } catch {
+      // fall back to text/message below
+    }
+  }
+  if (context && typeof context.text === "function") {
+    try {
+      const text = await context.clone().text();
+      if (text) return text;
+    } catch {
+      // fall back to message below
+    }
+  }
+  return error.message || "Nem sikerült elérni az AI Partner Toborzó végpontot.";
+}
+
+async function invokeRecruitmentAgent(body: Record<string, unknown>) {
+  const { data, error } = await supabase.functions.invoke("partner-recruitment-agent", { body });
+  if (error) throw new Error(await getFunctionErrorMessage(error));
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
 export default function AdminPartnerRecruitmentAgent() {
   const [tab, setTab] = useState<"generator" | "weekly" | "trends" | "analytics" | "pro">("generator");
   const [cfg, setCfg] = useState<any>(null);
@@ -109,10 +139,7 @@ export default function AdminPartnerRecruitmentAgent() {
     if (!selected.length) { toast({ title: "Válassz platformot", variant: "destructive" }); return; }
     setRunning(true);
     try {
-      const { data, error } = await supabase.functions.invoke("partner-recruitment-agent", {
-        body: { action: "run", platforms: selected, count, with_images: withImages, with_score: withScore, with_variants: true },
-      });
-      if (error) throw error;
+      const data = await invokeRecruitmentAgent({ action: "run", platforms: selected, count, with_images: withImages, with_score: withScore, with_variants: true });
       toast({ title: `${data?.created?.length || 0} poszt generálva ✨` });
       await load();
     } catch (e: any) {
@@ -126,10 +153,7 @@ export default function AdminPartnerRecruitmentAgent() {
     if (!confirm(`${days} napos terv = ${days * selected.length} poszt. Folytatod?`)) return;
     setWeeklyRunning(true);
     try {
-      const { data, error } = await supabase.functions.invoke("partner-recruitment-agent", {
-        body: { action: "weekly_plan", platforms: selected, days, with_images: withImages },
-      });
-      if (error) throw error;
+      const data = await invokeRecruitmentAgent({ action: "weekly_plan", platforms: selected, days, with_images: withImages });
       toast({ title: `Heti terv kész: ${data?.created?.length || 0} poszt ütemezve 📅` });
       await load();
       setTab("weekly");
@@ -143,10 +167,7 @@ export default function AdminPartnerRecruitmentAgent() {
     if (!selected.length) { toast({ title: "Válassz platformot", variant: "destructive" }); return; }
     setTrendRunning(true);
     try {
-      const { data, error } = await supabase.functions.invoke("partner-recruitment-agent", {
-        body: { action: "research_trends", platforms: selected },
-      });
-      if (error) throw error;
+      const data = await invokeRecruitmentAgent({ action: "research_trends", platforms: selected });
       toast({ title: `${data?.trends?.length || 0} trend behúzva 🔥` });
       await load();
       setTab("trends");
@@ -158,8 +179,7 @@ export default function AdminPartnerRecruitmentAgent() {
   const scoreOne = async (id: string) => {
     setScoringId(id);
     try {
-      const { error } = await supabase.functions.invoke("partner-recruitment-agent", { body: { action: "score_post", post_id: id } });
-      if (error) throw error;
+      await invokeRecruitmentAgent({ action: "score_post", post_id: id });
       toast({ title: "Pontszám frissítve" });
       await load();
     } catch (e: any) {
@@ -182,9 +202,13 @@ export default function AdminPartnerRecruitmentAgent() {
     load();
   };
   const regenImage = async (id: string) => {
-    const { error } = await supabase.functions.invoke("partner-recruitment-agent", { body: { action: "regenerate_image", post_id: id } });
-    if (error) toast({ title: "Hiba", description: error.message, variant: "destructive" });
-    else { toast({ title: "Kép újragenerálva" }); load(); }
+    try {
+      await invokeRecruitmentAgent({ action: "regenerate_image", post_id: id });
+      toast({ title: "Kép újragenerálva" });
+      load();
+    } catch (e: any) {
+      toast({ title: "Hiba", description: e.message, variant: "destructive" });
+    }
   };
   const swapHook = async (post: Post, newHook: string) => {
     await supabase.from("partner_recruitment_posts").update({ hook: newHook }).eq("id", post.id);

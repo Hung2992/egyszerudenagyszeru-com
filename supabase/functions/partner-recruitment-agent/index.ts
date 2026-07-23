@@ -1,19 +1,24 @@
 // Partner Toborzó AI Agent — PRO
 // Actions: run, regenerate_image, score_post, research_trends, weekly_plan, schedule_post
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.104.1";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 const AI_CHAT = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const AI_IMG = "https://ai.gateway.lovable.dev/v1/images/generations";
 const TEXT_MODEL = "google/gemini-2.5-flash";
 const IMAGE_MODEL = "google/gemini-2.5-flash-image-preview";
 
-const json = (b: unknown, s = 200) =>
-  new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+const buildCorsHeaders = (req?: Request) => ({
+  ...corsHeaders,
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers":
+    req?.headers.get("access-control-request-headers") ||
+    corsHeaders["Access-Control-Allow-Headers"] ||
+    "authorization, x-client-info, apikey, content-type",
+});
+
+const json = (b: unknown, s = 200, req?: Request) =>
+  new Response(JSON.stringify(b), { status: s, headers: { ...buildCorsHeaders(req), "Content-Type": "application/json" } });
 
 const ANGLES = [
   "sikertörténet — magyar KKV, aki 2 nap alatt indított saját webshopot",
@@ -92,13 +97,13 @@ async function scorePost(key: string, post: any) {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: buildCorsHeaders(req) });
 
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) return json({ error: "LOVABLE_API_KEY missing" }, 500);
+    if (!LOVABLE_API_KEY) return json({ error: "LOVABLE_API_KEY missing" }, 500, req);
     const auth = req.headers.get("Authorization") || "";
-    if (!auth.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
+    if (!auth.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401, req);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -107,9 +112,9 @@ Deno.serve(async (req) => {
     );
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData?.user?.id;
-    if (!userId) return json({ error: "Unauthorized" }, 401);
+    if (!userId) return json({ error: "Unauthorized" }, 401, req);
     const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-    if (!isAdmin) return json({ error: "Admin required" }, 403);
+    if (!isAdmin) return json({ error: "Admin required" }, 403, req);
 
     const body = await req.json().catch(() => ({}));
     const action = String(body?.action || "run");
@@ -203,17 +208,17 @@ JSON:
       if (cfgRow?.id) {
         await supabase.from("partner_recruitment_agent_config").update({ last_run_at: new Date().toISOString() }).eq("id", cfgRow.id);
       }
-      return json({ ok: true, created });
+      return json({ ok: true, created }, 200, req);
     }
 
     // ============ SCORE POST ============
     if (action === "score_post") {
       const { post_id } = body;
       const { data: post } = await supabase.from("partner_recruitment_posts").select("*").eq("id", post_id).maybeSingle();
-      if (!post) return json({ error: "not found" }, 404);
+      if (!post) return json({ error: "not found" }, 404, req);
       const s = await scorePost(LOVABLE_API_KEY, post);
       await supabase.from("partner_recruitment_posts").update({ viral_score: s.viral_score, viral_analysis: s }).eq("id", post_id);
-      return json({ ok: true, score: s });
+      return json({ ok: true, score: s }, 200, req);
     }
 
     // ============ RESEARCH TRENDS ============
@@ -239,7 +244,7 @@ JSON:
           }
         } catch (e) { console.error("trends", platform, e); }
       }
-      return json({ ok: true, trends: results });
+      return json({ ok: true, trends: results }, 200, req);
     }
 
     // ============ WEEKLY PLAN ============
@@ -258,7 +263,7 @@ Extra: ${cfg.custom_instructions || "—"}
 Adj minden napra minden platformra egy posztot. Ez ${days * platforms.length} poszt összesen. Változatos szögek: sikertörténet, probléma, összehasonlítás, AI feature, gyorsaság, közösségi bizonyíték, FOMO, hogyan-kezdd, before/after.`;
 
       let plan: any = {};
-      try { plan = await aiJson(LOVABLE_API_KEY, sys, usr); } catch (e: any) { return json({ error: e.message }, 500); }
+      try { plan = await aiJson(LOVABLE_API_KEY, sys, usr); } catch (e: any) { return json({ error: e.message }, 500, req); }
 
       const created: any[] = [];
       const now = new Date();
@@ -289,34 +294,34 @@ Adj minden napra minden platformra egy posztot. Ez ${days * platforms.length} po
         }).select().maybeSingle();
         if (ins) created.push(ins);
       }
-      return json({ ok: true, campaign_group: groupId, created });
+      return json({ ok: true, campaign_group: groupId, created }, 200, req);
     }
 
     // ============ SCHEDULE POST ============
     if (action === "schedule_post") {
       const { post_id, scheduled_for } = body;
       await supabase.from("partner_recruitment_posts").update({ scheduled_for }).eq("id", post_id);
-      return json({ ok: true });
+      return json({ ok: true }, 200, req);
     }
 
     // ============ REGENERATE IMAGE ============
     if (action === "regenerate_image") {
       const postId = body?.post_id;
-      if (!postId) return json({ error: "post_id required" }, 400);
+      if (!postId) return json({ error: "post_id required" }, 400, req);
       const { data: post } = await supabase.from("partner_recruitment_posts").select("*").eq("id", postId).maybeSingle();
-      if (!post) return json({ error: "not found" }, 404);
+      if (!post) return json({ error: "not found" }, 404, req);
       const prompt = body?.prompt || post.image_prompt;
-      if (!prompt) return json({ error: "no prompt" }, 400);
+      if (!prompt) return json({ error: "no prompt" }, 400, req);
       const url = await generateImage(LOVABLE_API_KEY, prompt, post.platform, supabase);
-      if (!url) return json({ error: "image gen failed" }, 500);
+      if (!url) return json({ error: "image gen failed" }, 500, req);
       await supabase.from("partner_recruitment_posts").update({ image_url: url, image_prompt: prompt }).eq("id", postId);
-      return json({ ok: true, image_url: url });
+      return json({ ok: true, image_url: url }, 200, req);
     }
 
     // ============ CAMPAIGN MANAGER ============
     if (action === "create_campaign") {
       const { name, goal, budget_huf, target_audience, platforms, start_date, end_date } = body;
-      if (!name) return json({ error: "name required" }, 400);
+      if (!name) return json({ error: "name required" }, 400, req);
       const sys = `Te egy top marketing stratéga vagy. Adj vissza JSON-t: {"kpis":{"target_reach":0,"target_leads":0,"target_signups":0,"target_conversion":0.0},"ai_suggestions":{"optimizations":[""],"channel_mix":{"facebook":0.0,"instagram":0.0,"tiktok":0.0},"cadence":"napi X poszt","risk":""}}`;
       const usr = `Kampány: ${name}. Cél: ${goal || "partner-toborzás"}. Költségkeret: ${budget_huf || 0} HUF. Célközönség: ${target_audience || cfg.target_audience}. Platformok: ${(platforms || ["facebook","instagram","tiktok"]).join(",")}. Kezdés: ${start_date || "most"}. Vége: ${end_date || "nincs"}.`;
       let ai: any = {};
@@ -329,8 +334,8 @@ Adj minden napra minden platformra egy posztot. Ez ${days * platforms.length} po
         start_date: start_date || null, end_date: end_date || null,
         status: "draft", created_by: userId,
       }).select().single();
-      if (error) return json({ error: error.message }, 500);
-      return json({ ok: true, campaign: ins });
+      if (error) return json({ error: error.message }, 500, req);
+      return json({ ok: true, campaign: ins }, 200, req);
     }
 
     // ============ VIDEO STUDIO ============
@@ -347,7 +352,7 @@ Adj minden napra minden platformra egy posztot. Ez ${days * platforms.length} po
 }`;
       const usr = `Platform: ${platform}. Hossz: ${duration} mp. Téma: ${topic || "Egyszerű de Nagyszerű webshop partnerprogram"}. Hangnem: ${cfg.tone}. Érték: ${cfg.value_props}.`;
       let v: any = {};
-      try { v = await aiJson(LOVABLE_API_KEY, sys, usr); } catch (e: any) { return json({ error: e.message }, 500); }
+      try { v = await aiJson(LOVABLE_API_KEY, sys, usr); } catch (e: any) { return json({ error: e.message }, 500, req); }
       const thumbUrl = v.thumbnail_prompt ? await generateImage(LOVABLE_API_KEY, v.thumbnail_prompt, platform, supabase) : null;
       const { data: ins, error } = await supabase.from("partner_recruitment_videos").insert({
         post_id: post_id || null, platform,
@@ -357,16 +362,16 @@ Adj minden napra minden platformra egy posztot. Ez ${days * platforms.length} po
         thumbnail_prompt: v.thumbnail_prompt || null, thumbnail_url: thumbUrl,
         duration_seconds: duration, status: "draft", created_by: userId,
       }).select().single();
-      if (error) return json({ error: error.message }, 500);
-      return json({ ok: true, video: ins });
+      if (error) return json({ error: error.message }, 500, req);
+      return json({ ok: true, video: ins }, 200, req);
     }
 
     // ============ MULTI-LANGUAGE TRANSLATE ============
     if (action === "translate_post") {
       const { post_id, langs } = body;
-      if (!post_id || !Array.isArray(langs) || !langs.length) return json({ error: "post_id + langs required" }, 400);
+      if (!post_id || !Array.isArray(langs) || !langs.length) return json({ error: "post_id + langs required" }, 400, req);
       const { data: post } = await supabase.from("partner_recruitment_posts").select("*").eq("id", post_id).maybeSingle();
-      if (!post) return json({ error: "not found" }, 404);
+      if (!post) return json({ error: "not found" }, 404, req);
       const LANG_NAMES: Record<string,string> = { en: "angol", de: "német", ro: "román", sk: "szlovák", hu: "magyar" };
       const out: any[] = [];
       for (const lang of langs) {
@@ -383,7 +388,7 @@ Adj minden napra minden platformra egy posztot. Ez ${days * platforms.length} po
           if (ins) out.push(ins);
         } catch (e) { console.error("translate", lang, e); }
       }
-      return json({ ok: true, translations: out });
+      return json({ ok: true, translations: out }, 200, req);
     }
 
     // ============ GROWTH PREDICTOR ============
@@ -407,7 +412,7 @@ Adj minden napra minden platformra egy posztot. Ez ${days * platforms.length} po
 {"predicted_reach": 0, "predicted_leads": 0, "predicted_signups": 0, "predicted_conversion": 0.0, "recommended_posts_per_day": 0, "reasoning": "1-2 mondat", "confidence": 0.0}`;
       const usr = `Kampány: ${campaign?.name || "általános toborzás"}. Költségkeret: ${campaign?.budget_huf || 0} HUF. Platformok: ${(campaign?.platforms||["facebook","instagram","tiktok"]).join(",")}. Célközönség: ${campaign?.target_audience || cfg.target_audience}. Előző 30 nap: ${stats.total} poszt, ${stats.published} publikált, átlag virális score ${stats.avg_viral}/100. Adj konzervatív, de bátor előrejelzést.`;
       let p: any = {};
-      try { p = await aiJson(LOVABLE_API_KEY, sys, usr); } catch (e: any) { return json({ error: e.message }, 500); }
+      try { p = await aiJson(LOVABLE_API_KEY, sys, usr); } catch (e: any) { return json({ error: e.message }, 500, req); }
       const { data: ins } = await supabase.from("partner_recruitment_predictions").insert({
         campaign_id: campaign_id || null,
         predicted_reach: Number(p.predicted_reach) || 0,
@@ -420,13 +425,13 @@ Adj minden napra minden platformra egy posztot. Ez ${days * platforms.length} po
         raw: { ai: p, stats },
         created_by: userId,
       }).select().single();
-      return json({ ok: true, prediction: ins, historical: stats });
+      return json({ ok: true, prediction: ins, historical: stats }, 200, req);
     }
 
-    return json({ error: "unknown action" }, 400);
+    return json({ error: "unknown action" }, 400, req);
   } catch (e: any) {
-    if (e?.message === "rate_limit") return json({ error: "Túl sok AI kérés." }, 429);
-    if (e?.message === "credits_exhausted") return json({ error: "AI kredit kimerült." }, 402);
-    return json({ error: e?.message || "internal" }, 500);
+    if (e?.message === "rate_limit") return json({ error: "Túl sok AI kérés." }, 429, req);
+    if (e?.message === "credits_exhausted") return json({ error: "AI kredit kimerült." }, 402, req);
+    return json({ error: e?.message || "internal" }, 500, req);
   }
 });

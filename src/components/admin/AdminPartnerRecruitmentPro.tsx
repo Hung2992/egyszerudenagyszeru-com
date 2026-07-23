@@ -18,7 +18,26 @@ const LANGS = [
 
 async function invoke(action: string, payload: any = {}) {
   const { data, error } = await supabase.functions.invoke("partner-recruitment-agent", { body: { action, ...payload } });
-  if (error) throw error;
+  if (error) {
+    const context = (error as any).context;
+    if (context && typeof context.json === "function") {
+      try {
+        const body = await context.clone().json();
+        throw new Error(body?.error || body?.message || error.message);
+      } catch (jsonError: any) {
+        if (jsonError?.message && jsonError.message !== "Failed to execute 'json' on 'Response': body stream already read") throw jsonError;
+      }
+    }
+    if (context && typeof context.text === "function") {
+      try {
+        const text = await context.clone().text();
+        if (text) throw new Error(text);
+      } catch (textError: any) {
+        if (textError?.message) throw textError;
+      }
+    }
+    throw new Error(error.message || "Nem sikerült elérni az AI Partner Toborzó végpontot.");
+  }
   if (data?.error) throw new Error(data.error);
   return data;
 }
