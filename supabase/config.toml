@@ -76,3 +76,6 @@ project_id = "meyxhsgnryuupwpddxav"
   [functions.ai-marketing-ceo]
     verify_jwt = false
 
+  [functions.ai-agent-bus-sync]
+    verify_jwt = false
+
