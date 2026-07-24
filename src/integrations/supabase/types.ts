@@ -352,6 +352,114 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_agent_bus_context: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          key: string
+          namespace: string
+          produced_by: string
+          ttl_seconds: number | null
+          updated_at: string
+          value: Json
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          key: string
+          namespace: string
+          produced_by: string
+          ttl_seconds?: number | null
+          updated_at?: string
+          value?: Json
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          key?: string
+          namespace?: string
+          produced_by?: string
+          ttl_seconds?: number | null
+          updated_at?: string
+          value?: Json
+          version?: number
+        }
+        Relationships: []
+      }
+      ai_agent_bus_events: {
+        Row: {
+          consumed_by: string[]
+          correlation_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          payload: Json
+          severity: string
+          source_agent: string
+          target_agent: string | null
+        }
+        Insert: {
+          consumed_by?: string[]
+          correlation_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          payload?: Json
+          severity?: string
+          source_agent: string
+          target_agent?: string | null
+        }
+        Update: {
+          consumed_by?: string[]
+          correlation_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          severity?: string
+          source_agent?: string
+          target_agent?: string | null
+        }
+        Relationships: []
+      }
+      ai_agent_bus_subscriptions: {
+        Row: {
+          agent_name: string
+          consume_count: number
+          created_at: string
+          event_type_pattern: string
+          id: string
+          is_active: boolean
+          last_consumed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          agent_name: string
+          consume_count?: number
+          created_at?: string
+          event_type_pattern: string
+          id?: string
+          is_active?: boolean
+          last_consumed_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agent_name?: string
+          consume_count?: number
+          created_at?: string
+          event_type_pattern?: string
+          id?: string
+          is_active?: boolean
+          last_consumed_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_agent_events: {
         Row: {
           created_at: string
@@ -11125,6 +11233,17 @@ export type Database = {
           user_email: string
           user_id: string
         }[]
+      }
+      agent_bus_publish: {
+        Args: {
+          _correlation_id?: string
+          _event_type: string
+          _payload?: Json
+          _severity?: string
+          _source_agent: string
+          _target_agent?: string
+        }
+        Returns: string
       }
       apply_meta_action: {
         Args: { _action_id: string; _user_id?: string }
