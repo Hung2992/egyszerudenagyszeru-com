@@ -18,6 +18,22 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } },
     );
 
+    // Replay: re-dispatch a specific archived event to subscribers
+    const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
+    if (body?.replay_event_id) {
+      const { data: ev } = await supabase.from("ai_agent_bus_events").select("*").eq("id", body.replay_event_id).maybeSingle();
+      if (!ev) return json({ error: "event not found" }, 404);
+      await publish(supabase, {
+        source: `${ev.source_agent}:replay`,
+        eventType: ev.event_type,
+        payload: { ...(ev.payload || {}), _replay_of: ev.id },
+        target: ev.target_agent || undefined,
+        severity: (ev.severity as any) || "info",
+        correlationId: ev.correlation_id || undefined,
+      });
+      return json({ ok: true, replayed: ev.id });
+    }
+
     const since = new Date(Date.now() - 5 * 60_000).toISOString(); // utolsó 5 perc
     const summary: Record<string, number> = {};
 
