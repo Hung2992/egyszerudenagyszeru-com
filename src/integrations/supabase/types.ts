@@ -427,6 +427,33 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_agent_bus_retention: {
+        Row: {
+          auto_cleanup_enabled: boolean
+          context_default_ttl_seconds: number
+          events_retention_days: number
+          id: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          auto_cleanup_enabled?: boolean
+          context_default_ttl_seconds?: number
+          events_retention_days?: number
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          auto_cleanup_enabled?: boolean
+          context_default_ttl_seconds?: number
+          events_retention_days?: number
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       ai_agent_bus_subscriptions: {
         Row: {
           agent_name: string
@@ -436,7 +463,10 @@ export type Database = {
           id: string
           is_active: boolean
           last_consumed_at: string | null
+          last_dispatch_at: string | null
+          last_dispatch_status: string | null
           updated_at: string
+          webhook_url: string | null
         }
         Insert: {
           agent_name: string
@@ -446,7 +476,10 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_consumed_at?: string | null
+          last_dispatch_at?: string | null
+          last_dispatch_status?: string | null
           updated_at?: string
+          webhook_url?: string | null
         }
         Update: {
           agent_name?: string
@@ -456,7 +489,10 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_consumed_at?: string | null
+          last_dispatch_at?: string | null
+          last_dispatch_status?: string | null
           updated_at?: string
+          webhook_url?: string | null
         }
         Relationships: []
       }
