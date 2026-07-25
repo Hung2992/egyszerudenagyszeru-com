@@ -132,12 +132,16 @@ Deno.serve(async (req) => {
       severity: "info",
     });
 
-    // 9) Takarítás: lejárt context sorok törlése
-    await supabase.from("ai_agent_bus_context")
-      .delete().not("expires_at", "is", null).lt("expires_at", new Date().toISOString());
-    // Régi eventek (7 napnál régebbi) törlése
-    await supabase.from("ai_agent_bus_events")
-      .delete().lt("created_at", new Date(Date.now() - 7*24*3600_000).toISOString());
+    // 9) Takarítás retenció alapján
+    const { data: retention } = await supabase.from("ai_agent_bus_retention").select("*").maybeSingle();
+    const eventsDays = Number(retention?.events_retention_days ?? 7);
+    const autoCleanup = retention?.auto_cleanup_enabled !== false;
+    if (autoCleanup) {
+      await supabase.from("ai_agent_bus_context")
+        .delete().not("expires_at", "is", null).lt("expires_at", new Date().toISOString());
+      await supabase.from("ai_agent_bus_events")
+        .delete().lt("created_at", new Date(Date.now() - eventsDays * 24 * 3600_000).toISOString());
+    }
 
     return json({ ok: true, summary, synced_at: new Date().toISOString() });
   } catch (e) {
