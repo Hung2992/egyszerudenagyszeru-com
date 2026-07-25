@@ -5,6 +5,7 @@
 //   enqueue        -> insert new queue item (admin)
 //   refresh_metrics -> pull latest metrics for a post
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { publish as busPublish } from "../_shared/agent-bus.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -259,6 +260,12 @@ Deno.serve(async (req) => {
             error_message: null,
           }).eq("id", item.id);
           await logEvent(sb, item.id, "published", item.platform, out);
+          await busPublish(sb, {
+            source: "social-publisher",
+            eventType: `social.published.${item.platform}`,
+            payload: { queue_id: item.id, external_id: out.id, permalink: out.permalink, platform: item.platform },
+            severity: "info",
+          });
           results.push({ id: item.id, ok: true, external_id: out.id });
         } catch (e: any) {
           const msg = e?.message || String(e);
@@ -271,6 +278,12 @@ Deno.serve(async (req) => {
             scheduled_at: failed ? undefined : new Date(Date.now() + Math.pow(2, nextRetry) * 60_000).toISOString(),
           }).eq("id", item.id);
           await logEvent(sb, item.id, failed ? "failed" : "retry_scheduled", item.platform, { error: msg, retry: nextRetry });
+          await busPublish(sb, {
+            source: "social-publisher",
+            eventType: failed ? `social.failed.${item.platform}` : `social.retry.${item.platform}`,
+            payload: { queue_id: item.id, error: msg, retry: nextRetry, platform: item.platform },
+            severity: failed ? "error" : "warning",
+          });
           results.push({ id: item.id, ok: false, error: msg });
         }
       }

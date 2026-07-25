@@ -1,6 +1,7 @@
 // AI Marketing CEO — napi/heti briefing + insights generálás
 // Actions: run_daily, run_weekly, generate_insights
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { publish as busPublish } from "../_shared/agent-bus.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -128,6 +129,7 @@ Deno.serve(async (req) => {
         evidence: { window_hours: hours, stats },
       }));
       if (rows.length) await sb.from("ai_marketing_insights").insert(rows);
+      await busPublish(sb, { source: "ai-marketing-ceo", eventType: "marketing.insights.generated", payload: { count: rows.length, window_hours: hours }, severity: "info" });
       return json({ ok: true, generated: rows.length });
     }
 
@@ -152,6 +154,7 @@ Deno.serve(async (req) => {
       .upsert(row, { onConflict: "briefing_date,period" }).select().single();
     if (error) throw error;
 
+    await busPublish(sb, { source: "ai-marketing-ceo", eventType: `marketing.briefing.${period}`, payload: { briefing_id: saved?.id, period, highlights: saved?.highlights?.slice?.(0,3) ?? [] }, severity: "info" });
     return json({ ok: true, briefing: saved });
   } catch (e: any) {
     console.error("ai-marketing-ceo error", e);

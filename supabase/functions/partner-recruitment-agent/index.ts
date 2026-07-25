@@ -2,6 +2,7 @@
 // Actions: run, regenerate_image, score_post, research_trends, weekly_plan, schedule_post
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { publish as busPublish } from "../_shared/agent-bus.ts";
 
 const AI_CHAT = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const AI_IMG = "https://ai.gateway.lovable.dev/v1/images/generations";
@@ -208,6 +209,7 @@ JSON:
       if (cfgRow?.id) {
         await supabase.from("partner_recruitment_agent_config").update({ last_run_at: new Date().toISOString() }).eq("id", cfgRow.id);
       }
+      await busPublish(supabase, { source: "partner-recruitment-agent", eventType: "partner.recruitment.posts_created", payload: { count: created.length }, severity: "info" });
       return json({ ok: true, created }, 200, req);
     }
 
@@ -294,6 +296,7 @@ Adj minden napra minden platformra egy posztot. Ez ${days * platforms.length} po
         }).select().maybeSingle();
         if (ins) created.push(ins);
       }
+      await busPublish(supabase, { source: "partner-recruitment-agent", eventType: "partner.recruitment.weekly_plan", payload: { campaign_group: groupId, count: created.length }, severity: "info" });
       return json({ ok: true, campaign_group: groupId, created }, 200, req);
     }
 
