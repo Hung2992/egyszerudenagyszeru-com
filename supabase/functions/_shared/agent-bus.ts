@@ -24,8 +24,45 @@ export async function publish(supabase: SupabaseLike, opts: PublishOpts): Promis
       correlation_id: opts.correlationId ?? null,
     }).select("id").maybeSingle();
     if (error) { console.warn("[agent-bus] publish failed:", error.message); return null; }
-    return data?.id ?? null;
+    const eventId = data?.id ?? null;
+    if (eventId) { dispatchToSubscribers(supabase, { id: eventId, ...opts }).catch(() => {}); }
+    return eventId;
   } catch (e) { console.warn("[agent-bus] publish exception:", e); return null; }
+}
+
+async function dispatchToSubscribers(supabase: SupabaseLike, ev: { id: string; source: string; eventType: string; target?: string; payload?: Record<string, unknown>; severity?: string }) {
+  try {
+    const { data: subs } = await supabase
+      .from("ai_agent_bus_subscriptions")
+      .select("agent_name,event_type_pattern,webhook_url,is_active,consume_count")
+      .eq("is_active", true)
+      .not("webhook_url", "is", null);
+    if (!subs?.length) return;
+    const matches = (subs as any[]).filter((s) => {
+      if (ev.target && s.agent_name !== ev.target) return false;
+      const pat = String(s.event_type_pattern || "*");
+      if (pat === "*" || pat === "%") return true;
+      if (pat.endsWith("*")) return ev.eventType.startsWith(pat.slice(0, -1));
+      if (pat.endsWith("%")) return ev.eventType.startsWith(pat.slice(0, -1));
+      return pat === ev.eventType;
+    });
+    await Promise.all(matches.map(async (s: any) => {
+      const started = Date.now();
+      let status = "sent";
+      try {
+        const r = await fetch(s.webhook_url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-bus-event-id": ev.id, "x-bus-source": ev.source },
+          body: JSON.stringify({ bus_event: { id: ev.id, event_type: ev.eventType, source: ev.source, target: ev.target ?? null, severity: ev.severity ?? "info", payload: ev.payload ?? {} } }),
+        });
+        status = `${r.status}`;
+      } catch (e) { status = `err:${(e as Error).message}`.slice(0, 120); }
+      await supabase.from("ai_agent_bus_subscriptions")
+        .update({ last_dispatch_at: new Date().toISOString(), last_dispatch_status: status, consume_count: (s.consume_count ?? 0) + 1 })
+        .eq("agent_name", s.agent_name).eq("event_type_pattern", s.event_type_pattern);
+      console.log(`[agent-bus] dispatch ${ev.eventType} -> ${s.agent_name} ${status} ${Date.now()-started}ms`);
+    }));
+  } catch (e) { console.warn("[agent-bus] dispatch exception:", e); }
 }
 
 export interface SetContextOpts {
