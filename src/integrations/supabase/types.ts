@@ -4427,6 +4427,89 @@ export type Database = {
           },
         ]
       }
+      partner_ai_builder_messages: {
+        Row: {
+          agent_plan: Json
+          applied: boolean
+          content: string
+          created_at: string
+          id: string
+          partner_id: string
+          patch: Json | null
+          role: string
+          session_id: string
+        }
+        Insert: {
+          agent_plan?: Json
+          applied?: boolean
+          content?: string
+          created_at?: string
+          id?: string
+          partner_id: string
+          patch?: Json | null
+          role: string
+          session_id: string
+        }
+        Update: {
+          agent_plan?: Json
+          applied?: boolean
+          content?: string
+          created_at?: string
+          id?: string
+          partner_id?: string
+          patch?: Json | null
+          role?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_ai_builder_messages_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_ai_builder_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "partner_ai_builder_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_ai_builder_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          partner_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          partner_id: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          partner_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_ai_builder_sessions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_ai_insights: {
         Row: {
           applied: boolean
@@ -4482,6 +4565,32 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "partner_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_brand_memory: {
+        Row: {
+          memory: Json
+          partner_id: string
+          updated_at: string
+        }
+        Insert: {
+          memory?: Json
+          partner_id: string
+          updated_at?: string
+        }
+        Update: {
+          memory?: Json
+          partner_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_brand_memory_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: true
+            referencedRelation: "partners"
             referencedColumns: ["id"]
           },
         ]
@@ -11631,6 +11740,7 @@ export type Database = {
         }
         Returns: number
       }
+      owns_partner: { Args: { _partner_id: string }; Returns: boolean }
       pick_response_strategy: {
         Args: { _epsilon?: number }
         Returns: {
