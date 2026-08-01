@@ -1,0 +1,210 @@
+// AI Web Creator Agent — beszélgetős, több-ügynökös webshop/weboldal építő partnereknek
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.104.1";
+import { publish } from "../_shared/agent-bus.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+const AI_CHAT = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const MODEL = "google/gemini-3.6-flash";
+
+const json = (b: unknown, s = 200) =>
+  new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+const AGENTS: Record<string, string> = {
+  architect: "🧠 Architect — oldalstruktúra, szekciók, felépítés",
+  designer: "🎨 Designer — színek, tipográfia, UI hangulat, sötét/világos mód",
+  frontend: "💻 Frontend — hero, szekciók, elrendezés, mobilbarát beállítások",
+  backend: "⚙️ Backend — adat- és jogosultsági beállítások",
+  commerce: "🛒 Commerce — kiemelt termékek, kosár, akciók",
+  seo: "🤖 SEO — meta cím, leírás, kulcsszavak",
+  content: "📝 Content — szövegek, GYIK, vélemények, about",
+  media: "🖼️ Media — képek, bannerek, videó beállítások",
+  qa: "🧪 QA — ellenőrzés, hiányzó mezők, konzisztencia",
+  deploy: "🚀 Deploy — publikálási javaslat",
+};
+
+// Csak ezek a storefront mezők írhatók az AI által
+const ALLOWED = [
+  "display_name", "tagline", "about_html",
+  "primary_color", "accent_color", "bg_color", "text_color",
+  "font_heading", "font_body", "theme_preset",
+  "hero_title", "hero_subtitle", "hero_cta_text", "hero_layout",
+  "hero_badge_enabled", "hero_badge_text", "hero_overlay_opacity",
+  "topbar_enabled", "topbar_text",
+  "section1_enabled", "section1_title", "section1_text",
+  "section2_enabled", "section2_title", "section2_text",
+  "featured_products_enabled", "featured_products_title",
+  "testimonials_enabled", "testimonials_title", "testimonials",
+  "newsletter_enabled", "newsletter_title", "newsletter_subtitle",
+  "footer_text", "footer_links",
+  "meta_title", "meta_description",
+];
+
+async function chat(apiKey: string, system: string, messages: any[]) {
+  const r = await fetch(AI_CHAT, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: MODEL,
+      messages: [{ role: "system", content: system }, ...messages],
+      response_format: { type: "json_object" },
+    }),
+  });
+  if (r.status === 429) throw Object.assign(new Error("Túl sok kérés, próbáld pár másodperc múlva."), { status: 429 });
+  if (r.status === 402) throw Object.assign(new Error("Elfogytak az AI kreditek."), { status: 402 });
+  if (!r.ok) throw Object.assign(new Error(`AI hiba (${r.status})`), { status: 502 });
+  const d = await r.json();
+  const c = d?.choices?.[0]?.message?.content ?? "{}";
+  try { return JSON.parse(c); } catch { const m = c.match(/\{[\s\S]*\}/); return m ? JSON.parse(m[0]) : {}; }
+}
+
+const ARCHITECT_SYSTEM = `Te vagy az 🧠 Architect Agent egy AI webshop-építő platformon. A partner magyarul beszélget veled.
+A feladatod: eldönteni MELYIK szakértő ügynökök dolgozzanak a kérésen, és rövid feladatot adni nekik.
+Elérhető ügynökök: ${Object.keys(AGENTS).join(", ")}.
+Csak érvényes JSON:
+{"plan":[{"agent":"designer","task":"1 mondatos feladat magyarul"}],"intent":"create|modify|question","reply_hint":"1 mondat mit fogunk csinálni"}`;
+
+const BUILDER_SYSTEM = `Te vagy egy AI fejlesztő ügynök-csapat (Designer, Frontend, Commerce, SEO, Content, Media, QA) egy magyar webshop-építő platformon.
+A partner természetes nyelven kér változtatásokat egy MEGLÉVŐ webshop konfiguráción — pontosan úgy, mint egy fejlesztővel beszélgetve.
+Csak azokat a mezőket add vissza a patch-ben, amiket a kérés ténylegesen érint (iteratív módosítás!). Új oldal esetén tölts ki mindent.
+Magyar, márkához illő, meggyőző szövegeket írj. Színek HEX-ben.
+
+Csak érvényes JSON:
+{
+  "reply": "2-5 mondat magyarul, beszélgetős hangnemben: mit csináltál, mit javasolsz még",
+  "patch": { csak érintett storefront mezők },
+  "agent_log": [{"agent":"designer","action":"mit csinált 1 mondatban"}],
+  "brand_memory": { "colors": [...], "audience": "...", "style": "...", "decisions": ["..."] },
+  "todo": ["amit a partnernek kézzel kell megtennie, ha van"]
+}
+
+Használható storefront mezők: ${ALLOWED.join(", ")}.
+A testimonials tömb: [{"name":..,"text":..,"rating":5}], a footer_links: [{"label":..,"url":..}].`;
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  try {
+    const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!apiKey) return json({ error: "LOVABLE_API_KEY hiányzik" }, 500);
+
+    const authHeader = req.headers.get("Authorization") || "";
+    if (!authHeader.startsWith("Bearer ")) return json({ error: "Bejelentkezés szükséges" }, 401);
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } },
+    );
+
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData?.user?.id) return json({ error: "Érvénytelen munkamenet" }, 401);
+
+    const body = await req.json().catch(() => ({}));
+    const partnerId = String(body?.partner_id || "").trim();
+    const sessionId = String(body?.session_id || "").trim();
+    const message = String(body?.message || "").trim();
+    const autoApply = body?.auto_apply !== false;
+    if (!partnerId || !sessionId) return json({ error: "partner_id és session_id kötelező" }, 400);
+    if (message.length < 2) return json({ error: "Írd le mit szeretnél" }, 400);
+
+    // Jogosultság (RLS is véd)
+    const { data: partner } = await supabase
+      .from("partners").select("id, brand_name").eq("id", partnerId).maybeSingle();
+    if (!partner) return json({ error: "Nincs jogosultságod ehhez a partnerhez" }, 403);
+
+    // Kontextus
+    const [{ data: sf }, { data: mem }, { data: prods }, { data: history }] = await Promise.all([
+      supabase.from("partner_storefronts").select("*").eq("partner_id", partnerId).maybeSingle(),
+      supabase.from("partner_brand_memory").select("memory").eq("partner_id", partnerId).maybeSingle(),
+      supabase.from("partner_products").select("title, price, category").eq("partner_id", partnerId).limit(15),
+      supabase.from("partner_ai_builder_messages").select("role, content")
+        .eq("session_id", sessionId).order("created_at", { ascending: true }).limit(30),
+    ]);
+
+    await supabase.from("partner_ai_builder_messages")
+      .insert({ session_id: sessionId, partner_id: partnerId, role: "user", content: message });
+
+    const currentConfig: Record<string, unknown> = {};
+    for (const k of ALLOWED) if (sf && sf[k] !== undefined && sf[k] !== null && sf[k] !== "") currentConfig[k] = sf[k];
+
+    const convo = (history || []).map((m: any) => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content }));
+
+    // 1) Architect: kiosztja a feladatokat
+    const plan = await chat(apiKey, ARCHITECT_SYSTEM, [
+      ...convo.slice(-8),
+      { role: "user", content: `Márka: ${partner.brand_name || "-"}\nVan már webshop config: ${sf ? "igen" : "nem"}\nKérés: ${message}` },
+    ]);
+    const agentPlan = Array.isArray(plan?.plan) ? plan.plan.slice(0, 10) : [];
+
+    // 2) Ügynök-csapat: elkészíti a konkrét változtatást
+    const built = await chat(apiKey, BUILDER_SYSTEM, [
+      ...convo.slice(-12),
+      {
+        role: "user",
+        content: `Márka: ${partner.brand_name || "-"}
+Márka-memória (korábbi döntések): ${JSON.stringify(mem?.memory ?? {})}
+Jelenlegi webshop konfiguráció: ${JSON.stringify(currentConfig)}
+Termékek: ${JSON.stringify((prods || []).slice(0, 10))}
+Architect terv: ${JSON.stringify(agentPlan)}
+
+A partner kérése: """${message.slice(0, 4000)}"""`,
+      },
+    ]);
+
+    const rawPatch = built?.patch && typeof built.patch === "object" ? built.patch : {};
+    const patch: Record<string, unknown> = {};
+    for (const k of ALLOWED) if (rawPatch[k] !== undefined && rawPatch[k] !== null) patch[k] = rawPatch[k];
+
+    // 3) Alkalmazás a webshopra
+    let applied = false;
+    if (autoApply && Object.keys(patch).length) {
+      if (sf?.id) {
+        const { error } = await supabase.from("partner_storefronts").update(patch).eq("id", sf.id);
+        applied = !error;
+        if (error) console.warn("[web-agent] update failed:", error.message);
+      } else {
+        const { error } = await supabase.from("partner_storefronts").insert({ partner_id: partnerId, ...patch });
+        applied = !error;
+        if (error) console.warn("[web-agent] insert failed:", error.message);
+      }
+    }
+
+    // 4) Hosszú távú márka-memória frissítése
+    if (built?.brand_memory && typeof built.brand_memory === "object") {
+      const merged = { ...(mem?.memory ?? {}), ...built.brand_memory, updated_at: new Date().toISOString() };
+      await supabase.from("partner_brand_memory")
+        .upsert({ partner_id: partnerId, memory: merged, updated_at: new Date().toISOString() }, { onConflict: "partner_id" });
+    }
+
+    const reply = String(built?.reply || plan?.reply_hint || "Kész.");
+    const agentLog = Array.isArray(built?.agent_log) ? built.agent_log.slice(0, 12) : agentPlan;
+
+    await supabase.from("partner_ai_builder_messages").insert({
+      session_id: sessionId, partner_id: partnerId, role: "assistant",
+      content: reply, agent_plan: agentLog, patch, applied,
+    });
+    await supabase.from("partner_ai_builder_sessions")
+      .update({ updated_at: new Date().toISOString() }).eq("id", sessionId);
+
+    // 5) Agent Bus értesítés
+    publish(supabase, {
+      source: "web-creator-agent",
+      eventType: "partner.site.updated",
+      severity: "info",
+      payload: { partner_id: partnerId, session_id: sessionId, fields: Object.keys(patch), applied, agents: agentLog },
+    }).catch(() => {});
+
+    return json({
+      ok: true, reply, patch, applied,
+      agent_log: agentLog,
+      todo: Array.isArray(built?.todo) ? built.todo.slice(0, 6) : [],
+    });
+  } catch (e) {
+    const err = e as Error & { status?: number };
+    return json({ error: err.message || "Ismeretlen hiba" }, err.status || 500);
+  }
+});
