@@ -315,10 +315,12 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
       </Dialog>
 
 
-      <Tabs defaultValue="basics">
+      <Tabs defaultValue="ai">
         <TabsList className="rounded-none flex flex-wrap h-auto">
+          <TabsTrigger value="ai" className="rounded-none">✨ AI építő</TabsTrigger>
           <TabsTrigger value="basics" className="rounded-none">Alap</TabsTrigger>
           <TabsTrigger value="design" className="rounded-none">Megjelenés</TabsTrigger>
+
           <TabsTrigger value="topbar" className="rounded-none">Topbar</TabsTrigger>
           <TabsTrigger value="hero" className="rounded-none">Hero</TabsTrigger>
           <TabsTrigger value="sections" className="rounded-none">Szekciók</TabsTrigger>
