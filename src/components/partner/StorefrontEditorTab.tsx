@@ -338,9 +338,18 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
           <TabsTrigger value="share" className="rounded-none">Megosztás</TabsTrigger>
         </TabsList>
 
+        {/* AI BUILDER */}
+        <TabsContent value="ai">
+          <AiSiteBuilderTab
+            partnerId={partnerId}
+            onApplied={(patch) => { setSf((cur: any) => ({ ...cur, ...patch })); setPreviewRefreshKey((k) => k + 1); void load(); }}
+          />
+        </TabsContent>
+
         {/* BASICS */}
         <TabsContent value="basics">
           <Card className="rounded-none border-foreground/20 p-6 space-y-4">
+
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <Label className="text-xs uppercase">URL slug *</Label>
