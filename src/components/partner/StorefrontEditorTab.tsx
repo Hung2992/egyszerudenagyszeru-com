@@ -16,6 +16,8 @@ import PartnerDomainTab from "./PartnerDomainTab";
 import StorefrontVersionsTab from "./StorefrontVersionsTab";
 import StorefrontLivePreview from "./StorefrontLivePreview";
 import AiSiteBuilderTab from "./AiSiteBuilderTab";
+import AiWebCreatorChat from "./AiWebCreatorChat";
+
 
 import PreviewTokenManager from "./PreviewTokenManager";
 import PartnerStorefrontAuditLogTab from "./PartnerStorefrontAuditLogTab";
@@ -317,8 +319,9 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
       </Dialog>
 
 
-      <Tabs defaultValue="ai">
+      <Tabs defaultValue="chat">
         <TabsList className="rounded-none flex flex-wrap h-auto">
+          <TabsTrigger value="chat" className="rounded-none">🤖 AI fejlesztő</TabsTrigger>
           <TabsTrigger value="ai" className="rounded-none">✨ AI építő</TabsTrigger>
           <TabsTrigger value="basics" className="rounded-none">Alap</TabsTrigger>
           <TabsTrigger value="design" className="rounded-none">Megjelenés</TabsTrigger>
@@ -340,6 +343,14 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
           <TabsTrigger value="share" className="rounded-none">Megosztás</TabsTrigger>
         </TabsList>
 
+        {/* AI CHAT AGENT */}
+        <TabsContent value="chat">
+          <AiWebCreatorChat
+            partnerId={partnerId}
+            onApplied={(patch) => { setSf((cur: any) => ({ ...cur, ...patch })); setPreviewRefreshKey((k) => k + 1); void load(); }}
+          />
+        </TabsContent>
+
         {/* AI BUILDER */}
         <TabsContent value="ai">
           <AiSiteBuilderTab
@@ -347,6 +358,7 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
             onApplied={(patch) => { setSf((cur: any) => ({ ...cur, ...patch })); setPreviewRefreshKey((k) => k + 1); void load(); }}
           />
         </TabsContent>
+
 
         {/* BASICS */}
         <TabsContent value="basics">
