@@ -15,6 +15,8 @@ import MediaImage from "./MediaImage";
 import PartnerDomainTab from "./PartnerDomainTab";
 import StorefrontVersionsTab from "./StorefrontVersionsTab";
 import StorefrontLivePreview from "./StorefrontLivePreview";
+import AiSiteBuilderTab from "./AiSiteBuilderTab";
+
 import PreviewTokenManager from "./PreviewTokenManager";
 import PartnerStorefrontAuditLogTab from "./PartnerStorefrontAuditLogTab";
 import { buildPreviewUrl, buildPublicUrl } from "@/lib/partner-storefront-urls";
@@ -315,10 +317,12 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
       </Dialog>
 
 
-      <Tabs defaultValue="basics">
+      <Tabs defaultValue="ai">
         <TabsList className="rounded-none flex flex-wrap h-auto">
+          <TabsTrigger value="ai" className="rounded-none">✨ AI építő</TabsTrigger>
           <TabsTrigger value="basics" className="rounded-none">Alap</TabsTrigger>
           <TabsTrigger value="design" className="rounded-none">Megjelenés</TabsTrigger>
+
           <TabsTrigger value="topbar" className="rounded-none">Topbar</TabsTrigger>
           <TabsTrigger value="hero" className="rounded-none">Hero</TabsTrigger>
           <TabsTrigger value="sections" className="rounded-none">Szekciók</TabsTrigger>
@@ -336,9 +340,18 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
           <TabsTrigger value="share" className="rounded-none">Megosztás</TabsTrigger>
         </TabsList>
 
+        {/* AI BUILDER */}
+        <TabsContent value="ai">
+          <AiSiteBuilderTab
+            partnerId={partnerId}
+            onApplied={(patch) => { setSf((cur: any) => ({ ...cur, ...patch })); setPreviewRefreshKey((k) => k + 1); void load(); }}
+          />
+        </TabsContent>
+
         {/* BASICS */}
         <TabsContent value="basics">
           <Card className="rounded-none border-foreground/20 p-6 space-y-4">
+
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <Label className="text-xs uppercase">URL slug *</Label>
