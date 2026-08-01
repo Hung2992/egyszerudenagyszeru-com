@@ -15,6 +15,8 @@ import MediaImage from "./MediaImage";
 import PartnerDomainTab from "./PartnerDomainTab";
 import StorefrontVersionsTab from "./StorefrontVersionsTab";
 import StorefrontLivePreview from "./StorefrontLivePreview";
+import AiSiteBuilderTab from "./AiSiteBuilderTab";
+
 import PreviewTokenManager from "./PreviewTokenManager";
 import PartnerStorefrontAuditLogTab from "./PartnerStorefrontAuditLogTab";
 import { buildPreviewUrl, buildPublicUrl } from "@/lib/partner-storefront-urls";
