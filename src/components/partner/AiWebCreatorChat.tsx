@@ -25,12 +25,39 @@ interface Msg {
 }
 
 const QUICK = [
-  "Készíts egy luxus ékszer webshopot fekete-arany dizájnnal, prémium hangvétellel.",
+  "Készíts egy prémium autóalkatrész-webshopot.",
+  "Készíts egy vállalati weboldalt egy építőipari cégnek.",
+  "Csinálj éttermi rendelő oldalt étlappal és kiszállítással.",
   "A fejléc legyen kisebb és a hero középre igazított.",
-  "Legyen sötét mód hangulat és erősebb kontraszt.",
-  "Írj 3 vásárlói véleményt és kapcsold be a hírlevelet.",
   "Optimalizáld a SEO-t: meta cím és leírás magyarul.",
 ];
+
+const PROJECT_TYPES: { id: string; label: string }[] = [
+  { id: "", label: "Automatikus" },
+  { id: "webshop", label: "🛒 Webshop" },
+  { id: "corporate", label: "🏢 Vállalati oldal" },
+  { id: "restaurant", label: "🍽️ Éttermi rendelő" },
+  { id: "booking", label: "📅 Időpontfoglaló" },
+  { id: "crm", label: "📇 CRM" },
+  { id: "erp", label: "📦 ERP" },
+  { id: "portal", label: "🤝 Partnerportál" },
+  { id: "saas", label: "☁️ SaaS" },
+  { id: "mobile_backend", label: "📱 Mobil háttér" },
+];
+
+const AGENT_ICON: Record<string, string> = {
+  architect: "🧠", designer: "🎨", frontend: "💻", backend: "⚙️", commerce: "🛒",
+  seo: "🔍", content: "📝", media: "🖼️", qa: "🧪", deploy: "🚀",
+};
+
+interface LiveStep {
+  agent: string;
+  action: string;
+  target?: string | null;
+  kind?: string | null;
+  fields?: string[];
+  status: "pending" | "running" | "done" | "warn";
+}
 
 const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
   const [sessions, setSessions] = useState<any[]>([]);
@@ -40,8 +67,12 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
   const [sending, setSending] = useState(false);
   const [autoApply, setAutoApply] = useState(true);
   const [memory, setMemory] = useState<any>(null);
+  const [projectType, setProjectType] = useState("");
+  const [liveSteps, setLiveSteps] = useState<LiveStep[]>([]);
+  const [pmIntro, setPmIntro] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
 
   const loadSessions = async () => {
     const { data } = await supabase
