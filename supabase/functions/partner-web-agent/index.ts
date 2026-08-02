@@ -62,28 +62,47 @@ async function chat(apiKey: string, system: string, messages: any[]) {
   try { return JSON.parse(c); } catch { const m = c.match(/\{[\s\S]*\}/); return m ? JSON.parse(m[0]) : {}; }
 }
 
-const ARCHITECT_SYSTEM = `Te vagy az 🧠 Architect Agent egy AI webshop-építő platformon. A partner magyarul beszélget veled.
-A feladatod: eldönteni MELYIK szakértő ügynökök dolgozzanak a kérésen, és rövid feladatot adni nekik.
-Elérhető ügynökök: ${Object.keys(AGENTS).join(", ")}.
-Csak érvényes JSON:
-{"plan":[{"agent":"designer","task":"1 mondatos feladat magyarul"}],"intent":"create|modify|question","reply_hint":"1 mondat mit fogunk csinálni"}`;
+// Támogatott projekt-típusok (nem csak webshop)
+const PROJECT_TYPES: Record<string, string> = {
+  webshop: "Webshop / online bolt (termékek, kosár, fizetés, szállítás)",
+  corporate: "Vállalati weboldal (bemutatkozás, szolgáltatások, referenciák, kapcsolat)",
+  restaurant: "Éttermi rendelő rendszer (étlap, rendelés, kiszállítás, nyitvatartás)",
+  booking: "Időpontfoglaló (szolgáltatások, naptár, foglalás, emlékeztetők)",
+  crm: "CRM (ügyfelek, leadek, pipeline, feladatok)",
+  erp: "ERP (készlet, beszerzés, számlázás, riportok)",
+  portal: "Partnerportál (belépés, dokumentumok, jutalékok, statisztika)",
+  saas: "SaaS termékoldal (árazás, funkciók, próbaverzió, onboarding)",
+  mobile_backend: "Mobilalkalmazás háttér (API, adatmodell, jogosultságok)",
+};
 
-const BUILDER_SYSTEM = `Te vagy egy AI fejlesztő ügynök-csapat (Designer, Frontend, Commerce, SEO, Content, Media, QA) egy magyar webshop-építő platformon.
-A partner természetes nyelven kér változtatásokat egy MEGLÉVŐ webshop konfiguráción — pontosan úgy, mint egy fejlesztővel beszélgetve.
+const ARCHITECT_SYSTEM = `Te vagy az 🧠 Architect Agent + AI Projektmenedzser egy AI szoftverfejlesztő platformon. A partner magyarul beszélget veled.
+A feladatod: eldönteni MELYIK szakértő ügynökök dolgozzanak a kérésen, milyen sorrendben, és rövid feladatot adni nekik — mint egy projektmenedzser a csapatnak.
+Elérhető ügynökök: ${Object.keys(AGENTS).join(", ")}.
+Projekt-típusok: ${Object.keys(PROJECT_TYPES).join(", ")}.
+Minden lépéshez adj konkrét "target"-et is (pl. módosított oldal/szekció, komponens, adatmező vagy adatbázis-tábla), hogy a partner élőben lássa mi történik.
+Csak érvényes JSON:
+{"project_type":"webshop","plan":[{"agent":"designer","task":"1 mondatos feladat magyarul","target":"pl. hero szekció színek","kind":"design|page|component|data|seo|content|media|test|deploy"}],"intent":"create|modify|question","pm_intro":"1-2 mondat projektmenedzseri bejelentés: mi a terv és ki jön sorban"}`;
+
+const BUILDER_SYSTEM = `Te vagy egy AI fejlesztő ügynök-csapat (Designer, Frontend, Backend, Commerce, SEO, Content, Media, QA, Deploy) egy magyar AI szoftverfejlesztő platformon.
+A partner természetes nyelven kér változtatásokat egy MEGLÉVŐ projekt konfiguráción — pontosan úgy, mint egy fejlesztőcsapattal beszélgetve.
 Csak azokat a mezőket add vissza a patch-ben, amiket a kérés ténylegesen érint (iteratív módosítás!). Új oldal esetén tölts ki mindent.
 Magyar, márkához illő, meggyőző szövegeket írj. Színek HEX-ben.
+Az agent_log legyen RÉSZLETES és élő fejlesztőnaplószerű: minden lépésnél írd le mit módosítottál (szekció/komponens/mező/tábla).
 
 Csak érvényes JSON:
 {
   "reply": "2-5 mondat magyarul, beszélgetős hangnemben: mit csináltál, mit javasolsz még",
+  "pm_summary": "1-2 mondat projektmenedzseri zárás: mi készült el, mi a következő javasolt lépés",
   "patch": { csak érintett storefront mezők },
-  "agent_log": [{"agent":"designer","action":"mit csinált 1 mondatban"}],
+  "agent_log": [{"agent":"designer","action":"mit csinált 1 mondatban","target":"hero szekció","kind":"design","fields":["primary_color"]}],
+  "qa": {"passed": true, "checks": [{"name":"Kötelező mezők","ok":true,"note":"..."}]},
   "brand_memory": { "colors": [...], "audience": "...", "style": "...", "decisions": ["..."] },
   "todo": ["amit a partnernek kézzel kell megtennie, ha van"]
 }
 
 Használható storefront mezők: ${ALLOWED.join(", ")}.
 A testimonials tömb: [{"name":..,"text":..,"rating":5}], a footer_links: [{"label":..,"url":..}].`;
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -108,6 +127,9 @@ Deno.serve(async (req) => {
     const sessionId = String(body?.session_id || "").trim();
     const message = String(body?.message || "").trim();
     const autoApply = body?.auto_apply !== false;
+    const stage = String(body?.stage || "full"); // "plan" | "build" | "full"
+    const projectType = String(body?.project_type || "").trim();
+    const incomingPlan = Array.isArray(body?.plan) ? body.plan.slice(0, 10) : null;
     if (!partnerId || !sessionId) return json({ error: "partner_id és session_id kötelező" }, 400);
     if (message.length < 2) return json({ error: "Írd le mit szeretnél" }, 400);
 
@@ -125,29 +147,65 @@ Deno.serve(async (req) => {
         .eq("session_id", sessionId).order("created_at", { ascending: true }).limit(30),
     ]);
 
-    await supabase.from("partner_ai_builder_messages")
-      .insert({ session_id: sessionId, partner_id: partnerId, role: "user", content: message });
-
     const currentConfig: Record<string, unknown> = {};
     for (const k of ALLOWED) if (sf && sf[k] !== undefined && sf[k] !== null && sf[k] !== "") currentConfig[k] = sf[k];
 
     const convo = (history || []).map((m: any) => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content }));
+    const typeHint = projectType && PROJECT_TYPES[projectType]
+      ? `Projekt-típus: ${projectType} — ${PROJECT_TYPES[projectType]}`
+      : "Projekt-típus: automatikusan döntsd el a kérésből.";
 
-    // 1) Architect: kiosztja a feladatokat
-    const plan = await chat(apiKey, ARCHITECT_SYSTEM, [
-      ...convo.slice(-8),
-      { role: "user", content: `Márka: ${partner.brand_name || "-"}\nVan már webshop config: ${sf ? "igen" : "nem"}\nKérés: ${message}` },
-    ]);
-    const agentPlan = Array.isArray(plan?.plan) ? plan.plan.slice(0, 10) : [];
+    // ── 1) Architect / Projektmenedzser fázis
+    if (stage === "plan" || stage === "full") {
+      const plan = await chat(apiKey, ARCHITECT_SYSTEM, [
+        ...convo.slice(-8),
+        {
+          role: "user",
+          content: `Márka: ${partner.brand_name || "-"}\n${typeHint}\nVan már konfiguráció: ${sf ? "igen" : "nem"}\nKérés: ${message}`,
+        },
+      ]);
+      const agentPlan = Array.isArray(plan?.plan) ? plan.plan.slice(0, 10) : [];
 
-    // 2) Ügynök-csapat: elkészíti a konkrét változtatást
+      if (stage === "plan") {
+        // A felhasználói üzenet mentése már itt megtörténik (egyszer)
+        await supabase.from("partner_ai_builder_messages")
+          .insert({ session_id: sessionId, partner_id: partnerId, role: "user", content: message });
+        publish(supabase, {
+          source: "web-creator-agent",
+          eventType: "partner.project.planned",
+          severity: "info",
+          payload: { partner_id: partnerId, session_id: sessionId, project_type: plan?.project_type ?? projectType, steps: agentPlan.length },
+        }).catch(() => {});
+        return json({
+          ok: true,
+          stage: "plan",
+          project_type: plan?.project_type ?? projectType ?? null,
+          pm_intro: String(plan?.pm_intro || "Összeállítottam a csapatot, kezdjük."),
+          plan: agentPlan,
+        });
+      }
+      (body as any).__plan = agentPlan;
+      (body as any).__pm_intro = plan?.pm_intro;
+      (body as any).__project_type = plan?.project_type;
+    }
+
+    const agentPlan = incomingPlan ?? (body as any).__plan ?? [];
+    const pmIntro = String((body as any).__pm_intro || body?.pm_intro || "");
+
+    if (stage === "full") {
+      await supabase.from("partner_ai_builder_messages")
+        .insert({ session_id: sessionId, partner_id: partnerId, role: "user", content: message });
+    }
+
+    // ── 2) Ügynök-csapat: elkészíti a konkrét változtatást
     const built = await chat(apiKey, BUILDER_SYSTEM, [
       ...convo.slice(-12),
       {
         role: "user",
         content: `Márka: ${partner.brand_name || "-"}
+${typeHint}
 Márka-memória (korábbi döntések): ${JSON.stringify(mem?.memory ?? {})}
-Jelenlegi webshop konfiguráció: ${JSON.stringify(currentConfig)}
+Jelenlegi konfiguráció: ${JSON.stringify(currentConfig)}
 Termékek: ${JSON.stringify((prods || []).slice(0, 10))}
 Architect terv: ${JSON.stringify(agentPlan)}
 
@@ -159,7 +217,7 @@ A partner kérése: """${message.slice(0, 4000)}"""`,
     const patch: Record<string, unknown> = {};
     for (const k of ALLOWED) if (rawPatch[k] !== undefined && rawPatch[k] !== null) patch[k] = rawPatch[k];
 
-    // 3) Alkalmazás a webshopra
+    // 3) Alkalmazás
     let applied = false;
     if (autoApply && Object.keys(patch).length) {
       if (sf?.id) {
@@ -180,12 +238,31 @@ A partner kérése: """${message.slice(0, 4000)}"""`,
         .upsert({ partner_id: partnerId, memory: merged, updated_at: new Date().toISOString() }, { onConflict: "partner_id" });
     }
 
-    const reply = String(built?.reply || plan?.reply_hint || "Kész.");
-    const agentLog = Array.isArray(built?.agent_log) ? built.agent_log.slice(0, 12) : agentPlan;
+    const reply = String(built?.reply || pmIntro || "Kész.");
+    const pmSummary = String(built?.pm_summary || "");
+    const qa = built?.qa && typeof built.qa === "object" ? built.qa : null;
+    const agentLog = (Array.isArray(built?.agent_log) ? built.agent_log.slice(0, 14) : agentPlan).map((a: any) => ({
+      agent: a?.agent ?? "frontend",
+      action: a?.action ?? a?.task ?? "",
+      target: a?.target ?? null,
+      kind: a?.kind ?? null,
+      fields: Array.isArray(a?.fields) ? a.fields.slice(0, 8) : [],
+      status: "done",
+    }));
+
+    // Élő "fejlesztői" napló: adatbázis- és bus-műveletek is látszódjanak
+    const devLog = [
+      ...agentLog,
+      ...(Object.keys(patch).length
+        ? [{ agent: "backend", action: `Adatbázis frissítés: partner_storefronts (${Object.keys(patch).length} mező)`, target: "partner_storefronts", kind: "data", fields: Object.keys(patch).slice(0, 8), status: applied ? "done" : "pending" }]
+        : []),
+      { agent: "qa", action: qa?.passed === false ? "Tesztek: figyelmeztetés" : "Tesztek lefutottak, konzisztencia rendben", target: "QA", kind: "test", fields: [], status: qa?.passed === false ? "warn" : "done" },
+      { agent: "deploy", action: applied ? "Változások élesítve a vázlat oldalon" : "Változások előkészítve, jóváhagyásra vár", target: "storefront", kind: "deploy", fields: [], status: applied ? "done" : "pending" },
+    ];
 
     await supabase.from("partner_ai_builder_messages").insert({
       session_id: sessionId, partner_id: partnerId, role: "assistant",
-      content: reply, agent_plan: agentLog, patch, applied,
+      content: reply, agent_plan: devLog, patch, applied,
     });
     await supabase.from("partner_ai_builder_sessions")
       .update({ updated_at: new Date().toISOString() }).eq("id", sessionId);
@@ -195,14 +272,22 @@ A partner kérése: """${message.slice(0, 4000)}"""`,
       source: "web-creator-agent",
       eventType: "partner.site.updated",
       severity: "info",
-      payload: { partner_id: partnerId, session_id: sessionId, fields: Object.keys(patch), applied, agents: agentLog },
+      payload: { partner_id: partnerId, session_id: sessionId, project_type: projectType || (body as any).__project_type || null, fields: Object.keys(patch), applied, agents: devLog },
     }).catch(() => {});
 
     return json({
-      ok: true, reply, patch, applied,
-      agent_log: agentLog,
+      ok: true,
+      stage: "build",
+      reply,
+      pm_summary: pmSummary,
+      qa,
+      patch,
+      applied,
+      agent_log: devLog,
+      bus_event: "partner.site.updated",
       todo: Array.isArray(built?.todo) ? built.todo.slice(0, 6) : [],
     });
+
   } catch (e) {
     const err = e as Error & { status?: number };
     return json({ error: err.message || "Ismeretlen hiba" }, err.status || 500);

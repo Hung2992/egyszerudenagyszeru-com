@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/untyped-client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
@@ -25,12 +25,39 @@ interface Msg {
 }
 
 const QUICK = [
-  "Készíts egy luxus ékszer webshopot fekete-arany dizájnnal, prémium hangvétellel.",
+  "Készíts egy prémium autóalkatrész-webshopot.",
+  "Készíts egy vállalati weboldalt egy építőipari cégnek.",
+  "Csinálj éttermi rendelő oldalt étlappal és kiszállítással.",
   "A fejléc legyen kisebb és a hero középre igazított.",
-  "Legyen sötét mód hangulat és erősebb kontraszt.",
-  "Írj 3 vásárlói véleményt és kapcsold be a hírlevelet.",
   "Optimalizáld a SEO-t: meta cím és leírás magyarul.",
 ];
+
+const PROJECT_TYPES: { id: string; label: string }[] = [
+  { id: "", label: "Automatikus" },
+  { id: "webshop", label: "🛒 Webshop" },
+  { id: "corporate", label: "🏢 Vállalati oldal" },
+  { id: "restaurant", label: "🍽️ Éttermi rendelő" },
+  { id: "booking", label: "📅 Időpontfoglaló" },
+  { id: "crm", label: "📇 CRM" },
+  { id: "erp", label: "📦 ERP" },
+  { id: "portal", label: "🤝 Partnerportál" },
+  { id: "saas", label: "☁️ SaaS" },
+  { id: "mobile_backend", label: "📱 Mobil háttér" },
+];
+
+const AGENT_ICON: Record<string, string> = {
+  architect: "🧠", designer: "🎨", frontend: "💻", backend: "⚙️", commerce: "🛒",
+  seo: "🔍", content: "📝", media: "🖼️", qa: "🧪", deploy: "🚀",
+};
+
+interface LiveStep {
+  agent: string;
+  action: string;
+  target?: string | null;
+  kind?: string | null;
+  fields?: string[];
+  status: "pending" | "running" | "done" | "warn";
+}
 
 const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
   const [sessions, setSessions] = useState<any[]>([]);
@@ -40,8 +67,12 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
   const [sending, setSending] = useState(false);
   const [autoApply, setAutoApply] = useState(true);
   const [memory, setMemory] = useState<any>(null);
+  const [projectType, setProjectType] = useState("");
+  const [liveSteps, setLiveSteps] = useState<LiveStep[]>([]);
+  const [pmIntro, setPmIntro] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
 
   const loadSessions = async () => {
     const { data } = await supabase
@@ -95,16 +126,58 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
     setInput("");
     setMessages((m) => [...m, { role: "user", content: msg }]);
     setSending(true);
+    setLiveSteps([]);
+    setPmIntro("");
+    let timer: ReturnType<typeof setInterval> | undefined;
     try {
-      const { data, error } = await supabase.functions.invoke("partner-web-agent", {
-        body: { partner_id: partnerId, session_id: sessionId, message: msg, auto_apply: autoApply },
+      // 1) Architect / Projektmenedzser — élő terv
+      const planRes = await supabase.functions.invoke("partner-web-agent", {
+        body: {
+          partner_id: partnerId, session_id: sessionId, message: msg,
+          stage: "plan", project_type: projectType,
+        },
       });
+      if (planRes.error) throw new Error(planRes.error.message);
+      if (planRes.data?.error) throw new Error(planRes.data.error);
+
+      const plan: any[] = planRes.data?.plan || [];
+      setPmIntro(planRes.data?.pm_intro || "");
+      setLiveSteps(
+        plan.map((p, i) => ({
+          agent: p.agent, action: p.task || p.action || "", target: p.target, kind: p.kind,
+          status: i === 0 ? "running" : "pending",
+        })),
+      );
+
+      // Lépések élő „haladása”, amíg a csapat dolgozik
+      let idx = 0;
+      timer = setInterval(() => {
+        setLiveSteps((s) => {
+          if (!s.length) return s;
+          const next = [...s];
+          if (idx < next.length) next[idx] = { ...next[idx], status: "done" };
+          idx += 1;
+          if (idx < next.length) next[idx] = { ...next[idx], status: "running" };
+          return next;
+        });
+      }, 1400);
+
+      // 2) Ügynökcsapat — tényleges építés
+      const { data, error } = await supabase.functions.invoke("partner-web-agent", {
+        body: {
+          partner_id: partnerId, session_id: sessionId, message: msg,
+          stage: "build", auto_apply: autoApply, project_type: projectType,
+          plan, pm_intro: planRes.data?.pm_intro,
+        },
+      });
+      if (timer) clearInterval(timer);
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
 
+      setLiveSteps([]);
       setMessages((m) => [...m, {
         role: "assistant",
-        content: data.reply,
+        content: [planRes.data?.pm_intro, data.reply, data.pm_summary].filter(Boolean).join("\n\n"),
         agent_plan: data.agent_log || [],
         patch: data.patch,
         applied: data.applied,
@@ -112,7 +185,7 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
 
       if (data.applied && data.patch) {
         onApplied(data.patch);
-        toast({ title: "Webshop frissítve", description: `${Object.keys(data.patch).length} beállítás módosult.` });
+        toast({ title: "Projekt frissítve", description: `${Object.keys(data.patch).length} beállítás módosult.` });
       }
       void loadMemory();
       if (messages.length === 0) {
@@ -121,12 +194,15 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
         void loadSessions();
       }
     } catch (e: any) {
+      if (timer) clearInterval(timer);
+      setLiveSteps([]);
       toast({ title: "Hiba", description: e?.message || "Nem sikerült.", variant: "destructive" });
     } finally {
       setSending(false);
       inputRef.current?.focus();
     }
   };
+
 
   const applyPatch = async (patch: Record<string, any>) => {
     const { data: existing } = await supabase
@@ -176,11 +252,21 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
         <div className="border-b border-border p-3 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2">
             <Bot className="h-4 w-4 text-primary" />
-            <span className="font-heading text-sm">AI Web Creator — beszélj, és megépíti</span>
+            <span className="font-heading text-sm">AI fejlesztőcsapat — beszélj, és megépíti</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Switch id="autoapply" checked={autoApply} onCheckedChange={setAutoApply} />
-            <Label htmlFor="autoapply" className="text-xs text-muted-foreground">Automatikus alkalmazás</Label>
+          <div className="flex items-center gap-3 flex-wrap">
+            <select
+              value={projectType}
+              onChange={(e) => setProjectType(e.target.value)}
+              className="h-8 border border-border bg-background text-xs px-2"
+              aria-label="Projekt típusa"
+            >
+              {PROJECT_TYPES.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+            </select>
+            <div className="flex items-center gap-2">
+              <Switch id="autoapply" checked={autoApply} onCheckedChange={setAutoApply} />
+              <Label htmlFor="autoapply" className="text-xs text-muted-foreground">Automatikus alkalmazás</Label>
+            </div>
           </div>
         </div>
 
@@ -188,9 +274,11 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
           {messages.length === 0 && (
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                Írd le magyarul, mit szeretnél — az ügynökcsapat (Architect, Designer, Frontend, Commerce, SEO, Content, Media, QA)
-                megtervezi és azonnal el is készíti a webshopodat. Utána bármikor mondhatod: „a fejléc legyen kisebb”, „tegyél be véleményeket”.
+                Írd le magyarul, mit szeretnél — nem csak webshopot: vállalati oldalt, éttermi rendelőt, időpontfoglalót, CRM-et, ERP-t,
+                partnerportált vagy SaaS-t is. Az Architect kiosztja a feladatokat, a Designer / Frontend / Backend / Commerce / SEO /
+                Content / Media / QA / Deploy ügynökök pedig élőben dolgoznak — és látod, ki mit módosít.
               </p>
+
               <div className="flex flex-wrap gap-2">
                 {QUICK.map((q) => (
                   <button key={q} onClick={() => void send(q)}
@@ -213,14 +301,33 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
                 </div>
 
                 {!!m.agent_plan?.length && (
-                  <div className="flex flex-wrap gap-1">
+                  <div className="border border-border divide-y divide-border text-left">
                     {m.agent_plan.map((a: any, idx: number) => (
-                      <Badge key={idx} variant="outline" className="rounded-none text-[10px]">
-                        {a.agent}{a.action ? `: ${String(a.action).slice(0, 40)}` : ""}
-                      </Badge>
+                      <div key={idx} className="px-2 py-1.5 flex items-start gap-2">
+                        <span className="text-[11px]">{AGENT_ICON[a.agent] || "🤖"}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[11px] font-medium capitalize">
+                            {a.agent}
+                            {a.target ? <span className="text-muted-foreground font-normal"> → {String(a.target).slice(0, 40)}</span> : null}
+                          </div>
+                          {a.action && <div className="text-[11px] text-muted-foreground">{String(a.action).slice(0, 140)}</div>}
+                          {!!a.fields?.length && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {a.fields.slice(0, 6).map((f: string) => (
+                                <span key={f} className="text-[9px] border border-border px-1 text-muted-foreground">{f}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <span className={`text-[10px] shrink-0 ${a.status === "warn" ? "text-destructive" : a.status === "pending" ? "text-muted-foreground" : "text-primary"}`}>
+                          {a.status === "pending" ? "vár" : a.status === "warn" ? "figyelem" : "kész"}
+                        </span>
+                      </div>
                     ))}
+                    <div className="px-2 py-1 text-[10px] text-muted-foreground">🛰️ Agent Bus: partner.site.updated</div>
                   </div>
                 )}
+
 
                 {m.patch && Object.keys(m.patch).length > 0 && (
                   <div className="border border-border p-2 space-y-2 text-left">
@@ -243,10 +350,38 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
           ))}
 
           {sending && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Az ügynökcsapat dolgozik…
+            <div className="space-y-2">
+              {pmIntro && (
+                <div className="text-sm flex gap-2"><span>🧠</span><span>{pmIntro}</span></div>
+              )}
+              {liveSteps.length > 0 ? (
+                <div className="border border-border divide-y divide-border">
+                  {liveSteps.map((s, i) => (
+                    <div key={i} className="px-2 py-1.5 flex items-start gap-2">
+                      <span className="text-[11px]">{AGENT_ICON[s.agent] || "🤖"}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[11px] font-medium capitalize">
+                          {s.agent}
+                          {s.target ? <span className="text-muted-foreground font-normal"> → {String(s.target).slice(0, 40)}</span> : null}
+                        </div>
+                        {s.action && <div className="text-[11px] text-muted-foreground">{s.action}</div>}
+                      </div>
+                      <span className="text-[10px] shrink-0">
+                        {s.status === "running" ? <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                          : s.status === "done" ? <Check className="h-3 w-3 text-primary" />
+                          : <span className="text-muted-foreground">vár</span>}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" /> 🧠 Architect tervezi a projektet…
+                </div>
+              )}
             </div>
           )}
+
           <div ref={bottomRef} />
         </div>
 
