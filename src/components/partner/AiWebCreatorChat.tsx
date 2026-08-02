@@ -126,16 +126,58 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
     setInput("");
     setMessages((m) => [...m, { role: "user", content: msg }]);
     setSending(true);
+    setLiveSteps([]);
+    setPmIntro("");
+    let timer: ReturnType<typeof setInterval> | undefined;
     try {
-      const { data, error } = await supabase.functions.invoke("partner-web-agent", {
-        body: { partner_id: partnerId, session_id: sessionId, message: msg, auto_apply: autoApply },
+      // 1) Architect / Projektmenedzser — élő terv
+      const planRes = await supabase.functions.invoke("partner-web-agent", {
+        body: {
+          partner_id: partnerId, session_id: sessionId, message: msg,
+          stage: "plan", project_type: projectType,
+        },
       });
+      if (planRes.error) throw new Error(planRes.error.message);
+      if (planRes.data?.error) throw new Error(planRes.data.error);
+
+      const plan: any[] = planRes.data?.plan || [];
+      setPmIntro(planRes.data?.pm_intro || "");
+      setLiveSteps(
+        plan.map((p, i) => ({
+          agent: p.agent, action: p.task || p.action || "", target: p.target, kind: p.kind,
+          status: i === 0 ? "running" : "pending",
+        })),
+      );
+
+      // Lépések élő „haladása”, amíg a csapat dolgozik
+      let idx = 0;
+      timer = setInterval(() => {
+        setLiveSteps((s) => {
+          if (!s.length) return s;
+          const next = [...s];
+          if (idx < next.length) next[idx] = { ...next[idx], status: "done" };
+          idx += 1;
+          if (idx < next.length) next[idx] = { ...next[idx], status: "running" };
+          return next;
+        });
+      }, 1400);
+
+      // 2) Ügynökcsapat — tényleges építés
+      const { data, error } = await supabase.functions.invoke("partner-web-agent", {
+        body: {
+          partner_id: partnerId, session_id: sessionId, message: msg,
+          stage: "build", auto_apply: autoApply, project_type: projectType,
+          plan, pm_intro: planRes.data?.pm_intro,
+        },
+      });
+      if (timer) clearInterval(timer);
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
 
+      setLiveSteps([]);
       setMessages((m) => [...m, {
         role: "assistant",
-        content: data.reply,
+        content: [planRes.data?.pm_intro, data.reply, data.pm_summary].filter(Boolean).join("\n\n"),
         agent_plan: data.agent_log || [],
         patch: data.patch,
         applied: data.applied,
@@ -143,7 +185,7 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
 
       if (data.applied && data.patch) {
         onApplied(data.patch);
-        toast({ title: "Webshop frissítve", description: `${Object.keys(data.patch).length} beállítás módosult.` });
+        toast({ title: "Projekt frissítve", description: `${Object.keys(data.patch).length} beállítás módosult.` });
       }
       void loadMemory();
       if (messages.length === 0) {
@@ -152,12 +194,15 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
         void loadSessions();
       }
     } catch (e: any) {
+      if (timer) clearInterval(timer);
+      setLiveSteps([]);
       toast({ title: "Hiba", description: e?.message || "Nem sikerült.", variant: "destructive" });
     } finally {
       setSending(false);
       inputRef.current?.focus();
     }
   };
+
 
   const applyPatch = async (patch: Record<string, any>) => {
     const { data: existing } = await supabase
