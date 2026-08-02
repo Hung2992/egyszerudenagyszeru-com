@@ -62,28 +62,47 @@ async function chat(apiKey: string, system: string, messages: any[]) {
   try { return JSON.parse(c); } catch { const m = c.match(/\{[\s\S]*\}/); return m ? JSON.parse(m[0]) : {}; }
 }
 
-const ARCHITECT_SYSTEM = `Te vagy az 🧠 Architect Agent egy AI webshop-építő platformon. A partner magyarul beszélget veled.
-A feladatod: eldönteni MELYIK szakértő ügynökök dolgozzanak a kérésen, és rövid feladatot adni nekik.
-Elérhető ügynökök: ${Object.keys(AGENTS).join(", ")}.
-Csak érvényes JSON:
-{"plan":[{"agent":"designer","task":"1 mondatos feladat magyarul"}],"intent":"create|modify|question","reply_hint":"1 mondat mit fogunk csinálni"}`;
+// Támogatott projekt-típusok (nem csak webshop)
+const PROJECT_TYPES: Record<string, string> = {
+  webshop: "Webshop / online bolt (termékek, kosár, fizetés, szállítás)",
+  corporate: "Vállalati weboldal (bemutatkozás, szolgáltatások, referenciák, kapcsolat)",
+  restaurant: "Éttermi rendelő rendszer (étlap, rendelés, kiszállítás, nyitvatartás)",
+  booking: "Időpontfoglaló (szolgáltatások, naptár, foglalás, emlékeztetők)",
+  crm: "CRM (ügyfelek, leadek, pipeline, feladatok)",
+  erp: "ERP (készlet, beszerzés, számlázás, riportok)",
+  portal: "Partnerportál (belépés, dokumentumok, jutalékok, statisztika)",
+  saas: "SaaS termékoldal (árazás, funkciók, próbaverzió, onboarding)",
+  mobile_backend: "Mobilalkalmazás háttér (API, adatmodell, jogosultságok)",
+};
 
-const BUILDER_SYSTEM = `Te vagy egy AI fejlesztő ügynök-csapat (Designer, Frontend, Commerce, SEO, Content, Media, QA) egy magyar webshop-építő platformon.
-A partner természetes nyelven kér változtatásokat egy MEGLÉVŐ webshop konfiguráción — pontosan úgy, mint egy fejlesztővel beszélgetve.
+const ARCHITECT_SYSTEM = `Te vagy az 🧠 Architect Agent + AI Projektmenedzser egy AI szoftverfejlesztő platformon. A partner magyarul beszélget veled.
+A feladatod: eldönteni MELYIK szakértő ügynökök dolgozzanak a kérésen, milyen sorrendben, és rövid feladatot adni nekik — mint egy projektmenedzser a csapatnak.
+Elérhető ügynökök: ${Object.keys(AGENTS).join(", ")}.
+Projekt-típusok: ${Object.keys(PROJECT_TYPES).join(", ")}.
+Minden lépéshez adj konkrét "target"-et is (pl. módosított oldal/szekció, komponens, adatmező vagy adatbázis-tábla), hogy a partner élőben lássa mi történik.
+Csak érvényes JSON:
+{"project_type":"webshop","plan":[{"agent":"designer","task":"1 mondatos feladat magyarul","target":"pl. hero szekció színek","kind":"design|page|component|data|seo|content|media|test|deploy"}],"intent":"create|modify|question","pm_intro":"1-2 mondat projektmenedzseri bejelentés: mi a terv és ki jön sorban"}`;
+
+const BUILDER_SYSTEM = `Te vagy egy AI fejlesztő ügynök-csapat (Designer, Frontend, Backend, Commerce, SEO, Content, Media, QA, Deploy) egy magyar AI szoftverfejlesztő platformon.
+A partner természetes nyelven kér változtatásokat egy MEGLÉVŐ projekt konfiguráción — pontosan úgy, mint egy fejlesztőcsapattal beszélgetve.
 Csak azokat a mezőket add vissza a patch-ben, amiket a kérés ténylegesen érint (iteratív módosítás!). Új oldal esetén tölts ki mindent.
 Magyar, márkához illő, meggyőző szövegeket írj. Színek HEX-ben.
+Az agent_log legyen RÉSZLETES és élő fejlesztőnaplószerű: minden lépésnél írd le mit módosítottál (szekció/komponens/mező/tábla).
 
 Csak érvényes JSON:
 {
   "reply": "2-5 mondat magyarul, beszélgetős hangnemben: mit csináltál, mit javasolsz még",
+  "pm_summary": "1-2 mondat projektmenedzseri zárás: mi készült el, mi a következő javasolt lépés",
   "patch": { csak érintett storefront mezők },
-  "agent_log": [{"agent":"designer","action":"mit csinált 1 mondatban"}],
+  "agent_log": [{"agent":"designer","action":"mit csinált 1 mondatban","target":"hero szekció","kind":"design","fields":["primary_color"]}],
+  "qa": {"passed": true, "checks": [{"name":"Kötelező mezők","ok":true,"note":"..."}]},
   "brand_memory": { "colors": [...], "audience": "...", "style": "...", "decisions": ["..."] },
   "todo": ["amit a partnernek kézzel kell megtennie, ha van"]
 }
 
 Használható storefront mezők: ${ALLOWED.join(", ")}.
 A testimonials tömb: [{"name":..,"text":..,"rating":5}], a footer_links: [{"label":..,"url":..}].`;
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
