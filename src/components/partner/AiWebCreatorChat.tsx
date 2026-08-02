@@ -301,14 +301,33 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
                 </div>
 
                 {!!m.agent_plan?.length && (
-                  <div className="flex flex-wrap gap-1">
+                  <div className="border border-border divide-y divide-border text-left">
                     {m.agent_plan.map((a: any, idx: number) => (
-                      <Badge key={idx} variant="outline" className="rounded-none text-[10px]">
-                        {a.agent}{a.action ? `: ${String(a.action).slice(0, 40)}` : ""}
-                      </Badge>
+                      <div key={idx} className="px-2 py-1.5 flex items-start gap-2">
+                        <span className="text-[11px]">{AGENT_ICON[a.agent] || "🤖"}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[11px] font-medium capitalize">
+                            {a.agent}
+                            {a.target ? <span className="text-muted-foreground font-normal"> → {String(a.target).slice(0, 40)}</span> : null}
+                          </div>
+                          {a.action && <div className="text-[11px] text-muted-foreground">{String(a.action).slice(0, 140)}</div>}
+                          {!!a.fields?.length && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {a.fields.slice(0, 6).map((f: string) => (
+                                <span key={f} className="text-[9px] border border-border px-1 text-muted-foreground">{f}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <span className={`text-[10px] shrink-0 ${a.status === "warn" ? "text-destructive" : a.status === "pending" ? "text-muted-foreground" : "text-primary"}`}>
+                          {a.status === "pending" ? "vár" : a.status === "warn" ? "figyelem" : "kész"}
+                        </span>
+                      </div>
                     ))}
+                    <div className="px-2 py-1 text-[10px] text-muted-foreground">🛰️ Agent Bus: partner.site.updated</div>
                   </div>
                 )}
+
 
                 {m.patch && Object.keys(m.patch).length > 0 && (
                   <div className="border border-border p-2 space-y-2 text-left">
