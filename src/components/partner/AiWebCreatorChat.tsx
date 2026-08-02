@@ -252,11 +252,21 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
         <div className="border-b border-border p-3 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2">
             <Bot className="h-4 w-4 text-primary" />
-            <span className="font-heading text-sm">AI Web Creator — beszélj, és megépíti</span>
+            <span className="font-heading text-sm">AI fejlesztőcsapat — beszélj, és megépíti</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Switch id="autoapply" checked={autoApply} onCheckedChange={setAutoApply} />
-            <Label htmlFor="autoapply" className="text-xs text-muted-foreground">Automatikus alkalmazás</Label>
+          <div className="flex items-center gap-3 flex-wrap">
+            <select
+              value={projectType}
+              onChange={(e) => setProjectType(e.target.value)}
+              className="h-8 border border-border bg-background text-xs px-2"
+              aria-label="Projekt típusa"
+            >
+              {PROJECT_TYPES.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+            </select>
+            <div className="flex items-center gap-2">
+              <Switch id="autoapply" checked={autoApply} onCheckedChange={setAutoApply} />
+              <Label htmlFor="autoapply" className="text-xs text-muted-foreground">Automatikus alkalmazás</Label>
+            </div>
           </div>
         </div>
 
@@ -264,9 +274,11 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
           {messages.length === 0 && (
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                Írd le magyarul, mit szeretnél — az ügynökcsapat (Architect, Designer, Frontend, Commerce, SEO, Content, Media, QA)
-                megtervezi és azonnal el is készíti a webshopodat. Utána bármikor mondhatod: „a fejléc legyen kisebb”, „tegyél be véleményeket”.
+                Írd le magyarul, mit szeretnél — nem csak webshopot: vállalati oldalt, éttermi rendelőt, időpontfoglalót, CRM-et, ERP-t,
+                partnerportált vagy SaaS-t is. Az Architect kiosztja a feladatokat, a Designer / Frontend / Backend / Commerce / SEO /
+                Content / Media / QA / Deploy ügynökök pedig élőben dolgoznak — és látod, ki mit módosít.
               </p>
+
               <div className="flex flex-wrap gap-2">
                 {QUICK.map((q) => (
                   <button key={q} onClick={() => void send(q)}
