@@ -350,10 +350,38 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
           ))}
 
           {sending && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Az ügynökcsapat dolgozik…
+            <div className="space-y-2">
+              {pmIntro && (
+                <div className="text-sm flex gap-2"><span>🧠</span><span>{pmIntro}</span></div>
+              )}
+              {liveSteps.length > 0 ? (
+                <div className="border border-border divide-y divide-border">
+                  {liveSteps.map((s, i) => (
+                    <div key={i} className="px-2 py-1.5 flex items-start gap-2">
+                      <span className="text-[11px]">{AGENT_ICON[s.agent] || "🤖"}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[11px] font-medium capitalize">
+                          {s.agent}
+                          {s.target ? <span className="text-muted-foreground font-normal"> → {String(s.target).slice(0, 40)}</span> : null}
+                        </div>
+                        {s.action && <div className="text-[11px] text-muted-foreground">{s.action}</div>}
+                      </div>
+                      <span className="text-[10px] shrink-0">
+                        {s.status === "running" ? <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                          : s.status === "done" ? <Check className="h-3 w-3 text-primary" />
+                          : <span className="text-muted-foreground">vár</span>}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" /> 🧠 Architect tervezi a projektet…
+                </div>
+              )}
             </div>
           )}
+
           <div ref={bottomRef} />
         </div>
 
