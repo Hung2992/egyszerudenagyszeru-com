@@ -1,4 +1,5 @@
 // AI Web Creator Agent — beszélgetős, több-ügynökös webshop/weboldal építő partnereknek
+// MINŐSÉGBIZTOSÍTÁSI LÁNC: iparágspecifikus promptok → érdemes QA validáció → minőségi pontszám + jóváhagyás
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.104.1";
 import { publish } from "../_shared/agent-bus.ts";
 
@@ -44,6 +45,297 @@ const ALLOWED = [
   "meta_title", "meta_description",
 ];
 
+// ─────────────────────────────────────────────────────────────
+// RÉTEG 1: Iparágspecifikus projektsablonok
+// Minden projekttípus saját kötelező szekciókkal, Architect/Builder
+// útmutatóval és alapértelmezett kezdőértékekkel rendelkezik, hogy a
+// generált kimenet iparághű és konzisztens legyen — ne egy generikus
+// prompt mindenhova.
+// ─────────────────────────────────────────────────────────────
+
+interface ProjectTemplate {
+  label: string;
+  description: string;
+  /** Kötelező storefront mezők (a QA ellenőrzi, hogy a végeredényben vannak-e) */
+  required: string[];
+  /** Architect útmutató: milyen szekciók/struktúra kell ehhez az iparághoz */
+  architectHint: string;
+  /** Builder útmutató: iparágra szabott szerkezet, hangnem, kötelező tartalom */
+  builderHint: string;
+  /** Kezdőértékek új projekt esetén (magas minőségű alap) */
+  seed: Record<string, unknown>;
+}
+
+const PROJECT_TEMPLATES: Record<string, ProjectTemplate> = {
+  webshop: {
+    label: "Webshop / online bolt",
+    description: "Termékek, kosár, fizetés, szállítás",
+    required: ["display_name", "hero_title", "hero_subtitle", "hero_cta_text", "featured_products_enabled", "meta_title", "meta_description"],
+    architectHint: "Webshopnál a fókusz: vonzó hero, kiemelt termékek szekció, social proof (értékelések), hírlevél, bizalmat építő lábléc. A kosár és fizetés már beépített.",
+    builderHint: "Webshop hangnem: meggyőző, vásárlásra ösztönző, de nem tolakodó. A featured_products szekció KÖTELEZŐ. Hero CTA legyen cselekvésre ösztönző ('Tedd a kosárba', 'Vásárlás indítása'). SEO: márka + fő termékkategória + 'webshop'/'online bolt' kulcsszó.",
+    seed: { featured_products_enabled: true, featured_products_title: "Kiemelt termékeink", section1_enabled: true, section1_title: "Miért minket?" },
+  },
+  corporate: {
+    label: "Vállalati weboldal",
+    description: "Bemutatkozás, szolgáltatások, referenciák, kapcsolat",
+    required: ["display_name", "tagline", "hero_title", "hero_subtitle", "section1_enabled", "section1_title", "footer_text", "meta_title", "meta_description"],
+    architectHint: "Vállalati oldalnál: hero bemutatkozás, szolgáltatások szekció (section1), rólunk/referenciák (section2), kapcsolat a láblécben. Nincs 'kosár'.",
+    builderHint: "Vállalati hangnem: professzionális, megbízható, hiteles. Két tartalmi szekció KÖTELEZŐ: section1 = szolgáltatások, section2 = rólunk/referenciák. Hero CTA: 'Kapcsolatfelvétel' vagy 'Ajánlatkérés'. SEO: cég neve + szolgáltatás + település.",
+    seed: { section1_enabled: true, section1_title: "Szolgáltatásaink", section2_enabled: true, section2_title: "Rólunk" },
+  },
+  restaurant: {
+    label: "Éttermi rendelő rendszer",
+    description: "Étlap, rendelés, kiszállítás, nyitvatartás",
+    required: ["display_name", "hero_title", "hero_subtitle", "section1_enabled", "section1_title", "section2_enabled", "section2_title", "meta_title", "meta_description"],
+    architectHint: "Étteremnél: étlap/kiemelt ételek (section1), nyitvatartás + kiszállítás info (section2), vonzó hero ételképpel. CTA: 'Rendelés' vagy 'Asztalfoglalás'.",
+    builderHint: "Éttermi hangnem: étvágygerjesztő, hangulatos, konyhai stílus. section1 = étlap/kiemelt ételek, section2 = nyitvatartás és kiszállítás. Hero CTA: 'Online rendelés' vagy 'Asztalfoglalás'. SEO: étterem neve + konyha + város + 'online rendelés'.",
+    seed: { section1_enabled: true, section1_title: "Étlapunk", section2_enabled: true, section2_title: "Nyitvatartás & Kiszállítás", hero_cta_text: "Online rendelés" },
+  },
+  booking: {
+    label: "Időpontfoglaló",
+    description: "Szolgáltatások, naptár, foglalás, emlékeztetők",
+    required: ["display_name", "hero_title", "hero_subtitle", "section1_enabled", "section1_title", "meta_title", "meta_description"],
+    architectHint: "Foglaló rendszernél: szolgáltatások listája (section1), működési idő/gyakori kérdések (section2), hero foglalás CTA-val. A naptár és foglalás már beépített.",
+    builderHint: "Foglaló hangnem: segítőkész, világos, időpont-orientált. section1 = szolgáltatások árazással, section2 = információk. Hero CTA: 'Időpont foglalása'. SEO: szolgáltatás + 'időpontfoglaló' + település.",
+    seed: { section1_enabled: true, section1_title: "Szolgáltatások", section2_enabled: true, section2_title: "Hasznos információk", hero_cta_text: "Időpont foglalása" },
+  },
+  crm: {
+    label: "CRM",
+    description: "Ügyfelek, leadek, pipeline, feladatok",
+    required: ["display_name", "hero_title", "hero_subtitle", "section1_enabled", "section1_title", "meta_title", "meta_description"],
+    architectHint: "CRM-nél: funkciók/szolgáltatások (section1), előnyök/integrációk (section2), hero regisztrációs CTA-val.",
+    builderHint: "CRM hangnem: hatékonyság-orientált, adatvezérelt, B2B. section1 = fő funkciók, section2 = integrációk/előnyök. Hero CTA: 'Ingyenes próba' vagy 'Regisztráció'. SEO: 'CRM szoftver' + szektor.",
+    seed: { section1_enabled: true, section1_title: "Funkciók", section2_enabled: true, section2_title: "Integrációk", hero_cta_text: "Ingyenes próba indítása" },
+  },
+  erp: {
+    label: "ERP",
+    description: "Készlet, beszerzés, számlázás, riportok",
+    required: ["display_name", "hero_title", "hero_subtitle", "section1_enabled", "section1_title", "meta_title", "meta_description"],
+    architectHint: "ERP-nél: modulok (section1), előnyök (section2), hero demó CTA-val. Fókusz: készlet, számlázás, riportok.",
+    builderHint: "ERP hangnem: stabil, megbízható, üzleti folyamat-orientált. section1 = modulok, section2 = előnyök/riportok. Hero CTA: 'Demó kérése'. SEO: 'ERP rendszer' + iparág.",
+    seed: { section1_enabled: true, section1_title: "Modulok", section2_enabled: true, section2_title: "Miért éri meg?", hero_cta_text: "Demó kérése" },
+  },
+  portal: {
+    label: "Partnerportál",
+    description: "Belépés, dokumentumok, jutalékok, statisztika",
+    required: ["display_name", "hero_title", "hero_subtitle", "section1_enabled", "section1_title", "footer_text", "meta_title", "meta_description"],
+    architectHint: "Partnerportálnál: belépés/előnyök (hero), funkciók (section1), információk (section2), bizalmat építő lábléc.",
+    builderHint: "Portál hangnem: partnerség-orientált, transzparens. section1 = fő funkciók. Hero CTA: 'Belépés' vagy 'Jelentkezés partnernek'. SEO: 'partnerprogram' + szektor.",
+    seed: { section1_enabled: true, section1_title: "A portál funkciói", section2_enabled: true, section2_title: "Hogyan működik?", hero_cta_text: "Belépés" },
+  },
+  saas: {
+    label: "SaaS termékoldal",
+    description: "Árazás, funkciók, próbaverzió, onboarding",
+    required: ["display_name", "tagline", "hero_title", "hero_subtitle", "section1_enabled", "section1_title", "section2_enabled", "section2_title", "meta_title", "meta_description"],
+    architectHint: "SaaS-nál: hero értékajánlat + CTA, funkciók (section1), árazás (section2), social proof. Két tartalmi szekció KÖTELEZŐ.",
+    builderHint: "SaaS hangnem: innovatív, világos, konkrét előnyök. section1 = funkciók, section2 = árazás/előnyök. Hero CTA: 'Ingyenes próba' vagy 'Kezdés'. SEO: terméknév + 'szoftver' + fő előny.",
+    seed: { section1_enabled: true, section1_title: "Funkciók", section2_enabled: true, section2_title: "Árazás", hero_cta_text: "Ingyenes próba" },
+  },
+  mobile_backend: {
+    label: "Mobilalkalmazás háttér",
+    description: "API, adatmodell, jogosultságok",
+    required: ["display_name", "hero_title", "hero_subtitle", "section1_enabled", "section1_title", "meta_title", "meta_description"],
+    architectHint: "Mobil backend-nél: API képességek (section1), technológia/biztonság (section2), hero fejlesztői CTA-val.",
+    builderHint: "Backend hangnem: technikai, de érthető, fejlesztőbarát. section1 = API végpontok/képességek, section2 = biztonság/technológia. Hero CTA: 'Dokumentáció' vagy 'API kulcs kérése'. SEO: 'API' + szektor.",
+    seed: { section1_enabled: true, section1_title: "API képességek", section2_enabled: true, section2_title: "Biztonság & Technológia", hero_cta_text: "Dokumentáció megnyitása" },
+  },
+};
+
+// Támogatott projekt-típusok (a lista a sablonból jön)
+const PROJECT_TYPES: Record<string, string> = Object.fromEntries(
+  Object.entries(PROJECT_TEMPLATES).map(([k, v]) => [k, `${v.label} (${v.description})`]),
+);
+
+// ─────────────────────────────────────────────────────────────
+// RÉTEG 2: Érdemes QA validáció (színkontraszt, kötelező mezők,
+// SEO teljesség, placeholder detektálás, iparági szekciók)
+// ─────────────────────────────────────────────────────────────
+
+function hexToRgb(hex: string): [number, number, number] | null {
+  if (!hex || typeof hex !== "string") return null;
+  const h = hex.replace("#", "").trim();
+  if (h.length !== 3 && h.length !== 6) return null;
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  if (!/^[0-9a-fA-F]{6}$/.test(full)) return null;
+  return [parseInt(full.slice(0, 2), 16), parseInt(full.slice(2, 4), 16), parseInt(full.slice(4, 6), 16)];
+}
+
+function relLuminance([r, g, b]: [number, number, number]): number {
+  const f = (c: number) => { const s = c / 255; return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4); };
+  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+}
+
+function contrastRatio(fg: string, bg: string): number | null {
+  const a = hexToRgb(fg), b = hexToRgb(bg);
+  if (!a || !b) return null;
+  const la = relLuminance(a), lb = relLuminance(b);
+  const hi = Math.max(la, lb), lo = Math.min(la, lb);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+const PLACEHOLDER_PATTERNS = /\b(lorem|ipsum|placeholder|példa|pelda|teszt|demo|saját szöveg|sajat szoveg|ide írd|ide ird|xxx)\b/i;
+
+interface QaCheck {
+  name: string;
+  weight: number;
+  severity: "critical" | "high" | "low";
+  ok: boolean;
+  note: string;
+}
+
+interface QaResult {
+  score: number;
+  passed: boolean;
+  checks: QaCheck[];
+  blockers: string[];
+}
+
+function runQualityAssurance(
+  cfg: Record<string, unknown>,
+  projectType: string,
+): QaResult {
+  const tmpl = PROJECT_TEMPLATES[projectType];
+  const checks: QaCheck[] = [];
+
+  // 1) Márkaidentitás
+  const hasName = !!cfg.display_name && String(cfg.display_name).trim().length >= 2;
+  const hasTagline = !!cfg.tagline && String(cfg.tagline).trim().length >= 3;
+  checks.push({
+    name: "Márkaidentitás (név + szlogen)",
+    weight: 15, severity: "critical",
+    ok: hasName && hasTagline,
+    note: hasName && hasTagline ? "rendben" : hasName ? "hiányzik a szlogen" : "hiányzik a márkanév",
+  });
+
+  // 2) Hero szekció
+  const heroComplete = !!cfg.hero_title && !!cfg.hero_subtitle && !!cfg.hero_cta_text;
+  checks.push({
+    name: "Hero szekció (cím + alcím + gomb)",
+    weight: 15, severity: "critical",
+    ok: heroComplete,
+    note: heroComplete ? "teljes" : "hiányzik valamelyik hero mező",
+  });
+
+  // 3) Iparági kötelező szekciók (projekttípus-specifikus)
+  const required = tmpl?.required || ["display_name", "hero_title", "meta_title", "meta_description"];
+  const missingReq = required.filter((k) => {
+    const v = cfg[k];
+    if (typeof v === "boolean") return v === false;
+    return v === undefined || v === null || v === "";
+  });
+  checks.push({
+    name: `Iparági kötelező mezők (${projectType || "auto"})`,
+    weight: 20, severity: "critical",
+    ok: missingReq.length === 0,
+    note: missingReq.length ? `hiányzik: ${missingReq.slice(0, 5).join(", ")}` : "minden megvan",
+  });
+
+  // 4) Színkontraszt (szöveg/háttér) — WCAG AA (>= 4.5)
+  const tc = String(cfg.text_color || ""), bc = String(cfg.bg_color || "");
+  const ratio = contrastRatio(tc, bc);
+  const contrastOk = ratio !== null && ratio >= 4.5;
+  checks.push({
+    name: "Színkontraszt (szöveg/háttér, WCAG AA ≥ 4.5)",
+    weight: 15, severity: "high",
+    ok: contrastOk,
+    note: ratio === null ? "hiányzik a szín (HEX kell)" : `kontraszt: ${ratio.toFixed(2)}${contrastOk ? " ✓" : " ✗"}`,
+  });
+
+  // 5) SEO meta cím (10–60 karakter)
+  const mt = String(cfg.meta_title || "").trim();
+  const mtOk = mt.length >= 10 && mt.length <= 60;
+  checks.push({
+    name: "SEO meta cím (10–60 karakter)",
+    weight: 10, severity: "high",
+    ok: mtOk,
+    note: `${mt.length} karakter`,
+  });
+
+  // 6) SEO meta leírás (50–160 karakter)
+  const md = String(cfg.meta_description || "").trim();
+  const mdOk = md.length >= 50 && md.length <= 160;
+  checks.push({
+    name: "SEO meta leírás (50–160 karakter)",
+    weight: 10, severity: "high",
+    ok: mdOk,
+    note: `${md.length} karakter`,
+  });
+
+  // 7) Nincs placeholder szöveg
+  const textFields = ["display_name", "tagline", "hero_title", "hero_subtitle", "section1_title", "section1_text", "section2_title", "section2_text", "footer_text", "meta_description"];
+  const foundPlaceholder = textFields.find((f) => PLACEHOLDER_PATTERNS.test(String(cfg[f] || "")));
+  checks.push({
+    name: "Nincs placeholder/teszt szöveg",
+    weight: 10, severity: "high",
+    ok: !foundPlaceholder,
+    note: foundPlaceholder ? `placeholder a '${foundPlaceholder}' mezőben` : "tiszta",
+  });
+
+  // 8) Lábléc
+  const hasFooter = !!cfg.footer_text && String(cfg.footer_text).trim().length >= 5;
+  checks.push({
+    name: "Lábléc jelen",
+    weight: 5, severity: "low",
+    ok: hasFooter,
+    note: hasFooter ? "rendben" : "hiányzik",
+  });
+
+  const totalWeight = checks.reduce((s, c) => s + c.weight, 0);
+  const earned = checks.reduce((s, c) => s + (c.ok ? c.weight : 0), 0);
+  const score = Math.round((earned / totalWeight) * 100);
+  const blockers = checks.filter((c) => c.severity === "critical" && !c.ok).map((c) => c.name);
+  const passed = score >= 70 && blockers.length === 0;
+
+  return { score, passed, checks, blockers };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Iparágspecifikus system promptok
+// ─────────────────────────────────────────────────────────────
+
+function architectSystem(projectType: string): string {
+  const tmpl = PROJECT_TEMPLATES[projectType];
+  const hint = tmpl?.architectHint ? `\nIparági útmutató (${tmpl.label}): ${tmpl.architectHint}` : "";
+  return `Te vagy az 🧠 Architect Agent + AI Projektmenedzser egy AI szoftverfejlesztő platformon. A partner magyarul beszélget veled.
+A feladatod: eldönteni MELYIK szakértő ügynökök dolgozzanak a kérésen, milyen sorrendben, és rövid feladatot adni nekik — mint egy projektmenedzser a csapatnak.
+Elérhető ügynökök: ${Object.keys(AGENTS).join(", ")}.
+Projekt-típusok: ${Object.keys(PROJECT_TYPES).join(", ")}.
+Minden lépéshez adj konkrét "target"-et is (pl. módosított oldal/szekció, komponens, adatmező vagy adatbázis-tábla), hogy a partner élőben lássa mi történik.
+${hint}
+Csak érvényes JSON:
+{"project_type":"webshop","plan":[{"agent":"designer","task":"1 mondatos feladat magyarul","target":"pl. hero szekció színek","kind":"design|page|component|data|seo|content|media|test|deploy"}],"intent":"create|modify|question","pm_intro":"1-2 mondat projektmenedzseri bejelentés: mi a terv és ki jön sorban"}`;
+}
+
+function builderSystem(projectType: string): string {
+  const tmpl = PROJECT_TEMPLATES[projectType];
+  const hint = tmpl?.builderHint ? `\nIparági útmutató (${tmpl.label}): ${tmpl.builderHint}` : "";
+  const requiredList = tmpl?.required?.join(", ") || "display_name, hero_title, meta_title, meta_description";
+  return `Te vagy egy AI fejlesztő ügynök-csapat (Designer, Frontend, Backend, Commerce, SEO, Content, Media, QA, Deploy) egy magyar AI szoftverfejlesztő platformon.
+A partner természetes nyelven kér változtatásokat egy MEGLÉVŐ projekt konfiguráción — pontosan úgy, mint egy fejlesztőcsapattal beszélgetve.
+Csak azokat a mezőket add vissza a patch-ben, amiket a kérés ténylegesen érint (iteratív módosítás!). Új oldal esetén tölts ki mindent — ekkor MINDEN kötelező mező legyen meg.
+Magyar, márkához illő, meggyőző szövegeket írj. Színek HEX-ben (#RRGGBB). A szöveg/háttér kontraszt legyen legalább 4.5:1 (WCAG AA).
+SOHA ne használj placeholder/teszt szöveget (lorem, ipsum, "példa", "teszt", "ide írd" stb.) — minden szöveg valós, kész tartalom legyen.
+${hint}
+
+KÖTELEZŐ mezők ehhez a projekttípushoz: ${requiredList}. Ha új projektet generálsz, ezek MINDENKEPP legyenek kitöltve.
+
+Az agent_log legyen RÉSZLETES és élő fejlesztőnaplószerű: minden lépésnél írd le mit módosítottál (szekció/komponens/mező/tábla).
+
+Csak érvényes JSON:
+{
+  "reply": "2-5 mondat magyarul, beszélgetős hangnemben: mit csináltál, mit javasolsz még",
+  "pm_summary": "1-2 mondat projektmenedzseri zárás: mi készült el, mi a következő javasolt lépés",
+  "patch": { csak érintett storefront mezők },
+  "agent_log": [{"agent":"designer","action":"mit csinált 1 mondatban","target":"hero szekció","kind":"design","fields":["primary_color"]}],
+  "qa": {"passed": true, "checks": [{"name":"Kötelező mezők","ok":true,"note":"..."}]},
+  "brand_memory": { "colors": [...], "audience": "...", "style": "...", "decisions": ["..."] },
+  "todo": ["amit a partnernek kézzel kell megtennie, ha van"]
+}
+
+Használható storefront mezők: ${ALLOWED.join(", ")}.
+A testimonials tömb: [{"name":..,"text":..,"rating":5}], a footer_links: [{"label":..,"url":..}].`;
+}
+
 async function chat(apiKey: string, system: string, messages: any[]) {
   const r = await fetch(AI_CHAT, {
     method: "POST",
@@ -61,48 +353,6 @@ async function chat(apiKey: string, system: string, messages: any[]) {
   const c = d?.choices?.[0]?.message?.content ?? "{}";
   try { return JSON.parse(c); } catch { const m = c.match(/\{[\s\S]*\}/); return m ? JSON.parse(m[0]) : {}; }
 }
-
-// Támogatott projekt-típusok (nem csak webshop)
-const PROJECT_TYPES: Record<string, string> = {
-  webshop: "Webshop / online bolt (termékek, kosár, fizetés, szállítás)",
-  corporate: "Vállalati weboldal (bemutatkozás, szolgáltatások, referenciák, kapcsolat)",
-  restaurant: "Éttermi rendelő rendszer (étlap, rendelés, kiszállítás, nyitvatartás)",
-  booking: "Időpontfoglaló (szolgáltatások, naptár, foglalás, emlékeztetők)",
-  crm: "CRM (ügyfelek, leadek, pipeline, feladatok)",
-  erp: "ERP (készlet, beszerzés, számlázás, riportok)",
-  portal: "Partnerportál (belépés, dokumentumok, jutalékok, statisztika)",
-  saas: "SaaS termékoldal (árazás, funkciók, próbaverzió, onboarding)",
-  mobile_backend: "Mobilalkalmazás háttér (API, adatmodell, jogosultságok)",
-};
-
-const ARCHITECT_SYSTEM = `Te vagy az 🧠 Architect Agent + AI Projektmenedzser egy AI szoftverfejlesztő platformon. A partner magyarul beszélget veled.
-A feladatod: eldönteni MELYIK szakértő ügynökök dolgozzanak a kérésen, milyen sorrendben, és rövid feladatot adni nekik — mint egy projektmenedzser a csapatnak.
-Elérhető ügynökök: ${Object.keys(AGENTS).join(", ")}.
-Projekt-típusok: ${Object.keys(PROJECT_TYPES).join(", ")}.
-Minden lépéshez adj konkrét "target"-et is (pl. módosított oldal/szekció, komponens, adatmező vagy adatbázis-tábla), hogy a partner élőben lássa mi történik.
-Csak érvényes JSON:
-{"project_type":"webshop","plan":[{"agent":"designer","task":"1 mondatos feladat magyarul","target":"pl. hero szekció színek","kind":"design|page|component|data|seo|content|media|test|deploy"}],"intent":"create|modify|question","pm_intro":"1-2 mondat projektmenedzseri bejelentés: mi a terv és ki jön sorban"}`;
-
-const BUILDER_SYSTEM = `Te vagy egy AI fejlesztő ügynök-csapat (Designer, Frontend, Backend, Commerce, SEO, Content, Media, QA, Deploy) egy magyar AI szoftverfejlesztő platformon.
-A partner természetes nyelven kér változtatásokat egy MEGLÉVŐ projekt konfiguráción — pontosan úgy, mint egy fejlesztőcsapattal beszélgetve.
-Csak azokat a mezőket add vissza a patch-ben, amiket a kérés ténylegesen érint (iteratív módosítás!). Új oldal esetén tölts ki mindent.
-Magyar, márkához illő, meggyőző szövegeket írj. Színek HEX-ben.
-Az agent_log legyen RÉSZLETES és élő fejlesztőnaplószerű: minden lépésnél írd le mit módosítottál (szekció/komponens/mező/tábla).
-
-Csak érvényes JSON:
-{
-  "reply": "2-5 mondat magyarul, beszélgetős hangnemben: mit csináltál, mit javasolsz még",
-  "pm_summary": "1-2 mondat projektmenedzseri zárás: mi készült el, mi a következő javasolt lépés",
-  "patch": { csak érintett storefront mezők },
-  "agent_log": [{"agent":"designer","action":"mit csinált 1 mondatban","target":"hero szekció","kind":"design","fields":["primary_color"]}],
-  "qa": {"passed": true, "checks": [{"name":"Kötelező mezők","ok":true,"note":"..."}]},
-  "brand_memory": { "colors": [...], "audience": "...", "style": "...", "decisions": ["..."] },
-  "todo": ["amit a partnernek kézzel kell megtennie, ha van"]
-}
-
-Használható storefront mezők: ${ALLOWED.join(", ")}.
-A testimonials tömb: [{"name":..,"text":..,"rating":5}], a footer_links: [{"label":..,"url":..}].`;
-
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -130,8 +380,10 @@ Deno.serve(async (req) => {
     const stage = String(body?.stage || "full"); // "plan" | "build" | "full"
     const projectType = String(body?.project_type || "").trim();
     const incomingPlan = Array.isArray(body?.plan) ? body.plan.slice(0, 10) : null;
+    // Ha a kliens QA-visszacsatolást küld (refine), a Builder kapja javításra
+    const refineFeedback = body?.refine_feedback || null;
     if (!partnerId || !sessionId) return json({ error: "partner_id és session_id kötelező" }, 400);
-    if (message.length < 2) return json({ error: "Írd le mit szeretnél" }, 400);
+    if (message.length < 2 && !refineFeedback) return json({ error: "Írd le mit szeretnél" }, 400);
 
     // Jogosultság (RLS is véd)
     const { data: partner } = await supabase
@@ -155,9 +407,9 @@ Deno.serve(async (req) => {
       ? `Projekt-típus: ${projectType} — ${PROJECT_TYPES[projectType]}`
       : "Projekt-típus: automatikusan döntsd el a kérésből.";
 
-    // ── 1) Architect / Projektmenedzser fázis
+    // ── 1) Architect / Projektmenedzser fázis (iparágspecifikus prompt)
     if (stage === "plan" || stage === "full") {
-      const plan = await chat(apiKey, ARCHITECT_SYSTEM, [
+      const plan = await chat(apiKey, architectSystem(projectType), [
         ...convo.slice(-8),
         {
           role: "user",
@@ -165,61 +417,103 @@ Deno.serve(async (req) => {
         },
       ]);
       const agentPlan = Array.isArray(plan?.plan) ? plan.plan.slice(0, 10) : [];
+      const detectedType = plan?.project_type || projectType || "";
 
       if (stage === "plan") {
-        // A felhasználói üzenet mentése már itt megtörténik (egyszer)
         await supabase.from("partner_ai_builder_messages")
           .insert({ session_id: sessionId, partner_id: partnerId, role: "user", content: message });
         publish(supabase, {
           source: "web-creator-agent",
           eventType: "partner.project.planned",
           severity: "info",
-          payload: { partner_id: partnerId, session_id: sessionId, project_type: plan?.project_type ?? projectType, steps: agentPlan.length },
+          payload: { partner_id: partnerId, session_id: sessionId, project_type: detectedType, steps: agentPlan.length },
         }).catch(() => {});
         return json({
           ok: true,
           stage: "plan",
-          project_type: plan?.project_type ?? projectType ?? null,
+          project_type: detectedType || null,
           pm_intro: String(plan?.pm_intro || "Összeállítottam a csapatot, kezdjük."),
           plan: agentPlan,
         });
       }
       (body as any).__plan = agentPlan;
       (body as any).__pm_intro = plan?.pm_intro;
-      (body as any).__project_type = plan?.project_type;
+      (body as any).__project_type = detectedType;
     }
 
     const agentPlan = incomingPlan ?? (body as any).__plan ?? [];
     const pmIntro = String((body as any).__pm_intro || body?.pm_intro || "");
+    const effectiveType = String((body as any).__project_type || projectType || "");
 
     if (stage === "full") {
       await supabase.from("partner_ai_builder_messages")
         .insert({ session_id: sessionId, partner_id: partnerId, role: "user", content: message });
     }
 
-    // ── 2) Ügynök-csapat: elkészíti a konkrét változtatást
-    const built = await chat(apiKey, BUILDER_SYSTEM, [
-      ...convo.slice(-12),
-      {
-        role: "user",
-        content: `Márka: ${partner.brand_name || "-"}
+    // ── 2) Ügynök-csapat: elkészíti a konkrét változtatást (iparágspecifikus prompt)
+    const buildPrompt = refineFeedback
+      ? `A QA validáció elbukott. JAVÍTSD a patch-et a következő hibák alapján, és add vissza a JAVÍTOTT patch-et:
+${JSON.stringify(refineFeedback)}
+
+Eredeti kérés: """${message.slice(0, 2000)}"""
+Jelenlegi konfiguráció: ${JSON.stringify(currentConfig)}`
+      : `Márka: ${partner.brand_name || "-"}
 ${typeHint}
 Márka-memória (korábbi döntések): ${JSON.stringify(mem?.memory ?? {})}
 Jelenlegi konfiguráció: ${JSON.stringify(currentConfig)}
 Termékek: ${JSON.stringify((prods || []).slice(0, 10))}
 Architect terv: ${JSON.stringify(agentPlan)}
 
-A partner kérése: """${message.slice(0, 4000)}"""`,
-      },
+A partner kérése: """${message.slice(0, 4000)}"""`;
+
+    const built = await chat(apiKey, builderSystem(effectiveType), [
+      ...convo.slice(-12),
+      { role: "user", content: buildPrompt },
     ]);
 
     const rawPatch = built?.patch && typeof built.patch === "object" ? built.patch : {};
     const patch: Record<string, unknown> = {};
     for (const k of ALLOWED) if (rawPatch[k] !== undefined && rawPatch[k] !== null) patch[k] = rawPatch[k];
 
-    // 3) Alkalmazás
+    // ── 3) RÉTEG 2: Érdemes QA validáció az alkalmazás ELŐTT
+    // A QA a teljes végeredményt vizsgálja (jelenlegi + patch együtt).
+    const merged: Record<string, unknown> = { ...currentConfig, ...patch };
+    let qa: QaResult = runQualityAssurance(merged, effectiveType);
+
+    // Automatikus javítási próbálkozés: ha a QA elbukik, visszacsatoljuk a
+    // Builder-nek a hibákat és egyszer újra generálunk (max 1 újrapróbálás).
+    if (!qa.passed && !refineFeedback && Object.keys(patch).length > 0) {
+      const feedback = {
+        score: qa.score,
+        blockers: qa.blockers,
+        failed_checks: qa.checks.filter((c) => !c.ok).map((c) => ({ name: c.name, note: c.note, severity: c.severity })),
+      };
+      const rebuilt = await chat(apiKey, builderSystem(effectiveType), [
+        ...convo.slice(-12),
+        { role: "user", content: buildPrompt },
+        { role: "assistant", content: JSON.stringify(built) },
+        {
+          role: "user",
+          content: `A QA validáció elbukott (pontszám: ${qa.score}/100). JAVÍTSD a patch-et, hogy minden hiba megoldódjon:
+${JSON.stringify(feedback, null, 2)}
+Add vissza a JAVÍTOTT teljes JSON-t ugyanazzal a szerkezettel.`,
+        },
+      ]);
+      const rePatch = rebuilt?.patch && typeof rebuilt.patch === "object" ? rebuilt.patch : {};
+      const fixedPatch: Record<string, unknown> = {};
+      for (const k of ALLOWED) if (rePatch[k] !== undefined && rePatch[k] !== null) fixedPatch[k] = rePatch[k];
+      if (Object.keys(fixedPatch).length) {
+        for (const k of Object.keys(fixedPatch)) patch[k] = fixedPatch[k];
+        const reMerged: Record<string, unknown> = { ...currentConfig, ...patch };
+        qa = runQualityAssurance(reMerged, effectiveType);
+      }
+    }
+
+    // ── 4) Alkalmazás: csak akkor, ha autoApply ÉS a QA passed.
+    // Ha a QA elbukik, nem élesítünk — a partner jóváhagyása kell.
     let applied = false;
-    if (autoApply && Object.keys(patch).length) {
+    const shouldApply = autoApply && Object.keys(patch).length > 0 && qa.passed;
+    if (shouldApply) {
       if (sf?.id) {
         const { error } = await supabase.from("partner_storefronts").update(patch).eq("id", sf.id);
         applied = !error;
@@ -231,16 +525,15 @@ A partner kérése: """${message.slice(0, 4000)}"""`,
       }
     }
 
-    // 4) Hosszú távú márka-memória frissítése
+    // 5) Hosszú távú márka-memória frissítése
     if (built?.brand_memory && typeof built.brand_memory === "object") {
-      const merged = { ...(mem?.memory ?? {}), ...built.brand_memory, updated_at: new Date().toISOString() };
+      const mergedMem = { ...(mem?.memory ?? {}), ...built.brand_memory, updated_at: new Date().toISOString() };
       await supabase.from("partner_brand_memory")
-        .upsert({ partner_id: partnerId, memory: merged, updated_at: new Date().toISOString() }, { onConflict: "partner_id" });
+        .upsert({ partner_id: partnerId, memory: mergedMem, updated_at: new Date().toISOString() }, { onConflict: "partner_id" });
     }
 
     const reply = String(built?.reply || pmIntro || "Kész.");
     const pmSummary = String(built?.pm_summary || "");
-    const qa = built?.qa && typeof built.qa === "object" ? built.qa : null;
     const agentLog = (Array.isArray(built?.agent_log) ? built.agent_log.slice(0, 14) : agentPlan).map((a: any) => ({
       agent: a?.agent ?? "frontend",
       action: a?.action ?? a?.task ?? "",
@@ -250,14 +543,14 @@ A partner kérése: """${message.slice(0, 4000)}"""`,
       status: "done",
     }));
 
-    // Élő "fejlesztői" napló: adatbázis- és bus-műveletek is látszódjanak
+    // Élő "fejlesztői" napló: QA lépés is látszódjon
     const devLog = [
       ...agentLog,
       ...(Object.keys(patch).length
         ? [{ agent: "backend", action: `Adatbázis frissítés: partner_storefronts (${Object.keys(patch).length} mező)`, target: "partner_storefronts", kind: "data", fields: Object.keys(patch).slice(0, 8), status: applied ? "done" : "pending" }]
         : []),
-      { agent: "qa", action: qa?.passed === false ? "Tesztek: figyelmeztetés" : "Tesztek lefutottak, konzisztencia rendben", target: "QA", kind: "test", fields: [], status: qa?.passed === false ? "warn" : "done" },
-      { agent: "deploy", action: applied ? "Változások élesítve a vázlat oldalon" : "Változások előkészítve, jóváhagyásra vár", target: "storefront", kind: "deploy", fields: [], status: applied ? "done" : "pending" },
+      { agent: "qa", action: qa.passed ? `QA validáció: ${qa.score}/100 — átment` : `QA validáció: ${qa.score}/100 — elbukott (${qa.blockers.length} blokkoló)`, target: "QA", kind: "test", fields: qa.checks.filter((c) => !c.ok).map((c) => c.name).slice(0, 6), status: qa.passed ? "done" : "warn" },
+      { agent: "deploy", action: applied ? "Változások élesítve a vázlat oldalon" : qa.passed ? "Változások előkészítve, jóváhagyásra vár" : "QA elbukott — javítás szükséges élesítés előtt", target: "storefront", kind: "deploy", fields: [], status: applied ? "done" : "pending" },
     ];
 
     await supabase.from("partner_ai_builder_messages").insert({
@@ -267,12 +560,12 @@ A partner kérése: """${message.slice(0, 4000)}"""`,
     await supabase.from("partner_ai_builder_sessions")
       .update({ updated_at: new Date().toISOString() }).eq("id", sessionId);
 
-    // 5) Agent Bus értesítés
+    // 6) Agent Bus értesítés
     publish(supabase, {
       source: "web-creator-agent",
-      eventType: "partner.site.updated",
-      severity: "info",
-      payload: { partner_id: partnerId, session_id: sessionId, project_type: projectType || (body as any).__project_type || null, fields: Object.keys(patch), applied, agents: devLog },
+      eventType: applied ? "partner.site.updated" : "partner.site.preview",
+      severity: qa.passed ? "info" : "warning",
+      payload: { partner_id: partnerId, session_id: sessionId, project_type: effectiveType, fields: Object.keys(patch), applied, quality_score: qa.score, qa_passed: qa.passed, agents: devLog },
     }).catch(() => {});
 
     return json({
@@ -280,11 +573,15 @@ A partner kérése: """${message.slice(0, 4000)}"""`,
       stage: "build",
       reply,
       pm_summary: pmSummary,
-      qa,
       patch,
       applied,
+      // RÉTEG 3: minőségi pontszám + QA részletek a kliensnek
+      quality_score: qa.score,
+      quality_passed: qa.passed,
+      quality_checks: qa.checks,
+      quality_blockers: qa.blockers,
       agent_log: devLog,
-      bus_event: "partner.site.updated",
+      bus_event: applied ? "partner.site.updated" : "partner.site.preview",
       todo: Array.isArray(built?.todo) ? built.todo.slice(0, 6) : [],
     });
 
