@@ -7,11 +7,19 @@ import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Send, Loader2, Plus, Bot, User as UserIcon, Brain, Check } from "lucide-react";
+import { Send, Loader2, Plus, Bot, User as UserIcon, Brain, Check, AlertTriangle, Wand2 } from "lucide-react";
 
 interface Props {
   partnerId: string;
   onApplied: (patch: Record<string, any>) => void;
+}
+
+interface QaCheck {
+  name: string;
+  weight: number;
+  severity: "critical" | "high" | "low";
+  ok: boolean;
+  note: string;
 }
 
 interface Msg {
@@ -22,6 +30,10 @@ interface Msg {
   patch?: Record<string, any> | null;
   applied?: boolean;
   created_at?: string;
+  quality_score?: number;
+  quality_passed?: boolean;
+  quality_checks?: QaCheck[];
+  quality_blockers?: string[];
 }
 
 const QUICK = [
@@ -59,12 +71,17 @@ interface LiveStep {
   status: "pending" | "running" | "done" | "warn";
 }
 
+const scoreColor = (s: number) => (s >= 85 ? "text-emerald-500" : s >= 70 ? "text-amber-500" : "text-destructive");
+const scoreBg = (s: number) => (s >= 85 ? "border-emerald-500/40 bg-emerald-500/5" : s >= 70 ? "border-amber-500/40 bg-amber-500/5" : "border-destructive/40 bg-destructive/5");
+const scoreLabel = (s: number, passed: boolean) => passed ? "Kiváló" : s >= 70 ? "Jó, de javítható" : "Javítás szükséges";
+
 const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
   const [sessions, setSessions] = useState<any[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [refining, setRefining] = useState(false);
   const [autoApply, setAutoApply] = useState(true);
   const [memory, setMemory] = useState<any>(null);
   const [projectType, setProjectType] = useState("");
@@ -149,7 +166,6 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
         })),
       );
 
-      // Lépések élő „haladása”, amíg a csapat dolgozik
       let idx = 0;
       timer = setInterval(() => {
         setLiveSteps((s) => {
@@ -181,11 +197,17 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
         agent_plan: data.agent_log || [],
         patch: data.patch,
         applied: data.applied,
+        quality_score: data.quality_score,
+        quality_passed: data.quality_passed,
+        quality_checks: data.quality_checks,
+        quality_blockers: data.quality_blockers,
       }]);
 
       if (data.applied && data.patch) {
         onApplied(data.patch);
-        toast({ title: "Projekt frissítve", description: `${Object.keys(data.patch).length} beállítás módosult.` });
+        toast({ title: "Projekt frissítve", description: `${Object.keys(data.patch).length} beállítás módosult. Minőség: ${data.quality_score}/100` });
+      } else if (data.patch && !data.applied && !data.quality_passed) {
+        toast({ title: "QA elbukott", description: `Minőség: ${data.quality_score}/100. Javítsd vagy alkalmazd kézzel.`, variant: "destructive" });
       }
       void loadMemory();
       if (messages.length === 0) {
@@ -199,6 +221,58 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
       toast({ title: "Hiba", description: e?.message || "Nem sikerült.", variant: "destructive" });
     } finally {
       setSending(false);
+      inputRef.current?.focus();
+    }
+  };
+
+  // RÉTEG 3: QA visszacsatolás — a partner kéri a javítást, az AI újrapróbálja
+  const refine = async (msgIdx: number) => {
+    const m = messages[msgIdx];
+    if (!m?.patch || !sessionId || refining) return;
+    setRefining(true);
+    try {
+      const failedChecks = (m.quality_checks || []).filter((c) => !c.ok);
+      const feedback = {
+        score: m.quality_score,
+        blockers: m.quality_blockers || [],
+        failed_checks: failedChecks.map((c) => ({ name: c.name, note: c.note, severity: c.severity })),
+      };
+      const { data, error } = await supabase.functions.invoke("partner-web-agent", {
+        body: {
+          partner_id: partnerId, session_id: sessionId,
+          stage: "build", auto_apply: autoApply, project_type: projectType,
+          refine_feedback: feedback,
+        },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+
+      setMessages((prev) => {
+        const next = [...prev];
+        next[msgIdx] = {
+          ...m,
+          patch: data.patch,
+          applied: data.applied,
+          quality_score: data.quality_score,
+          quality_passed: data.quality_passed,
+          quality_checks: data.quality_checks,
+          quality_blockers: data.quality_blockers,
+          agent_plan: data.agent_log || m.agent_plan,
+        };
+        return next;
+      });
+      if (data.applied && data.patch) {
+        onApplied(data.patch);
+        toast({ title: "Javítva és alkalmazva", description: `Minőség: ${data.quality_score}/100` });
+      } else if (data.quality_passed && data.patch) {
+        toast({ title: "Javítva", description: `Minőség: ${data.quality_score}/100. Alkalmazd a gombbal.` });
+      } else {
+        toast({ title: "További javítás kell", description: `Minőség: ${data.quality_score}/100`, variant: "destructive" });
+      }
+    } catch (e: any) {
+      toast({ title: "Javítás sikertelen", description: e?.message, variant: "destructive" });
+    } finally {
+      setRefining(false);
       inputRef.current?.focus();
     }
   };
@@ -276,7 +350,7 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
               <p className="text-sm text-muted-foreground">
                 Írd le magyarul, mit szeretnél — nem csak webshopot: vállalati oldalt, éttermi rendelőt, időpontfoglalót, CRM-et, ERP-t,
                 partnerportált vagy SaaS-t is. Az Architect kiosztja a feladatokat, a Designer / Frontend / Backend / Commerce / SEO /
-                Content / Media / QA / Deploy ügynökök pedig élőben dolgoznak — és látod, ki mit módosít.
+                Content / Media / QA / Deploy ügynökök pedig élőben dolgoznak. Minden kimenet QA-validált (pontszám 0–100).
               </p>
 
               <div className="flex flex-wrap gap-2">
@@ -331,16 +405,70 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
 
                 {m.patch && Object.keys(m.patch).length > 0 && (
                   <div className="border border-border p-2 space-y-2 text-left">
+                    {/* MINŐSÉGI PONTSZÁM + QA ELLENŐRZÉSEK */}
+                    {typeof m.quality_score === "number" && (
+                      <div className={`border ${scoreBg(m.quality_score)} px-2 py-2 space-y-2`}>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            {m.quality_passed ? <Check className="h-4 w-4 text-emerald-500" /> : <AlertTriangle className="h-4 w-4 text-amber-500" />}
+                            <span className="text-xs font-medium">Minőségi pontszám</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`font-heading text-lg font-bold ${scoreColor(m.quality_score)}`}>{m.quality_score}<span className="text-xs font-normal text-muted-foreground">/100</span></span>
+                            <span className={`text-[10px] ${scoreColor(m.quality_score)}`}>{scoreLabel(m.quality_score, !!m.quality_passed)}</span>
+                          </div>
+                        </div>
+
+                        {!!m.quality_checks?.length && (
+                          <div className="grid gap-1">
+                            {m.quality_checks.map((c, ci) => (
+                              <div key={ci} className="flex items-start gap-1.5 text-[10px]">
+                                <span className={c.ok ? "text-emerald-500" : c.severity === "critical" ? "text-destructive" : "text-amber-500"}>
+                                  {c.ok ? "✓" : c.severity === "critical" ? "✗" : "⚠"}
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                  <span className={c.ok ? "text-muted-foreground" : "text-foreground font-medium"}>{c.name}</span>
+                                  <span className="text-muted-foreground"> — {c.note}</span>
+                                </div>
+                                <span className={`shrink-0 px-1 ${c.severity === "critical" ? "text-destructive" : c.severity === "high" ? "text-amber-500" : "text-muted-foreground"}`}>
+                                  {c.severity === "critical" ? "kritikus" : c.severity === "high" ? "fontos" : "apró"}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {!m.quality_passed && !!m.quality_blockers?.length && (
+                          <div className="text-[10px] text-destructive border-t border-destructive/20 pt-1">
+                            Blokkolók: {m.quality_blockers.join(", ")}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <div className="flex flex-wrap gap-1">
                       {Object.keys(m.patch).slice(0, 12).map((k) => (
                         <span key={k} className="text-[10px] border border-border px-1.5 py-0.5 text-muted-foreground">{k}</span>
                       ))}
                     </div>
+
                     {m.applied ? (
                       <div className="flex items-center gap-1 text-[11px] text-primary"><Check className="h-3 w-3" /> Alkalmazva a webshopra</div>
                     ) : (
-                      <Button size="sm" variant="outline" className="rounded-none h-7 text-xs"
-                        onClick={() => applyPatch(m.patch!)}>Alkalmazom</Button>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" variant="outline" className="rounded-none h-7 text-xs"
+                          onClick={() => applyPatch(m.patch!)}>
+                          Alkalmazom
+                        </Button>
+                        {!m.quality_passed && (
+                          <Button size="sm" variant="outline" className="rounded-none h-7 text-xs"
+                            disabled={refining}
+                            onClick={() => void refine(i)}>
+                            {refining ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Wand2 className="h-3 w-3 mr-1" />}
+                            AI javítása
+                          </Button>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}
