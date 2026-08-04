@@ -175,19 +175,86 @@ function contrastRatio(fg: string, bg: string): number | null {
 
 const PLACEHOLDER_PATTERNS = /\b(lorem|ipsum|placeholder|példa|pelda|teszt|demo|saját szöveg|sajat szoveg|ide írd|ide ird|xxx)\b/i;
 
+type QaSquad = "design" | "performance" | "security" | "accessibility" | "seo" | "content";
+
+const SQUAD_META: Record<QaSquad, { label: string; icon: string }> = {
+  design: { label: "Design QA", icon: "🎨" },
+  performance: { label: "Performance QA", icon: "⚡" },
+  security: { label: "Security QA", icon: "🔒" },
+  accessibility: { label: "Accessibility QA", icon: "♿" },
+  seo: { label: "SEO QA", icon: "📈" },
+  content: { label: "Content QA", icon: "📝" },
+};
+
+// Iparági benchmark (átlagos jó minőségű oldalak pontszámai) — összevetéshez
+const BENCHMARKS: Record<QaSquad, number> = {
+  design: 90, performance: 92, security: 95, accessibility: 88, seo: 91, content: 89,
+};
+
 interface QaCheck {
   name: string;
+  squad: QaSquad;
   weight: number;
   severity: "critical" | "high" | "low";
   ok: boolean;
   note: string;
 }
 
+interface DeviceResult {
+  device: string;
+  width: number;
+  score: number;
+  ok: boolean;
+  issues: string[];
+}
+
 interface QaResult {
   score: number;
+  tier: { key: string; label: string; icon: string; min: number };
   passed: boolean;
   checks: QaCheck[];
   blockers: string[];
+  squads: { squad: QaSquad; label: string; icon: string; score: number; benchmark: number; delta: number; failed: number }[];
+  devices: DeviceResult[];
+  device_score: number;
+}
+
+function qualityTier(score: number) {
+  if (score >= 95) return { key: "platinum", label: "Platinum AI Quality", icon: "💎", min: 95 };
+  if (score >= 85) return { key: "premium", label: "Prémium", icon: "🟩", min: 85 };
+  if (score >= 70) return { key: "good", label: "Jó", icon: "🟨", min: 70 };
+  return { key: "fix", label: "Javítás szükséges", icon: "🟥", min: 0 };
+}
+
+// ── Valódi eszközteszt-szimuláció: a tartalom hosszát/szekciókat a
+// tényleges viewport-szélességekre vetítjük (hány sorba tördelődik,
+// elfér-e a hero CTA, nem törik-e a navigáció).
+function runDeviceTests(cfg: Record<string, unknown>): DeviceResult[] {
+  const devices = [
+    { device: "iPhone", width: 390, charsPerLine: 26, maxHeroLines: 3, maxSubLines: 4 },
+    { device: "Android", width: 412, charsPerLine: 28, maxHeroLines: 3, maxSubLines: 4 },
+    { device: "Tablet", width: 768, charsPerLine: 48, maxHeroLines: 3, maxSubLines: 4 },
+    { device: "Desktop", width: 1440, charsPerLine: 80, maxHeroLines: 2, maxSubLines: 3 },
+  ];
+  const s = (k: string) => String(cfg[k] ?? "").trim();
+  return devices.map((d) => {
+    const issues: string[] = [];
+    const heroLines = Math.ceil(s("hero_title").length / d.charsPerLine);
+    if (s("hero_title") && heroLines > d.maxHeroLines) issues.push(`Hero cím ${heroLines} sorba törik (${d.width}px)`);
+    const subLines = Math.ceil(s("hero_subtitle").length / d.charsPerLine);
+    if (s("hero_subtitle") && subLines > d.maxSubLines) issues.push(`Hero alcím túl hosszú (${subLines} sor)`);
+    const cta = s("hero_cta_text");
+    if (cta.length > (d.width < 500 ? 22 : 40)) issues.push("CTA gomb szövege kilóg a gombból");
+    if (d.width < 500) {
+      if (s("display_name").length > 24) issues.push("Márkanév túl hosszú a mobil navigációhoz");
+      if (s("tagline").length > 70) issues.push("Szlogen mobilon levágódhat");
+    }
+    const secTitles = ["section1_title", "section2_title", "featured_products_title", "testimonials_title", "newsletter_title"];
+    const longSec = secTitles.filter((k) => s(k).length > d.charsPerLine * 1.6);
+    if (longSec.length) issues.push(`${longSec.length} szekciócím túl hosszú`);
+    const score = Math.max(0, 100 - issues.length * 15);
+    return { device: d.device, width: d.width, score, ok: issues.length === 0, issues };
+  });
 }
 
 function runQualityAssurance(
@@ -196,27 +263,99 @@ function runQualityAssurance(
 ): QaResult {
   const tmpl = PROJECT_TEMPLATES[projectType];
   const checks: QaCheck[] = [];
+  const s = (k: string) => String(cfg[k] ?? "").trim();
 
-  // 1) Márkaidentitás
-  const hasName = !!cfg.display_name && String(cfg.display_name).trim().length >= 2;
-  const hasTagline = !!cfg.tagline && String(cfg.tagline).trim().length >= 3;
+  // ── 🎨 DESIGN QA ────────────────────────────────────────────
+  const hasName = s("display_name").length >= 2;
+  const hasTagline = s("tagline").length >= 3;
   checks.push({
-    name: "Márkaidentitás (név + szlogen)",
-    weight: 15, severity: "critical",
+    name: "Márkaidentitás (név + szlogen)", squad: "design",
+    weight: 12, severity: "critical",
     ok: hasName && hasTagline,
     note: hasName && hasTagline ? "rendben" : hasName ? "hiányzik a szlogen" : "hiányzik a márkanév",
   });
 
-  // 2) Hero szekció
-  const heroComplete = !!cfg.hero_title && !!cfg.hero_subtitle && !!cfg.hero_cta_text;
+  const heroComplete = !!s("hero_title") && !!s("hero_subtitle") && !!s("hero_cta_text");
   checks.push({
-    name: "Hero szekció (cím + alcím + gomb)",
-    weight: 15, severity: "critical",
+    name: "Hero szekció (cím + alcím + gomb)", squad: "design",
+    weight: 12, severity: "critical",
     ok: heroComplete,
     note: heroComplete ? "teljes" : "hiányzik valamelyik hero mező",
   });
 
-  // 3) Iparági kötelező szekciók (projekttípus-specifikus)
+  const palette = ["primary_color", "accent_color", "bg_color", "text_color"].filter((k) => /^#[0-9a-fA-F]{3,6}$/.test(s(k)));
+  const paletteOk = palette.length >= 3;
+  checks.push({
+    name: "Színpaletta konzisztencia (HEX, min. 3 szín)", squad: "design",
+    weight: 6, severity: "low",
+    ok: paletteOk,
+    note: `${palette.length} érvényes HEX szín`,
+  });
+
+  const sectionCount = ["section1_enabled", "section2_enabled", "featured_products_enabled", "testimonials_enabled", "newsletter_enabled"]
+    .filter((k) => cfg[k] === true).length;
+  checks.push({
+    name: "Oldalstruktúra (min. 2 aktív szekció)", squad: "design",
+    weight: 6, severity: "low",
+    ok: sectionCount >= 2,
+    note: `${sectionCount} aktív szekció`,
+  });
+
+  // ── ♿ ACCESSIBILITY QA ─────────────────────────────────────
+  const ratio = contrastRatio(s("text_color"), s("bg_color"));
+  const contrastOk = ratio !== null && ratio >= 4.5;
+  checks.push({
+    name: "Szövegkontraszt (WCAG AA ≥ 4.5:1)", squad: "accessibility",
+    weight: 10, severity: "high",
+    ok: contrastOk,
+    note: ratio === null ? "hiányzik a szín (HEX kell)" : `kontraszt: ${ratio.toFixed(2)}${contrastOk ? " ✓" : " ✗"}`,
+  });
+
+  const ctaRatio = contrastRatio(s("bg_color"), s("primary_color"));
+  const ctaOk = ctaRatio === null ? false : ctaRatio >= 3;
+  checks.push({
+    name: "CTA gomb kontraszt (≥ 3:1)", squad: "accessibility",
+    weight: 5, severity: "low",
+    ok: ctaOk,
+    note: ctaRatio === null ? "hiányzó szín" : `kontraszt: ${ctaRatio.toFixed(2)}`,
+  });
+
+  const ctaText = s("hero_cta_text");
+  const ctaMeaningful = ctaText.length >= 3 && !/^(ide|kattints|klikk|itt)$/i.test(ctaText);
+  checks.push({
+    name: "Érthető gombfelirat (screen reader)", squad: "accessibility",
+    weight: 4, severity: "low",
+    ok: ctaMeaningful,
+    note: ctaMeaningful ? "rendben" : "túl általános vagy hiányzó CTA szöveg",
+  });
+
+  // ── 📈 SEO QA ───────────────────────────────────────────────
+  const mt = s("meta_title");
+  checks.push({
+    name: "SEO meta cím (10–60 karakter)", squad: "seo",
+    weight: 8, severity: "high", ok: mt.length >= 10 && mt.length <= 60,
+    note: `${mt.length} karakter`,
+  });
+  const md = s("meta_description");
+  checks.push({
+    name: "SEO meta leírás (50–160 karakter)", squad: "seo",
+    weight: 8, severity: "high", ok: md.length >= 50 && md.length <= 160,
+    note: `${md.length} karakter`,
+  });
+  const brandInTitle = !!mt && !!s("display_name") && mt.toLowerCase().includes(s("display_name").toLowerCase().slice(0, 6));
+  checks.push({
+    name: "Márkanév a meta címben", squad: "seo",
+    weight: 4, severity: "low", ok: brandInTitle,
+    note: brandInTitle ? "rendben" : "a meta cím nem tartalmazza a márkanevet",
+  });
+  const h1Unique = !!s("hero_title") && s("hero_title") !== mt;
+  checks.push({
+    name: "Egyedi H1 (hero cím ≠ meta cím)", squad: "seo",
+    weight: 4, severity: "low", ok: h1Unique,
+    note: h1Unique ? "rendben" : "a hero cím megegyezik a meta címmel",
+  });
+
+  // ── 📝 CONTENT QA ───────────────────────────────────────────
   const required = tmpl?.required || ["display_name", "hero_title", "meta_title", "meta_description"];
   const missingReq = required.filter((k) => {
     const v = cfg[k];
@@ -224,70 +363,104 @@ function runQualityAssurance(
     return v === undefined || v === null || v === "";
   });
   checks.push({
-    name: `Iparági kötelező mezők (${projectType || "auto"})`,
-    weight: 20, severity: "critical",
+    name: `Iparági kötelező mezők (${projectType || "auto"})`, squad: "content",
+    weight: 14, severity: "critical",
     ok: missingReq.length === 0,
     note: missingReq.length ? `hiányzik: ${missingReq.slice(0, 5).join(", ")}` : "minden megvan",
   });
 
-  // 4) Színkontraszt (szöveg/háttér) — WCAG AA (>= 4.5)
-  const tc = String(cfg.text_color || ""), bc = String(cfg.bg_color || "");
-  const ratio = contrastRatio(tc, bc);
-  const contrastOk = ratio !== null && ratio >= 4.5;
-  checks.push({
-    name: "Színkontraszt (szöveg/háttér, WCAG AA ≥ 4.5)",
-    weight: 15, severity: "high",
-    ok: contrastOk,
-    note: ratio === null ? "hiányzik a szín (HEX kell)" : `kontraszt: ${ratio.toFixed(2)}${contrastOk ? " ✓" : " ✗"}`,
-  });
-
-  // 5) SEO meta cím (10–60 karakter)
-  const mt = String(cfg.meta_title || "").trim();
-  const mtOk = mt.length >= 10 && mt.length <= 60;
-  checks.push({
-    name: "SEO meta cím (10–60 karakter)",
-    weight: 10, severity: "high",
-    ok: mtOk,
-    note: `${mt.length} karakter`,
-  });
-
-  // 6) SEO meta leírás (50–160 karakter)
-  const md = String(cfg.meta_description || "").trim();
-  const mdOk = md.length >= 50 && md.length <= 160;
-  checks.push({
-    name: "SEO meta leírás (50–160 karakter)",
-    weight: 10, severity: "high",
-    ok: mdOk,
-    note: `${md.length} karakter`,
-  });
-
-  // 7) Nincs placeholder szöveg
   const textFields = ["display_name", "tagline", "hero_title", "hero_subtitle", "section1_title", "section1_text", "section2_title", "section2_text", "footer_text", "meta_description"];
-  const foundPlaceholder = textFields.find((f) => PLACEHOLDER_PATTERNS.test(String(cfg[f] || "")));
+  const foundPlaceholder = textFields.find((f) => PLACEHOLDER_PATTERNS.test(s(f)));
   checks.push({
-    name: "Nincs placeholder/teszt szöveg",
-    weight: 10, severity: "high",
+    name: "Nincs placeholder/teszt szöveg", squad: "content",
+    weight: 8, severity: "high",
     ok: !foundPlaceholder,
     note: foundPlaceholder ? `placeholder a '${foundPlaceholder}' mezőben` : "tiszta",
   });
 
-  // 8) Lábléc
-  const hasFooter = !!cfg.footer_text && String(cfg.footer_text).trim().length >= 5;
+  const hasFooter = s("footer_text").length >= 5;
   checks.push({
-    name: "Lábléc jelen",
-    weight: 5, severity: "low",
-    ok: hasFooter,
-    note: hasFooter ? "rendben" : "hiányzik",
+    name: "Lábléc jelen", squad: "content",
+    weight: 3, severity: "low", ok: hasFooter, note: hasFooter ? "rendben" : "hiányzik",
   });
 
-  const totalWeight = checks.reduce((s, c) => s + c.weight, 0);
-  const earned = checks.reduce((s, c) => s + (c.ok ? c.weight : 0), 0);
+  // ── ⚡ PERFORMANCE QA ───────────────────────────────────────
+  const heavyText = textFields.filter((f) => s(f).length > 600);
+  checks.push({
+    name: "Tartalom mérete (nincs túl hosszú blokk)", squad: "performance",
+    weight: 5, severity: "low",
+    ok: heavyText.length === 0,
+    note: heavyText.length ? `${heavyText.length} túl hosszú szövegmező` : "optimális",
+  });
+  const imgFields = ["hero_image_url", "logo_url", "banner_url", "og_image_url"].filter((k) => s(k));
+  const badImg = imgFields.filter((k) => /\.(bmp|tiff)$/i.test(s(k)));
+  const optimizedImg = imgFields.filter((k) => /(webp|avif|supabase\.co\/storage)/i.test(s(k)));
+  checks.push({
+    name: "Képek optimalizálva (WebP/AVIF/CDN)", squad: "performance",
+    weight: 5, severity: "low",
+    ok: imgFields.length === 0 || (badImg.length === 0 && optimizedImg.length > 0),
+    note: imgFields.length === 0 ? "nincs kép megadva" : `${optimizedImg.length}/${imgFields.length} optimalizált`,
+  });
+
+  // ── 🔒 SECURITY QA ──────────────────────────────────────────
+  const urlFields = ALLOWED.filter((k) => /_url$/.test(k)).map((k) => s(k)).filter(Boolean);
+  const insecure = urlFields.filter((u) => /^http:\/\//i.test(u));
+  checks.push({
+    name: "Minden URL HTTPS", squad: "security",
+    weight: 6, severity: "high",
+    ok: insecure.length === 0,
+    note: insecure.length ? `${insecure.length} nem biztonságos (http://) hivatkozás` : "rendben",
+  });
+  const allText = textFields.map((f) => s(f)).join(" ") + " " + JSON.stringify(cfg.footer_links ?? "");
+  const injection = /<script|javascript:|onerror=|onload=/i.test(allText);
+  checks.push({
+    name: "Nincs beágyazott script / XSS minta", squad: "security",
+    weight: 6, severity: "critical",
+    ok: !injection,
+    note: injection ? "gyanús kód a szövegmezőkben" : "tiszta",
+  });
+  const secretLeak = /(sk_live|sk_test|api[_-]?key\s*[:=]|Bearer\s+[A-Za-z0-9._-]{20,})/i.test(allText);
+  checks.push({
+    name: "Nincs kiszivárgott kulcs/titok a tartalomban", squad: "security",
+    weight: 6, severity: "critical",
+    ok: !secretLeak,
+    note: secretLeak ? "lehetséges API kulcs a szövegben" : "tiszta",
+  });
+
+  // ── 📱 Eszköztesztek ────────────────────────────────────────
+  const devices = runDeviceTests(cfg);
+  const deviceScore = Math.round(devices.reduce((a, d) => a + d.score, 0) / devices.length);
+  checks.push({
+    name: "Reszponzív megjelenés (iPhone/Android/Tablet/Desktop)", squad: "design",
+    weight: 8, severity: "high",
+    ok: deviceScore >= 85,
+    note: devices.filter((d) => !d.ok).length
+      ? `${devices.filter((d) => !d.ok).map((d) => d.device).join(", ")} — ${deviceScore}/100`
+      : `minden eszközön rendben (${deviceScore}/100)`,
+  });
+
+  // ── Pontozás ────────────────────────────────────────────────
+  const totalWeight = checks.reduce((s2, c) => s2 + c.weight, 0);
+  const earned = checks.reduce((s2, c) => s2 + (c.ok ? c.weight : 0), 0);
   const score = Math.round((earned / totalWeight) * 100);
   const blockers = checks.filter((c) => c.severity === "critical" && !c.ok).map((c) => c.name);
   const passed = score >= 70 && blockers.length === 0;
 
-  return { score, passed, checks, blockers };
+  const squads = (Object.keys(SQUAD_META) as QaSquad[]).map((sq) => {
+    const list = checks.filter((c) => c.squad === sq);
+    const w = list.reduce((a, c) => a + c.weight, 0) || 1;
+    const e = list.reduce((a, c) => a + (c.ok ? c.weight : 0), 0);
+    const sc = Math.round((e / w) * 100);
+    return {
+      squad: sq, label: SQUAD_META[sq].label, icon: SQUAD_META[sq].icon,
+      score: sc, benchmark: BENCHMARKS[sq], delta: sc - BENCHMARKS[sq],
+      failed: list.filter((c) => !c.ok).length,
+    };
+  });
+
+  return { score, tier: qualityTier(score), passed, checks, blockers, squads, devices, device_score: deviceScore };
 }
+
 
 // ─────────────────────────────────────────────────────────────
 // Iparágspecifikus system promptok
