@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Send, Loader2, Plus, Bot, User as UserIcon, Brain, Check, AlertTriangle, Wand2 } from "lucide-react";
+import { Send, Loader2, Plus, Bot, User as UserIcon, Brain, Check, AlertTriangle, Wand2, Rocket } from "lucide-react";
 
 interface Props {
   partnerId: string;
@@ -16,10 +16,36 @@ interface Props {
 
 interface QaCheck {
   name: string;
+  squad?: string;
   weight: number;
   severity: "critical" | "high" | "low";
   ok: boolean;
   note: string;
+}
+
+interface QaSquad {
+  squad: string;
+  label: string;
+  icon: string;
+  score: number;
+  benchmark: number;
+  delta: number;
+  failed: number;
+}
+
+interface QaDevice {
+  device: string;
+  width: number;
+  score: number;
+  ok: boolean;
+  issues: string[];
+}
+
+interface QaTier {
+  key: string;
+  label: string;
+  icon: string;
+  min: number;
 }
 
 interface Msg {
@@ -34,7 +60,17 @@ interface Msg {
   quality_passed?: boolean;
   quality_checks?: QaCheck[];
   quality_blockers?: string[];
+  quality_tier?: QaTier;
+  quality_squads?: QaSquad[];
+  quality_devices?: QaDevice[];
+  quality_device_score?: number;
+  optimize_stats?: {
+    clicks: number; conversions: number; ctr: number; benchmark_ctr: number;
+    delta_pct: number; mobile_share: number; button_events: Record<string, number>;
+  } | null;
+
 }
+
 
 const QUICK = [
   "Készíts egy prémium autóalkatrész-webshopot.",
@@ -71,9 +107,16 @@ interface LiveStep {
   status: "pending" | "running" | "done" | "warn";
 }
 
-const scoreColor = (s: number) => (s >= 85 ? "text-emerald-500" : s >= 70 ? "text-amber-500" : "text-destructive");
-const scoreBg = (s: number) => (s >= 85 ? "border-emerald-500/40 bg-emerald-500/5" : s >= 70 ? "border-amber-500/40 bg-amber-500/5" : "border-destructive/40 bg-destructive/5");
-const scoreLabel = (s: number, passed: boolean) => passed ? "Kiváló" : s >= 70 ? "Jó, de javítható" : "Javítás szükséges";
+const scoreColor = (s: number) => (s >= 95 ? "text-cyan-400" : s >= 85 ? "text-emerald-500" : s >= 70 ? "text-amber-500" : "text-destructive");
+const scoreBg = (s: number) => (s >= 95 ? "border-cyan-400/50 bg-cyan-400/5" : s >= 85 ? "border-emerald-500/40 bg-emerald-500/5" : s >= 70 ? "border-amber-500/40 bg-amber-500/5" : "border-destructive/40 bg-destructive/5");
+const tierOf = (s: number): QaTier =>
+  s >= 95 ? { key: "platinum", label: "Platinum AI Quality", icon: "💎", min: 95 }
+  : s >= 85 ? { key: "premium", label: "Prémium", icon: "🟩", min: 85 }
+  : s >= 70 ? { key: "good", label: "Jó", icon: "🟨", min: 70 }
+  : { key: "fix", label: "Javítás szükséges", icon: "🟥", min: 0 };
+const scoreLabel = (s: number) => tierOf(s).label;
+const deviceIcon = (d: string) => (d === "Desktop" ? "🖥️" : d === "Tablet" ? "📲" : d === "Android" ? "🤖" : "📱");
+
 
 const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
   const [sessions, setSessions] = useState<any[]>([]);
@@ -82,6 +125,8 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [refining, setRefining] = useState(false);
+  const [optimizing, setOptimizing] = useState(false);
+
   const [autoApply, setAutoApply] = useState(true);
   const [memory, setMemory] = useState<any>(null);
   const [projectType, setProjectType] = useState("");
@@ -201,6 +246,11 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
         quality_passed: data.quality_passed,
         quality_checks: data.quality_checks,
         quality_blockers: data.quality_blockers,
+        quality_tier: data.quality_tier,
+        quality_squads: data.quality_squads,
+        quality_devices: data.quality_devices,
+        quality_device_score: data.quality_device_score,
+
       }]);
 
       if (data.applied && data.patch) {
@@ -257,6 +307,11 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
           quality_passed: data.quality_passed,
           quality_checks: data.quality_checks,
           quality_blockers: data.quality_blockers,
+          quality_tier: data.quality_tier,
+          quality_squads: data.quality_squads,
+          quality_devices: data.quality_devices,
+          quality_device_score: data.quality_device_score,
+
           agent_plan: data.agent_log || m.agent_plan,
         };
         return next;
@@ -274,6 +329,43 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
     } finally {
       setRefining(false);
       inputRef.current?.focus();
+    }
+  };
+
+  // 🚀 AI OPTIMALIZÁLÓ — publikálás utáni élő teljesítmény alapján új verzió (jóváhagyással)
+  const optimize = async () => {
+    if (!sessionId || optimizing) return;
+    setOptimizing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("partner-web-agent", {
+        body: { partner_id: partnerId, session_id: sessionId, stage: "optimize", project_type: projectType },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      setMessages((prev) => [...prev, {
+        role: "assistant",
+        content: data.reply,
+        agent_plan: data.agent_log,
+        patch: data.patch,
+        applied: false,
+        quality_score: data.quality_score,
+        quality_passed: data.quality_passed,
+        quality_checks: data.quality_checks,
+        quality_blockers: data.quality_blockers,
+        quality_tier: data.quality_tier,
+        quality_squads: data.quality_squads,
+        quality_devices: data.quality_devices,
+        quality_device_score: data.quality_device_score,
+        optimize_stats: data.optimize_stats,
+      }]);
+      toast({
+        title: "AI Optimalizáló javaslat kész",
+        description: `Minőség: ${data.quality_score}/100 — a változás jóváhagyásra vár.`,
+      });
+    } catch (e: any) {
+      toast({ title: "Optimalizálás sikertelen", description: e?.message, variant: "destructive" });
+    } finally {
+      setOptimizing(false);
     }
   };
 
@@ -341,6 +433,15 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
               <Switch id="autoapply" checked={autoApply} onCheckedChange={setAutoApply} />
               <Label htmlFor="autoapply" className="text-xs text-muted-foreground">Automatikus alkalmazás</Label>
             </div>
+            <Button
+              type="button" size="sm" variant="outline"
+              className="rounded-none h-8 text-xs ml-auto"
+              onClick={optimize} disabled={optimizing || sending}
+            >
+              {optimizing ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Rocket className="h-3 w-3 mr-1" />}
+              AI Optimalizáló
+            </Button>
+
           </div>
         </div>
 
@@ -405,7 +506,26 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
 
                 {m.patch && Object.keys(m.patch).length > 0 && (
                   <div className="border border-border p-2 space-y-2 text-left">
+                    {/* 🚀 AI OPTIMALIZÁLÓ — élő teljesítmény */}
+                    {m.optimize_stats && (
+                      <div className="border border-primary/40 bg-primary/5 px-2 py-2 space-y-1">
+                        <div className="flex items-center gap-1.5 text-xs font-medium">
+                          <Rocket className="h-3.5 w-3.5 text-primary" /> AI Optimalizáló — 30 napos élő adat
+                        </div>
+                        <div className="grid grid-cols-2 gap-1 text-[10px] text-muted-foreground">
+                          <span>Kattintás: <span className="text-foreground">{m.optimize_stats.clicks}</span></span>
+                          <span>Konverzió: <span className="text-foreground">{m.optimize_stats.conversions}</span></span>
+                          <span>CTR: <span className={m.optimize_stats.delta_pct >= 0 ? "text-emerald-500" : "text-destructive"}>{m.optimize_stats.ctr}%</span> (benchmark {m.optimize_stats.benchmark_ctr}%)</span>
+                          <span>Mobil arány: <span className="text-foreground">{m.optimize_stats.mobile_share}%</span></span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">
+                          A hero CTR-je {Math.abs(m.optimize_stats.delta_pct)}%-kal {m.optimize_stats.delta_pct >= 0 ? "jobb" : "gyengébb"} az átlagosnál — az új verzió jóváhagyásra vár.
+                        </p>
+                      </div>
+                    )}
+
                     {/* MINŐSÉGI PONTSZÁM + QA ELLENŐRZÉSEK */}
+
                     {typeof m.quality_score === "number" && (
                       <div className={`border ${scoreBg(m.quality_score)} px-2 py-2 space-y-2`}>
                         <div className="flex items-center justify-between gap-2">
@@ -415,12 +535,61 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
                           </div>
                           <div className="flex items-center gap-2">
                             <span className={`font-heading text-lg font-bold ${scoreColor(m.quality_score)}`}>{m.quality_score}<span className="text-xs font-normal text-muted-foreground">/100</span></span>
-                            <span className={`text-[10px] ${scoreColor(m.quality_score)}`}>{scoreLabel(m.quality_score, !!m.quality_passed)}</span>
+                            <span className={`text-[10px] border px-1.5 py-0.5 ${scoreColor(m.quality_score)} border-current`}>
+                              {(m.quality_tier?.icon ?? tierOf(m.quality_score).icon)} {(m.quality_tier?.label ?? scoreLabel(m.quality_score))}
+                            </span>
                           </div>
                         </div>
 
+                        {/* QA ÜGYNÖKÖK + BENCHMARK */}
+                        {!!m.quality_squads?.length && (
+                          <div className="grid gap-1 border-t border-border/40 pt-1.5">
+                            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">QA ügynökök · benchmark</div>
+                            {m.quality_squads.map((sq) => (
+                              <div key={sq.squad} className="flex items-center gap-2 text-[10px]">
+                                <span className="w-28 shrink-0 truncate">{sq.icon} {sq.label}</span>
+                                <div className="relative h-1.5 flex-1 bg-muted">
+                                  <div
+                                    className={`h-full ${sq.score >= 95 ? "bg-cyan-400" : sq.score >= 85 ? "bg-emerald-500" : sq.score >= 70 ? "bg-amber-500" : "bg-destructive"}`}
+                                    style={{ width: `${Math.max(2, sq.score)}%` }}
+                                  />
+                                  <div className="absolute top-[-2px] h-2.5 w-px bg-foreground/60" style={{ left: `${sq.benchmark}%` }} title={`Benchmark: ${sq.benchmark}`} />
+                                </div>
+                                <span className={`w-8 shrink-0 text-right ${scoreColor(sq.score)}`}>{sq.score}</span>
+                                <span className={`w-9 shrink-0 text-right ${sq.delta >= 0 ? "text-emerald-500" : "text-destructive"}`}>
+                                  {sq.delta >= 0 ? "+" : ""}{sq.delta}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* VALÓDI ESZKÖZTESZT */}
+                        {!!m.quality_devices?.length && (
+                          <div className="border-t border-border/40 pt-1.5 space-y-1">
+                            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                              Eszközteszt {typeof m.quality_device_score === "number" && `— ${m.quality_device_score}/100`}
+                            </div>
+                            <div className="grid grid-cols-2 gap-1">
+                              {m.quality_devices.map((d) => (
+                                <div key={d.device} className={`border px-1.5 py-1 text-[10px] ${d.ok ? "border-emerald-500/30" : "border-amber-500/40"}`}>
+                                  <div className="flex items-center justify-between">
+                                    <span>{deviceIcon(d.device)} {d.device} <span className="text-muted-foreground">{d.width}px</span></span>
+                                    <span className={scoreColor(d.score)}>{d.score}</span>
+                                  </div>
+                                  {!d.ok && (
+                                    <ul className="mt-0.5 text-muted-foreground">
+                                      {d.issues.slice(0, 3).map((i, ii) => <li key={ii}>• {i}</li>)}
+                                    </ul>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
                         {!!m.quality_checks?.length && (
-                          <div className="grid gap-1">
+                          <div className="grid gap-1 border-t border-border/40 pt-1.5">
                             {m.quality_checks.map((c, ci) => (
                               <div key={ci} className="flex items-start gap-1.5 text-[10px]">
                                 <span className={c.ok ? "text-emerald-500" : c.severity === "critical" ? "text-destructive" : "text-amber-500"}>
@@ -443,6 +612,7 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
                             Blokkolók: {m.quality_blockers.join(", ")}
                           </div>
                         )}
+
                       </div>
                     )}
 

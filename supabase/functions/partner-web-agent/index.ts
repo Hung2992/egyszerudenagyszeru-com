@@ -175,19 +175,86 @@ function contrastRatio(fg: string, bg: string): number | null {
 
 const PLACEHOLDER_PATTERNS = /\b(lorem|ipsum|placeholder|példa|pelda|teszt|demo|saját szöveg|sajat szoveg|ide írd|ide ird|xxx)\b/i;
 
+type QaSquad = "design" | "performance" | "security" | "accessibility" | "seo" | "content";
+
+const SQUAD_META: Record<QaSquad, { label: string; icon: string }> = {
+  design: { label: "Design QA", icon: "🎨" },
+  performance: { label: "Performance QA", icon: "⚡" },
+  security: { label: "Security QA", icon: "🔒" },
+  accessibility: { label: "Accessibility QA", icon: "♿" },
+  seo: { label: "SEO QA", icon: "📈" },
+  content: { label: "Content QA", icon: "📝" },
+};
+
+// Iparági benchmark (átlagos jó minőségű oldalak pontszámai) — összevetéshez
+const BENCHMARKS: Record<QaSquad, number> = {
+  design: 90, performance: 92, security: 95, accessibility: 88, seo: 91, content: 89,
+};
+
 interface QaCheck {
   name: string;
+  squad: QaSquad;
   weight: number;
   severity: "critical" | "high" | "low";
   ok: boolean;
   note: string;
 }
 
+interface DeviceResult {
+  device: string;
+  width: number;
+  score: number;
+  ok: boolean;
+  issues: string[];
+}
+
 interface QaResult {
   score: number;
+  tier: { key: string; label: string; icon: string; min: number };
   passed: boolean;
   checks: QaCheck[];
   blockers: string[];
+  squads: { squad: QaSquad; label: string; icon: string; score: number; benchmark: number; delta: number; failed: number }[];
+  devices: DeviceResult[];
+  device_score: number;
+}
+
+function qualityTier(score: number) {
+  if (score >= 95) return { key: "platinum", label: "Platinum AI Quality", icon: "💎", min: 95 };
+  if (score >= 85) return { key: "premium", label: "Prémium", icon: "🟩", min: 85 };
+  if (score >= 70) return { key: "good", label: "Jó", icon: "🟨", min: 70 };
+  return { key: "fix", label: "Javítás szükséges", icon: "🟥", min: 0 };
+}
+
+// ── Valódi eszközteszt-szimuláció: a tartalom hosszát/szekciókat a
+// tényleges viewport-szélességekre vetítjük (hány sorba tördelődik,
+// elfér-e a hero CTA, nem törik-e a navigáció).
+function runDeviceTests(cfg: Record<string, unknown>): DeviceResult[] {
+  const devices = [
+    { device: "iPhone", width: 390, charsPerLine: 26, maxHeroLines: 3, maxSubLines: 4 },
+    { device: "Android", width: 412, charsPerLine: 28, maxHeroLines: 3, maxSubLines: 4 },
+    { device: "Tablet", width: 768, charsPerLine: 48, maxHeroLines: 3, maxSubLines: 4 },
+    { device: "Desktop", width: 1440, charsPerLine: 80, maxHeroLines: 2, maxSubLines: 3 },
+  ];
+  const s = (k: string) => String(cfg[k] ?? "").trim();
+  return devices.map((d) => {
+    const issues: string[] = [];
+    const heroLines = Math.ceil(s("hero_title").length / d.charsPerLine);
+    if (s("hero_title") && heroLines > d.maxHeroLines) issues.push(`Hero cím ${heroLines} sorba törik (${d.width}px)`);
+    const subLines = Math.ceil(s("hero_subtitle").length / d.charsPerLine);
+    if (s("hero_subtitle") && subLines > d.maxSubLines) issues.push(`Hero alcím túl hosszú (${subLines} sor)`);
+    const cta = s("hero_cta_text");
+    if (cta.length > (d.width < 500 ? 22 : 40)) issues.push("CTA gomb szövege kilóg a gombból");
+    if (d.width < 500) {
+      if (s("display_name").length > 24) issues.push("Márkanév túl hosszú a mobil navigációhoz");
+      if (s("tagline").length > 70) issues.push("Szlogen mobilon levágódhat");
+    }
+    const secTitles = ["section1_title", "section2_title", "featured_products_title", "testimonials_title", "newsletter_title"];
+    const longSec = secTitles.filter((k) => s(k).length > d.charsPerLine * 1.6);
+    if (longSec.length) issues.push(`${longSec.length} szekciócím túl hosszú`);
+    const score = Math.max(0, 100 - issues.length * 15);
+    return { device: d.device, width: d.width, score, ok: issues.length === 0, issues };
+  });
 }
 
 function runQualityAssurance(
@@ -196,27 +263,99 @@ function runQualityAssurance(
 ): QaResult {
   const tmpl = PROJECT_TEMPLATES[projectType];
   const checks: QaCheck[] = [];
+  const s = (k: string) => String(cfg[k] ?? "").trim();
 
-  // 1) Márkaidentitás
-  const hasName = !!cfg.display_name && String(cfg.display_name).trim().length >= 2;
-  const hasTagline = !!cfg.tagline && String(cfg.tagline).trim().length >= 3;
+  // ── 🎨 DESIGN QA ────────────────────────────────────────────
+  const hasName = s("display_name").length >= 2;
+  const hasTagline = s("tagline").length >= 3;
   checks.push({
-    name: "Márkaidentitás (név + szlogen)",
-    weight: 15, severity: "critical",
+    name: "Márkaidentitás (név + szlogen)", squad: "design",
+    weight: 12, severity: "critical",
     ok: hasName && hasTagline,
     note: hasName && hasTagline ? "rendben" : hasName ? "hiányzik a szlogen" : "hiányzik a márkanév",
   });
 
-  // 2) Hero szekció
-  const heroComplete = !!cfg.hero_title && !!cfg.hero_subtitle && !!cfg.hero_cta_text;
+  const heroComplete = !!s("hero_title") && !!s("hero_subtitle") && !!s("hero_cta_text");
   checks.push({
-    name: "Hero szekció (cím + alcím + gomb)",
-    weight: 15, severity: "critical",
+    name: "Hero szekció (cím + alcím + gomb)", squad: "design",
+    weight: 12, severity: "critical",
     ok: heroComplete,
     note: heroComplete ? "teljes" : "hiányzik valamelyik hero mező",
   });
 
-  // 3) Iparági kötelező szekciók (projekttípus-specifikus)
+  const palette = ["primary_color", "accent_color", "bg_color", "text_color"].filter((k) => /^#[0-9a-fA-F]{3,6}$/.test(s(k)));
+  const paletteOk = palette.length >= 3;
+  checks.push({
+    name: "Színpaletta konzisztencia (HEX, min. 3 szín)", squad: "design",
+    weight: 6, severity: "low",
+    ok: paletteOk,
+    note: `${palette.length} érvényes HEX szín`,
+  });
+
+  const sectionCount = ["section1_enabled", "section2_enabled", "featured_products_enabled", "testimonials_enabled", "newsletter_enabled"]
+    .filter((k) => cfg[k] === true).length;
+  checks.push({
+    name: "Oldalstruktúra (min. 2 aktív szekció)", squad: "design",
+    weight: 6, severity: "low",
+    ok: sectionCount >= 2,
+    note: `${sectionCount} aktív szekció`,
+  });
+
+  // ── ♿ ACCESSIBILITY QA ─────────────────────────────────────
+  const ratio = contrastRatio(s("text_color"), s("bg_color"));
+  const contrastOk = ratio !== null && ratio >= 4.5;
+  checks.push({
+    name: "Szövegkontraszt (WCAG AA ≥ 4.5:1)", squad: "accessibility",
+    weight: 10, severity: "high",
+    ok: contrastOk,
+    note: ratio === null ? "hiányzik a szín (HEX kell)" : `kontraszt: ${ratio.toFixed(2)}${contrastOk ? " ✓" : " ✗"}`,
+  });
+
+  const ctaRatio = contrastRatio(s("bg_color"), s("primary_color"));
+  const ctaOk = ctaRatio === null ? false : ctaRatio >= 3;
+  checks.push({
+    name: "CTA gomb kontraszt (≥ 3:1)", squad: "accessibility",
+    weight: 5, severity: "low",
+    ok: ctaOk,
+    note: ctaRatio === null ? "hiányzó szín" : `kontraszt: ${ctaRatio.toFixed(2)}`,
+  });
+
+  const ctaText = s("hero_cta_text");
+  const ctaMeaningful = ctaText.length >= 3 && !/^(ide|kattints|klikk|itt)$/i.test(ctaText);
+  checks.push({
+    name: "Érthető gombfelirat (screen reader)", squad: "accessibility",
+    weight: 4, severity: "low",
+    ok: ctaMeaningful,
+    note: ctaMeaningful ? "rendben" : "túl általános vagy hiányzó CTA szöveg",
+  });
+
+  // ── 📈 SEO QA ───────────────────────────────────────────────
+  const mt = s("meta_title");
+  checks.push({
+    name: "SEO meta cím (10–60 karakter)", squad: "seo",
+    weight: 8, severity: "high", ok: mt.length >= 10 && mt.length <= 60,
+    note: `${mt.length} karakter`,
+  });
+  const md = s("meta_description");
+  checks.push({
+    name: "SEO meta leírás (50–160 karakter)", squad: "seo",
+    weight: 8, severity: "high", ok: md.length >= 50 && md.length <= 160,
+    note: `${md.length} karakter`,
+  });
+  const brandInTitle = !!mt && !!s("display_name") && mt.toLowerCase().includes(s("display_name").toLowerCase().slice(0, 6));
+  checks.push({
+    name: "Márkanév a meta címben", squad: "seo",
+    weight: 4, severity: "low", ok: brandInTitle,
+    note: brandInTitle ? "rendben" : "a meta cím nem tartalmazza a márkanevet",
+  });
+  const h1Unique = !!s("hero_title") && s("hero_title") !== mt;
+  checks.push({
+    name: "Egyedi H1 (hero cím ≠ meta cím)", squad: "seo",
+    weight: 4, severity: "low", ok: h1Unique,
+    note: h1Unique ? "rendben" : "a hero cím megegyezik a meta címmel",
+  });
+
+  // ── 📝 CONTENT QA ───────────────────────────────────────────
   const required = tmpl?.required || ["display_name", "hero_title", "meta_title", "meta_description"];
   const missingReq = required.filter((k) => {
     const v = cfg[k];
@@ -224,70 +363,104 @@ function runQualityAssurance(
     return v === undefined || v === null || v === "";
   });
   checks.push({
-    name: `Iparági kötelező mezők (${projectType || "auto"})`,
-    weight: 20, severity: "critical",
+    name: `Iparági kötelező mezők (${projectType || "auto"})`, squad: "content",
+    weight: 14, severity: "critical",
     ok: missingReq.length === 0,
     note: missingReq.length ? `hiányzik: ${missingReq.slice(0, 5).join(", ")}` : "minden megvan",
   });
 
-  // 4) Színkontraszt (szöveg/háttér) — WCAG AA (>= 4.5)
-  const tc = String(cfg.text_color || ""), bc = String(cfg.bg_color || "");
-  const ratio = contrastRatio(tc, bc);
-  const contrastOk = ratio !== null && ratio >= 4.5;
-  checks.push({
-    name: "Színkontraszt (szöveg/háttér, WCAG AA ≥ 4.5)",
-    weight: 15, severity: "high",
-    ok: contrastOk,
-    note: ratio === null ? "hiányzik a szín (HEX kell)" : `kontraszt: ${ratio.toFixed(2)}${contrastOk ? " ✓" : " ✗"}`,
-  });
-
-  // 5) SEO meta cím (10–60 karakter)
-  const mt = String(cfg.meta_title || "").trim();
-  const mtOk = mt.length >= 10 && mt.length <= 60;
-  checks.push({
-    name: "SEO meta cím (10–60 karakter)",
-    weight: 10, severity: "high",
-    ok: mtOk,
-    note: `${mt.length} karakter`,
-  });
-
-  // 6) SEO meta leírás (50–160 karakter)
-  const md = String(cfg.meta_description || "").trim();
-  const mdOk = md.length >= 50 && md.length <= 160;
-  checks.push({
-    name: "SEO meta leírás (50–160 karakter)",
-    weight: 10, severity: "high",
-    ok: mdOk,
-    note: `${md.length} karakter`,
-  });
-
-  // 7) Nincs placeholder szöveg
   const textFields = ["display_name", "tagline", "hero_title", "hero_subtitle", "section1_title", "section1_text", "section2_title", "section2_text", "footer_text", "meta_description"];
-  const foundPlaceholder = textFields.find((f) => PLACEHOLDER_PATTERNS.test(String(cfg[f] || "")));
+  const foundPlaceholder = textFields.find((f) => PLACEHOLDER_PATTERNS.test(s(f)));
   checks.push({
-    name: "Nincs placeholder/teszt szöveg",
-    weight: 10, severity: "high",
+    name: "Nincs placeholder/teszt szöveg", squad: "content",
+    weight: 8, severity: "high",
     ok: !foundPlaceholder,
     note: foundPlaceholder ? `placeholder a '${foundPlaceholder}' mezőben` : "tiszta",
   });
 
-  // 8) Lábléc
-  const hasFooter = !!cfg.footer_text && String(cfg.footer_text).trim().length >= 5;
+  const hasFooter = s("footer_text").length >= 5;
   checks.push({
-    name: "Lábléc jelen",
-    weight: 5, severity: "low",
-    ok: hasFooter,
-    note: hasFooter ? "rendben" : "hiányzik",
+    name: "Lábléc jelen", squad: "content",
+    weight: 3, severity: "low", ok: hasFooter, note: hasFooter ? "rendben" : "hiányzik",
   });
 
-  const totalWeight = checks.reduce((s, c) => s + c.weight, 0);
-  const earned = checks.reduce((s, c) => s + (c.ok ? c.weight : 0), 0);
+  // ── ⚡ PERFORMANCE QA ───────────────────────────────────────
+  const heavyText = textFields.filter((f) => s(f).length > 600);
+  checks.push({
+    name: "Tartalom mérete (nincs túl hosszú blokk)", squad: "performance",
+    weight: 5, severity: "low",
+    ok: heavyText.length === 0,
+    note: heavyText.length ? `${heavyText.length} túl hosszú szövegmező` : "optimális",
+  });
+  const imgFields = ["hero_image_url", "logo_url", "banner_url", "og_image_url"].filter((k) => s(k));
+  const badImg = imgFields.filter((k) => /\.(bmp|tiff)$/i.test(s(k)));
+  const optimizedImg = imgFields.filter((k) => /(webp|avif|supabase\.co\/storage)/i.test(s(k)));
+  checks.push({
+    name: "Képek optimalizálva (WebP/AVIF/CDN)", squad: "performance",
+    weight: 5, severity: "low",
+    ok: imgFields.length === 0 || (badImg.length === 0 && optimizedImg.length > 0),
+    note: imgFields.length === 0 ? "nincs kép megadva" : `${optimizedImg.length}/${imgFields.length} optimalizált`,
+  });
+
+  // ── 🔒 SECURITY QA ──────────────────────────────────────────
+  const urlFields = ALLOWED.filter((k) => /_url$/.test(k)).map((k) => s(k)).filter(Boolean);
+  const insecure = urlFields.filter((u) => /^http:\/\//i.test(u));
+  checks.push({
+    name: "Minden URL HTTPS", squad: "security",
+    weight: 6, severity: "high",
+    ok: insecure.length === 0,
+    note: insecure.length ? `${insecure.length} nem biztonságos (http://) hivatkozás` : "rendben",
+  });
+  const allText = textFields.map((f) => s(f)).join(" ") + " " + JSON.stringify(cfg.footer_links ?? "");
+  const injection = /<script|javascript:|onerror=|onload=/i.test(allText);
+  checks.push({
+    name: "Nincs beágyazott script / XSS minta", squad: "security",
+    weight: 6, severity: "critical",
+    ok: !injection,
+    note: injection ? "gyanús kód a szövegmezőkben" : "tiszta",
+  });
+  const secretLeak = /(sk_live|sk_test|api[_-]?key\s*[:=]|Bearer\s+[A-Za-z0-9._-]{20,})/i.test(allText);
+  checks.push({
+    name: "Nincs kiszivárgott kulcs/titok a tartalomban", squad: "security",
+    weight: 6, severity: "critical",
+    ok: !secretLeak,
+    note: secretLeak ? "lehetséges API kulcs a szövegben" : "tiszta",
+  });
+
+  // ── 📱 Eszköztesztek ────────────────────────────────────────
+  const devices = runDeviceTests(cfg);
+  const deviceScore = Math.round(devices.reduce((a, d) => a + d.score, 0) / devices.length);
+  checks.push({
+    name: "Reszponzív megjelenés (iPhone/Android/Tablet/Desktop)", squad: "design",
+    weight: 8, severity: "high",
+    ok: deviceScore >= 85,
+    note: devices.filter((d) => !d.ok).length
+      ? `${devices.filter((d) => !d.ok).map((d) => d.device).join(", ")} — ${deviceScore}/100`
+      : `minden eszközön rendben (${deviceScore}/100)`,
+  });
+
+  // ── Pontozás ────────────────────────────────────────────────
+  const totalWeight = checks.reduce((s2, c) => s2 + c.weight, 0);
+  const earned = checks.reduce((s2, c) => s2 + (c.ok ? c.weight : 0), 0);
   const score = Math.round((earned / totalWeight) * 100);
   const blockers = checks.filter((c) => c.severity === "critical" && !c.ok).map((c) => c.name);
   const passed = score >= 70 && blockers.length === 0;
 
-  return { score, passed, checks, blockers };
+  const squads = (Object.keys(SQUAD_META) as QaSquad[]).map((sq) => {
+    const list = checks.filter((c) => c.squad === sq);
+    const w = list.reduce((a, c) => a + c.weight, 0) || 1;
+    const e = list.reduce((a, c) => a + (c.ok ? c.weight : 0), 0);
+    const sc = Math.round((e / w) * 100);
+    return {
+      squad: sq, label: SQUAD_META[sq].label, icon: SQUAD_META[sq].icon,
+      score: sc, benchmark: BENCHMARKS[sq], delta: sc - BENCHMARKS[sq],
+      failed: list.filter((c) => !c.ok).length,
+    };
+  });
+
+  return { score, tier: qualityTier(score), passed, checks, blockers, squads, devices, device_score: deviceScore };
 }
+
 
 // ─────────────────────────────────────────────────────────────
 // Iparágspecifikus system promptok
@@ -375,15 +548,19 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const partnerId = String(body?.partner_id || "").trim();
     const sessionId = String(body?.session_id || "").trim();
-    const message = String(body?.message || "").trim();
-    const autoApply = body?.auto_apply !== false;
-    const stage = String(body?.stage || "full"); // "plan" | "build" | "full"
+    let message = String(body?.message || "").trim();
+    const rawStage = String(body?.stage || "full"); // "plan" | "build" | "full" | "optimize"
+    const isOptimize = rawStage === "optimize";
+    // Az AI Optimalizáló SOHA nem élesít automatikusan — partneri jóváhagyás kell
+    const autoApply = isOptimize ? false : body?.auto_apply !== false;
+    const stage = isOptimize ? "build" : rawStage;
     const projectType = String(body?.project_type || "").trim();
     const incomingPlan = Array.isArray(body?.plan) ? body.plan.slice(0, 10) : null;
     // Ha a kliens QA-visszacsatolást küld (refine), a Builder kapja javításra
     const refineFeedback = body?.refine_feedback || null;
     if (!partnerId || !sessionId) return json({ error: "partner_id és session_id kötelező" }, 400);
-    if (message.length < 2 && !refineFeedback) return json({ error: "Írd le mit szeretnél" }, 400);
+    if (message.length < 2 && !refineFeedback && !isOptimize) return json({ error: "Írd le mit szeretnél" }, 400);
+
 
     // Jogosultság (RLS is véd)
     const { data: partner } = await supabase
@@ -401,6 +578,38 @@ Deno.serve(async (req) => {
 
     const currentConfig: Record<string, unknown> = {};
     for (const k of ALLOWED) if (sf && sf[k] !== undefined && sf[k] !== null && sf[k] !== "") currentConfig[k] = sf[k];
+
+    // ── 🚀 AI OPTIMALIZÁLÓ: publikálás utáni teljesítmény alapú javaslat
+    let optimizeStats: Record<string, unknown> | null = null;
+    if (isOptimize) {
+      const since = new Date(Date.now() - 30 * 86400000).toISOString();
+      const [{ data: clicks }, { data: btn }] = await Promise.all([
+        supabase.from("partner_share_clicks").select("converted, device_type, source")
+          .eq("partner_id", partnerId).gte("clicked_at", since).limit(2000),
+        supabase.from("partner_storefront_button_events").select("event_type, url_type")
+          .eq("partner_id", partnerId).gte("created_at", since).limit(2000),
+      ]);
+      const cl = clicks || [];
+      const conversions = cl.filter((c: any) => c.converted).length;
+      const ctr = cl.length ? (conversions / cl.length) * 100 : 0;
+      const BENCH_CTR = 4.2; // iparági átlag konverziós arány (%)
+      const mobile = cl.filter((c: any) => /mobile|iphone|android/i.test(String(c.device_type || ""))).length;
+      const byType: Record<string, number> = {};
+      for (const b of btn || []) byType[String((b as any).url_type || "egyéb")] = (byType[String((b as any).url_type || "egyéb")] ?? 0) + 1;
+      optimizeStats = {
+        clicks: cl.length, conversions,
+        ctr: Number(ctr.toFixed(2)), benchmark_ctr: BENCH_CTR,
+        delta_pct: cl.length ? Number((((ctr - BENCH_CTR) / BENCH_CTR) * 100).toFixed(1)) : 0,
+        mobile_share: cl.length ? Math.round((mobile / cl.length) * 100) : 0,
+        button_events: byType,
+      };
+      message = `Publikálás utáni optimalizálás. 30 napos élő teljesítmény:
+${JSON.stringify(optimizeStats, null, 2)}
+
+A hero CTR ${optimizeStats.delta_pct as number >= 0 ? "jobb" : "gyengébb"} az iparági átlagnál (${BENCH_CTR}%) ${Math.abs(optimizeStats.delta_pct as number)}%-kal.
+Készíts egy JAVÍTOTT verziót: erősebb hero cím, meggyőzőbb alcím, konverzióra optimalizált CTA szöveg, ha kell jobb kontraszt és mobilbarát rövidebb szövegek. Csak a valóban javítandó mezőket add vissza.`;
+    }
+
 
     const convo = (history || []).map((m: any) => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content }));
     const typeHint = projectType && PROJECT_TYPES[projectType]
@@ -486,7 +695,9 @@ A partner kérése: """${message.slice(0, 4000)}"""`;
       const feedback = {
         score: qa.score,
         blockers: qa.blockers,
-        failed_checks: qa.checks.filter((c) => !c.ok).map((c) => ({ name: c.name, note: c.note, severity: c.severity })),
+        failed_checks: qa.checks.filter((c) => !c.ok).map((c) => ({ name: c.name, squad: c.squad, note: c.note, severity: c.severity })),
+        device_issues: qa.devices.filter((d) => !d.ok).map((d) => ({ device: d.device, issues: d.issues })),
+
       };
       const rebuilt = await chat(apiKey, builderSystem(effectiveType), [
         ...convo.slice(-12),
@@ -549,7 +760,16 @@ Add vissza a JAVÍTOTT teljes JSON-t ugyanazzal a szerkezettel.`,
       ...(Object.keys(patch).length
         ? [{ agent: "backend", action: `Adatbázis frissítés: partner_storefronts (${Object.keys(patch).length} mező)`, target: "partner_storefronts", kind: "data", fields: Object.keys(patch).slice(0, 8), status: applied ? "done" : "pending" }]
         : []),
-      { agent: "qa", action: qa.passed ? `QA validáció: ${qa.score}/100 — átment` : `QA validáció: ${qa.score}/100 — elbukott (${qa.blockers.length} blokkoló)`, target: "QA", kind: "test", fields: qa.checks.filter((c) => !c.ok).map((c) => c.name).slice(0, 6), status: qa.passed ? "done" : "warn" },
+      ...qa.squads.map((sq) => ({
+        agent: "qa",
+        action: `${sq.icon} ${sq.label}: ${sq.score}/100 (benchmark ${sq.benchmark}, ${sq.delta >= 0 ? "+" : ""}${sq.delta})`,
+        target: sq.label, kind: "test",
+        fields: qa.checks.filter((c) => c.squad === sq.squad && !c.ok).map((c) => c.name).slice(0, 4),
+        status: sq.failed === 0 ? "done" : "warn",
+      })),
+      { agent: "qa", action: `📱 Eszközteszt: ${qa.devices.map((d) => `${d.device} ${d.score}`).join(" · ")}`, target: "eszközök", kind: "test", fields: qa.devices.filter((d) => !d.ok).map((d) => d.device), status: qa.device_score >= 85 ? "done" : "warn" },
+      { agent: "qa", action: `${qa.tier.icon} Összesített minőség: ${qa.score}/100 — ${qa.tier.label}${qa.passed ? "" : ` (${qa.blockers.length} blokkoló)`}`, target: "QA", kind: "test", fields: qa.checks.filter((c) => !c.ok).map((c) => c.name).slice(0, 6), status: qa.passed ? "done" : "warn" },
+
       { agent: "deploy", action: applied ? "Változások élesítve a vázlat oldalon" : qa.passed ? "Változások előkészítve, jóváhagyásra vár" : "QA elbukott — javítás szükséges élesítés előtt", target: "storefront", kind: "deploy", fields: [], status: applied ? "done" : "pending" },
     ];
 
@@ -580,6 +800,13 @@ Add vissza a JAVÍTOTT teljes JSON-t ugyanazzal a szerkezettel.`,
       quality_passed: qa.passed,
       quality_checks: qa.checks,
       quality_blockers: qa.blockers,
+      quality_tier: qa.tier,
+      quality_squads: qa.squads,
+      quality_devices: qa.devices,
+      quality_device_score: qa.device_score,
+      optimize_stats: optimizeStats,
+
+
       agent_log: devLog,
       bus_event: applied ? "partner.site.updated" : "partner.site.preview",
       todo: Array.isArray(built?.todo) ? built.todo.slice(0, 6) : [],
