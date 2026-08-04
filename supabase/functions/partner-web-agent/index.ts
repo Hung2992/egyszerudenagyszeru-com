@@ -804,6 +804,8 @@ Add vissza a JAVÍTOTT teljes JSON-t ugyanazzal a szerkezettel.`,
       quality_squads: qa.squads,
       quality_devices: qa.devices,
       quality_device_score: qa.device_score,
+      optimize_stats: optimizeStats,
+
 
       agent_log: devLog,
       bus_event: applied ? "partner.site.updated" : "partner.site.preview",
