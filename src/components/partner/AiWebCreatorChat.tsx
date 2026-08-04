@@ -463,12 +463,61 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
                           </div>
                           <div className="flex items-center gap-2">
                             <span className={`font-heading text-lg font-bold ${scoreColor(m.quality_score)}`}>{m.quality_score}<span className="text-xs font-normal text-muted-foreground">/100</span></span>
-                            <span className={`text-[10px] ${scoreColor(m.quality_score)}`}>{scoreLabel(m.quality_score, !!m.quality_passed)}</span>
+                            <span className={`text-[10px] border px-1.5 py-0.5 ${scoreColor(m.quality_score)} border-current`}>
+                              {(m.quality_tier?.icon ?? tierOf(m.quality_score).icon)} {(m.quality_tier?.label ?? scoreLabel(m.quality_score))}
+                            </span>
                           </div>
                         </div>
 
+                        {/* QA ÜGYNÖKÖK + BENCHMARK */}
+                        {!!m.quality_squads?.length && (
+                          <div className="grid gap-1 border-t border-border/40 pt-1.5">
+                            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">QA ügynökök · benchmark</div>
+                            {m.quality_squads.map((sq) => (
+                              <div key={sq.squad} className="flex items-center gap-2 text-[10px]">
+                                <span className="w-28 shrink-0 truncate">{sq.icon} {sq.label}</span>
+                                <div className="relative h-1.5 flex-1 bg-muted">
+                                  <div
+                                    className={`h-full ${sq.score >= 95 ? "bg-cyan-400" : sq.score >= 85 ? "bg-emerald-500" : sq.score >= 70 ? "bg-amber-500" : "bg-destructive"}`}
+                                    style={{ width: `${Math.max(2, sq.score)}%` }}
+                                  />
+                                  <div className="absolute top-[-2px] h-2.5 w-px bg-foreground/60" style={{ left: `${sq.benchmark}%` }} title={`Benchmark: ${sq.benchmark}`} />
+                                </div>
+                                <span className={`w-8 shrink-0 text-right ${scoreColor(sq.score)}`}>{sq.score}</span>
+                                <span className={`w-9 shrink-0 text-right ${sq.delta >= 0 ? "text-emerald-500" : "text-destructive"}`}>
+                                  {sq.delta >= 0 ? "+" : ""}{sq.delta}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* VALÓDI ESZKÖZTESZT */}
+                        {!!m.quality_devices?.length && (
+                          <div className="border-t border-border/40 pt-1.5 space-y-1">
+                            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                              Eszközteszt {typeof m.quality_device_score === "number" && `— ${m.quality_device_score}/100`}
+                            </div>
+                            <div className="grid grid-cols-2 gap-1">
+                              {m.quality_devices.map((d) => (
+                                <div key={d.device} className={`border px-1.5 py-1 text-[10px] ${d.ok ? "border-emerald-500/30" : "border-amber-500/40"}`}>
+                                  <div className="flex items-center justify-between">
+                                    <span>{deviceIcon(d.device)} {d.device} <span className="text-muted-foreground">{d.width}px</span></span>
+                                    <span className={scoreColor(d.score)}>{d.score}</span>
+                                  </div>
+                                  {!d.ok && (
+                                    <ul className="mt-0.5 text-muted-foreground">
+                                      {d.issues.slice(0, 3).map((i, ii) => <li key={ii}>• {i}</li>)}
+                                    </ul>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
                         {!!m.quality_checks?.length && (
-                          <div className="grid gap-1">
+                          <div className="grid gap-1 border-t border-border/40 pt-1.5">
                             {m.quality_checks.map((c, ci) => (
                               <div key={ci} className="flex items-start gap-1.5 text-[10px]">
                                 <span className={c.ok ? "text-emerald-500" : c.severity === "critical" ? "text-destructive" : "text-amber-500"}>
@@ -491,6 +540,7 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
                             Blokkolók: {m.quality_blockers.join(", ")}
                           </div>
                         )}
+
                       </div>
                     )}
 
