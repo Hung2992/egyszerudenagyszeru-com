@@ -16,10 +16,36 @@ interface Props {
 
 interface QaCheck {
   name: string;
+  squad?: string;
   weight: number;
   severity: "critical" | "high" | "low";
   ok: boolean;
   note: string;
+}
+
+interface QaSquad {
+  squad: string;
+  label: string;
+  icon: string;
+  score: number;
+  benchmark: number;
+  delta: number;
+  failed: number;
+}
+
+interface QaDevice {
+  device: string;
+  width: number;
+  score: number;
+  ok: boolean;
+  issues: string[];
+}
+
+interface QaTier {
+  key: string;
+  label: string;
+  icon: string;
+  min: number;
 }
 
 interface Msg {
@@ -34,7 +60,12 @@ interface Msg {
   quality_passed?: boolean;
   quality_checks?: QaCheck[];
   quality_blockers?: string[];
+  quality_tier?: QaTier;
+  quality_squads?: QaSquad[];
+  quality_devices?: QaDevice[];
+  quality_device_score?: number;
 }
+
 
 const QUICK = [
   "Készíts egy prémium autóalkatrész-webshopot.",
