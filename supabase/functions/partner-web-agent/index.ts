@@ -724,7 +724,16 @@ Add vissza a JAVÍTOTT teljes JSON-t ugyanazzal a szerkezettel.`,
       ...(Object.keys(patch).length
         ? [{ agent: "backend", action: `Adatbázis frissítés: partner_storefronts (${Object.keys(patch).length} mező)`, target: "partner_storefronts", kind: "data", fields: Object.keys(patch).slice(0, 8), status: applied ? "done" : "pending" }]
         : []),
-      { agent: "qa", action: qa.passed ? `QA validáció: ${qa.score}/100 — átment` : `QA validáció: ${qa.score}/100 — elbukott (${qa.blockers.length} blokkoló)`, target: "QA", kind: "test", fields: qa.checks.filter((c) => !c.ok).map((c) => c.name).slice(0, 6), status: qa.passed ? "done" : "warn" },
+      ...qa.squads.map((sq) => ({
+        agent: "qa",
+        action: `${sq.icon} ${sq.label}: ${sq.score}/100 (benchmark ${sq.benchmark}, ${sq.delta >= 0 ? "+" : ""}${sq.delta})`,
+        target: sq.label, kind: "test",
+        fields: qa.checks.filter((c) => c.squad === sq.squad && !c.ok).map((c) => c.name).slice(0, 4),
+        status: sq.failed === 0 ? "done" : "warn",
+      })),
+      { agent: "qa", action: `📱 Eszközteszt: ${qa.devices.map((d) => `${d.device} ${d.score}`).join(" · ")}`, target: "eszközök", kind: "test", fields: qa.devices.filter((d) => !d.ok).map((d) => d.device), status: qa.device_score >= 85 ? "done" : "warn" },
+      { agent: "qa", action: `${qa.tier.icon} Összesített minőség: ${qa.score}/100 — ${qa.tier.label}${qa.passed ? "" : ` (${qa.blockers.length} blokkoló)`}`, target: "QA", kind: "test", fields: qa.checks.filter((c) => !c.ok).map((c) => c.name).slice(0, 6), status: qa.passed ? "done" : "warn" },
+
       { agent: "deploy", action: applied ? "Változások élesítve a vázlat oldalon" : qa.passed ? "Változások előkészítve, jóváhagyásra vár" : "QA elbukott — javítás szükséges élesítés előtt", target: "storefront", kind: "deploy", fields: [], status: applied ? "done" : "pending" },
     ];
 
