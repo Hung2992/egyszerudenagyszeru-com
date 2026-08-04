@@ -120,6 +120,8 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [refining, setRefining] = useState(false);
+  const [optimizing, setOptimizing] = useState(false);
+
   const [autoApply, setAutoApply] = useState(true);
   const [memory, setMemory] = useState<any>(null);
   const [projectType, setProjectType] = useState("");
