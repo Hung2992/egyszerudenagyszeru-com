@@ -64,6 +64,11 @@ interface Msg {
   quality_squads?: QaSquad[];
   quality_devices?: QaDevice[];
   quality_device_score?: number;
+  optimize_stats?: {
+    clicks: number; conversions: number; ctr: number; benchmark_ctr: number;
+    delta_pct: number; mobile_share: number; button_events: Record<string, number>;
+  } | null;
+
 }
 
 
