@@ -659,7 +659,9 @@ A partner kérése: """${message.slice(0, 4000)}"""`;
       const feedback = {
         score: qa.score,
         blockers: qa.blockers,
-        failed_checks: qa.checks.filter((c) => !c.ok).map((c) => ({ name: c.name, note: c.note, severity: c.severity })),
+        failed_checks: qa.checks.filter((c) => !c.ok).map((c) => ({ name: c.name, squad: c.squad, note: c.note, severity: c.severity })),
+        device_issues: qa.devices.filter((d) => !d.ok).map((d) => ({ device: d.device, issues: d.issues })),
+
       };
       const rebuilt = await chat(apiKey, builderSystem(effectiveType), [
         ...convo.slice(-12),
