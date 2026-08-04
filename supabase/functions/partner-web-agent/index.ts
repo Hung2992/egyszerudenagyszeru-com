@@ -579,6 +579,38 @@ Deno.serve(async (req) => {
     const currentConfig: Record<string, unknown> = {};
     for (const k of ALLOWED) if (sf && sf[k] !== undefined && sf[k] !== null && sf[k] !== "") currentConfig[k] = sf[k];
 
+    // ── 🚀 AI OPTIMALIZÁLÓ: publikálás utáni teljesítmény alapú javaslat
+    let optimizeStats: Record<string, unknown> | null = null;
+    if (isOptimize) {
+      const since = new Date(Date.now() - 30 * 86400000).toISOString();
+      const [{ data: clicks }, { data: btn }] = await Promise.all([
+        supabase.from("partner_share_clicks").select("converted, device_type, source")
+          .eq("partner_id", partnerId).gte("clicked_at", since).limit(2000),
+        supabase.from("partner_storefront_button_events").select("event_type, url_type")
+          .eq("partner_id", partnerId).gte("created_at", since).limit(2000),
+      ]);
+      const cl = clicks || [];
+      const conversions = cl.filter((c: any) => c.converted).length;
+      const ctr = cl.length ? (conversions / cl.length) * 100 : 0;
+      const BENCH_CTR = 4.2; // iparági átlag konverziós arány (%)
+      const mobile = cl.filter((c: any) => /mobile|iphone|android/i.test(String(c.device_type || ""))).length;
+      const byType: Record<string, number> = {};
+      for (const b of btn || []) byType[String((b as any).url_type || "egyéb")] = (byType[String((b as any).url_type || "egyéb")] ?? 0) + 1;
+      optimizeStats = {
+        clicks: cl.length, conversions,
+        ctr: Number(ctr.toFixed(2)), benchmark_ctr: BENCH_CTR,
+        delta_pct: cl.length ? Number((((ctr - BENCH_CTR) / BENCH_CTR) * 100).toFixed(1)) : 0,
+        mobile_share: cl.length ? Math.round((mobile / cl.length) * 100) : 0,
+        button_events: byType,
+      };
+      message = `Publikálás utáni optimalizálás. 30 napos élő teljesítmény:
+${JSON.stringify(optimizeStats, null, 2)}
+
+A hero CTR ${optimizeStats.delta_pct as number >= 0 ? "jobb" : "gyengébb"} az iparági átlagnál (${BENCH_CTR}%) ${Math.abs(optimizeStats.delta_pct as number)}%-kal.
+Készíts egy JAVÍTOTT verziót: erősebb hero cím, meggyőzőbb alcím, konverzióra optimalizált CTA szöveg, ha kell jobb kontraszt és mobilbarát rövidebb szövegek. Csak a valóban javítandó mezőket add vissza.`;
+    }
+
+
     const convo = (history || []).map((m: any) => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content }));
     const typeHint = projectType && PROJECT_TYPES[projectType]
       ? `Projekt-típus: ${projectType} — ${PROJECT_TYPES[projectType]}`
