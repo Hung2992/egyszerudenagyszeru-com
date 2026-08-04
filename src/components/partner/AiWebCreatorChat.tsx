@@ -506,7 +506,26 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
 
                 {m.patch && Object.keys(m.patch).length > 0 && (
                   <div className="border border-border p-2 space-y-2 text-left">
+                    {/* 🚀 AI OPTIMALIZÁLÓ — élő teljesítmény */}
+                    {m.optimize_stats && (
+                      <div className="border border-primary/40 bg-primary/5 px-2 py-2 space-y-1">
+                        <div className="flex items-center gap-1.5 text-xs font-medium">
+                          <Rocket className="h-3.5 w-3.5 text-primary" /> AI Optimalizáló — 30 napos élő adat
+                        </div>
+                        <div className="grid grid-cols-2 gap-1 text-[10px] text-muted-foreground">
+                          <span>Kattintás: <span className="text-foreground">{m.optimize_stats.clicks}</span></span>
+                          <span>Konverzió: <span className="text-foreground">{m.optimize_stats.conversions}</span></span>
+                          <span>CTR: <span className={m.optimize_stats.delta_pct >= 0 ? "text-emerald-500" : "text-destructive"}>{m.optimize_stats.ctr}%</span> (benchmark {m.optimize_stats.benchmark_ctr}%)</span>
+                          <span>Mobil arány: <span className="text-foreground">{m.optimize_stats.mobile_share}%</span></span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">
+                          A hero CTR-je {Math.abs(m.optimize_stats.delta_pct)}%-kal {m.optimize_stats.delta_pct >= 0 ? "jobb" : "gyengébb"} az átlagosnál — az új verzió jóváhagyásra vár.
+                        </p>
+                      </div>
+                    )}
+
                     {/* MINŐSÉGI PONTSZÁM + QA ELLENŐRZÉSEK */}
+
                     {typeof m.quality_score === "number" && (
                       <div className={`border ${scoreBg(m.quality_score)} px-2 py-2 space-y-2`}>
                         <div className="flex items-center justify-between gap-2">
