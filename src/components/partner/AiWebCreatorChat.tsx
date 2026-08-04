@@ -325,6 +325,43 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
     }
   };
 
+  // 🚀 AI OPTIMALIZÁLÓ — publikálás utáni élő teljesítmény alapján új verzió (jóváhagyással)
+  const optimize = async () => {
+    if (!sessionId || optimizing) return;
+    setOptimizing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("partner-web-agent", {
+        body: { partner_id: partnerId, session_id: sessionId, stage: "optimize", project_type: projectType },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      setMessages((prev) => [...prev, {
+        role: "assistant",
+        content: data.reply,
+        agent_plan: data.agent_log,
+        patch: data.patch,
+        applied: false,
+        quality_score: data.quality_score,
+        quality_passed: data.quality_passed,
+        quality_checks: data.quality_checks,
+        quality_blockers: data.quality_blockers,
+        quality_tier: data.quality_tier,
+        quality_squads: data.quality_squads,
+        quality_devices: data.quality_devices,
+        quality_device_score: data.quality_device_score,
+        optimize_stats: data.optimize_stats,
+      }]);
+      toast({
+        title: "AI Optimalizáló javaslat kész",
+        description: `Minőség: ${data.quality_score}/100 — a változás jóváhagyásra vár.`,
+      });
+    } catch (e: any) {
+      toast({ title: "Optimalizálás sikertelen", description: e?.message, variant: "destructive" });
+    } finally {
+      setOptimizing(false);
+    }
+  };
+
 
   const applyPatch = async (patch: Record<string, any>) => {
     const { data: existing } = await supabase
