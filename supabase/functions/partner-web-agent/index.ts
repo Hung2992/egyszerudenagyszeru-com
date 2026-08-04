@@ -548,15 +548,19 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const partnerId = String(body?.partner_id || "").trim();
     const sessionId = String(body?.session_id || "").trim();
-    const message = String(body?.message || "").trim();
-    const autoApply = body?.auto_apply !== false;
-    const stage = String(body?.stage || "full"); // "plan" | "build" | "full"
+    let message = String(body?.message || "").trim();
+    const rawStage = String(body?.stage || "full"); // "plan" | "build" | "full" | "optimize"
+    const isOptimize = rawStage === "optimize";
+    // Az AI Optimalizáló SOHA nem élesít automatikusan — partneri jóváhagyás kell
+    const autoApply = isOptimize ? false : body?.auto_apply !== false;
+    const stage = isOptimize ? "build" : rawStage;
     const projectType = String(body?.project_type || "").trim();
     const incomingPlan = Array.isArray(body?.plan) ? body.plan.slice(0, 10) : null;
     // Ha a kliens QA-visszacsatolást küld (refine), a Builder kapja javításra
     const refineFeedback = body?.refine_feedback || null;
     if (!partnerId || !sessionId) return json({ error: "partner_id és session_id kötelező" }, 400);
-    if (message.length < 2 && !refineFeedback) return json({ error: "Írd le mit szeretnél" }, 400);
+    if (message.length < 2 && !refineFeedback && !isOptimize) return json({ error: "Írd le mit szeretnél" }, 400);
+
 
     // Jogosultság (RLS is véd)
     const { data: partner } = await supabase
