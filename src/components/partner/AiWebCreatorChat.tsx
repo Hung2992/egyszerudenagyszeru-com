@@ -102,9 +102,16 @@ interface LiveStep {
   status: "pending" | "running" | "done" | "warn";
 }
 
-const scoreColor = (s: number) => (s >= 85 ? "text-emerald-500" : s >= 70 ? "text-amber-500" : "text-destructive");
-const scoreBg = (s: number) => (s >= 85 ? "border-emerald-500/40 bg-emerald-500/5" : s >= 70 ? "border-amber-500/40 bg-amber-500/5" : "border-destructive/40 bg-destructive/5");
-const scoreLabel = (s: number, passed: boolean) => passed ? "Kiváló" : s >= 70 ? "Jó, de javítható" : "Javítás szükséges";
+const scoreColor = (s: number) => (s >= 95 ? "text-cyan-400" : s >= 85 ? "text-emerald-500" : s >= 70 ? "text-amber-500" : "text-destructive");
+const scoreBg = (s: number) => (s >= 95 ? "border-cyan-400/50 bg-cyan-400/5" : s >= 85 ? "border-emerald-500/40 bg-emerald-500/5" : s >= 70 ? "border-amber-500/40 bg-amber-500/5" : "border-destructive/40 bg-destructive/5");
+const tierOf = (s: number): QaTier =>
+  s >= 95 ? { key: "platinum", label: "Platinum AI Quality", icon: "💎", min: 95 }
+  : s >= 85 ? { key: "premium", label: "Prémium", icon: "🟩", min: 85 }
+  : s >= 70 ? { key: "good", label: "Jó", icon: "🟨", min: 70 }
+  : { key: "fix", label: "Javítás szükséges", icon: "🟥", min: 0 };
+const scoreLabel = (s: number) => tierOf(s).label;
+const deviceIcon = (d: string) => (d === "Desktop" ? "🖥️" : d === "Tablet" ? "📲" : d === "Android" ? "🤖" : "📱");
+
 
 const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
   const [sessions, setSessions] = useState<any[]>([]);
