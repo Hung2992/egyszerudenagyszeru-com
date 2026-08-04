@@ -433,6 +433,15 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
               <Switch id="autoapply" checked={autoApply} onCheckedChange={setAutoApply} />
               <Label htmlFor="autoapply" className="text-xs text-muted-foreground">Automatikus alkalmazás</Label>
             </div>
+            <Button
+              type="button" size="sm" variant="outline"
+              className="rounded-none h-8 text-xs ml-auto"
+              onClick={optimize} disabled={optimizing || sending}
+            >
+              {optimizing ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Rocket className="h-3 w-3 mr-1" />}
+              AI Optimalizáló
+            </Button>
+
           </div>
         </div>
 
