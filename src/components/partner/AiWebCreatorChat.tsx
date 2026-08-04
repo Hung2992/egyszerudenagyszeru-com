@@ -239,6 +239,11 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
         quality_passed: data.quality_passed,
         quality_checks: data.quality_checks,
         quality_blockers: data.quality_blockers,
+        quality_tier: data.quality_tier,
+        quality_squads: data.quality_squads,
+        quality_devices: data.quality_devices,
+        quality_device_score: data.quality_device_score,
+
       }]);
 
       if (data.applied && data.patch) {
