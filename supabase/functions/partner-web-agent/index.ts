@@ -542,6 +542,12 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } },
     );
 
+    // Rendszerszintű kliens: AI tudásbázis írásához (partneradat nélkül)
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+    );
+
     const { data: userData } = await supabase.auth.getUser();
     if (!userData?.user?.id) return json({ error: "Érvénytelen munkamenet" }, 401);
 
