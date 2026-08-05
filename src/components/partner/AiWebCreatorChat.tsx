@@ -298,6 +298,9 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
         quality_squads: data.quality_squads,
         quality_devices: data.quality_devices,
         quality_device_score: data.quality_device_score,
+        snapshot_id: data.snapshot_id,
+        playbook_used: data.playbook_used,
+
 
       }]);
 
