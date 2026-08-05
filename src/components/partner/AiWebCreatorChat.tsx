@@ -463,6 +463,41 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
             ))}
           </Card>
         )}
+
+        {/* 🕘 VERZIÓKEZELÉS + ROLLBACK */}
+        <Card className="rounded-none border-border p-3 space-y-2">
+          <div className="flex items-center gap-2 text-xs font-medium">
+            <History className="h-3.5 w-3.5" /> Verziók
+            <span className="ml-auto text-[10px] text-muted-foreground">{snapshots.length}</span>
+          </div>
+          {snapshots.length === 0 ? (
+            <p className="text-[11px] text-muted-foreground">Minden AI-módosítás előtt automatikus mentés készül.</p>
+          ) : (
+            <div className="space-y-1 max-h-[220px] overflow-auto">
+              {snapshots.map((s) => (
+                <div key={s.id} className="border border-border px-2 py-1.5 space-y-1">
+                  <div className="text-[11px] truncate" title={s.label}>{s.label}</div>
+                  <div className="flex items-center justify-between gap-1 text-[10px] text-muted-foreground">
+                    <span>{new Date(s.created_at).toLocaleString("hu-HU", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+                    {typeof s.quality_score === "number" && <span className={scoreColor(s.quality_score)}>{s.quality_score}</span>}
+                  </div>
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-[10px] text-muted-foreground">{(s.changed_fields || []).length} mező</span>
+                    <Button
+                      size="sm" variant="outline"
+                      className="rounded-none h-6 px-2 text-[10px]"
+                      disabled={restoringId === s.id}
+                      onClick={() => void restore(s)}
+                    >
+                      {restoringId === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <><Undo2 className="h-3 w-3 mr-1" /> Vissza</>}
+                    </Button>
+                  </div>
+                  {s.restored_at && <div className="text-[9px] text-primary">visszaállítva</div>}
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
       </div>
 
       {/* Chat */}
