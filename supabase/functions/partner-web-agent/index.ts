@@ -669,19 +669,28 @@ Készíts egy JAVÍTOTT verziót: erősebb hero cím, meggyőzőbb alcím, konve
         .insert({ session_id: sessionId, partner_id: partnerId, role: "user", content: message });
     }
 
+    // ── 📚 AI TUDÁSBÁZIS: a legjobb korábbi minták beemelése a promptba
+    const pbAll = (playbook || []) as any[];
+    const pbRelevant = (effectiveType ? pbAll.filter((p) => p.project_type === effectiveType) : []).slice(0, 3);
+    const pbBest = [...pbRelevant, ...pbAll.filter((p) => !pbRelevant.includes(p))].slice(0, 4);
+    const playbookHint = pbBest.length
+      ? `\nTANULT MINTÁK (korábbi, ${pbBest[0].quality_score}+ QA pontszámú projektek — kövesd a bevált arányokat, de NE másold szó szerint a szövegeket, igazítsd a márkához):
+${JSON.stringify(pbBest.map((p) => ({ tipus: p.project_type, keres: String(p.request_summary || "").slice(0, 120), pontszam: p.quality_score, tanulsagok: (p.lessons || []).slice(0, 4), minta: p.winning_config })))}`
+      : "";
+
     // ── 2) Ügynök-csapat: elkészíti a konkrét változtatást (iparágspecifikus prompt)
     const buildPrompt = refineFeedback
       ? `A QA validáció elbukott. JAVÍTSD a patch-et a következő hibák alapján, és add vissza a JAVÍTOTT patch-et:
 ${JSON.stringify(refineFeedback)}
 
 Eredeti kérés: """${message.slice(0, 2000)}"""
-Jelenlegi konfiguráció: ${JSON.stringify(currentConfig)}`
+Jelenlegi konfiguráció: ${JSON.stringify(currentConfig)}${playbookHint}`
       : `Márka: ${partner.brand_name || "-"}
 ${typeHint}
 Márka-memória (korábbi döntések): ${JSON.stringify(mem?.memory ?? {})}
 Jelenlegi konfiguráció: ${JSON.stringify(currentConfig)}
 Termékek: ${JSON.stringify((prods || []).slice(0, 10))}
-Architect terv: ${JSON.stringify(agentPlan)}
+Architect terv: ${JSON.stringify(agentPlan)}${playbookHint}
 
 A partner kérése: """${message.slice(0, 4000)}"""`;
 
