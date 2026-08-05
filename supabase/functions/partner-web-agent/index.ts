@@ -574,12 +574,16 @@ Deno.serve(async (req) => {
     if (!partner) return json({ error: "Nincs jogosultságod ehhez a partnerhez" }, 403);
 
     // Kontextus
-    const [{ data: sf }, { data: mem }, { data: prods }, { data: history }] = await Promise.all([
+    const [{ data: sf }, { data: mem }, { data: prods }, { data: history }, { data: playbook }] = await Promise.all([
       supabase.from("partner_storefronts").select("*").eq("partner_id", partnerId).maybeSingle(),
       supabase.from("partner_brand_memory").select("memory").eq("partner_id", partnerId).maybeSingle(),
       supabase.from("partner_products").select("title, price, category").eq("partner_id", partnerId).limit(15),
       supabase.from("partner_ai_builder_messages").select("role, content")
         .eq("session_id", sessionId).order("created_at", { ascending: true }).limit(30),
+      // 📚 AI tudásbázis: korábbi, kiváló minőségű generálásokból tanult minták
+      supabase.from("ai_build_playbook")
+        .select("project_type, request_summary, winning_config, quality_score, lessons")
+        .order("quality_score", { ascending: false }).limit(24),
     ]);
 
     const currentConfig: Record<string, unknown> = {};
