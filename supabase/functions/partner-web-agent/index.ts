@@ -742,8 +742,23 @@ Add vissza a JAVÍTOTT teljes JSON-t ugyanazzal a szerkezettel.`,
     // ── 4) Alkalmazás: csak akkor, ha autoApply ÉS a QA passed.
     // Ha a QA elbukik, nem élesítünk — a partner jóváhagyása kell.
     let applied = false;
+    let snapshotId: string | null = null;
     const shouldApply = autoApply && Object.keys(patch).length > 0 && qa.passed;
     if (shouldApply) {
+      // 🕘 VERZIÓMENTÉS: az élesítés ELŐTTI állapot elmentése (egykattintásos rollback)
+      const beforeConfig: Record<string, unknown> = {};
+      for (const k of Object.keys(patch)) beforeConfig[k] = sf && sf[k] !== undefined ? sf[k] : null;
+      const { data: snap } = await supabase.from("partner_ai_build_snapshots").insert({
+        partner_id: partnerId,
+        session_id: sessionId,
+        label: (isOptimize ? "AI Optimalizáló: " : "") + (message ? message.slice(0, 60) : "AI módosítás"),
+        before_config: beforeConfig,
+        patch,
+        changed_fields: Object.keys(patch),
+        quality_score: qa.score,
+      }).select("id").maybeSingle();
+      snapshotId = snap?.id ?? null;
+
       if (sf?.id) {
         const { error } = await supabase.from("partner_storefronts").update(patch).eq("id", sf.id);
         applied = !error;
@@ -753,6 +768,25 @@ Add vissza a JAVÍTOTT teljes JSON-t ugyanazzal a szerkezettel.`,
         applied = !error;
         if (error) console.warn("[web-agent] insert failed:", error.message);
       }
+    }
+
+    // ── 📚 AI TUDÁSBÁZIS gyarapítása: csak kiváló (90+) eredmények kerülnek be
+    if (qa.score >= 90 && Object.keys(patch).length >= 3 && !refineFeedback) {
+      const learn: Record<string, unknown> = {};
+      for (const k of Object.keys(patch)) {
+        const v = patch[k];
+        // Csak stílus/szerkezeti minta — hosszú egyedi szövegeket nem tanulunk meg
+        if (typeof v === "string" && v.length > 160) continue;
+        learn[k] = v;
+      }
+      admin.from("ai_build_playbook").insert({
+        project_type: effectiveType || "general",
+        request_summary: (message || "AI optimalizálás").slice(0, 180),
+        winning_config: learn,
+        quality_score: qa.score,
+        quality_tier: qa.tier?.key ?? null,
+        lessons: qa.checks.filter((c) => c.ok).map((c) => c.name).slice(0, 6),
+      }).then(({ error }: any) => { if (error) console.warn("[web-agent] playbook insert:", error.message); });
     }
 
     // 5) Hosszú távú márka-memória frissítése
