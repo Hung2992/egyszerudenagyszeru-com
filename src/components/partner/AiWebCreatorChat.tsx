@@ -586,7 +586,13 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
                         </span>
                       </div>
                     ))}
-                    <div className="px-2 py-1 text-[10px] text-muted-foreground">🛰️ Agent Bus: partner.site.updated</div>
+                    <div className="px-2 py-1 text-[10px] text-muted-foreground flex items-center gap-2 flex-wrap">
+                      <span>🛰️ Agent Bus: partner.site.updated</span>
+                      {!!m.playbook_used && (
+                        <span className="flex items-center gap-1 text-primary"><BookOpen className="h-3 w-3" /> {m.playbook_used} tanult minta felhasználva</span>
+                      )}
+                      {m.snapshot_id && <span>🕘 verzió mentve</span>}
+                    </div>
                   </div>
                 )}
 
