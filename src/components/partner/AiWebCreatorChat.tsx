@@ -143,6 +143,8 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
   const [memory, setMemory] = useState<any>(null);
   const [projectType, setProjectType] = useState("");
   const [liveSteps, setLiveSteps] = useState<LiveStep[]>([]);
+  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
+  const [restoringId, setRestoringId] = useState<string | null>(null);
   const [pmIntro, setPmIntro] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
