@@ -68,7 +68,19 @@ interface Msg {
     clicks: number; conversions: number; ctr: number; benchmark_ctr: number;
     delta_pct: number; mobile_share: number; button_events: Record<string, number>;
   } | null;
+  snapshot_id?: string | null;
+  playbook_used?: number;
 
+}
+
+interface Snapshot {
+  id: string;
+  label: string;
+  changed_fields: string[];
+  before_config: Record<string, any>;
+  quality_score: number | null;
+  restored_at: string | null;
+  created_at: string;
 }
 
 
