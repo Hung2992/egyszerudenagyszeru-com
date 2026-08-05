@@ -718,6 +718,42 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_build_playbook: {
+        Row: {
+          created_at: string
+          id: string
+          lessons: string[]
+          project_type: string
+          quality_score: number
+          quality_tier: string | null
+          request_summary: string
+          use_count: number
+          winning_config: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lessons?: string[]
+          project_type: string
+          quality_score: number
+          quality_tier?: string | null
+          request_summary: string
+          use_count?: number
+          winning_config?: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lessons?: string[]
+          project_type?: string
+          quality_score?: number
+          quality_tier?: string | null
+          request_summary?: string
+          use_count?: number
+          winning_config?: Json
+        }
+        Relationships: []
+      }
       ai_bulk_ingest_jobs: {
         Row: {
           completed_at: string | null
@@ -4426,6 +4462,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      partner_ai_build_snapshots: {
+        Row: {
+          before_config: Json
+          changed_fields: string[]
+          created_at: string
+          id: string
+          label: string
+          partner_id: string
+          patch: Json
+          quality_score: number | null
+          restored_at: string | null
+          session_id: string | null
+        }
+        Insert: {
+          before_config?: Json
+          changed_fields?: string[]
+          created_at?: string
+          id?: string
+          label?: string
+          partner_id: string
+          patch?: Json
+          quality_score?: number | null
+          restored_at?: string | null
+          session_id?: string | null
+        }
+        Update: {
+          before_config?: Json
+          changed_fields?: string[]
+          created_at?: string
+          id?: string
+          label?: string
+          partner_id?: string
+          patch?: Json
+          quality_score?: number | null
+          restored_at?: string | null
+          session_id?: string | null
+        }
+        Relationships: []
       }
       partner_ai_builder_messages: {
         Row: {
