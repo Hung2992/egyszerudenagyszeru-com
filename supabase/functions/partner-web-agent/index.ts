@@ -858,6 +858,8 @@ Add vissza a JAVÍTOTT teljes JSON-t ugyanazzal a szerkezettel.`,
       quality_devices: qa.devices,
       quality_device_score: qa.device_score,
       optimize_stats: optimizeStats,
+      snapshot_id: snapshotId,
+      playbook_used: pbBest.length,
 
 
       agent_log: devLog,
