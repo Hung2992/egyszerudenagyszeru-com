@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Send, Loader2, Plus, Bot, User as UserIcon, Brain, Check, AlertTriangle, Wand2, Rocket } from "lucide-react";
+import { Send, Loader2, Plus, Bot, User as UserIcon, Brain, Check, AlertTriangle, Wand2, Rocket, History, Undo2, BookOpen } from "lucide-react";
 
 interface Props {
   partnerId: string;
@@ -68,7 +68,19 @@ interface Msg {
     clicks: number; conversions: number; ctr: number; benchmark_ctr: number;
     delta_pct: number; mobile_share: number; button_events: Record<string, number>;
   } | null;
+  snapshot_id?: string | null;
+  playbook_used?: number;
 
+}
+
+interface Snapshot {
+  id: string;
+  label: string;
+  changed_fields: string[];
+  before_config: Record<string, any>;
+  quality_score: number | null;
+  restored_at: string | null;
+  created_at: string;
 }
 
 
@@ -131,6 +143,8 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
   const [memory, setMemory] = useState<any>(null);
   const [projectType, setProjectType] = useState("");
   const [liveSteps, setLiveSteps] = useState<LiveStep[]>([]);
+  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
+  const [restoringId, setRestoringId] = useState<string | null>(null);
   const [pmIntro, setPmIntro] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -178,7 +192,41 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
     }
   };
 
-  useEffect(() => { void loadSessions(); void loadMemory(); /* eslint-disable-next-line */ }, [partnerId]);
+  // 🕘 VERZIÓKEZELÉS — minden AI módosítás előtti állapot
+  const loadSnapshots = async () => {
+    const { data } = await supabase
+      .from("partner_ai_build_snapshots")
+      .select("id, label, changed_fields, before_config, quality_score, restored_at, created_at")
+      .eq("partner_id", partnerId)
+      .order("created_at", { ascending: false })
+      .limit(15);
+    setSnapshots((data as Snapshot[]) || []);
+  };
+
+  const restore = async (snap: Snapshot) => {
+    if (restoringId) return;
+    setRestoringId(snap.id);
+    try {
+      const revert: Record<string, any> = {};
+      for (const k of snap.changed_fields || []) revert[k] = snap.before_config?.[k] ?? null;
+      const { data: existing } = await supabase
+        .from("partner_storefronts").select("id").eq("partner_id", partnerId).maybeSingle();
+      if (!existing?.id) throw new Error("Nincs mit visszaállítani.");
+      const { error } = await supabase.from("partner_storefronts").update(revert).eq("id", existing.id);
+      if (error) throw new Error(error.message);
+      await supabase.from("partner_ai_build_snapshots")
+        .update({ restored_at: new Date().toISOString() }).eq("id", snap.id);
+      onApplied(revert);
+      toast({ title: "Visszaállítva", description: `${(snap.changed_fields || []).length} mező korábbi állapota helyreállt.` });
+      void loadSnapshots();
+    } catch (e: any) {
+      toast({ title: "Visszaállítás sikertelen", description: e?.message, variant: "destructive" });
+    } finally {
+      setRestoringId(null);
+    }
+  };
+
+  useEffect(() => { void loadSessions(); void loadMemory(); void loadSnapshots(); /* eslint-disable-next-line */ }, [partnerId]);
   useEffect(() => { if (sessionId) void loadMessages(sessionId); }, [sessionId]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending]);
 
@@ -250,6 +298,9 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
         quality_squads: data.quality_squads,
         quality_devices: data.quality_devices,
         quality_device_score: data.quality_device_score,
+        snapshot_id: data.snapshot_id,
+        playbook_used: data.playbook_used,
+
 
       }]);
 
@@ -260,6 +311,7 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
         toast({ title: "QA elbukott", description: `Minőség: ${data.quality_score}/100. Javítsd vagy alkalmazd kézzel.`, variant: "destructive" });
       }
       void loadMemory();
+      void loadSnapshots();
       if (messages.length === 0) {
         await supabase.from("partner_ai_builder_sessions")
           .update({ title: msg.slice(0, 48) }).eq("id", sessionId);
@@ -411,6 +463,41 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
             ))}
           </Card>
         )}
+
+        {/* 🕘 VERZIÓKEZELÉS + ROLLBACK */}
+        <Card className="rounded-none border-border p-3 space-y-2">
+          <div className="flex items-center gap-2 text-xs font-medium">
+            <History className="h-3.5 w-3.5" /> Verziók
+            <span className="ml-auto text-[10px] text-muted-foreground">{snapshots.length}</span>
+          </div>
+          {snapshots.length === 0 ? (
+            <p className="text-[11px] text-muted-foreground">Minden AI-módosítás előtt automatikus mentés készül.</p>
+          ) : (
+            <div className="space-y-1 max-h-[220px] overflow-auto">
+              {snapshots.map((s) => (
+                <div key={s.id} className="border border-border px-2 py-1.5 space-y-1">
+                  <div className="text-[11px] truncate" title={s.label}>{s.label}</div>
+                  <div className="flex items-center justify-between gap-1 text-[10px] text-muted-foreground">
+                    <span>{new Date(s.created_at).toLocaleString("hu-HU", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+                    {typeof s.quality_score === "number" && <span className={scoreColor(s.quality_score)}>{s.quality_score}</span>}
+                  </div>
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-[10px] text-muted-foreground">{(s.changed_fields || []).length} mező</span>
+                    <Button
+                      size="sm" variant="outline"
+                      className="rounded-none h-6 px-2 text-[10px]"
+                      disabled={restoringId === s.id}
+                      onClick={() => void restore(s)}
+                    >
+                      {restoringId === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <><Undo2 className="h-3 w-3 mr-1" /> Vissza</>}
+                    </Button>
+                  </div>
+                  {s.restored_at && <div className="text-[9px] text-primary">visszaállítva</div>}
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
       </div>
 
       {/* Chat */}
@@ -499,7 +586,13 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
                         </span>
                       </div>
                     ))}
-                    <div className="px-2 py-1 text-[10px] text-muted-foreground">🛰️ Agent Bus: partner.site.updated</div>
+                    <div className="px-2 py-1 text-[10px] text-muted-foreground flex items-center gap-2 flex-wrap">
+                      <span>🛰️ Agent Bus: partner.site.updated</span>
+                      {!!m.playbook_used && (
+                        <span className="flex items-center gap-1 text-primary"><BookOpen className="h-3 w-3" /> {m.playbook_used} tanult minta felhasználva</span>
+                      )}
+                      {m.snapshot_id && <span>🕘 verzió mentve</span>}
+                    </div>
                   </div>
                 )}
 

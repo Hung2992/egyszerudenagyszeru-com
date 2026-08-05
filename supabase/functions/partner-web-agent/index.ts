@@ -542,6 +542,12 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } },
     );
 
+    // Rendszerszintű kliens: AI tudásbázis írásához (partneradat nélkül)
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+    );
+
     const { data: userData } = await supabase.auth.getUser();
     if (!userData?.user?.id) return json({ error: "Érvénytelen munkamenet" }, 401);
 
@@ -568,12 +574,16 @@ Deno.serve(async (req) => {
     if (!partner) return json({ error: "Nincs jogosultságod ehhez a partnerhez" }, 403);
 
     // Kontextus
-    const [{ data: sf }, { data: mem }, { data: prods }, { data: history }] = await Promise.all([
+    const [{ data: sf }, { data: mem }, { data: prods }, { data: history }, { data: playbook }] = await Promise.all([
       supabase.from("partner_storefronts").select("*").eq("partner_id", partnerId).maybeSingle(),
       supabase.from("partner_brand_memory").select("memory").eq("partner_id", partnerId).maybeSingle(),
       supabase.from("partner_products").select("title, price, category").eq("partner_id", partnerId).limit(15),
       supabase.from("partner_ai_builder_messages").select("role, content")
         .eq("session_id", sessionId).order("created_at", { ascending: true }).limit(30),
+      // 📚 AI tudásbázis: korábbi, kiváló minőségű generálásokból tanult minták
+      supabase.from("ai_build_playbook")
+        .select("project_type, request_summary, winning_config, quality_score, lessons")
+        .order("quality_score", { ascending: false }).limit(24),
     ]);
 
     const currentConfig: Record<string, unknown> = {};
@@ -659,19 +669,28 @@ Készíts egy JAVÍTOTT verziót: erősebb hero cím, meggyőzőbb alcím, konve
         .insert({ session_id: sessionId, partner_id: partnerId, role: "user", content: message });
     }
 
+    // ── 📚 AI TUDÁSBÁZIS: a legjobb korábbi minták beemelése a promptba
+    const pbAll = (playbook || []) as any[];
+    const pbRelevant = (effectiveType ? pbAll.filter((p) => p.project_type === effectiveType) : []).slice(0, 3);
+    const pbBest = [...pbRelevant, ...pbAll.filter((p) => !pbRelevant.includes(p))].slice(0, 4);
+    const playbookHint = pbBest.length
+      ? `\nTANULT MINTÁK (korábbi, ${pbBest[0].quality_score}+ QA pontszámú projektek — kövesd a bevált arányokat, de NE másold szó szerint a szövegeket, igazítsd a márkához):
+${JSON.stringify(pbBest.map((p) => ({ tipus: p.project_type, keres: String(p.request_summary || "").slice(0, 120), pontszam: p.quality_score, tanulsagok: (p.lessons || []).slice(0, 4), minta: p.winning_config })))}`
+      : "";
+
     // ── 2) Ügynök-csapat: elkészíti a konkrét változtatást (iparágspecifikus prompt)
     const buildPrompt = refineFeedback
       ? `A QA validáció elbukott. JAVÍTSD a patch-et a következő hibák alapján, és add vissza a JAVÍTOTT patch-et:
 ${JSON.stringify(refineFeedback)}
 
 Eredeti kérés: """${message.slice(0, 2000)}"""
-Jelenlegi konfiguráció: ${JSON.stringify(currentConfig)}`
+Jelenlegi konfiguráció: ${JSON.stringify(currentConfig)}${playbookHint}`
       : `Márka: ${partner.brand_name || "-"}
 ${typeHint}
 Márka-memória (korábbi döntések): ${JSON.stringify(mem?.memory ?? {})}
 Jelenlegi konfiguráció: ${JSON.stringify(currentConfig)}
 Termékek: ${JSON.stringify((prods || []).slice(0, 10))}
-Architect terv: ${JSON.stringify(agentPlan)}
+Architect terv: ${JSON.stringify(agentPlan)}${playbookHint}
 
 A partner kérése: """${message.slice(0, 4000)}"""`;
 
@@ -723,8 +742,23 @@ Add vissza a JAVÍTOTT teljes JSON-t ugyanazzal a szerkezettel.`,
     // ── 4) Alkalmazás: csak akkor, ha autoApply ÉS a QA passed.
     // Ha a QA elbukik, nem élesítünk — a partner jóváhagyása kell.
     let applied = false;
+    let snapshotId: string | null = null;
     const shouldApply = autoApply && Object.keys(patch).length > 0 && qa.passed;
     if (shouldApply) {
+      // 🕘 VERZIÓMENTÉS: az élesítés ELŐTTI állapot elmentése (egykattintásos rollback)
+      const beforeConfig: Record<string, unknown> = {};
+      for (const k of Object.keys(patch)) beforeConfig[k] = sf && sf[k] !== undefined ? sf[k] : null;
+      const { data: snap } = await supabase.from("partner_ai_build_snapshots").insert({
+        partner_id: partnerId,
+        session_id: sessionId,
+        label: (isOptimize ? "AI Optimalizáló: " : "") + (message ? message.slice(0, 60) : "AI módosítás"),
+        before_config: beforeConfig,
+        patch,
+        changed_fields: Object.keys(patch),
+        quality_score: qa.score,
+      }).select("id").maybeSingle();
+      snapshotId = snap?.id ?? null;
+
       if (sf?.id) {
         const { error } = await supabase.from("partner_storefronts").update(patch).eq("id", sf.id);
         applied = !error;
@@ -734,6 +768,25 @@ Add vissza a JAVÍTOTT teljes JSON-t ugyanazzal a szerkezettel.`,
         applied = !error;
         if (error) console.warn("[web-agent] insert failed:", error.message);
       }
+    }
+
+    // ── 📚 AI TUDÁSBÁZIS gyarapítása: csak kiváló (90+) eredmények kerülnek be
+    if (qa.score >= 90 && Object.keys(patch).length >= 3 && !refineFeedback) {
+      const learn: Record<string, unknown> = {};
+      for (const k of Object.keys(patch)) {
+        const v = patch[k];
+        // Csak stílus/szerkezeti minta — hosszú egyedi szövegeket nem tanulunk meg
+        if (typeof v === "string" && v.length > 160) continue;
+        learn[k] = v;
+      }
+      admin.from("ai_build_playbook").insert({
+        project_type: effectiveType || "general",
+        request_summary: (message || "AI optimalizálás").slice(0, 180),
+        winning_config: learn,
+        quality_score: qa.score,
+        quality_tier: qa.tier?.key ?? null,
+        lessons: qa.checks.filter((c) => c.ok).map((c) => c.name).slice(0, 6),
+      }).then(({ error }: any) => { if (error) console.warn("[web-agent] playbook insert:", error.message); });
     }
 
     // 5) Hosszú távú márka-memória frissítése
@@ -805,6 +858,8 @@ Add vissza a JAVÍTOTT teljes JSON-t ugyanazzal a szerkezettel.`,
       quality_devices: qa.devices,
       quality_device_score: qa.device_score,
       optimize_stats: optimizeStats,
+      snapshot_id: snapshotId,
+      playbook_used: pbBest.length,
 
 
       agent_log: devLog,
