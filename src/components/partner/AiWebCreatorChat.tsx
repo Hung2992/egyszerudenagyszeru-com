@@ -192,7 +192,41 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
     }
   };
 
-  useEffect(() => { void loadSessions(); void loadMemory(); /* eslint-disable-next-line */ }, [partnerId]);
+  // 🕘 VERZIÓKEZELÉS — minden AI módosítás előtti állapot
+  const loadSnapshots = async () => {
+    const { data } = await supabase
+      .from("partner_ai_build_snapshots")
+      .select("id, label, changed_fields, before_config, quality_score, restored_at, created_at")
+      .eq("partner_id", partnerId)
+      .order("created_at", { ascending: false })
+      .limit(15);
+    setSnapshots((data as Snapshot[]) || []);
+  };
+
+  const restore = async (snap: Snapshot) => {
+    if (restoringId) return;
+    setRestoringId(snap.id);
+    try {
+      const revert: Record<string, any> = {};
+      for (const k of snap.changed_fields || []) revert[k] = snap.before_config?.[k] ?? null;
+      const { data: existing } = await supabase
+        .from("partner_storefronts").select("id").eq("partner_id", partnerId).maybeSingle();
+      if (!existing?.id) throw new Error("Nincs mit visszaállítani.");
+      const { error } = await supabase.from("partner_storefronts").update(revert).eq("id", existing.id);
+      if (error) throw new Error(error.message);
+      await supabase.from("partner_ai_build_snapshots")
+        .update({ restored_at: new Date().toISOString() }).eq("id", snap.id);
+      onApplied(revert);
+      toast({ title: "Visszaállítva", description: `${(snap.changed_fields || []).length} mező korábbi állapota helyreállt.` });
+      void loadSnapshots();
+    } catch (e: any) {
+      toast({ title: "Visszaállítás sikertelen", description: e?.message, variant: "destructive" });
+    } finally {
+      setRestoringId(null);
+    }
+  };
+
+  useEffect(() => { void loadSessions(); void loadMemory(); void loadSnapshots(); /* eslint-disable-next-line */ }, [partnerId]);
   useEffect(() => { if (sessionId) void loadMessages(sessionId); }, [sessionId]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending]);
 
