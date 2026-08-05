@@ -308,6 +308,7 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
         toast({ title: "QA elbukott", description: `Minőség: ${data.quality_score}/100. Javítsd vagy alkalmazd kézzel.`, variant: "destructive" });
       }
       void loadMemory();
+      void loadSnapshots();
       if (messages.length === 0) {
         await supabase.from("partner_ai_builder_sessions")
           .update({ title: msg.slice(0, 48) }).eq("id", sessionId);
