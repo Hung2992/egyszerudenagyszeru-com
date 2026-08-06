@@ -257,6 +257,9 @@ const PartnerPortal = () => {
             <TabsTrigger value="referrals" className="rounded-none"><ListChecks className="h-4 w-4 mr-2" />Rendelések</TabsTrigger>
             <TabsTrigger value="payouts" className="rounded-none"><Banknote className="h-4 w-4 mr-2" />Kifizetések</TabsTrigger>
             <TabsTrigger value="marketing" className="rounded-none"><Megaphone className="h-4 w-4 mr-2" />Marketing</TabsTrigger>
+            <TabsTrigger value="workflows" className="rounded-none"><Workflow className="h-4 w-4 mr-2" />Automatizálás</TabsTrigger>
+            <TabsTrigger value="abtests" className="rounded-none"><FlaskConical className="h-4 w-4 mr-2" />A/B teszt</TabsTrigger>
+            <TabsTrigger value="plugins" className="rounded-none"><Puzzle className="h-4 w-4 mr-2" />Pluginok</TabsTrigger>
             <TabsTrigger value="profile" className="rounded-none"><UserIcon className="h-4 w-4 mr-2" />Profil</TabsTrigger>
           </TabsList>
 
@@ -267,6 +270,19 @@ const PartnerPortal = () => {
           <TabsContent value="products" className="mt-6">
             <PartnerProductsTab partnerId={partner.id} />
           </TabsContent>
+
+          <TabsContent value="workflows" className="mt-6">
+            <PartnerWorkflowsTab partnerId={partner.id} />
+          </TabsContent>
+
+          <TabsContent value="abtests" className="mt-6">
+            <PartnerAbTestsTab partnerId={partner.id} storefrontId={storefrontId} />
+          </TabsContent>
+
+          <TabsContent value="plugins" className="mt-6">
+            <PartnerPluginsTab partnerId={partner.id} />
+          </TabsContent>
+
 
           <TabsContent value="overview" className="mt-6 space-y-6">
             <Card className="rounded-none border-foreground/20 p-6">
