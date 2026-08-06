@@ -11,12 +11,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { LogOut, Copy, Check, Download, Banknote, BarChart3, Megaphone, User as UserIcon, ListChecks, RefreshCw, Link2, FileSpreadsheet, Store, Package } from "lucide-react";
+import { LogOut, Copy, Check, Download, Banknote, BarChart3, Megaphone, User as UserIcon, ListChecks, RefreshCw, Link2, FileSpreadsheet, Store, Package, Workflow, FlaskConical, Puzzle } from "lucide-react";
 import { copyToClipboard } from "@/lib/clipboard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import StorefrontEditorTab from "@/components/partner/StorefrontEditorTab";
 import PartnerProductsTab from "@/components/partner/PartnerProductsTab";
 import PartnerMarketingHub from "@/components/partner/PartnerMarketingHub";
+import PartnerWorkflowsTab from "@/components/partner/PartnerWorkflowsTab";
+import PartnerAbTestsTab from "@/components/partner/PartnerAbTestsTab";
+import PartnerPluginsTab from "@/components/partner/PartnerPluginsTab";
+
 
 interface Stats { pending_commission: number; available_commission: number; paid_total: number; total_orders: number; }
 interface Referral { id: string; created_at: string; order_id: string; coupon_code: string; order_total: number; commission_amount: number; status: string; }
@@ -29,6 +33,14 @@ const PartnerPortal = () => {
   const navigate = useNavigate();
   const { partner, isAdmin, loading, claim } = usePartnerCheck();
   const [tab, setTab] = useState("overview");
+  const [storefrontId, setStorefrontId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!partner?.id) return;
+    supabase.from("partner_storefronts").select("id").eq("partner_id", partner.id).maybeSingle()
+      .then(({ data }) => setStorefrontId(data?.id ?? null));
+  }, [partner?.id]);
+
   const [stats, setStats] = useState<Stats | null>(null);
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
@@ -257,6 +269,9 @@ const PartnerPortal = () => {
             <TabsTrigger value="referrals" className="rounded-none"><ListChecks className="h-4 w-4 mr-2" />Rendelések</TabsTrigger>
             <TabsTrigger value="payouts" className="rounded-none"><Banknote className="h-4 w-4 mr-2" />Kifizetések</TabsTrigger>
             <TabsTrigger value="marketing" className="rounded-none"><Megaphone className="h-4 w-4 mr-2" />Marketing</TabsTrigger>
+            <TabsTrigger value="workflows" className="rounded-none"><Workflow className="h-4 w-4 mr-2" />Automatizálás</TabsTrigger>
+            <TabsTrigger value="abtests" className="rounded-none"><FlaskConical className="h-4 w-4 mr-2" />A/B teszt</TabsTrigger>
+            <TabsTrigger value="plugins" className="rounded-none"><Puzzle className="h-4 w-4 mr-2" />Pluginok</TabsTrigger>
             <TabsTrigger value="profile" className="rounded-none"><UserIcon className="h-4 w-4 mr-2" />Profil</TabsTrigger>
           </TabsList>
 
@@ -267,6 +282,19 @@ const PartnerPortal = () => {
           <TabsContent value="products" className="mt-6">
             <PartnerProductsTab partnerId={partner.id} />
           </TabsContent>
+
+          <TabsContent value="workflows" className="mt-6">
+            <PartnerWorkflowsTab partnerId={partner.id} />
+          </TabsContent>
+
+          <TabsContent value="abtests" className="mt-6">
+            <PartnerAbTestsTab partnerId={partner.id} storefrontId={storefrontId} />
+          </TabsContent>
+
+          <TabsContent value="plugins" className="mt-6">
+            <PartnerPluginsTab partnerId={partner.id} />
+          </TabsContent>
+
 
           <TabsContent value="overview" className="mt-6 space-y-6">
             <Card className="rounded-none border-foreground/20 p-6">

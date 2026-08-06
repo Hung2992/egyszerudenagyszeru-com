@@ -1520,6 +1520,83 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_plugins: {
+        Row: {
+          agent_prompt: string | null
+          author_name: string | null
+          author_partner_id: string | null
+          category: string
+          config_schema: Json
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          industry: string | null
+          install_count: number
+          is_public: boolean
+          name: string
+          rating: number
+          seed_config: Json
+          slug: string
+          status: string
+          updated_at: string
+          version: string
+          workflow_templates: Json
+        }
+        Insert: {
+          agent_prompt?: string | null
+          author_name?: string | null
+          author_partner_id?: string | null
+          category?: string
+          config_schema?: Json
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          industry?: string | null
+          install_count?: number
+          is_public?: boolean
+          name: string
+          rating?: number
+          seed_config?: Json
+          slug: string
+          status?: string
+          updated_at?: string
+          version?: string
+          workflow_templates?: Json
+        }
+        Update: {
+          agent_prompt?: string | null
+          author_name?: string | null
+          author_partner_id?: string | null
+          category?: string
+          config_schema?: Json
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          industry?: string | null
+          install_count?: number
+          is_public?: boolean
+          name?: string
+          rating?: number
+          seed_config?: Json
+          slug?: string
+          status?: string
+          updated_at?: string
+          version?: string
+          workflow_templates?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_plugins_author_partner_id_fkey"
+            columns: ["author_partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_price_offers: {
         Row: {
           accepted: boolean
@@ -4372,50 +4449,136 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_ab_events: {
+        Row: {
+          created_at: string
+          device_type: string | null
+          event_type: string
+          id: string
+          partner_id: string
+          session_id: string | null
+          test_id: string
+          value: number
+          variant: string
+        }
+        Insert: {
+          created_at?: string
+          device_type?: string | null
+          event_type: string
+          id?: string
+          partner_id: string
+          session_id?: string | null
+          test_id: string
+          value?: number
+          variant: string
+        }
+        Update: {
+          created_at?: string
+          device_type?: string | null
+          event_type?: string
+          id?: string
+          partner_id?: string
+          session_id?: string | null
+          test_id?: string
+          value?: number
+          variant?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_ab_events_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "partner_ab_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_ab_tests: {
         Row: {
+          ai_recommendation: string | null
+          applied_at: string | null
+          auto_apply: boolean
           completed_at: string | null
+          confidence: number | null
           created_at: string
           id: string
+          min_sample_size: number
           name: string
           partner_id: string
+          started_at: string
           status: string
+          storefront_id: string | null
+          target_field: string | null
+          test_type: string
+          traffic_split: number
           variant_a: Json
           variant_a_clicks: number
           variant_a_conversions: number
+          variant_a_impressions: number
+          variant_a_revenue: number
           variant_b: Json
           variant_b_clicks: number
           variant_b_conversions: number
+          variant_b_impressions: number
+          variant_b_revenue: number
           winner: string | null
         }
         Insert: {
+          ai_recommendation?: string | null
+          applied_at?: string | null
+          auto_apply?: boolean
           completed_at?: string | null
+          confidence?: number | null
           created_at?: string
           id?: string
+          min_sample_size?: number
           name: string
           partner_id: string
+          started_at?: string
           status?: string
+          storefront_id?: string | null
+          target_field?: string | null
+          test_type?: string
+          traffic_split?: number
           variant_a: Json
           variant_a_clicks?: number
           variant_a_conversions?: number
+          variant_a_impressions?: number
+          variant_a_revenue?: number
           variant_b: Json
           variant_b_clicks?: number
           variant_b_conversions?: number
+          variant_b_impressions?: number
+          variant_b_revenue?: number
           winner?: string | null
         }
         Update: {
+          ai_recommendation?: string | null
+          applied_at?: string | null
+          auto_apply?: boolean
           completed_at?: string | null
+          confidence?: number | null
           created_at?: string
           id?: string
+          min_sample_size?: number
           name?: string
           partner_id?: string
+          started_at?: string
           status?: string
+          storefront_id?: string | null
+          target_field?: string | null
+          test_type?: string
+          traffic_split?: number
           variant_a?: Json
           variant_a_clicks?: number
           variant_a_conversions?: number
+          variant_a_impressions?: number
+          variant_a_revenue?: number
           variant_b?: Json
           variant_b_clicks?: number
           variant_b_conversions?: number
+          variant_b_impressions?: number
+          variant_b_revenue?: number
           winner?: string | null
         }
         Relationships: [
@@ -5699,6 +5862,51 @@ export type Database = {
             columns: ["partner_id"]
             isOneToOne: false
             referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_plugin_installs: {
+        Row: {
+          id: string
+          installed_at: string
+          is_enabled: boolean
+          partner_id: string
+          plugin_id: string
+          settings: Json
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          installed_at?: string
+          is_enabled?: boolean
+          partner_id: string
+          plugin_id: string
+          settings?: Json
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          installed_at?: string
+          is_enabled?: boolean
+          partner_id?: string
+          plugin_id?: string
+          settings?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_plugin_installs_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_plugin_installs_plugin_id_fkey"
+            columns: ["plugin_id"]
+            isOneToOne: false
+            referencedRelation: "ai_plugins"
             referencedColumns: ["id"]
           },
         ]
@@ -7039,6 +7247,122 @@ export type Database = {
             foreignKeyName: "partner_storefronts_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: true
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_workflow_runs: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          error: string | null
+          id: string
+          partner_id: string
+          status: string
+          step_results: Json
+          trigger_event: string
+          trigger_payload: Json
+          workflow_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          partner_id: string
+          status?: string
+          step_results?: Json
+          trigger_event: string
+          trigger_payload?: Json
+          workflow_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: string
+          partner_id?: string
+          status?: string
+          step_results?: Json
+          trigger_event?: string
+          trigger_payload?: Json
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_workflow_runs_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_workflow_runs_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "partner_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_workflows: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          error_count: number
+          id: string
+          is_active: boolean
+          last_run_at: string | null
+          name: string
+          natural_language: string | null
+          partner_id: string
+          run_count: number
+          steps: Json
+          trigger_event: string
+          trigger_filter: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          error_count?: number
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          name: string
+          natural_language?: string | null
+          partner_id: string
+          run_count?: number
+          steps?: Json
+          trigger_event: string
+          trigger_filter?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          error_count?: number
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          name?: string
+          natural_language?: string | null
+          partner_id?: string
+          run_count?: number
+          steps?: Json
+          trigger_event?: string
+          trigger_filter?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_workflows_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
