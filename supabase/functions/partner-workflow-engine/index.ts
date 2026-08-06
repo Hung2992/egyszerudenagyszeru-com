@@ -188,7 +188,11 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
       { auth: { persistSession: false } },
     );
-    const body = await req.json().catch(() => ({}));
+    const raw = await req.json().catch(() => ({}));
+    // Agent Bus webhook alak: { bus_event: { event_type, payload } }
+    const body = raw?.bus_event
+      ? { action: "dispatch", event: raw.bus_event.event_type, payload: raw.bus_event.payload ?? {} }
+      : raw;
     const action = body.action ?? "compile";
 
     // --- 1) Természetes nyelv -> workflow ---
