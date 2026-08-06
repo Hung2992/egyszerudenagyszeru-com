@@ -33,6 +33,14 @@ const PartnerPortal = () => {
   const navigate = useNavigate();
   const { partner, isAdmin, loading, claim } = usePartnerCheck();
   const [tab, setTab] = useState("overview");
+  const [storefrontId, setStorefrontId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!partner?.id) return;
+    supabase.from("partner_storefronts").select("id").eq("partner_id", partner.id).maybeSingle()
+      .then(({ data }) => setStorefrontId(data?.id ?? null));
+  }, [partner?.id]);
+
   const [stats, setStats] = useState<Stats | null>(null);
   const [referrals, setReferrals] = useState<Referral[]>([]);
   const [payouts, setPayouts] = useState<Payout[]>([]);
