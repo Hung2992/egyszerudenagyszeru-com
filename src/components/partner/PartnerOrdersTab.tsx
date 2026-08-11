@@ -206,6 +206,9 @@ const PartnerOrdersTab = ({ partnerId }: Props) => {
                     </div>
                   )}
 
+                  {items.length > 0 && <OrderFulfillmentPlan items={items} />}
+
+
                   {o.shipping_address && (
                     <div className="text-xs text-muted-foreground">
                       Szállítás: {[o.shipping_address.postal_code, o.shipping_address.city, o.shipping_address.address, o.shipping_address.street]
