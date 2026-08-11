@@ -62,7 +62,7 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
 
   useEffect(() => { void load(); void loadCatalog(); }, [partnerId]);
 
-  const fulfillmentOfType = (pt: string) => pt?.startsWith("digital_") ? "digital" : pt?.startsWith("service_") ? "service" : "physical";
+  // teljesítési típus feloldás a központi sémából (@/lib/product-schema)
   const allTypes = useMemo(() => catalog.filter(c => c.category === "type"), [catalog]);
   const types = useMemo(
     () => allTypes.filter(c => fulfillmentOfType(c.product_type) === (form.fulfillment_type || "physical")),
