@@ -111,7 +111,50 @@ async function generateCover(prompt: string): Promise<string | null> {
   }
 }
 
+// --- Improvement Report segédek ---
+// Ezeket a mezőket a partner adja meg / üzletileg érzékenyek: ha nem változtak, külön kiemeljük.
+const PROTECTED_PATHS = [
+  "price_huf",
+  "compare_price_huf",
+  "slug",
+  "attributes.license_terms",
+  "attributes.download_limit",
+  "attributes.access_days",
+  "attributes.digital_delivery",
+  "attributes.certificate",
+  "attributes.cancellation_policy",
+];
+
+const readPath = (obj: any, path: string) =>
+  path.split(".").reduce((a: any, k) => (a && typeof a === "object" ? a[k] : undefined), obj);
+
+const stable = (v: unknown) => JSON.stringify(v ?? null);
+
+function diffPaths(before: any, after: any, prefix = "", depth = 0): string[] {
+  const out: string[] = [];
+  const keys = new Set([...Object.keys(before || {}), ...Object.keys(after || {})]);
+  for (const k of keys) {
+    const path = prefix ? `${prefix}.${k}` : k;
+    const a = before?.[k];
+    const b = after?.[k];
+    if (stable(a) === stable(b)) continue;
+    const bothPlainObjects =
+      a && b && typeof a === "object" && typeof b === "object" && !Array.isArray(a) && !Array.isArray(b);
+    if (bothPlainObjects && depth < 2) out.push(...diffPaths(a, b, path, depth + 1));
+    else out.push(path);
+  }
+  return out;
+}
+
+const makeRunId = () => {
+  const d = new Date();
+  const day = d.toISOString().slice(0, 10);
+  const rnd = Math.floor(Math.random() * 900 + 100);
+  return `IMP-${day}-${rnd}`;
+};
+
 Deno.serve(async (req) => {
+
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
