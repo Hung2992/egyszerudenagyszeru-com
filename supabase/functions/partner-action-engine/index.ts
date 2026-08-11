@@ -122,6 +122,75 @@ async function busPublish(sb: any, eventType: string, payload: unknown, correlat
   } catch (_) { /* nem kritikus */ }
 }
 
+/** ✅ Rollback Integrity Check: ellenőrzés → konzisztencia → QA → üzleti check */
+async function runIntegrityCheck(sb: any, partnerId: string, attempted: any[], stats: any) {
+  const checks: any[] = [];
+
+  // 1. Ellenőrzés: minden érintett rekord tényleg visszaállt?
+  let verified = 0;
+  const mismatched: any[] = [];
+  for (const e of attempted) {
+    const { data: row } = await sb.from(e.table).select("*").eq("id", e.id).eq("partner_id", partnerId).maybeSingle();
+    if (e.delete) {
+      if (!row) verified++; else mismatched.push({ id: e.id, table: e.table, reason: "still_exists" });
+      continue;
+    }
+    if (!row) { mismatched.push({ id: e.id, table: e.table, reason: "missing" }); continue; }
+    const bad = Object.keys(e.values || {}).filter((k) => String(row[k] ?? "") !== String(e.values[k] ?? ""));
+    if (bad.length) mismatched.push({ id: e.id, table: e.table, reason: "value_mismatch", fields: bad });
+    else verified++;
+  }
+  checks.push({
+    key: "verify", label: "Rekordok visszaállítása",
+    ok: mismatched.length === 0,
+    detail: `${verified}/${attempted.length} elem ellenőrizve`, issues: mismatched,
+  });
+
+  // 2. Konzisztencia + 4. üzleti check: árképzés / készlet épsége
+  const { data: products } = await sb.from("partner_products")
+    .select("id,title,price_huf,compare_price_huf,status,stock_quantity")
+    .eq("partner_id", partnerId).limit(500);
+  const priceIssues = (products || []).filter((p: any) =>
+    p.status === "active" && (p.price_huf == null || Number(p.price_huf) <= 0)
+  ).map((p: any) => ({ id: p.id, title: p.title, reason: "invalid_price" }));
+  const compareIssues = (products || []).filter((p: any) =>
+    p.compare_price_huf != null && Number(p.compare_price_huf) > 0 && Number(p.compare_price_huf) < Number(p.price_huf || 0)
+  ).map((p: any) => ({ id: p.id, title: p.title, reason: "compare_price_lower_than_price" }));
+  checks.push({
+    key: "consistency", label: "Állapot konzisztencia",
+    ok: priceIssues.length === 0,
+    detail: priceIssues.length ? `${priceIssues.length} termék hibás árral` : "Minden aktív terméknek érvényes ára van",
+    issues: priceIssues,
+  });
+  checks.push({
+    key: "business", label: "Üzleti / árképzési ellenőrzés",
+    ok: compareIssues.length === 0,
+    detail: compareIssues.length ? `${compareIssues.length} terméknél az áthúzott ár kisebb az árnál` : "Kosár és árképzés rendben",
+    issues: compareIssues,
+  });
+
+  // 3. QA: webshop minőségi pontszám nem romlott-e
+  const { data: sf } = await sb.from("partner_storefronts")
+    .select("id,quality_score").eq("partner_id", partnerId).maybeSingle();
+  const score = sf?.quality_score ?? null;
+  checks.push({
+    key: "qa", label: "Webshop minőségi pontszám",
+    ok: score == null || Number(score) >= 60,
+    detail: score == null ? "Nincs QA pontszám (kihagyva)" : `Aktuális pontszám: ${score}`,
+    issues: [],
+  });
+
+  const ok = checks.every((c) => c.ok) && stats.failures.length === 0;
+  return {
+    ok,
+    summary: `${stats.restored}/${stats.total} elem helyreállítva`,
+    restored: stats.restored, total: stats.total,
+    skipped: stats.skipped?.length || 0, failed: stats.failures?.length || 0,
+    checks, checked_at: new Date().toISOString(),
+  };
+}
+
+
 /** Egy lépés végrehajtása. Visszaadja az előtte/utána állapotot és a rollback adatot. */
 async function executeStep(sb: any, partnerId: string, storefrontId: string | null, step: any) {
   const p = step?.params || {};
@@ -401,6 +470,9 @@ Deno.serve(async (req) => {
       let restored = 0;
       const failures: any[] = [];
       const skipped: any[] = [];
+      // 🔐 Semmi nem vész el: a rollback előtti teljes sorokat elmentjük (undo lehetőség)
+      const preSnapshot: any[] = [];
+      const attempted: any[] = [];
       for (const e of entries) {
         if (only && !only.includes(String(e.id))) { skipped.push({ id: e.id, reason: "not_selected" }); continue; }
         try {
@@ -413,31 +485,71 @@ Deno.serve(async (req) => {
               continue;
             }
           }
+          preSnapshot.push({ table: e.table, id: e.id, kind: e.delete ? "deleted" : "updated", row });
           const { error } = e.delete
             ? await sb.from(e.table).delete().eq("id", e.id).eq("partner_id", partnerId)
             : await sb.from(e.table).update(e.values).eq("id", e.id).eq("partner_id", partnerId);
           if (error) failures.push({ id: e.id, table: e.table, error: error.message });
-          else restored++;
+          else { restored++; attempted.push(e); }
         } catch (err) {
           failures.push({ id: e.id, table: e.table, error: String((err as Error)?.message || err) });
         }
       }
-      const partial = failures.length > 0 || (skipped.length > 0 && restored > 0);
+
+      // ✅ Rollback Integrity Check — ellenőrzés, konzisztencia, üzleti check
+      const integrity = await runIntegrityCheck(sb, partnerId, attempted, { restored, failures, skipped, total: entries.length });
+
+      const partial = failures.length > 0 || (skipped.length > 0 && restored > 0) || !integrity.ok;
       const { data: updated } = await sb.from("partner_action_plans")
         .update({
           status: failures.length && restored === 0 ? plan.status : "rolled_back",
           rolled_back_at: new Date().toISOString(), rolled_back_by: user.id,
+          pre_rollback_snapshot: preSnapshot,
+          integrity_check: integrity,
         })
         .eq("id", planId).eq("partner_id", partnerId).select().single();
       await audit(sb, {
         action_id: planId, partner_id: partnerId, correlation_id: plan.correlation_id,
         event_type: failures.length ? "rollback_failed" : partial ? "rollback_partial" : "rolled_back",
         risk_level: plan.risk_level, ...actor,
-        details: { restored, failures, skipped }, before_state: plan.after_state || {}, after_state: plan.before_state || {},
+        details: { restored, failures, skipped, integrity }, before_state: plan.after_state || {}, after_state: plan.before_state || {},
       });
-      await busPublish(sb, "action_plan.rolled_back", { action_id: planId, partner_id: partnerId, restored, failed: failures.length, skipped: skipped.length }, plan.correlation_id);
-      return json({ plan: updated, restored, failures, skipped, partial });
+      await busPublish(sb, "action_plan.rolled_back", { action_id: planId, partner_id: partnerId, restored, failed: failures.length, skipped: skipped.length, integrity_ok: integrity.ok }, plan.correlation_id);
+      return json({ plan: updated, restored, failures, skipped, partial, integrity });
     }
+
+    // ↩️ Rollback visszavonása: a rollback előtti pillanatképből visszaállítjuk az állapotot
+    if (action === "rollback_undo") {
+      const planId = String(body.plan_id || "");
+      const { data: plan } = await sb.from("partner_action_plans").select("*").eq("id", planId).eq("partner_id", partnerId).maybeSingle();
+      if (!plan) return json({ error: "plan_not_found" }, 404);
+      const snap: any[] = Array.isArray(plan.pre_rollback_snapshot) ? plan.pre_rollback_snapshot : [];
+      if (!snap.length) return json({ error: "no_snapshot" }, 400);
+      let restored = 0;
+      const failures: any[] = [];
+      for (const s of snap) {
+        try {
+          const { error } = s.kind === "deleted"
+            ? await sb.from(s.table).upsert(s.row)
+            : await sb.from(s.table).update(s.row).eq("id", s.id).eq("partner_id", partnerId);
+          if (error) failures.push({ id: s.id, table: s.table, error: error.message });
+          else restored++;
+        } catch (err) {
+          failures.push({ id: s.id, table: s.table, error: String((err as Error)?.message || err) });
+        }
+      }
+      const { data: updated } = await sb.from("partner_action_plans")
+        .update({ status: "executed", rolled_back_at: null, pre_rollback_snapshot: [] })
+        .eq("id", planId).eq("partner_id", partnerId).select().single();
+      await audit(sb, {
+        action_id: planId, partner_id: partnerId, correlation_id: plan.correlation_id,
+        event_type: "rollback_undone", risk_level: plan.risk_level, ...actor,
+        details: { restored, failures },
+      });
+      await busPublish(sb, "action_plan.rollback_undone", { action_id: planId, partner_id: partnerId, restored }, plan.correlation_id);
+      return json({ plan: updated, restored, failures });
+    }
+
 
 
     if (action === "measure") {

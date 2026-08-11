@@ -4862,8 +4862,10 @@ export type Database = {
           expected_impact: string | null
           goal: string
           id: string
+          integrity_check: Json | null
           measured_at: string | null
           partner_id: string
+          pre_rollback_snapshot: Json
           result: Json
           risk_level: string | null
           rollback_data: Json
@@ -4890,8 +4892,10 @@ export type Database = {
           expected_impact?: string | null
           goal: string
           id?: string
+          integrity_check?: Json | null
           measured_at?: string | null
           partner_id: string
+          pre_rollback_snapshot?: Json
           result?: Json
           risk_level?: string | null
           rollback_data?: Json
@@ -4918,8 +4922,10 @@ export type Database = {
           expected_impact?: string | null
           goal?: string
           id?: string
+          integrity_check?: Json | null
           measured_at?: string | null
           partner_id?: string
+          pre_rollback_snapshot?: Json
           result?: Json
           risk_level?: string | null
           rollback_data?: Json
