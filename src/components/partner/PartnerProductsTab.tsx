@@ -15,6 +15,7 @@ import MediaImage from "./MediaImage";
 import ProductAttributesFields from "./ProductAttributesFields";
 import VariantMatrix, { Variant } from "./VariantMatrix";
 import DigitalServiceFields from "./DigitalServiceFields";
+import ProductCapabilityMatrix from "./ProductCapabilityMatrix";
 import {
   FULFILLMENTS, fulfillmentLabel, fulfillmentIcon, fulfillmentHint, fulfillmentOfType,
   capabilitiesOf, defaultTypeOf, stockLabel, checkoutModeOf, checkoutModeLabel, orderFlow, summaryOf,
