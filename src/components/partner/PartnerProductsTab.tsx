@@ -175,12 +175,14 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
   };
 
   const t = form.product_type;
-  const ff: "physical" | "digital" | "service" = form.fulfillment_type || "physical";
+  const ff: Fulfillment = (form.fulfillment_type as Fulfillment) || "physical";
+  const caps = capabilitiesOf(ff);
   const isPhysical = ff === "physical";
-  const isClothing = isPhysical && (t === "clothing" || t === "shoes");
-  const isCase = isPhysical && (t === "phone_case" || t === "screen_protector");
+  const isClothing = caps.sizes && (t === "clothing" || t === "shoes");
+  const isCase = caps.devices && (t === "phone_case" || t === "screen_protector");
   const isPhone = isPhysical && t === "phone";
   const sizeOptions = sizesForType(t);
+
 
 
   return (
