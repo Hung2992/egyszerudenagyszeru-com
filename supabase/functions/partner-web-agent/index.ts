@@ -695,6 +695,14 @@ Készíts egy JAVÍTOTT verziót: erősebb hero cím, meggyőzőbb alcím, konve
 ${JSON.stringify(pbBest.map((p) => ({ tipus: p.project_type, keres: String(p.request_summary || "").slice(0, 120), pontszam: p.quality_score, tanulsagok: (p.lessons || []).slice(0, 4), minta: p.winning_config })))}`
       : "";
 
+    // ── 🤖 AI MARKETPLACE: a partner által telepített szakértő ügynökök
+    const installedHint = installedAgents.length
+      ? `\nTELEPÍTETT AI SZAKÉRTŐ ÜGYNÖKÖK (ezen ügynökök szabályait/személyiségét vegyük figyelembe a válaszban):\n${JSON.stringify(installedAgents.map((a) => ({ name: a.marketplace_agent?.name, role: a.marketplace_agent?.role, instructions: (a.marketplace_agent?.system_prompt || "").slice(0, 300) })))}`
+      : "";
+
+    // ── 🧠 MULTI-AGENT MEMORY: platform-szintű tanult minták
+    const memoryHint = buildMemoryHint(memorySignals || []);
+
     // ── 2) Ügynök-csapat: elkészíti a konkrét változtatást (iparágspecifikus prompt)
     const buildPrompt = refineFeedback
       ? `A QA validáció elbukott. JAVÍTSD a patch-et a következő hibák alapján, és add vissza a JAVÍTOTT patch-et:
