@@ -5128,6 +5128,60 @@ export type Database = {
           },
         ]
       }
+      partner_appointments: {
+        Row: {
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_user_id: string | null
+          duration_min: number | null
+          id: string
+          location: string | null
+          metadata: Json
+          notes: string | null
+          order_id: string | null
+          partner_id: string
+          product_id: string | null
+          starts_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_user_id?: string | null
+          duration_min?: number | null
+          id?: string
+          location?: string | null
+          metadata?: Json
+          notes?: string | null
+          order_id?: string | null
+          partner_id: string
+          product_id?: string | null
+          starts_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_user_id?: string | null
+          duration_min?: number | null
+          id?: string
+          location?: string | null
+          metadata?: Json
+          notes?: string | null
+          order_id?: string | null
+          partner_id?: string
+          product_id?: string | null
+          starts_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       partner_autopilot_settings: {
         Row: {
           auto_allowed_types: string[]
@@ -5454,6 +5508,60 @@ export type Database = {
           },
         ]
       }
+      partner_course_enrollments: {
+        Row: {
+          access_until: string | null
+          certificate_issued: boolean
+          certificate_url: string | null
+          completed_lessons: Json
+          created_at: string
+          customer_email: string | null
+          customer_user_id: string | null
+          id: string
+          metadata: Json
+          order_id: string | null
+          partner_id: string
+          product_id: string | null
+          progress_percent: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          access_until?: string | null
+          certificate_issued?: boolean
+          certificate_url?: string | null
+          completed_lessons?: Json
+          created_at?: string
+          customer_email?: string | null
+          customer_user_id?: string | null
+          id?: string
+          metadata?: Json
+          order_id?: string | null
+          partner_id: string
+          product_id?: string | null
+          progress_percent?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          access_until?: string | null
+          certificate_issued?: boolean
+          certificate_url?: string | null
+          completed_lessons?: Json
+          created_at?: string
+          customer_email?: string | null
+          customer_user_id?: string | null
+          id?: string
+          metadata?: Json
+          order_id?: string | null
+          partner_id?: string
+          product_id?: string | null
+          progress_percent?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       partner_domain_proof_versions: {
         Row: {
           created_at: string
@@ -5581,6 +5689,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      partner_download_access: {
+        Row: {
+          created_at: string
+          customer_email: string | null
+          customer_user_id: string | null
+          download_limit: number | null
+          downloads_used: number
+          expires_at: string | null
+          file_name: string | null
+          file_path: string | null
+          id: string
+          metadata: Json
+          order_id: string | null
+          partner_id: string
+          product_id: string | null
+          status: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_email?: string | null
+          customer_user_id?: string | null
+          download_limit?: number | null
+          downloads_used?: number
+          expires_at?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          metadata?: Json
+          order_id?: string | null
+          partner_id: string
+          product_id?: string | null
+          status?: string
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string | null
+          customer_user_id?: string | null
+          download_limit?: number | null
+          downloads_used?: number
+          expires_at?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          metadata?: Json
+          order_id?: string | null
+          partner_id?: string
+          product_id?: string | null
+          status?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       partner_email_blasts: {
         Row: {
@@ -5890,6 +6055,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      partner_license_keys: {
+        Row: {
+          activations: number
+          created_at: string
+          customer_email: string | null
+          customer_user_id: string | null
+          expires_at: string | null
+          id: string
+          license_key: string
+          license_type: string
+          metadata: Json
+          order_id: string | null
+          partner_id: string
+          product_id: string | null
+          seats: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          activations?: number
+          created_at?: string
+          customer_email?: string | null
+          customer_user_id?: string | null
+          expires_at?: string | null
+          id?: string
+          license_key: string
+          license_type?: string
+          metadata?: Json
+          order_id?: string | null
+          partner_id: string
+          product_id?: string | null
+          seats?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          activations?: number
+          created_at?: string
+          customer_email?: string | null
+          customer_user_id?: string | null
+          expires_at?: string | null
+          id?: string
+          license_key?: string
+          license_type?: string
+          metadata?: Json
+          order_id?: string | null
+          partner_id?: string
+          product_id?: string | null
+          seats?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       partner_marketing_assets: {
         Row: {
