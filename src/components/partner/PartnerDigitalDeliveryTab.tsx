@@ -12,6 +12,8 @@ import {
   Copy, KeyRound, Download, GraduationCap, CalendarClock, Sparkles,
   RefreshCw, ShieldAlert, History, Loader2,
 } from "lucide-react";
+import FulfillmentHealthPanel, { type Health } from "./FulfillmentHealthPanel";
+
 
 interface Props { partnerId: string }
 
@@ -54,6 +56,8 @@ export default function PartnerDigitalDeliveryTab({ partnerId }: Props) {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [summary, setSummary] = useState("");
   const [stats, setStats] = useState<Record<string, number> | null>(null);
+  const [health, setHealth] = useState<Health | null>(null);
+
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -105,7 +109,9 @@ export default function PartnerDigitalDeliveryTab({ partnerId }: Props) {
     setIssues(((data as any).issues || []) as Issue[]);
     setSummary((data as any).summary || "");
     setStats((data as any).stats || null);
+    setHealth((data as any).health || null);
   };
+
 
   const handleIssue = async (issue: Issue) => {
     const fix = AUTO_FIXABLE[issue.action_key];
@@ -170,6 +176,15 @@ export default function PartnerDigitalDeliveryTab({ partnerId }: Props) {
         {stat(GraduationCap, "Beiratkozás", enrollments.length, `${stats?.avg_progress ?? Math.round(enrollments.reduce((s, e) => s + (e.progress_percent || 0), 0) / (enrollments.length || 1))}% átlag haladás`)}
         {stat(CalendarClock, "Időpont", appointments.length, `${upcoming.length} közelgő`)}
       </div>
+
+      <FulfillmentHealthPanel
+        partnerId={partnerId}
+        health={health}
+        issues={issues}
+        onExecuted={async () => { await load(); await diagnose(); }}
+      />
+
+
 
       {(summary || issues.length > 0) && (
         <Card className="rounded-none border-primary/40">
@@ -336,9 +351,13 @@ export default function PartnerDigitalDeliveryTab({ partnerId }: Props) {
                     <div className="text-xs text-muted-foreground">
                       {a.customer_email || "—"} · {fmt(a.created_at)}{a.reason ? ` · ${a.reason}` : ""}
                     </div>
+                    <div className="text-[10px] font-mono text-muted-foreground">
+                      action_id: {a.action_id?.slice(0, 8) || "—"}{a.plan_id ? ` · plan: ${a.plan_id.slice(0, 8)}` : ""} · {a.result || "success"}
+                    </div>
                   </div>
                 </div>
-                <Badge variant="outline" className="rounded-none font-mono text-[10px]">{a.resource_id?.slice(0, 8)}</Badge>
+                <Badge variant={String(a.result || "success").startsWith("failed") ? "destructive" : "outline"} className="rounded-none font-mono text-[10px]">{a.resource_id?.slice(0, 8)}</Badge>
+
               </CardContent>
             </Card>
           ))}

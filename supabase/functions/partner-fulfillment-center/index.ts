@@ -172,8 +172,71 @@ Deno.serve(async (req) => {
         } catch (_) { /* csendes fallback */ }
       }
 
-      return json({ ok: true, stats, issues, summary });
+      return json({ ok: true, stats, issues, summary, health: computeHealth(stats, issues) });
     }
+
+    // ---------- HEALTH SCORE ----------
+    function computeHealth(stats: any, issues: any[]) {
+      const pct = (ok: number, total: number) => (total > 0 ? Math.round((ok / total) * 100) : 100);
+      const digital = pct(stats.downloads_active, stats.downloads_total);
+      const licenses = pct(stats.licenses_active, stats.licenses_total);
+      const courses = stats.enrollments_total ? Math.max(0, Math.min(100, stats.avg_progress)) : 100;
+      const services = pct(stats.appointments_total - stats.appointments_cancelled, stats.appointments_total);
+      const openIssues = issues.filter((i) => i.severity !== 'info').length;
+      const errors = issues.filter((i) => i.severity === 'error').length;
+      const base = Math.round((digital + licenses + courses + services) / 4);
+      const score = Math.max(0, Math.min(100, base - openIssues * 3 - errors * 5));
+      const expiringSoon = issues
+        .filter((i) => i.action_key === 'extend_access')
+        .reduce((s, i) => s + (i.targets?.length ?? 0), 0);
+      return {
+        score,
+        areas: [
+          { key: 'digital', label: '💾 Digitális hozzáférések', value: digital },
+          { key: 'licenses', label: '🔑 Licenckulcsok', value: licenses },
+          { key: 'courses', label: '🎓 Kurzusok', value: courses },
+          { key: 'services', label: '🛠️ Foglalások', value: services },
+        ],
+        expiring_soon: expiringSoon,
+        open_issues: openIssues,
+        audit_ok: true,
+      };
+    }
+
+    // ---------- AI TERV (javaslat, végrehajtás nélkül) ----------
+    if (action === 'plan') {
+      const issues: any[] = Array.isArray(body.issues) ? body.issues : [];
+      const planId = crypto.randomUUID();
+      const recipe: Record<string, { action: string; label: string; why: string; extra?: Record<string, unknown> }> = {
+        extend_access: { action: 'extend_access', label: 'Hozzáférés hosszabbítása (+30 nap)', why: '24 órán belül lejár a hozzáférés', extra: { days: 30 } },
+        expire_access: { action: 'expire_access', label: 'Lejárt hozzáférés lezárása', why: 'Lejárt, de még aktív státuszú rekord' },
+        reset_limit: { action: 'reset_limit', label: 'Letöltési limit nullázása', why: 'Az ügyfél elérte a letöltési limitet' },
+        issue_certificate: { action: 'issue_certificate', label: 'Oklevél kiadása', why: 'Befejezett kurzus oklevél nélkül' },
+        complete_appointment: { action: 'complete_appointment', label: 'Elmúlt időpont lezárása', why: 'Az időpont elmúlt, de nyitva maradt' },
+      };
+      const steps: any[] = [];
+      for (const issue of issues) {
+        const r = recipe[issue.action_key];
+        if (!r) continue;
+        for (const t of issue.targets ?? []) {
+          steps.push({
+            action_id: crypto.randomUUID(),
+            plan_id: planId,
+            action: r.action,
+            label: r.label,
+            why: r.why,
+            severity: issue.severity,
+            domain: issue.domain,
+            target_type: t.type,
+            target_id: t.id,
+            customer_email: t.email,
+            ...(r.extra ?? {}),
+          });
+        }
+      }
+      return json({ ok: true, plan_id: planId, steps, executable: steps.length });
+    }
+
 
     // ---------- MŰVELETEK ----------
     const targetId: string | undefined = body.target_id;
@@ -186,6 +249,8 @@ Deno.serve(async (req) => {
       appointment: 'partner_appointments',
     };
 
+    let ctx: { plan_id?: string; action_id?: string; why?: string } = {};
+
     const mutate = async (type: string, id: string, values: Record<string, unknown>, act: string) => {
       const table = tableFor[type];
       if (!table) throw new Error('Ismeretlen erőforrás típus');
@@ -197,10 +262,73 @@ Deno.serve(async (req) => {
       await audit({
         action: act, resource_type: type, resource_id: id,
         customer_email: (before as any).customer_email,
-        before_state: before, after_state: after, reason,
+        before_state: before, after_state: after,
+        reason: ctx.why ?? reason,
+        ...(ctx.plan_id ? { plan_id: ctx.plan_id } : {}),
+        ...(ctx.action_id ? { action_id: ctx.action_id } : {}),
+        result: 'success',
       });
       return after;
     };
+
+    const extendAccess = async (type: string, id: string, days: number) => {
+      const field = type === 'enrollment' ? 'access_until' : 'expires_at';
+      const table = tableFor[type];
+      const { data: cur } = await supabase.from(table).select(`id, ${field}`).eq('id', id).eq('partner_id', partnerId).maybeSingle();
+      const base = (cur as any)?.[field] ? new Date((cur as any)[field]).getTime() : now;
+      const next = new Date(Math.max(base, now) + days * DAY).toISOString();
+      return mutate(type, id, { [field]: next, status: 'active' }, 'extend_access');
+    };
+
+    const applyStep = async (step: any) => {
+      const type = step.target_type as string;
+      const id = step.target_id as string;
+      switch (step.action) {
+        case 'extend_access':
+          return extendAccess(type === 'license' ? 'license' : type === 'enrollment' ? 'enrollment' : 'download', id, Math.max(1, Math.min(365, Number(step.days ?? 30))));
+        case 'expire_access':
+          return mutate(type === 'license' ? 'license' : 'download', id, { status: 'expired' }, 'expire_access');
+        case 'reset_limit':
+          return mutate('download', id, { downloads_used: 0, status: 'active' }, 'reset_limit');
+        case 'issue_certificate':
+          return mutate('enrollment', id, { certificate_issued: true, status: 'completed', progress_percent: 100 }, 'issue_certificate');
+        case 'complete_appointment':
+          return mutate('appointment', id, { status: 'completed' }, 'complete_appointment');
+        default:
+          throw new Error(`A terv nem tartalmazhat ilyen műveletet: ${step.action}`);
+      }
+    };
+
+    // ---------- TERV VÉGREHAJTÁSA (partner jóváhagyás után) ----------
+    if (action === 'execute_plan') {
+      const planId: string = body.plan_id ?? crypto.randomUUID();
+      const steps: any[] = Array.isArray(body.steps) ? body.steps : [];
+      if (!steps.length) return json({ error: 'A terv üres' }, 400);
+      const results: any[] = [];
+      for (const step of steps) {
+        const actionId = step.action_id ?? crypto.randomUUID();
+        ctx = { plan_id: planId, action_id: actionId, why: step.why ?? step.label };
+        try {
+          const record = await applyStep(step);
+          results.push({ action_id: actionId, action: step.action, target_id: step.target_id, result: 'success', record });
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : 'Ismeretlen hiba';
+          await audit({
+            action: step.action, resource_type: step.target_type ?? 'unknown', resource_id: step.target_id,
+            customer_email: step.customer_email ?? null, reason: step.why ?? step.label,
+            plan_id: planId, action_id: actionId, result: `failed: ${msg}`,
+          });
+          results.push({ action_id: actionId, action: step.action, target_id: step.target_id, result: 'failed', error: msg });
+        }
+      }
+      ctx = {};
+      return json({
+        ok: true, plan_id: planId, results,
+        succeeded: results.filter((r) => r.result === 'success').length,
+        failed: results.filter((r) => r.result === 'failed').length,
+      });
+    }
+
 
     switch (action) {
       case 'revoke_license':
