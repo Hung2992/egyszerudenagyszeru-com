@@ -314,6 +314,11 @@ const PartnerPortal = () => {
             <PartnerAiTeamTab partnerId={partner.id} />
           </TabsContent>
 
+          <TabsContent value="action_plans" className="mt-6">
+            <PartnerActionPlansTab partnerId={partner.id} />
+          </TabsContent>
+
+
           <TabsContent value="advisor" className="mt-6">
             <PartnerAiAdvisorTab partnerId={partner.id} />
           </TabsContent>
