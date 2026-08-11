@@ -177,6 +177,15 @@ export default function PartnerDigitalDeliveryTab({ partnerId }: Props) {
         {stat(CalendarClock, "Időpont", appointments.length, `${upcoming.length} közelgő`)}
       </div>
 
+      <FulfillmentHealthPanel
+        partnerId={partnerId}
+        health={health}
+        issues={issues}
+        onExecuted={async () => { await load(); await diagnose(); }}
+      />
+
+
+
       {(summary || issues.length > 0) && (
         <Card className="rounded-none border-primary/40">
           <CardContent className="p-4 space-y-3">
