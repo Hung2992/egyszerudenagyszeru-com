@@ -24,6 +24,7 @@ interface Plan {
   approved_by_email?: string | null; approved_at?: string | null;
   approval_mode?: string | null; source?: string | null;
   correlation_id?: string | null; rollback_data?: unknown[] | null;
+  integrity_check?: IntegrityCheck | null; pre_rollback_snapshot?: unknown[] | null;
 }
 
 const GOALS = [
