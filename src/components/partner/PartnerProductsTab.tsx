@@ -410,7 +410,7 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
             />
 
             {/* Variánsok mátrix: méret/modell × szín × készlet (csak fizikai termékeknél) */}
-            {isPhysical && (
+            {caps.variants && (
               <VariantMatrix
                 mode={isCase ? "device" : isClothing ? "size" : "simple"}
                 sizes={form.sizes || []}
@@ -429,7 +429,7 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
               />
             )}
 
-            {isPhysical && (
+            {caps.material && (
               <div className="grid grid-cols-2 gap-2">
                 <div><Label>Anyag</Label><Input className="rounded-none" value={form.material} onChange={e => setForm({ ...form, material: e.target.value })} placeholder="pl. 100% pamut / szilikon" /></div>
                 <div><Label>Származási hely</Label><Input className="rounded-none" value={form.origin_country} onChange={e => setForm({ ...form, origin_country: e.target.value })} placeholder="pl. Magyarország" /></div>

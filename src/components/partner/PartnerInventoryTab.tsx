@@ -195,7 +195,7 @@ const PartnerInventoryTab = ({ partnerId }: Props) => {
                     </TableCell>
                     <TableCell>
                       {(p.fulfillment_type || "physical") !== "physical" ? (
-                        <span className="text-[11px] text-muted-foreground">{p.fulfillment_type === "service" ? "szolgáltatás" : "digitális"}</span>
+                        <span className="text-[11px] text-muted-foreground">{p.fulfillment_type === "service" ? "szolgáltatás" : p.fulfillment_type === "course" ? "kurzus" : "digitális"}</span>
                       ) : hasVars ? (
                         <span className="text-sm">{s} <span className="text-[11px] text-muted-foreground">(variáns)</span></span>
                       ) : (
