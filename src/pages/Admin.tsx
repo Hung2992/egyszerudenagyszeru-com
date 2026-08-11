@@ -38,6 +38,7 @@ const AdminMultiAgentMemory = lazy(lazyRetry(() => import("@/components/admin/Ad
 const AdminAiMarketplaceTab = lazy(lazyRetry(() => import("@/components/admin/AdminAiMarketplaceTab")));
 const AdminPlatformKpiTab = lazy(lazyRetry(() => import("@/components/admin/AdminPlatformKpiTab")));
 const AdminPilotPartnersTab = lazy(lazyRetry(() => import("@/components/admin/AdminPilotPartnersTab")));
+const AdminPartnerCenterTab = lazy(lazyRetry(() => import("@/components/admin/AdminPartnerCenterTab")));
 const AdminAiMarketingCeo = lazy(lazyRetry(() => import("@/components/admin/AdminAiMarketingCeo")));
 import { Facebook as FacebookIcon, Instagram as InstagramIcon, Youtube as YoutubeIcon, Music2, Linkedin as LinkedinIcon, Twitter as TwitterIcon } from "lucide-react";
 const AdminGdprTab = lazy(lazyRetry(() => import("@/components/admin/AdminGdprTab")));
