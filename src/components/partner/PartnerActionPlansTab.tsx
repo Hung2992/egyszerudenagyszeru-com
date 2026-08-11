@@ -200,7 +200,35 @@ const PartnerActionPlansTab = ({ partnerId }: Props) => {
                 Eredmény mérése
               </Button>
             )}
+            {(plan.status === "executed" || plan.status === "measured") && (plan.rollback_data?.length ?? 0) > 0 && (
+              <Button size="sm" variant="destructive" className="rounded-none" disabled={busy !== null}
+                onClick={() => void call("rollback", { plan_id: plan.id }, `r-${plan.id}`)}>
+                {busy === `r-${plan.id}` ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Undo2 className="h-4 w-4 mr-2" />}
+                Visszavonás (rollback)
+              </Button>
+            )}
+            <Button size="sm" variant="ghost" className="rounded-none"
+              onClick={() => setOpenAudit(openAudit === plan.id ? null : plan.id)}>
+              <ScrollText className="h-4 w-4 mr-2" />
+              {openAudit === plan.id ? "Napló elrejtése" : "Audit napló"}
+            </Button>
           </div>
+
+          {(plan.approved_by_email || plan.approval_mode) && (
+            <p className="text-[11px] text-muted-foreground">
+              Jóváhagyta: {plan.approved_by_email || "—"}
+              {plan.approved_at ? ` · ${new Date(plan.approved_at).toLocaleString("hu-HU")}` : ""}
+              {plan.approval_mode ? ` · mód: ${plan.approval_mode === "autopilot" ? "autopilot" : "kézi"}` : ""}
+              {plan.source === "autopilot" ? " · forrás: 🚀 autopilot" : ""}
+            </p>
+          )}
+
+          {openAudit === plan.id && (
+            <div className="border border-border p-3">
+              <PartnerActionAuditTrail actionId={plan.id} />
+            </div>
+          )}
+
         </Card>
       ))}
     </div>
