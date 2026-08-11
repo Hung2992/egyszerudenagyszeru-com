@@ -10,7 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { X } from "lucide-react";
 
 interface Props {
-  fulfillment: "physical" | "digital" | "service";
+  fulfillment: "physical" | "digital" | "course" | "service";
   partnerId: string;
   attributes: Record<string, any>;
   setAttributes: (a: Record<string, any>) => void;
@@ -21,6 +21,7 @@ const DigitalServiceFields = ({ fulfillment, partnerId, attributes, setAttribute
   const set = (k: string, v: any) => setAttributes({ ...attributes, [k]: v });
 
   if (fulfillment === "physical") return null;
+
 
   const uploadFile = async (file: File) => {
     setUploading(true);
