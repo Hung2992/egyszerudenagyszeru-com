@@ -38,7 +38,7 @@ const fmt = (n: number) => `${(n || 0).toLocaleString("hu-HU")} Ft`;
 const PartnerPortal = () => {
   const navigate = useNavigate();
   const { partner, isAdmin, loading, claim } = usePartnerCheck();
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useState("dashboard");
   const [storefrontId, setStorefrontId] = useState<string | null>(null);
 
   useEffect(() => {
