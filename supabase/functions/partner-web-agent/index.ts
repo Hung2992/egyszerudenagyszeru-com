@@ -2,6 +2,7 @@
 // MINŐSÉGBIZTOSÍTÁSI LÁNC: iparágspecifikus promptok → érdemes QA validáció → minőségi pontszám + jóváhagyás
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.104.1";
 import { publish } from "../_shared/agent-bus.ts";
+import { querySignals, buildMemoryHint } from "../_shared/ai-memory.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -574,7 +575,7 @@ Deno.serve(async (req) => {
     if (!partner) return json({ error: "Nincs jogosultságod ehhez a partnerhez" }, 403);
 
     // Kontextus
-    const [{ data: sf }, { data: mem }, { data: prods }, { data: history }, { data: playbook }] = await Promise.all([
+    const [sfRes, memRes, prodsRes, historyRes, playbookRes, installedAgentsRes, memorySignals] = await Promise.all([
       supabase.from("partner_storefronts").select("*").eq("partner_id", partnerId).maybeSingle(),
       supabase.from("partner_brand_memory").select("memory").eq("partner_id", partnerId).maybeSingle(),
       supabase.from("partner_products").select("title, price, category").eq("partner_id", partnerId).limit(15),
@@ -584,7 +585,23 @@ Deno.serve(async (req) => {
       supabase.from("ai_build_playbook")
         .select("project_type, request_summary, winning_config, quality_score, lessons")
         .order("quality_score", { ascending: false }).limit(24),
+      // 🤖 AI Marketplace: a partner által telepített szakértő ügynökök
+      supabase.from("ai_agent_installs")
+        .select("is_enabled,marketplace_agent:marketplace_agent_id(role,system_prompt,name,model)")
+        .eq("partner_id", partnerId).eq("is_enabled", true),
+      // 🧠 Multi-Agent Memory: anonimizált, platform-szintű tanult minták
+      querySignals(supabase, {
+        signalTypes: ["design_color_primary", "design_color_accent", "design_font_heading", "cta_text", "project_type_score"],
+        projectType: projectType || undefined,
+        limit: 20,
+      }),
     ]);
+    const sf = sfRes.data;
+    const mem = memRes.data;
+    const prods = prodsRes.data;
+    const history = historyRes.data;
+    const playbook = playbookRes.data;
+    const installedAgents = installedAgentsRes.data || [];
 
     const currentConfig: Record<string, unknown> = {};
     for (const k of ALLOWED) if (sf && sf[k] !== undefined && sf[k] !== null && sf[k] !== "") currentConfig[k] = sf[k];
@@ -678,19 +695,27 @@ Készíts egy JAVÍTOTT verziót: erősebb hero cím, meggyőzőbb alcím, konve
 ${JSON.stringify(pbBest.map((p) => ({ tipus: p.project_type, keres: String(p.request_summary || "").slice(0, 120), pontszam: p.quality_score, tanulsagok: (p.lessons || []).slice(0, 4), minta: p.winning_config })))}`
       : "";
 
+    // ── 🤖 AI MARKETPLACE: a partner által telepített szakértő ügynökök
+    const installedHint = installedAgents.length
+      ? `\nTELEPÍTETT AI SZAKÉRTŐ ÜGYNÖKÖK (ezen ügynökök szabályait/személyiségét vegyük figyelembe a válaszban):\n${JSON.stringify(installedAgents.map((a) => ({ name: a.marketplace_agent?.name, role: a.marketplace_agent?.role, instructions: (a.marketplace_agent?.system_prompt || "").slice(0, 300) })))}`
+      : "";
+
+    // ── 🧠 MULTI-AGENT MEMORY: platform-szintű tanult minták
+    const memoryHint = buildMemoryHint(memorySignals || []);
+
     // ── 2) Ügynök-csapat: elkészíti a konkrét változtatást (iparágspecifikus prompt)
     const buildPrompt = refineFeedback
       ? `A QA validáció elbukott. JAVÍTSD a patch-et a következő hibák alapján, és add vissza a JAVÍTOTT patch-et:
 ${JSON.stringify(refineFeedback)}
 
 Eredeti kérés: """${message.slice(0, 2000)}"""
-Jelenlegi konfiguráció: ${JSON.stringify(currentConfig)}${playbookHint}`
+Jelenlegi konfiguráció: ${JSON.stringify(currentConfig)}${playbookHint}${installedHint}${memoryHint}`
       : `Márka: ${partner.brand_name || "-"}
 ${typeHint}
 Márka-memória (korábbi döntések): ${JSON.stringify(mem?.memory ?? {})}
 Jelenlegi konfiguráció: ${JSON.stringify(currentConfig)}
 Termékek: ${JSON.stringify((prods || []).slice(0, 10))}
-Architect terv: ${JSON.stringify(agentPlan)}${playbookHint}
+Architect terv: ${JSON.stringify(agentPlan)}${playbookHint}${installedHint}${memoryHint}
 
 A partner kérése: """${message.slice(0, 4000)}"""`;
 

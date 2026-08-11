@@ -529,6 +529,170 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_agent_installs: {
+        Row: {
+          id: string
+          installed_at: string
+          is_enabled: boolean
+          marketplace_agent_id: string
+          partner_id: string
+          settings: Json
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          installed_at?: string
+          is_enabled?: boolean
+          marketplace_agent_id: string
+          partner_id: string
+          settings?: Json
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          installed_at?: string
+          is_enabled?: boolean
+          marketplace_agent_id?: string
+          partner_id?: string
+          settings?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_installs_marketplace_agent_id_fkey"
+            columns: ["marketplace_agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agent_marketplace"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_installs_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agent_marketplace: {
+        Row: {
+          author_partner_id: string | null
+          capabilities: Json
+          category: string | null
+          config: Json
+          created_at: string
+          description: string | null
+          id: string
+          industry: string | null
+          install_count: number
+          is_public: boolean
+          model: string | null
+          name: string
+          price_monthly: number | null
+          role: string
+          slug: string
+          status: string
+          system_prompt: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_partner_id?: string | null
+          capabilities?: Json
+          category?: string | null
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          industry?: string | null
+          install_count?: number
+          is_public?: boolean
+          model?: string | null
+          name: string
+          price_monthly?: number | null
+          role: string
+          slug: string
+          status?: string
+          system_prompt?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_partner_id?: string | null
+          capabilities?: Json
+          category?: string | null
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          industry?: string | null
+          install_count?: number
+          is_public?: boolean
+          model?: string | null
+          name?: string
+          price_monthly?: number | null
+          role?: string
+          slug?: string
+          status?: string
+          system_prompt?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_marketplace_author_partner_id_fkey"
+            columns: ["author_partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agent_memory_signals: {
+        Row: {
+          confidence: number | null
+          context: Json
+          feature_key: string
+          feature_value: string | null
+          first_seen_at: string
+          id: string
+          is_active: boolean
+          last_seen_at: string
+          sample_count: number
+          signal_type: string
+          source_count: number
+          success_score: number | null
+          updated_at: string
+        }
+        Insert: {
+          confidence?: number | null
+          context?: Json
+          feature_key: string
+          feature_value?: string | null
+          first_seen_at?: string
+          id?: string
+          is_active?: boolean
+          last_seen_at?: string
+          sample_count?: number
+          signal_type: string
+          source_count?: number
+          success_score?: number | null
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number | null
+          context?: Json
+          feature_key?: string
+          feature_value?: string | null
+          first_seen_at?: string
+          id?: string
+          is_active?: boolean
+          last_seen_at?: string
+          sample_count?: number
+          signal_type?: string
+          source_count?: number
+          success_score?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_agent_runs: {
         Row: {
           agent_slug: string
@@ -5627,6 +5791,38 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "partner_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_memory_consent: {
+        Row: {
+          consented_at: string
+          id: string
+          is_active: boolean
+          partner_id: string
+          revoked_at: string | null
+        }
+        Insert: {
+          consented_at?: string
+          id?: string
+          is_active?: boolean
+          partner_id: string
+          revoked_at?: string | null
+        }
+        Update: {
+          consented_at?: string
+          id?: string
+          is_active?: boolean
+          partner_id?: string
+          revoked_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_memory_consent_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: true
+            referencedRelation: "partners"
             referencedColumns: ["id"]
           },
         ]

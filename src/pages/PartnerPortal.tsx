@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { LogOut, Copy, Check, Download, Banknote, BarChart3, Megaphone, User as UserIcon, ListChecks, RefreshCw, Link2, FileSpreadsheet, Store, Package, Workflow, FlaskConical, Puzzle } from "lucide-react";
+import { LogOut, Copy, Check, Download, Banknote, BarChart3, Megaphone, User as UserIcon, ListChecks, RefreshCw, Link2, FileSpreadsheet, Store, Package, Workflow, FlaskConical, Puzzle, Bot } from "lucide-react";
 import { copyToClipboard } from "@/lib/clipboard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import StorefrontEditorTab from "@/components/partner/StorefrontEditorTab";
@@ -20,6 +20,7 @@ import PartnerMarketingHub from "@/components/partner/PartnerMarketingHub";
 import PartnerWorkflowsTab from "@/components/partner/PartnerWorkflowsTab";
 import PartnerAbTestsTab from "@/components/partner/PartnerAbTestsTab";
 import PartnerPluginsTab from "@/components/partner/PartnerPluginsTab";
+import PartnerAiMarketplaceTab from "@/components/partner/PartnerAiMarketplaceTab";
 
 
 interface Stats { pending_commission: number; available_commission: number; paid_total: number; total_orders: number; }
@@ -272,6 +273,7 @@ const PartnerPortal = () => {
             <TabsTrigger value="workflows" className="rounded-none"><Workflow className="h-4 w-4 mr-2" />Automatizálás</TabsTrigger>
             <TabsTrigger value="abtests" className="rounded-none"><FlaskConical className="h-4 w-4 mr-2" />A/B teszt</TabsTrigger>
             <TabsTrigger value="plugins" className="rounded-none"><Puzzle className="h-4 w-4 mr-2" />Pluginok</TabsTrigger>
+            <TabsTrigger value="ai_marketplace" className="rounded-none"><Bot className="h-4 w-4 mr-2" />AI Marketplace</TabsTrigger>
             <TabsTrigger value="profile" className="rounded-none"><UserIcon className="h-4 w-4 mr-2" />Profil</TabsTrigger>
           </TabsList>
 
@@ -295,6 +297,9 @@ const PartnerPortal = () => {
             <PartnerPluginsTab partnerId={partner.id} />
           </TabsContent>
 
+          <TabsContent value="ai_marketplace" className="mt-6">
+            <PartnerAiMarketplaceTab partnerId={partner.id} />
+          </TabsContent>
 
           <TabsContent value="overview" className="mt-6 space-y-6">
             <Card className="rounded-none border-foreground/20 p-6">
