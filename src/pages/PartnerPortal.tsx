@@ -28,6 +28,7 @@ import PartnerAiAdvisorTab from "@/components/partner/PartnerAiAdvisorTab";
 import PartnerCommandBar from "@/components/partner/PartnerCommandBar";
 import PartnerFinanceTab from "@/components/partner/PartnerFinanceTab";
 import PartnerAiTeamTab from "@/components/partner/PartnerAiTeamTab";
+import PartnerActionPlansTab from "@/components/partner/PartnerActionPlansTab";
 
 
 
