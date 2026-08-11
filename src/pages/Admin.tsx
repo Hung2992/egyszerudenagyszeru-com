@@ -2962,6 +2962,8 @@ const Admin = () => {
         {tab === "partner_acquisition_engine" && <AdminPartnerAcquisitionEngine />}
         {tab === "social_auto_publish" && <AdminSocialAutoPublish />}
         {tab === "ai_agent_bus" && <AdminAgentBus />}
+        {tab === "ai_marketplace" && <AdminMultiAgentMemory />}
+        {tab === "multi_agent_memory" && <AdminMultiAgentMemory />}
         {tab === "ai_marketing_ceo" && <AdminAiMarketingCeo />}
         {tab === "ai_command_center" && <AdminAiCommandCenter />}
         {tab === "ar_3d_center" && <AdminArAssetsTab />}
