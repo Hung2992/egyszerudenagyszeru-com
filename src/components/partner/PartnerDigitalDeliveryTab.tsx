@@ -54,6 +54,8 @@ export default function PartnerDigitalDeliveryTab({ partnerId }: Props) {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [summary, setSummary] = useState("");
   const [stats, setStats] = useState<Record<string, number> | null>(null);
+  const [health, setHealth] = useState<Health | null>(null);
+
 
   const load = useCallback(async () => {
     setLoading(true);
