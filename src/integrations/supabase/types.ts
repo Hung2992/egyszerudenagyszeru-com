@@ -6371,6 +6371,7 @@ export type Database = {
           compatible_devices: Json
           created_at: string
           description: string | null
+          fulfillment_type: string
           id: string
           images: Json
           material: string | null
@@ -6402,6 +6403,7 @@ export type Database = {
           compatible_devices?: Json
           created_at?: string
           description?: string | null
+          fulfillment_type?: string
           id?: string
           images?: Json
           material?: string | null
@@ -6433,6 +6435,7 @@ export type Database = {
           compatible_devices?: Json
           created_at?: string
           description?: string | null
+          fulfillment_type?: string
           id?: string
           images?: Json
           material?: string | null
