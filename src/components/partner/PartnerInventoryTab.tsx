@@ -16,7 +16,7 @@ interface Props { partnerId: string }
 
 interface Prod {
   id: string; title: string; sku: string | null; price_huf: number | null; compare_price_huf: number | null;
-  stock_qty: number | null; status: string; brand: string | null; product_type: string | null;
+  stock_qty: number | null; status: string; brand: string | null; product_type: string | null; fulfillment_type?: string | null;
 }
 interface Variant { id: string; product_id: string; size: string | null; color: string | null; stock_qty: number | null; price_override_huf: number | null; sku: string | null }
 
@@ -38,7 +38,7 @@ const PartnerInventoryTab = ({ partnerId }: Props) => {
     setLoading(true);
     const { data: prods } = await supabase
       .from("partner_products")
-      .select("id,title,sku,price_huf,compare_price_huf,stock_qty,status,brand,product_type")
+      .select("id,title,sku,price_huf,compare_price_huf,stock_qty,status,brand,product_type,fulfillment_type")
       .eq("partner_id", partnerId)
       .order("created_at", { ascending: false });
     const list = (prods as Prod[]) || [];
@@ -194,7 +194,9 @@ const PartnerInventoryTab = ({ partnerId }: Props) => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {hasVars ? (
+                      {(p.fulfillment_type || "physical") !== "physical" ? (
+                        <span className="text-[11px] text-muted-foreground">{p.fulfillment_type === "service" ? "szolgáltatás" : "digitális"}</span>
+                      ) : hasVars ? (
                         <span className="text-sm">{s} <span className="text-[11px] text-muted-foreground">(variáns)</span></span>
                       ) : (
                         <Input
