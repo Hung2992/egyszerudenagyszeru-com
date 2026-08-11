@@ -28,6 +28,7 @@ import {
   canUsePublishButton,
   evaluateDomainReadiness,
 } from "@/lib/partner-storefront-analytics";
+import { logPlatformMetric } from "@/lib/platform-metrics";
 import { usePartnerCheck } from "@/hooks/usePartnerCheck";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { AlertTriangle } from "lucide-react";
@@ -182,6 +183,13 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
     setSaving(false);
     if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
     if (data) setSf(data);
+    void logPlatformMetric({
+      partnerId,
+      metricType: publishRequest ? "publish_request" : "human_edit",
+      applied: true,
+      patchFields: Object.keys(payload || {}).length,
+      metadata: { storefront_id: (data as any)?.id ?? sf?.id ?? null },
+    });
     if (publishRequest) {
       try {
         const { data: p } = await supabase.from("partners").select("email, full_name, company_name").eq("id", partnerId).maybeSingle();
