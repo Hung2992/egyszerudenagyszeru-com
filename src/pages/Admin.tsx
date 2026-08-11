@@ -1360,6 +1360,8 @@ const Admin = () => {
     { key: "ai_marketing_ceo", label: "🧠 AI Marketing CEO", icon: Sparkles },
     { key: "social_auto_publish", label: "📅 Social Auto-Publish", icon: Rocket },
     { key: "ai_agent_bus", label: "📡 AI Ügynök Busz", icon: Sparkles },
+    { key: "ai_marketplace", label: "🛒 AI Marketplace", icon: Store },
+    { key: "multi_agent_memory", label: "🧠 Multi-Agent Memory", icon: Brain },
     { key: "fb_studio", label: "Facebook Stúdió", icon: FacebookIcon },
     { key: "ig_studio", label: "Instagram Stúdió", icon: InstagramIcon },
     { key: "tt_studio", label: "TikTok Stúdió", icon: Music2 },
