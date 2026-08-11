@@ -20,6 +20,7 @@ import PartnerMarketingHub from "@/components/partner/PartnerMarketingHub";
 import PartnerWorkflowsTab from "@/components/partner/PartnerWorkflowsTab";
 import PartnerAbTestsTab from "@/components/partner/PartnerAbTestsTab";
 import PartnerPluginsTab from "@/components/partner/PartnerPluginsTab";
+import PartnerAiMarketplaceTab from "@/components/partner/PartnerAiMarketplaceTab";
 
 
 interface Stats { pending_commission: number; available_commission: number; paid_total: number; total_orders: number; }
