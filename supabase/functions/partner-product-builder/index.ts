@@ -187,6 +187,30 @@ ${JSON.stringify(spec).slice(0, 12000)}`,
         rounds.push({ round: r, total: Number(qa?.total ?? 0), scores: qa?.scores ?? {}, changes });
       }
 
+      // 📄 IMPROVEMENT REPORT — mi változott, mi maradt érintetlen, QA végállapot
+      const changedPaths = diffPaths(inputSpec, spec);
+      const unchangedPaths = PROTECTED_PATHS.filter((p) => !changedPaths.includes(p) && readPath(inputSpec, p) !== undefined);
+      const report = {
+        run_id: makeRunId(),
+        created_at: new Date().toISOString(),
+        fulfillment,
+        target,
+        before: Number(rounds[0]?.total ?? 0),
+        after: Number(qa?.total ?? 0),
+        rounds: Math.max(0, rounds.length - 1),
+        max_rounds: maxRounds,
+        reached: Number(qa?.total ?? 0) >= target,
+        changed: changedPaths,
+        unchanged: unchangedPaths,
+        qa_areas: Object.entries(qa?.scores ?? {}).map(([area, score]) => ({
+          area,
+          score: Number(score),
+          passed: Number(score) >= target,
+        })),
+        open_issues: (qa?.issues ?? []).filter((i: any) => i?.severity === "error").length,
+        changes: rounds.flatMap((r: any) => r.changes || []),
+      };
+
       return json({
         ok: true,
         fulfillment,
@@ -194,9 +218,11 @@ ${JSON.stringify(spec).slice(0, 12000)}`,
         qa,
         rounds,
         target,
+        report,
         reached: Number(qa?.total ?? 0) >= target,
       });
     }
+
 
     // ---------- ÉPÍTÉS ----------
     const priceHint = Number(body.price_huf || 0) > 0 ? `A partner által megadott célár: ${Number(body.price_huf)} Ft.` : "Az árat te javasold a magyar piac alapján.";
