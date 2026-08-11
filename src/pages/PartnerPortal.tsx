@@ -269,10 +269,14 @@ const PartnerPortal = () => {
       <main className="mx-auto max-w-6xl px-4 py-6">
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="rounded-none w-full justify-start overflow-x-auto">
-            <TabsTrigger value="overview" className="rounded-none"><BarChart3 className="h-4 w-4 mr-2" />Áttekintés</TabsTrigger>
+            <TabsTrigger value="dashboard" className="rounded-none"><LayoutDashboard className="h-4 w-4 mr-2" />Irányítópult</TabsTrigger>
+            <TabsTrigger value="orders" className="rounded-none"><ShoppingBag className="h-4 w-4 mr-2" />Rendelések & ügyfelek</TabsTrigger>
+            <TabsTrigger value="inventory" className="rounded-none"><Boxes className="h-4 w-4 mr-2" />Készlet & árazás</TabsTrigger>
+            <TabsTrigger value="advisor" className="rounded-none"><Sparkles className="h-4 w-4 mr-2" />AI asszisztens</TabsTrigger>
+            <TabsTrigger value="overview" className="rounded-none"><BarChart3 className="h-4 w-4 mr-2" />Jutalék</TabsTrigger>
             <TabsTrigger value="storefront" className="rounded-none"><Store className="h-4 w-4 mr-2" />Saját webshop</TabsTrigger>
             <TabsTrigger value="products" className="rounded-none"><Package className="h-4 w-4 mr-2" />Termékek</TabsTrigger>
-            <TabsTrigger value="referrals" className="rounded-none"><ListChecks className="h-4 w-4 mr-2" />Rendelések</TabsTrigger>
+            <TabsTrigger value="referrals" className="rounded-none"><ListChecks className="h-4 w-4 mr-2" />Ajánlások</TabsTrigger>
             <TabsTrigger value="payouts" className="rounded-none"><Banknote className="h-4 w-4 mr-2" />Kifizetések</TabsTrigger>
             <TabsTrigger value="marketing" className="rounded-none"><Megaphone className="h-4 w-4 mr-2" />Marketing</TabsTrigger>
             <TabsTrigger value="workflows" className="rounded-none"><Workflow className="h-4 w-4 mr-2" />Automatizálás</TabsTrigger>
@@ -282,9 +286,26 @@ const PartnerPortal = () => {
             <TabsTrigger value="profile" className="rounded-none"><UserIcon className="h-4 w-4 mr-2" />Profil</TabsTrigger>
           </TabsList>
 
+          <TabsContent value="dashboard" className="mt-6">
+            <PartnerDashboardTab partnerId={partner.id} onNavigate={setTab} />
+          </TabsContent>
+
+          <TabsContent value="orders" className="mt-6">
+            <PartnerOrdersTab partnerId={partner.id} />
+          </TabsContent>
+
+          <TabsContent value="inventory" className="mt-6">
+            <PartnerInventoryTab partnerId={partner.id} />
+          </TabsContent>
+
+          <TabsContent value="advisor" className="mt-6">
+            <PartnerAiAdvisorTab partnerId={partner.id} />
+          </TabsContent>
+
           <TabsContent value="storefront" className="mt-6">
             <StorefrontEditorTab partnerId={partner.id} />
           </TabsContent>
+
 
           <TabsContent value="products" className="mt-6">
             <PartnerProductsTab partnerId={partner.id} />
