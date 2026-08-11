@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { LogOut, Copy, Check, Download, Banknote, BarChart3, Megaphone, User as UserIcon, ListChecks, RefreshCw, Link2, FileSpreadsheet, Store, Package, Workflow, FlaskConical, Puzzle, Bot } from "lucide-react";
+import { LogOut, Copy, Check, Download, Banknote, BarChart3, Megaphone, User as UserIcon, ListChecks, RefreshCw, Link2, FileSpreadsheet, Store, Package, Workflow, FlaskConical, Puzzle, Bot, LayoutDashboard, ShoppingBag, Boxes, Sparkles } from "lucide-react";
 import { copyToClipboard } from "@/lib/clipboard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import StorefrontEditorTab from "@/components/partner/StorefrontEditorTab";
@@ -21,6 +21,11 @@ import PartnerWorkflowsTab from "@/components/partner/PartnerWorkflowsTab";
 import PartnerAbTestsTab from "@/components/partner/PartnerAbTestsTab";
 import PartnerPluginsTab from "@/components/partner/PartnerPluginsTab";
 import PartnerAiMarketplaceTab from "@/components/partner/PartnerAiMarketplaceTab";
+import PartnerDashboardTab from "@/components/partner/PartnerDashboardTab";
+import PartnerOrdersTab from "@/components/partner/PartnerOrdersTab";
+import PartnerInventoryTab from "@/components/partner/PartnerInventoryTab";
+import PartnerAiAdvisorTab from "@/components/partner/PartnerAiAdvisorTab";
+
 
 
 interface Stats { pending_commission: number; available_commission: number; paid_total: number; total_orders: number; }
@@ -33,7 +38,7 @@ const fmt = (n: number) => `${(n || 0).toLocaleString("hu-HU")} Ft`;
 const PartnerPortal = () => {
   const navigate = useNavigate();
   const { partner, isAdmin, loading, claim } = usePartnerCheck();
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useState("dashboard");
   const [storefrontId, setStorefrontId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -264,10 +269,14 @@ const PartnerPortal = () => {
       <main className="mx-auto max-w-6xl px-4 py-6">
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="rounded-none w-full justify-start overflow-x-auto">
-            <TabsTrigger value="overview" className="rounded-none"><BarChart3 className="h-4 w-4 mr-2" />Áttekintés</TabsTrigger>
+            <TabsTrigger value="dashboard" className="rounded-none"><LayoutDashboard className="h-4 w-4 mr-2" />Irányítópult</TabsTrigger>
+            <TabsTrigger value="orders" className="rounded-none"><ShoppingBag className="h-4 w-4 mr-2" />Rendelések & ügyfelek</TabsTrigger>
+            <TabsTrigger value="inventory" className="rounded-none"><Boxes className="h-4 w-4 mr-2" />Készlet & árazás</TabsTrigger>
+            <TabsTrigger value="advisor" className="rounded-none"><Sparkles className="h-4 w-4 mr-2" />AI asszisztens</TabsTrigger>
+            <TabsTrigger value="overview" className="rounded-none"><BarChart3 className="h-4 w-4 mr-2" />Jutalék</TabsTrigger>
             <TabsTrigger value="storefront" className="rounded-none"><Store className="h-4 w-4 mr-2" />Saját webshop</TabsTrigger>
             <TabsTrigger value="products" className="rounded-none"><Package className="h-4 w-4 mr-2" />Termékek</TabsTrigger>
-            <TabsTrigger value="referrals" className="rounded-none"><ListChecks className="h-4 w-4 mr-2" />Rendelések</TabsTrigger>
+            <TabsTrigger value="referrals" className="rounded-none"><ListChecks className="h-4 w-4 mr-2" />Ajánlások</TabsTrigger>
             <TabsTrigger value="payouts" className="rounded-none"><Banknote className="h-4 w-4 mr-2" />Kifizetések</TabsTrigger>
             <TabsTrigger value="marketing" className="rounded-none"><Megaphone className="h-4 w-4 mr-2" />Marketing</TabsTrigger>
             <TabsTrigger value="workflows" className="rounded-none"><Workflow className="h-4 w-4 mr-2" />Automatizálás</TabsTrigger>
@@ -277,9 +286,26 @@ const PartnerPortal = () => {
             <TabsTrigger value="profile" className="rounded-none"><UserIcon className="h-4 w-4 mr-2" />Profil</TabsTrigger>
           </TabsList>
 
+          <TabsContent value="dashboard" className="mt-6">
+            <PartnerDashboardTab partnerId={partner.id} onNavigate={setTab} />
+          </TabsContent>
+
+          <TabsContent value="orders" className="mt-6">
+            <PartnerOrdersTab partnerId={partner.id} />
+          </TabsContent>
+
+          <TabsContent value="inventory" className="mt-6">
+            <PartnerInventoryTab partnerId={partner.id} />
+          </TabsContent>
+
+          <TabsContent value="advisor" className="mt-6">
+            <PartnerAiAdvisorTab partnerId={partner.id} />
+          </TabsContent>
+
           <TabsContent value="storefront" className="mt-6">
             <StorefrontEditorTab partnerId={partner.id} />
           </TabsContent>
+
 
           <TabsContent value="products" className="mt-6">
             <PartnerProductsTab partnerId={partner.id} />
