@@ -211,12 +211,22 @@ const PartnerActionPlansTab = ({ partnerId }: Props) => {
                 Visszavonás (rollback)
               </Button>
             )}
+            {plan.status === "rolled_back" && (plan.pre_rollback_snapshot?.length ?? 0) > 0 && (
+              <Button size="sm" variant="outline" className="rounded-none" disabled={busy !== null}
+                onClick={() => void call("rollback_undo", { plan_id: plan.id }, `u-${plan.id}`)}>
+                {busy === `u-${plan.id}` ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Undo2 className="h-4 w-4 mr-2" />}
+                Rollback visszavonása
+              </Button>
+            )}
             <Button size="sm" variant="ghost" className="rounded-none"
               onClick={() => setOpenAudit(openAudit === plan.id ? null : plan.id)}>
               <ScrollText className="h-4 w-4 mr-2" />
               {openAudit === plan.id ? "Napló elrejtése" : "Audit napló"}
             </Button>
           </div>
+
+          {plan.integrity_check && <RollbackIntegrityReport integrity={plan.integrity_check} />}
+
 
           {(plan.approved_by_email || plan.approval_mode) && (
             <p className="text-[11px] text-muted-foreground">
