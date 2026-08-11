@@ -148,6 +148,7 @@ Deno.serve(async (req) => {
 
     // ---------- 💎 PREMIUM AUTO-IMPROVE CIKLUS ----------
     // QA → gyenge területek → AI javítás → újra QA → új score, amíg el nem éri a célt.
+
     if (mode === "improve") {
       const inputSpec = body.spec;
       if (!inputSpec || typeof inputSpec !== "object") return json({ error: "Hiányzik a javítandó termék." }, 400);
