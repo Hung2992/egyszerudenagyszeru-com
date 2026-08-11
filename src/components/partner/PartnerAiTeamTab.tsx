@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Bot, Send } from "lucide-react";
+import { Loader2, Bot, Send, AlertTriangle } from "lucide-react";
+import { usePartnerAgentMetrics, AgentMetricGrid } from "@/components/partner/PartnerAgentMetrics";
 
 interface Props { partnerId: string }
 
