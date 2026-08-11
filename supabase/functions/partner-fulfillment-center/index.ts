@@ -249,6 +249,8 @@ Deno.serve(async (req) => {
       appointment: 'partner_appointments',
     };
 
+    let ctx: { plan_id?: string; action_id?: string; why?: string } = {};
+
     const mutate = async (type: string, id: string, values: Record<string, unknown>, act: string) => {
       const table = tableFor[type];
       if (!table) throw new Error('Ismeretlen erőforrás típus');
@@ -260,10 +262,73 @@ Deno.serve(async (req) => {
       await audit({
         action: act, resource_type: type, resource_id: id,
         customer_email: (before as any).customer_email,
-        before_state: before, after_state: after, reason,
+        before_state: before, after_state: after,
+        reason: ctx.why ?? reason,
+        ...(ctx.plan_id ? { plan_id: ctx.plan_id } : {}),
+        ...(ctx.action_id ? { action_id: ctx.action_id } : {}),
+        result: 'success',
       });
       return after;
     };
+
+    const extendAccess = async (type: string, id: string, days: number) => {
+      const field = type === 'enrollment' ? 'access_until' : 'expires_at';
+      const table = tableFor[type];
+      const { data: cur } = await supabase.from(table).select(`id, ${field}`).eq('id', id).eq('partner_id', partnerId).maybeSingle();
+      const base = (cur as any)?.[field] ? new Date((cur as any)[field]).getTime() : now;
+      const next = new Date(Math.max(base, now) + days * DAY).toISOString();
+      return mutate(type, id, { [field]: next, status: 'active' }, 'extend_access');
+    };
+
+    const applyStep = async (step: any) => {
+      const type = step.target_type as string;
+      const id = step.target_id as string;
+      switch (step.action) {
+        case 'extend_access':
+          return extendAccess(type === 'license' ? 'license' : type === 'enrollment' ? 'enrollment' : 'download', id, Math.max(1, Math.min(365, Number(step.days ?? 30))));
+        case 'expire_access':
+          return mutate(type === 'license' ? 'license' : 'download', id, { status: 'expired' }, 'expire_access');
+        case 'reset_limit':
+          return mutate('download', id, { downloads_used: 0, status: 'active' }, 'reset_limit');
+        case 'issue_certificate':
+          return mutate('enrollment', id, { certificate_issued: true, status: 'completed', progress_percent: 100 }, 'issue_certificate');
+        case 'complete_appointment':
+          return mutate('appointment', id, { status: 'completed' }, 'complete_appointment');
+        default:
+          throw new Error(`A terv nem tartalmazhat ilyen műveletet: ${step.action}`);
+      }
+    };
+
+    // ---------- TERV VÉGREHAJTÁSA (partner jóváhagyás után) ----------
+    if (action === 'execute_plan') {
+      const planId: string = body.plan_id ?? crypto.randomUUID();
+      const steps: any[] = Array.isArray(body.steps) ? body.steps : [];
+      if (!steps.length) return json({ error: 'A terv üres' }, 400);
+      const results: any[] = [];
+      for (const step of steps) {
+        const actionId = step.action_id ?? crypto.randomUUID();
+        ctx = { plan_id: planId, action_id: actionId, why: step.why ?? step.label };
+        try {
+          const record = await applyStep(step);
+          results.push({ action_id: actionId, action: step.action, target_id: step.target_id, result: 'success', record });
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : 'Ismeretlen hiba';
+          await audit({
+            action: step.action, resource_type: step.target_type ?? 'unknown', resource_id: step.target_id,
+            customer_email: step.customer_email ?? null, reason: step.why ?? step.label,
+            plan_id: planId, action_id: actionId, result: `failed: ${msg}`,
+          });
+          results.push({ action_id: actionId, action: step.action, target_id: step.target_id, result: 'failed', error: msg });
+        }
+      }
+      ctx = {};
+      return json({
+        ok: true, plan_id: planId, results,
+        succeeded: results.filter((r) => r.result === 'success').length,
+        failed: results.filter((r) => r.result === 'failed').length,
+      });
+    }
+
 
     switch (action) {
       case 'revoke_license':
