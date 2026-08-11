@@ -224,7 +224,43 @@ const AiProductBuilderDialog = ({ partnerId, open, onOpenChange, initialFulfillm
                   ))}
                 </div>
                 {result.qa?.verdict && <p className="text-xs text-muted-foreground mt-2">{result.qa.verdict}</p>}
+
+                {history.length > 1 && (
+                  <div className="text-xs mt-2 flex items-center gap-1 flex-wrap">
+                    <span className="text-muted-foreground uppercase tracking-widest">Fejlődés:</span>
+                    {history.map((h, i) => (
+                      <span key={i} className={`font-bold ${i === history.length - 1 ? "text-accent" : "text-muted-foreground"}`}>
+                        {i > 0 && <span className="text-muted-foreground mx-1">→</span>}{h}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <Button
+                  className="rounded-none w-full uppercase tracking-wider mt-3"
+                  variant={total >= 90 ? "outline" : "default"}
+                  onClick={autoImprove}
+                  disabled={improving || applying}
+                >
+                  {improving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
+                  {total >= 90 ? "Még egy optimalizálási kör" : "✨ Automatikus javítás (cél: 90+)"}
+                </Button>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Az AI csak a gyenge területeket írja át, majd újra lefuttatja a QA-t. Publikálás csak a te jóváhagyásoddal.
+                </p>
               </div>
+
+              {changes.length > 0 && (
+                <div className="border border-accent/40 p-3 space-y-1">
+                  <div className="text-xs uppercase tracking-widest text-muted-foreground">Mit javított az AI</div>
+                  {changes.map((c, i) => (
+                    <div key={i} className="text-xs flex gap-2">
+                      <Check className="h-3 w-3 mt-0.5 shrink-0 text-accent" />
+                      <span><b>{SCORE_LABELS[c.area] || c.area}:</b> {c.what}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {(result.qa?.issues || []).length > 0 && (
                 <div className="border border-foreground/20 p-3 space-y-1">
