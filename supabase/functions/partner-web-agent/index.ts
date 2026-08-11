@@ -510,7 +510,9 @@ Használható storefront mezők: ${ALLOWED.join(", ")}.
 A testimonials tömb: [{"name":..,"text":..,"rating":5}], a footer_links: [{"label":..,"url":..}].`;
 }
 
-async function chat(apiKey: string, system: string, messages: any[]) {
+export interface AiMeter { calls: number; tokens: number }
+
+async function chat(apiKey: string, system: string, messages: any[], meter?: AiMeter) {
   const r = await fetch(AI_CHAT, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
@@ -524,9 +526,14 @@ async function chat(apiKey: string, system: string, messages: any[]) {
   if (r.status === 402) throw Object.assign(new Error("Elfogytak az AI kreditek."), { status: 402 });
   if (!r.ok) throw Object.assign(new Error(`AI hiba (${r.status})`), { status: 502 });
   const d = await r.json();
+  if (meter) {
+    meter.calls += 1;
+    meter.tokens += Number(d?.usage?.total_tokens ?? 0);
+  }
   const c = d?.choices?.[0]?.message?.content ?? "{}";
   try { return JSON.parse(c); } catch { const m = c.match(/\{[\s\S]*\}/); return m ? JSON.parse(m[0]) : {}; }
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -552,6 +559,8 @@ Deno.serve(async (req) => {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData?.user?.id) return json({ error: "Érvénytelen munkamenet" }, 401);
 
+    const startedAt = Date.now();
+    const meter: AiMeter = { calls: 0, tokens: 0 };
     const body = await req.json().catch(() => ({}));
     const partnerId = String(body?.partner_id || "").trim();
     const sessionId = String(body?.session_id || "").trim();
@@ -651,7 +660,7 @@ Készíts egy JAVÍTOTT verziót: erősebb hero cím, meggyőzőbb alcím, konve
           role: "user",
           content: `Márka: ${partner.brand_name || "-"}\n${typeHint}\nVan már konfiguráció: ${sf ? "igen" : "nem"}\nKérés: ${message}`,
         },
-      ]);
+      ], meter);
       const agentPlan = Array.isArray(plan?.plan) ? plan.plan.slice(0, 10) : [];
       const detectedType = plan?.project_type || projectType || "";
 
@@ -722,7 +731,7 @@ A partner kérése: """${message.slice(0, 4000)}"""`;
     const built = await chat(apiKey, builderSystem(effectiveType), [
       ...convo.slice(-12),
       { role: "user", content: buildPrompt },
-    ]);
+    ], meter);
 
     const rawPatch = built?.patch && typeof built.patch === "object" ? built.patch : {};
     const patch: Record<string, unknown> = {};
@@ -753,7 +762,7 @@ A partner kérése: """${message.slice(0, 4000)}"""`;
 ${JSON.stringify(feedback, null, 2)}
 Add vissza a JAVÍTOTT teljes JSON-t ugyanazzal a szerkezettel.`,
         },
-      ]);
+      ], meter);
       const rePatch = rebuilt?.patch && typeof rebuilt.patch === "object" ? rebuilt.patch : {};
       const fixedPatch: Record<string, unknown> = {};
       for (const k of ALLOWED) if (rePatch[k] !== undefined && rePatch[k] !== null) fixedPatch[k] = rePatch[k];
@@ -865,6 +874,27 @@ Add vissza a JAVÍTOTT teljes JSON-t ugyanazzal a szerkezettel.`,
       severity: qa.passed ? "info" : "warning",
       payload: { partner_id: partnerId, session_id: sessionId, project_type: effectiveType, fields: Object.keys(patch), applied, quality_score: qa.score, qa_passed: qa.passed, agents: devLog },
     }).catch(() => {});
+
+    // 📊 Platform mérés: time-to-live, first-pass QA, AI költség
+    const isFirstPass = !(historyRes.data ?? []).some((m: any) => m.role === "assistant");
+    admin.from("platform_build_metrics").insert({
+      partner_id: partnerId,
+      session_id: sessionId,
+      project_type: effectiveType || "general",
+      metric_type: isOptimize ? "ai_optimize" : "ai_build",
+      is_first_pass: isFirstPass,
+      quality_score: qa.score,
+      qa_passed: qa.passed,
+      applied,
+      duration_ms: Date.now() - startedAt,
+      patch_fields: Object.keys(patch).length,
+      ai_calls: meter.calls,
+      ai_tokens: meter.tokens,
+      // Gemini Flash nagyságrend: ~0.001 kredit / 1k token
+      ai_cost_credits: Number(((meter.tokens / 1000) * 0.001).toFixed(6)),
+      metadata: { tier: qa.tier?.key ?? null, blockers: qa.blockers.length, refine: !!refineFeedback },
+    }).then(({ error }: any) => { if (error) console.warn("[web-agent] metrics:", error.message); });
+
 
     return json({
       ok: true,

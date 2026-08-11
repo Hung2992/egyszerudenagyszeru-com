@@ -7981,6 +7981,130 @@ export type Database = {
         }
         Relationships: []
       }
+      pilot_partners: {
+        Row: {
+          brand_name: string | null
+          churned_at: string | null
+          cohort: string
+          contact_email: string | null
+          created_at: string
+          feedback_score: number | null
+          first_live_at: string | null
+          id: string
+          joined_at: string
+          last_active_at: string | null
+          notes: string | null
+          partner_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          brand_name?: string | null
+          churned_at?: string | null
+          cohort?: string
+          contact_email?: string | null
+          created_at?: string
+          feedback_score?: number | null
+          first_live_at?: string | null
+          id?: string
+          joined_at?: string
+          last_active_at?: string | null
+          notes?: string | null
+          partner_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          brand_name?: string | null
+          churned_at?: string | null
+          cohort?: string
+          contact_email?: string | null
+          created_at?: string
+          feedback_score?: number | null
+          first_live_at?: string | null
+          id?: string
+          joined_at?: string
+          last_active_at?: string | null
+          notes?: string | null
+          partner_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pilot_partners_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_build_metrics: {
+        Row: {
+          ai_calls: number
+          ai_cost_credits: number
+          ai_tokens: number
+          applied: boolean
+          created_at: string
+          duration_ms: number | null
+          id: string
+          is_first_pass: boolean
+          metadata: Json
+          metric_type: string
+          partner_id: string | null
+          patch_fields: number
+          project_type: string | null
+          qa_passed: boolean | null
+          quality_score: number | null
+          session_id: string | null
+        }
+        Insert: {
+          ai_calls?: number
+          ai_cost_credits?: number
+          ai_tokens?: number
+          applied?: boolean
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          is_first_pass?: boolean
+          metadata?: Json
+          metric_type?: string
+          partner_id?: string | null
+          patch_fields?: number
+          project_type?: string | null
+          qa_passed?: boolean | null
+          quality_score?: number | null
+          session_id?: string | null
+        }
+        Update: {
+          ai_calls?: number
+          ai_cost_credits?: number
+          ai_tokens?: number
+          applied?: boolean
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          is_first_pass?: boolean
+          metadata?: Json
+          metric_type?: string
+          partner_id?: string | null
+          patch_fields?: number
+          project_type?: string | null
+          qa_passed?: boolean | null
+          quality_score?: number | null
+          session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_build_metrics_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_3d_assets: {
         Row: {
           alt_text: string | null
