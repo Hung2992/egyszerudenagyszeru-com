@@ -273,6 +273,7 @@ const PartnerPortal = () => {
             <TabsTrigger value="workflows" className="rounded-none"><Workflow className="h-4 w-4 mr-2" />Automatizálás</TabsTrigger>
             <TabsTrigger value="abtests" className="rounded-none"><FlaskConical className="h-4 w-4 mr-2" />A/B teszt</TabsTrigger>
             <TabsTrigger value="plugins" className="rounded-none"><Puzzle className="h-4 w-4 mr-2" />Pluginok</TabsTrigger>
+            <TabsTrigger value="ai_marketplace" className="rounded-none"><Bot className="h-4 w-4 mr-2" />AI Marketplace</TabsTrigger>
             <TabsTrigger value="profile" className="rounded-none"><UserIcon className="h-4 w-4 mr-2" />Profil</TabsTrigger>
           </TabsList>
 
