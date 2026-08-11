@@ -26,8 +26,9 @@ export const fulfillmentHint: Record<Fulfillment, string> = {
   service: "tanácsadás, javítás, egyedi munka – időtartam és időpont",
 };
 
-/** Mely mezőcsoportok jelenjenek meg az adott típusnál. */
+/** Mely mezőcsoportok / képességek tartoznak az adott típushoz. */
 export interface Capabilities {
+  // UI mezőcsoportok
   weight: boolean;
   material: boolean;
   variants: boolean;
@@ -38,16 +39,88 @@ export interface Capabilities {
   digitalDelivery: boolean;
   courseContent: boolean;
   booking: boolean;
+  // Üzleti képességek (checkout + rendeléskezelés vezérlése)
+  inventory: boolean;
+  download: boolean;
+  license: boolean;
+  lessons: boolean;
+  certificate: boolean;
+  accessControl: boolean;
+  appointment: boolean;
+  capacity: boolean;
+  customWork: boolean;
 }
 
+export type CapabilityKey = keyof Capabilities;
+
+/** Központi capability mátrix – egyetlen forrás az UI, checkout és order workflow számára. */
 const CAPS: Record<Fulfillment, Capabilities> = {
-  physical: { weight: true, material: true, variants: true, stock: true, shipping: true, sizes: true, devices: true, digitalDelivery: false, courseContent: false, booking: false },
-  digital: { weight: false, material: false, variants: false, stock: false, shipping: false, sizes: false, devices: false, digitalDelivery: true, courseContent: false, booking: false },
-  course: { weight: false, material: false, variants: false, stock: true, shipping: false, sizes: false, devices: false, digitalDelivery: false, courseContent: true, booking: false },
-  service: { weight: false, material: false, variants: false, stock: true, shipping: false, sizes: false, devices: false, digitalDelivery: false, courseContent: false, booking: true },
+  physical: {
+    weight: true, material: true, variants: true, stock: true, shipping: true, sizes: true, devices: true,
+    digitalDelivery: false, courseContent: false, booking: false,
+    inventory: true, download: false, license: false, lessons: false, certificate: false,
+    accessControl: false, appointment: false, capacity: false, customWork: false,
+  },
+  digital: {
+    weight: false, material: false, variants: false, stock: false, shipping: false, sizes: false, devices: false,
+    digitalDelivery: true, courseContent: false, booking: false,
+    inventory: false, download: true, license: true, lessons: false, certificate: false,
+    accessControl: true, appointment: false, capacity: false, customWork: false,
+  },
+  course: {
+    weight: false, material: false, variants: false, stock: true, shipping: false, sizes: false, devices: false,
+    digitalDelivery: false, courseContent: true, booking: false,
+    inventory: false, download: false, license: false, lessons: true, certificate: true,
+    accessControl: true, appointment: false, capacity: true, customWork: false,
+  },
+  service: {
+    weight: false, material: false, variants: false, stock: true, shipping: false, sizes: false, devices: false,
+    digitalDelivery: false, courseContent: false, booking: true,
+    inventory: false, download: false, license: false, lessons: false, certificate: false,
+    accessControl: false, appointment: true, capacity: true, customWork: true,
+  },
 };
 
 export const capabilitiesOf = (f: Fulfillment): Capabilities => CAPS[f] || CAPS.physical;
+
+export const hasCapability = (f: Fulfillment, key: CapabilityKey): boolean => !!capabilitiesOf(f)[key];
+
+/** Emberi feliratok a mátrix megjelenítéséhez. */
+export const capabilityLabel: Record<CapabilityKey, string> = {
+  weight: "Súly",
+  material: "Anyag",
+  variants: "Variánsok",
+  stock: "Készlet mező",
+  shipping: "Szállítás",
+  sizes: "Méretek",
+  devices: "Készülék-modellek",
+  digitalDelivery: "Digitális kézbesítés",
+  courseContent: "Tananyag szerkesztő",
+  booking: "Foglalás űrlap",
+  inventory: "Raktárkészlet-kezelés",
+  download: "Letöltés",
+  license: "Licenckulcs",
+  lessons: "Modulok / leckék",
+  certificate: "Oklevél",
+  accessControl: "Hozzáférés-kezelés",
+  appointment: "Időpont",
+  capacity: "Kapacitás",
+  customWork: "Egyedi munka",
+};
+
+/** A mátrixban megjelenítendő üzleti képességek sorrendje. */
+export const BUSINESS_CAPABILITIES: CapabilityKey[] = [
+  "inventory", "variants", "shipping", "download", "license",
+  "lessons", "certificate", "accessControl", "appointment", "capacity", "customWork",
+];
+
+/** Teljes mátrix: típus → aktív képességek listája. */
+export const capabilityMatrix = (): Record<Fulfillment, CapabilityKey[]> =>
+  FULFILLMENTS.reduce((acc, f) => {
+    acc[f] = BUSINESS_CAPABILITIES.filter((k) => capabilitiesOf(f)[k]);
+    return acc;
+  }, {} as Record<Fulfillment, CapabilityKey[]>);
+
 
 /** Terméktípus prefix → teljesítési típus. */
 export const fulfillmentOfType = (pt?: string | null): Fulfillment => {
