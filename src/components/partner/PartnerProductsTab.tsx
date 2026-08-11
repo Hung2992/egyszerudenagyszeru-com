@@ -15,6 +15,11 @@ import MediaImage from "./MediaImage";
 import ProductAttributesFields from "./ProductAttributesFields";
 import VariantMatrix, { Variant } from "./VariantMatrix";
 import DigitalServiceFields from "./DigitalServiceFields";
+import {
+  FULFILLMENTS, fulfillmentLabel, fulfillmentIcon, fulfillmentHint, fulfillmentOfType,
+  capabilitiesOf, defaultTypeOf, stockLabel, checkoutModeOf, checkoutModeLabel, orderFlow, summaryOf,
+  type Fulfillment,
+} from "@/lib/product-schema";
 
 interface Props { partnerId: string; }
 
@@ -22,9 +27,6 @@ const statusLabel: Record<string, string> = {
   draft: "Vázlat", pending_review: "Jóváhagyásra vár", active: "Aktív", paused: "Szünetel", rejected: "Elutasítva",
 };
 
-const fulfillmentLabel: Record<string, string> = {
-  physical: "Fizikai termék", digital: "Digitális termék", service: "Szolgáltatás",
-};
 
 const empty: any = {
   title: "", slug: "", description: "", price_huf: 0, compare_price_huf: null,
