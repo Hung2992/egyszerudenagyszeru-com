@@ -10,6 +10,7 @@ import { Loader2, Rocket, CheckCircle2, XCircle, BarChart3, Target, Undo2, Scrol
 import PartnerAutopilotCard from "./PartnerAutopilotCard";
 import PartnerActionAuditTrail from "./PartnerActionAuditTrail";
 import RollbackPreviewDialog from "./RollbackPreviewDialog";
+import RollbackIntegrityReport, { type IntegrityCheck } from "./RollbackIntegrityReport";
 
 interface Props { partnerId: string }
 
