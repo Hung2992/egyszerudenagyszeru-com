@@ -279,6 +279,9 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
               </div>
             </div>
 
+            <ProductCapabilityMatrix active={ff} />
+
+
             {/* Termék típus */}
             <div>
               <Label>{ff === "service" ? "Szolgáltatás típusa *" : ff === "course" ? "Képzés típusa *" : "Termék típusa *"}</Label>
