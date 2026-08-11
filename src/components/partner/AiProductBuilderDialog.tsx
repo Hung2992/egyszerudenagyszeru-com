@@ -62,10 +62,13 @@ const AiProductBuilderDialog = ({ partnerId, open, onOpenChange, initialFulfillm
   const [step, setStep] = useState(0);
   const [result, setResult] = useState<any>(null);
   const [applying, setApplying] = useState(false);
+  const [improving, setImproving] = useState(false);
+  const [history, setHistory] = useState<number[]>([]);
+  const [changes, setChanges] = useState<{ area: string; what: string }[]>([]);
 
   const run = async () => {
     if (idea.trim().length < 10) { toast({ title: "Írd le bővebben az ötleted", variant: "destructive" }); return; }
-    setLoading(true); setResult(null); setStep(1);
+    setLoading(true); setResult(null); setStep(1); setHistory([]); setChanges([]);
     const timer = setInterval(() => setStep((s) => (s < PIPELINE.length - 1 ? s + 1 : s)), 1400);
     const { data, error } = await supabase.functions.invoke("partner-product-builder", {
       body: { partner_id: partnerId, fulfillment: ff, idea: idea.trim(), price_huf: Number(price) || 0 },
@@ -79,7 +82,40 @@ const AiProductBuilderDialog = ({ partnerId, open, onOpenChange, initialFulfillm
     }
     setStep(PIPELINE.length);
     setResult(data);
+    setHistory([Number(data?.qa?.total ?? 0)]);
   };
+
+  // 💎 Premium Auto-Improve: QA → gyenge területek → AI javítás → újra QA → új score
+  const autoImprove = async () => {
+    if (!result?.spec) return;
+    setImproving(true);
+    const { data, error } = await supabase.functions.invoke("partner-product-builder", {
+      body: {
+        partner_id: partnerId,
+        mode: "improve",
+        fulfillment: ff,
+        spec: result.spec,
+        qa: result.qa,
+        target_score: 90,
+        max_rounds: 3,
+      },
+    });
+    setImproving(false);
+    if (error || data?.error) {
+      toast({ title: "A javítás nem sikerült", description: (data?.error as string) || error?.message || "Ismeretlen hiba", variant: "destructive" });
+      return;
+    }
+    const rounds = (data?.rounds || []) as any[];
+    setResult({ ...result, spec: data.spec, qa: data.qa });
+    setHistory((h) => [...h, ...rounds.slice(1).map((r) => Number(r.total ?? 0))]);
+    setChanges(rounds.flatMap((r) => r.changes || []));
+    const newTotal = Number(data?.qa?.total ?? 0);
+    toast({
+      title: data?.reached ? `💎 Elérte a prémium szintet: ${newTotal}/100` : `Javítva: ${newTotal}/100`,
+      description: data?.reached ? "A termék készen áll a publikálásra." : "Futtathatsz még egy javítási kört.",
+    });
+  };
+
 
   const apply = async () => {
     if (!result?.spec) return;
@@ -114,7 +150,7 @@ const AiProductBuilderDialog = ({ partnerId, open, onOpenChange, initialFulfillm
     setApplying(false);
     toast({ title: "AI termék betöltve a szerkesztőbe" });
     onOpenChange(false);
-    setResult(null); setIdea(""); setPrice(""); setStep(0);
+    setResult(null); setIdea(""); setPrice(""); setStep(0); setHistory([]); setChanges([]);
   };
 
   const total = Number(result?.qa?.total ?? 0);
@@ -188,7 +224,43 @@ const AiProductBuilderDialog = ({ partnerId, open, onOpenChange, initialFulfillm
                   ))}
                 </div>
                 {result.qa?.verdict && <p className="text-xs text-muted-foreground mt-2">{result.qa.verdict}</p>}
+
+                {history.length > 1 && (
+                  <div className="text-xs mt-2 flex items-center gap-1 flex-wrap">
+                    <span className="text-muted-foreground uppercase tracking-widest">Fejlődés:</span>
+                    {history.map((h, i) => (
+                      <span key={i} className={`font-bold ${i === history.length - 1 ? "text-accent" : "text-muted-foreground"}`}>
+                        {i > 0 && <span className="text-muted-foreground mx-1">→</span>}{h}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <Button
+                  className="rounded-none w-full uppercase tracking-wider mt-3"
+                  variant={total >= 90 ? "outline" : "default"}
+                  onClick={autoImprove}
+                  disabled={improving || applying}
+                >
+                  {improving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
+                  {total >= 90 ? "Még egy optimalizálási kör" : "✨ Automatikus javítás (cél: 90+)"}
+                </Button>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Az AI csak a gyenge területeket írja át, majd újra lefuttatja a QA-t. Publikálás csak a te jóváhagyásoddal.
+                </p>
               </div>
+
+              {changes.length > 0 && (
+                <div className="border border-accent/40 p-3 space-y-1">
+                  <div className="text-xs uppercase tracking-widest text-muted-foreground">Mit javított az AI</div>
+                  {changes.map((c, i) => (
+                    <div key={i} className="text-xs flex gap-2">
+                      <Check className="h-3 w-3 mt-0.5 shrink-0 text-accent" />
+                      <span><b>{SCORE_LABELS[c.area] || c.area}:</b> {c.what}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {(result.qa?.issues || []).length > 0 && (
                 <div className="border border-foreground/20 p-3 space-y-1">
