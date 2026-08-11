@@ -172,8 +172,71 @@ Deno.serve(async (req) => {
         } catch (_) { /* csendes fallback */ }
       }
 
-      return json({ ok: true, stats, issues, summary });
+      return json({ ok: true, stats, issues, summary, health: computeHealth(stats, issues) });
     }
+
+    // ---------- HEALTH SCORE ----------
+    function computeHealth(stats: any, issues: any[]) {
+      const pct = (ok: number, total: number) => (total > 0 ? Math.round((ok / total) * 100) : 100);
+      const digital = pct(stats.downloads_active, stats.downloads_total);
+      const licenses = pct(stats.licenses_active, stats.licenses_total);
+      const courses = stats.enrollments_total ? Math.max(0, Math.min(100, stats.avg_progress)) : 100;
+      const services = pct(stats.appointments_total - stats.appointments_cancelled, stats.appointments_total);
+      const openIssues = issues.filter((i) => i.severity !== 'info').length;
+      const errors = issues.filter((i) => i.severity === 'error').length;
+      const base = Math.round((digital + licenses + courses + services) / 4);
+      const score = Math.max(0, Math.min(100, base - openIssues * 3 - errors * 5));
+      const expiringSoon = issues
+        .filter((i) => i.action_key === 'extend_access')
+        .reduce((s, i) => s + (i.targets?.length ?? 0), 0);
+      return {
+        score,
+        areas: [
+          { key: 'digital', label: '💾 Digitális hozzáférések', value: digital },
+          { key: 'licenses', label: '🔑 Licenckulcsok', value: licenses },
+          { key: 'courses', label: '🎓 Kurzusok', value: courses },
+          { key: 'services', label: '🛠️ Foglalások', value: services },
+        ],
+        expiring_soon: expiringSoon,
+        open_issues: openIssues,
+        audit_ok: true,
+      };
+    }
+
+    // ---------- AI TERV (javaslat, végrehajtás nélkül) ----------
+    if (action === 'plan') {
+      const issues: any[] = Array.isArray(body.issues) ? body.issues : [];
+      const planId = crypto.randomUUID();
+      const recipe: Record<string, { action: string; label: string; why: string; extra?: Record<string, unknown> }> = {
+        extend_access: { action: 'extend_access', label: 'Hozzáférés hosszabbítása (+30 nap)', why: '24 órán belül lejár a hozzáférés', extra: { days: 30 } },
+        expire_access: { action: 'expire_access', label: 'Lejárt hozzáférés lezárása', why: 'Lejárt, de még aktív státuszú rekord' },
+        reset_limit: { action: 'reset_limit', label: 'Letöltési limit nullázása', why: 'Az ügyfél elérte a letöltési limitet' },
+        issue_certificate: { action: 'issue_certificate', label: 'Oklevél kiadása', why: 'Befejezett kurzus oklevél nélkül' },
+        complete_appointment: { action: 'complete_appointment', label: 'Elmúlt időpont lezárása', why: 'Az időpont elmúlt, de nyitva maradt' },
+      };
+      const steps: any[] = [];
+      for (const issue of issues) {
+        const r = recipe[issue.action_key];
+        if (!r) continue;
+        for (const t of issue.targets ?? []) {
+          steps.push({
+            action_id: crypto.randomUUID(),
+            plan_id: planId,
+            action: r.action,
+            label: r.label,
+            why: r.why,
+            severity: issue.severity,
+            domain: issue.domain,
+            target_type: t.type,
+            target_id: t.id,
+            customer_email: t.email,
+            ...(r.extra ?? {}),
+          });
+        }
+      }
+      return json({ ok: true, plan_id: planId, steps, executable: steps.length });
+    }
+
 
     // ---------- MŰVELETEK ----------
     const targetId: string | undefined = body.target_id;
