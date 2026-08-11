@@ -113,6 +113,9 @@ const PartnerActionPlansTab = ({ partnerId }: Props) => {
         </div>
       </Card>
 
+      <PartnerAutopilotCard partnerId={partnerId} onPlan={() => void load()} />
+
+
       {plans.length === 0 && (
         <Card className="rounded-none p-6 text-center text-sm text-muted-foreground">
           Még nincs intézkedési terved. Írd be a célod és kérj tervet az AI-tól.
