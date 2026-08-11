@@ -131,8 +131,9 @@ Deno.serve(async (req) => {
     const partnerId = String(body.partner_id || "");
     const fulfillment = ["digital", "course", "service"].includes(body.fulfillment) ? String(body.fulfillment) : "digital";
     const idea = String(body.idea || "").trim();
+    const mode = body.mode === "improve" ? "improve" : "build";
     if (!partnerId) return json({ error: "partner_id kötelező" }, 400);
-    if (!idea) return json({ error: "Írd le pár mondatban, mit szeretnél eladni." }, 400);
+    if (mode === "build" && !idea) return json({ error: "Írd le pár mondatban, mit szeretnél eladni." }, 400);
 
     // Jogosultság: csak a saját partner-profiljához generálhat
     const { data: partner } = await sb
@@ -142,6 +143,62 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!partner) return json({ error: "Nincs jogosultságod ehhez a partnerhez." }, 403);
 
+    const runQa = (s: unknown) =>
+      callAI(QA_SYSTEM, `Terméktípus: ${fulfillment}\nGenerált termék JSON:\n${JSON.stringify(s).slice(0, 12000)}`);
+
+    // ---------- 💎 PREMIUM AUTO-IMPROVE CIKLUS ----------
+    // QA → gyenge területek → AI javítás → újra QA → új score, amíg el nem éri a célt.
+    if (mode === "improve") {
+      const inputSpec = body.spec;
+      if (!inputSpec || typeof inputSpec !== "object") return json({ error: "Hiányzik a javítandó termék." }, 400);
+      const target = Math.max(60, Math.min(100, Number(body.target_score) || 90));
+      const maxRounds = Math.max(1, Math.min(3, Number(body.max_rounds) || 3));
+
+      let spec: any = inputSpec;
+      let qa: any = body.qa && typeof body.qa === "object" ? body.qa : await runQa(spec);
+      const rounds: any[] = [{ round: 0, total: Number(qa?.total ?? 0), scores: qa?.scores ?? {}, changes: [] }];
+
+      for (let r = 1; r <= maxRounds; r++) {
+        if (Number(qa?.total ?? 0) >= target) break;
+
+        const weak = Object.entries(qa?.scores ?? {})
+          .filter(([, v]) => Number(v) < target)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join(", ");
+
+        const improved = await callAI(
+          IMPROVE_SYSTEM,
+          `Terméktípus: ${fulfillment}
+${FF_GUIDE[fulfillment]}
+
+Cél pontszám: ${target}/100. Jelenlegi összpontszám: ${qa?.total ?? 0}.
+Gyenge területek: ${weak || "nincs kiemelt gyenge terület, emeld az összképet"}.
+QA észrevételek: ${JSON.stringify(qa?.issues ?? []).slice(0, 4000)}
+
+Jelenlegi termék JSON:
+${JSON.stringify(spec).slice(0, 12000)}`,
+        );
+
+        const changes = Array.isArray(improved?.changes) ? improved.changes : [];
+        delete improved.changes;
+        // Biztonsági háló: a javítás nem törölheti a meglévő mezőket
+        spec = { ...spec, ...improved, attributes: { ...(spec.attributes || {}), ...(improved.attributes || {}) } };
+        qa = await runQa(spec);
+        rounds.push({ round: r, total: Number(qa?.total ?? 0), scores: qa?.scores ?? {}, changes });
+      }
+
+      return json({
+        ok: true,
+        fulfillment,
+        spec,
+        qa,
+        rounds,
+        target,
+        reached: Number(qa?.total ?? 0) >= target,
+      });
+    }
+
+    // ---------- ÉPÍTÉS ----------
     const priceHint = Number(body.price_huf || 0) > 0 ? `A partner által megadott célár: ${Number(body.price_huf)} Ft.` : "Az árat te javasold a magyar piac alapján.";
 
     const spec = await callAI(
@@ -156,10 +213,7 @@ ${priceHint}
 Építs fel egy PRÉMIUM, azonnal értékesíthető terméket. Az attributes mezőben KÖTELEZŐ kitölteni a fenti típushoz tartozó összes mezőt.`,
     );
 
-    const qa = await callAI(
-      QA_SYSTEM,
-      `Terméktípus: ${fulfillment}\nGenerált termék JSON:\n${JSON.stringify(spec).slice(0, 12000)}`,
-    );
+    const qa = await runQa(spec);
 
     let cover: string | null = null;
     if (body.generate_cover !== false && spec?.cover_prompt) {
