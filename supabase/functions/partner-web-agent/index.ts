@@ -2,6 +2,7 @@
 // MINŐSÉGBIZTOSÍTÁSI LÁNC: iparágspecifikus promptok → érdemes QA validáció → minőségi pontszám + jóváhagyás
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.104.1";
 import { publish } from "../_shared/agent-bus.ts";
+import { querySignals, buildMemoryHint } from "../_shared/ai-memory.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
