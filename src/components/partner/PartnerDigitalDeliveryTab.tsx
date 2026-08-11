@@ -351,9 +351,13 @@ export default function PartnerDigitalDeliveryTab({ partnerId }: Props) {
                     <div className="text-xs text-muted-foreground">
                       {a.customer_email || "—"} · {fmt(a.created_at)}{a.reason ? ` · ${a.reason}` : ""}
                     </div>
+                    <div className="text-[10px] font-mono text-muted-foreground">
+                      action_id: {a.action_id?.slice(0, 8) || "—"}{a.plan_id ? ` · plan: ${a.plan_id.slice(0, 8)}` : ""} · {a.result || "success"}
+                    </div>
                   </div>
                 </div>
-                <Badge variant="outline" className="rounded-none font-mono text-[10px]">{a.resource_id?.slice(0, 8)}</Badge>
+                <Badge variant={String(a.result || "success").startsWith("failed") ? "destructive" : "outline"} className="rounded-none font-mono text-[10px]">{a.resource_id?.slice(0, 8)}</Badge>
+
               </CardContent>
             </Card>
           ))}
