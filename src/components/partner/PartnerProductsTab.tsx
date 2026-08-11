@@ -9,13 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Trash2, Send, X, Edit3, Check } from "lucide-react";
+import { Plus, Trash2, Send, X, Edit3, Check, Sparkles } from "lucide-react";
 import { uploadPartnerMedia } from "@/lib/partner-storage";
 import MediaImage from "./MediaImage";
 import ProductAttributesFields from "./ProductAttributesFields";
 import VariantMatrix, { Variant } from "./VariantMatrix";
 import DigitalServiceFields from "./DigitalServiceFields";
 import ProductCapabilityMatrix from "./ProductCapabilityMatrix";
+import AiProductBuilderDialog from "./AiProductBuilderDialog";
 import {
   FULFILLMENTS, fulfillmentLabel, fulfillmentIcon, fulfillmentHint, fulfillmentOfType,
   capabilitiesOf, defaultTypeOf, stockLabel, checkoutModeOf, checkoutModeLabel, orderFlow, summaryOf,
