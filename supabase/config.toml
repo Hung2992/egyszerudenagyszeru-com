@@ -82,3 +82,6 @@ project_id = "meyxhsgnryuupwpddxav"
 
   [functions.partner-product-builder]
     verify_jwt = true
+
+  [functions.partner-fulfillment-center]
+    verify_jwt = true
