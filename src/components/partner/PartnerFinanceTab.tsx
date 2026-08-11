@@ -37,7 +37,7 @@ const PartnerFinanceTab = ({ partnerId }: Props) => {
           .eq("partner_id", partnerId).gte("created_at", from).limit(1000),
         supabase.from("partner_orders").select("total_huf,partner_payout_huf,created_at")
           .eq("partner_id", partnerId).gte("created_at", prevFrom).lt("created_at", from).limit(1000),
-        supabase.from("partner_products").select("title,price_huf,cost_huf,compare_price_huf,stock_qty,sales_count,view_count,status")
+        supabase.from("partner_products").select("title,price_huf,compare_price_huf,stock_qty,sales_count,view_count,status,attributes")
           .eq("partner_id", partnerId).limit(300),
       ]);
       if (cancelled) return;
@@ -63,7 +63,7 @@ const PartnerFinanceTab = ({ partnerId }: Props) => {
     return products
       .map((p) => {
         const price = Number(p.price_huf || 0);
-        const cost = Number(p.cost_huf || 0);
+        const cost = Number((p.attributes as any)?.cost_huf || 0);
         const margin = cost > 0 ? ((price - cost) / price) * 100 : null;
         const profit = cost > 0 ? (price - cost) * Number(p.sales_count || 0) : null;
         return { ...p, price, cost, margin, profit, revenue: price * Number(p.sales_count || 0) };
