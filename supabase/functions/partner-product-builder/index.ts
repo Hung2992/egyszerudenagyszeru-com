@@ -83,6 +83,16 @@ Csak JSON-t adsz vissza:
 }
 Légy őszinte: hiányzó licencfeltétel, gyenge leírás, hiányzó upsell, túl hosszú meta cím esetén pontlevonás.`;
 
+const IMPROVE_SYSTEM = `Te egy magyar prémium termék-optimalizáló ügynök vagy.
+Kapsz egy meglévő termék JSON-t és a QA jelentését. A feladatod KIZÁRÓLAG a gyenge területek javítása,
+a jól teljesítő részeket ne írd át feleslegesen.
+Csak érvényes JSON objektumot adsz vissza, ugyanazzal a szerkezettel, mint a bemeneti termék JSON
+(title, slug, category, short_pitch, description, bullets, faq, price_huf, compare_price_huf, price_reasoning,
+upsell, seo, checkout, cover_prompt, attributes), KIEGÉSZÍTVE egy "changes" mezővel:
+"changes": [{"area": string, "what": string (mit változtattál magyarul, 1 mondat)}]
+Szabályok: a seo.meta_title max 60, a seo.meta_description max 155 karakter.
+Az attributes kötelező mezőit tartsd meg és töltsd ki hiánytalanul. A címet és a slug-ot csak akkor módosítsd, ha a QA kifejezetten kifogásolta.`;
+
 async function generateCover(prompt: string): Promise<string | null> {
   const key = Deno.env.get("LOVABLE_API_KEY");
   if (!key) return null;
