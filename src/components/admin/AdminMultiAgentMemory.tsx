@@ -36,12 +36,12 @@ const AdminMultiAgentMemory = () => {
     }
   };
 
-  const grouped = signals.reduce((acc, s) => {
+  const grouped = signals.reduce<Record<string, any[]>>((acc, s) => {
     const t = s.signal_type || "egyéb";
     acc[t] = acc[t] || [];
     acc[t].push(s);
     return acc;
-  }, {} as Record<string, any[]>);
+  }, {});
 
   const typeLabel: Record<string, string> = {
     design_color_primary: "Színek (primary)",
