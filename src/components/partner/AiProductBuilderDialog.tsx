@@ -62,10 +62,13 @@ const AiProductBuilderDialog = ({ partnerId, open, onOpenChange, initialFulfillm
   const [step, setStep] = useState(0);
   const [result, setResult] = useState<any>(null);
   const [applying, setApplying] = useState(false);
+  const [improving, setImproving] = useState(false);
+  const [history, setHistory] = useState<number[]>([]);
+  const [changes, setChanges] = useState<{ area: string; what: string }[]>([]);
 
   const run = async () => {
     if (idea.trim().length < 10) { toast({ title: "Írd le bővebben az ötleted", variant: "destructive" }); return; }
-    setLoading(true); setResult(null); setStep(1);
+    setLoading(true); setResult(null); setStep(1); setHistory([]); setChanges([]);
     const timer = setInterval(() => setStep((s) => (s < PIPELINE.length - 1 ? s + 1 : s)), 1400);
     const { data, error } = await supabase.functions.invoke("partner-product-builder", {
       body: { partner_id: partnerId, fulfillment: ff, idea: idea.trim(), price_huf: Number(price) || 0 },
@@ -79,7 +82,40 @@ const AiProductBuilderDialog = ({ partnerId, open, onOpenChange, initialFulfillm
     }
     setStep(PIPELINE.length);
     setResult(data);
+    setHistory([Number(data?.qa?.total ?? 0)]);
   };
+
+  // 💎 Premium Auto-Improve: QA → gyenge területek → AI javítás → újra QA → új score
+  const autoImprove = async () => {
+    if (!result?.spec) return;
+    setImproving(true);
+    const { data, error } = await supabase.functions.invoke("partner-product-builder", {
+      body: {
+        partner_id: partnerId,
+        mode: "improve",
+        fulfillment: ff,
+        spec: result.spec,
+        qa: result.qa,
+        target_score: 90,
+        max_rounds: 3,
+      },
+    });
+    setImproving(false);
+    if (error || data?.error) {
+      toast({ title: "A javítás nem sikerült", description: (data?.error as string) || error?.message || "Ismeretlen hiba", variant: "destructive" });
+      return;
+    }
+    const rounds = (data?.rounds || []) as any[];
+    setResult({ ...result, spec: data.spec, qa: data.qa });
+    setHistory((h) => [...h, ...rounds.slice(1).map((r) => Number(r.total ?? 0))]);
+    setChanges(rounds.flatMap((r) => r.changes || []));
+    const newTotal = Number(data?.qa?.total ?? 0);
+    toast({
+      title: data?.reached ? `💎 Elérte a prémium szintet: ${newTotal}/100` : `Javítva: ${newTotal}/100`,
+      description: data?.reached ? "A termék készen áll a publikálásra." : "Futtathatsz még egy javítási kört.",
+    });
+  };
+
 
   const apply = async () => {
     if (!result?.spec) return;
