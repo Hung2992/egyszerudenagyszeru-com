@@ -4790,10 +4790,72 @@ export type Database = {
           },
         ]
       }
+      partner_action_audit: {
+        Row: {
+          action_id: string
+          actor_email: string | null
+          actor_id: string | null
+          actor_role: string | null
+          after_state: Json
+          before_state: Json
+          correlation_id: string | null
+          created_at: string
+          details: Json
+          event_type: string
+          id: string
+          partner_id: string
+          risk_level: string | null
+        }
+        Insert: {
+          action_id: string
+          actor_email?: string | null
+          actor_id?: string | null
+          actor_role?: string | null
+          after_state?: Json
+          before_state?: Json
+          correlation_id?: string | null
+          created_at?: string
+          details?: Json
+          event_type: string
+          id?: string
+          partner_id: string
+          risk_level?: string | null
+        }
+        Update: {
+          action_id?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          actor_role?: string | null
+          after_state?: Json
+          before_state?: Json
+          correlation_id?: string | null
+          created_at?: string
+          details?: Json
+          event_type?: string
+          id?: string
+          partner_id?: string
+          risk_level?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_action_audit_action_id_fkey"
+            columns: ["action_id"]
+            isOneToOne: false
+            referencedRelation: "partner_action_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_action_plans: {
         Row: {
+          after_state: Json
+          approval_mode: string
           approved_at: string | null
+          approved_by: string | null
+          approved_by_email: string | null
           baseline: Json
+          before_state: Json
+          correlation_id: string
           created_at: string
           executed_at: string | null
           execution_log: Json
@@ -4804,14 +4866,24 @@ export type Database = {
           partner_id: string
           result: Json
           risk_level: string | null
+          rollback_data: Json
+          rolled_back_at: string | null
+          rolled_back_by: string | null
+          source: string
           status: string
           steps: Json
           summary: string | null
           updated_at: string
         }
         Insert: {
+          after_state?: Json
+          approval_mode?: string
           approved_at?: string | null
+          approved_by?: string | null
+          approved_by_email?: string | null
           baseline?: Json
+          before_state?: Json
+          correlation_id?: string
           created_at?: string
           executed_at?: string | null
           execution_log?: Json
@@ -4822,14 +4894,24 @@ export type Database = {
           partner_id: string
           result?: Json
           risk_level?: string | null
+          rollback_data?: Json
+          rolled_back_at?: string | null
+          rolled_back_by?: string | null
+          source?: string
           status?: string
           steps?: Json
           summary?: string | null
           updated_at?: string
         }
         Update: {
+          after_state?: Json
+          approval_mode?: string
           approved_at?: string | null
+          approved_by?: string | null
+          approved_by_email?: string | null
           baseline?: Json
+          before_state?: Json
+          correlation_id?: string
           created_at?: string
           executed_at?: string | null
           execution_log?: Json
@@ -4840,6 +4922,10 @@ export type Database = {
           partner_id?: string
           result?: Json
           risk_level?: string | null
+          rollback_data?: Json
+          rolled_back_at?: string | null
+          rolled_back_by?: string | null
+          source?: string
           status?: string
           steps?: Json
           summary?: string | null
@@ -5032,6 +5118,59 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "partner_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_autopilot_settings: {
+        Row: {
+          auto_allowed_types: string[]
+          created_at: string
+          enabled: boolean
+          goals: string[]
+          id: string
+          last_run_at: string | null
+          max_auto_actions_per_day: number
+          max_price_change_pct: number
+          max_risk_level: string
+          notify_email: boolean
+          partner_id: string
+          updated_at: string
+        }
+        Insert: {
+          auto_allowed_types?: string[]
+          created_at?: string
+          enabled?: boolean
+          goals?: string[]
+          id?: string
+          last_run_at?: string | null
+          max_auto_actions_per_day?: number
+          max_price_change_pct?: number
+          max_risk_level?: string
+          notify_email?: boolean
+          partner_id: string
+          updated_at?: string
+        }
+        Update: {
+          auto_allowed_types?: string[]
+          created_at?: string
+          enabled?: boolean
+          goals?: string[]
+          id?: string
+          last_run_at?: string | null
+          max_auto_actions_per_day?: number
+          max_price_change_pct?: number
+          max_risk_level?: string
+          notify_email?: boolean
+          partner_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_autopilot_settings_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: true
+            referencedRelation: "partners"
             referencedColumns: ["id"]
           },
         ]
