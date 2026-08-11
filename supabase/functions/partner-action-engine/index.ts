@@ -345,34 +345,100 @@ Deno.serve(async (req) => {
       return json({ plan: updated });
     }
 
-    if (action === "rollback") {
+    // 🔐 Rollback előnézet: mit állítanánk vissza, és időközben módosult-e valami (drift)
+    if (action === "rollback_preview") {
       const planId = String(body.plan_id || "");
       const { data: plan } = await sb.from("partner_action_plans").select("*").eq("id", planId).eq("partner_id", partnerId).maybeSingle();
       if (!plan) return json({ error: "plan_not_found" }, 404);
       const entries: any[] = Array.isArray(plan.rollback_data) ? plan.rollback_data : [];
-      let restored = 0;
+      const items: any[] = [];
       for (const e of entries) {
-        try {
-          if (e.delete) {
-            const { error } = await sb.from(e.table).delete().eq("id", e.id).eq("partner_id", partnerId);
-            if (!error) restored++;
-          } else {
-            const { error } = await sb.from(e.table).update(e.values).eq("id", e.id).eq("partner_id", partnerId);
-            if (!error) restored++;
-          }
-        } catch (_) { /* folytatjuk */ }
+        const { data: row } = await sb.from(e.table).select("*").eq("id", e.id).eq("partner_id", partnerId).maybeSingle();
+        if (!row) {
+          items.push({ table: e.table, id: e.id, kind: e.delete ? "delete" : "restore", missing: true, label: "Törölt / nem található elem" });
+          continue;
+        }
+        if (e.delete) {
+          items.push({
+            table: e.table, id: e.id, kind: "delete", missing: false,
+            label: String(row.title || row.name || e.table), drift: false,
+          });
+          continue;
+        }
+        const fields = Object.keys(e.values || {}).map((k) => ({
+          field: k, current: row[k] ?? null, restore: e.values[k] ?? null,
+        }));
+        // drift: a jelenlegi érték nem az, amit az AI beállított → a partner közben módosította
+        const drift = fields.some((f) => {
+          const setByAi = (plan.after_state?.termekek || []).find((t: any) => t.id === e.id);
+          return setByAi && f.field === "price_huf" && Number(setByAi.ar) !== Number(f.current);
+        });
+        items.push({
+          table: e.table, id: e.id, kind: "restore", missing: false, drift,
+          label: String(row.title || row.name || e.table), fields,
+        });
       }
+      return json({
+        preview: items,
+        summary: {
+          total: items.length,
+          restore: items.filter((i) => i.kind === "restore" && !i.missing).length,
+          remove: items.filter((i) => i.kind === "delete" && !i.missing).length,
+          missing: items.filter((i) => i.missing).length,
+          drifted: items.filter((i) => i.drift).length,
+        },
+      });
+    }
+
+    if (action === "rollback") {
+      const planId = String(body.plan_id || "");
+      const skipDrifted = body.skip_drifted !== false; // alapértelmezés: időközben kézzel módosított elemet nem írunk felül
+      const only: string[] | null = Array.isArray(body.entry_ids) ? body.entry_ids.map(String) : null;
+      const { data: plan } = await sb.from("partner_action_plans").select("*").eq("id", planId).eq("partner_id", partnerId).maybeSingle();
+      if (!plan) return json({ error: "plan_not_found" }, 404);
+      if (plan.status === "rolled_back") return json({ plan, restored: 0, already: true });
+      const entries: any[] = Array.isArray(plan.rollback_data) ? plan.rollback_data : [];
+      let restored = 0;
+      const failures: any[] = [];
+      const skipped: any[] = [];
+      for (const e of entries) {
+        if (only && !only.includes(String(e.id))) { skipped.push({ id: e.id, reason: "not_selected" }); continue; }
+        try {
+          const { data: row } = await sb.from(e.table).select("*").eq("id", e.id).eq("partner_id", partnerId).maybeSingle();
+          if (!row) { skipped.push({ id: e.id, reason: "missing" }); continue; }
+          if (!e.delete && skipDrifted) {
+            const setByAi = (plan.after_state?.termekek || []).find((t: any) => t.id === e.id);
+            if (setByAi && Number(setByAi.ar) !== Number(row.price_huf)) {
+              skipped.push({ id: e.id, reason: "manually_changed" });
+              continue;
+            }
+          }
+          const { error } = e.delete
+            ? await sb.from(e.table).delete().eq("id", e.id).eq("partner_id", partnerId)
+            : await sb.from(e.table).update(e.values).eq("id", e.id).eq("partner_id", partnerId);
+          if (error) failures.push({ id: e.id, table: e.table, error: error.message });
+          else restored++;
+        } catch (err) {
+          failures.push({ id: e.id, table: e.table, error: String((err as Error)?.message || err) });
+        }
+      }
+      const partial = failures.length > 0 || (skipped.length > 0 && restored > 0);
       const { data: updated } = await sb.from("partner_action_plans")
-        .update({ status: "rolled_back", rolled_back_at: new Date().toISOString(), rolled_back_by: user.id })
+        .update({
+          status: failures.length && restored === 0 ? plan.status : "rolled_back",
+          rolled_back_at: new Date().toISOString(), rolled_back_by: user.id,
+        })
         .eq("id", planId).eq("partner_id", partnerId).select().single();
       await audit(sb, {
         action_id: planId, partner_id: partnerId, correlation_id: plan.correlation_id,
-        event_type: "rolled_back", risk_level: plan.risk_level, ...actor,
-        details: { restored }, before_state: plan.after_state || {}, after_state: plan.before_state || {},
+        event_type: failures.length ? "rollback_failed" : partial ? "rollback_partial" : "rolled_back",
+        risk_level: plan.risk_level, ...actor,
+        details: { restored, failures, skipped }, before_state: plan.after_state || {}, after_state: plan.before_state || {},
       });
-      await busPublish(sb, "action_plan.rolled_back", { action_id: planId, partner_id: partnerId, restored }, plan.correlation_id);
-      return json({ plan: updated, restored });
+      await busPublish(sb, "action_plan.rolled_back", { action_id: planId, partner_id: partnerId, restored, failed: failures.length, skipped: skipped.length }, plan.correlation_id);
+      return json({ plan: updated, restored, failures, skipped, partial });
     }
+
 
     if (action === "measure") {
       const planId = String(body.plan_id || "");
