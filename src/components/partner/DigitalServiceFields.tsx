@@ -136,7 +136,112 @@ const DigitalServiceFields = ({ fulfillment, partnerId, attributes, setAttribute
     );
   }
 
+  if (fulfillment === "course") {
+    const lessons: any[] = attributes.lessons || [];
+    const setLessons = (l: any[]) => setAttributes({ ...attributes, lessons: l, lesson_count: l.length });
+    return (
+      <div className="border border-foreground/20 p-3 space-y-3">
+        <Label className="text-sm font-bold uppercase tracking-wider">Kurzus beállítások</Label>
+
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <Label className="text-xs">Forma</Label>
+            <Select value={attributes.course_mode || "online"} onValueChange={(v) => set("course_mode", v)}>
+              <SelectTrigger className="rounded-none"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="online">Online, saját tempó</SelectItem>
+                <SelectItem value="live">Élő online</SelectItem>
+                <SelectItem value="onsite">Személyes jelenlét</SelectItem>
+                <SelectItem value="hybrid">Vegyes</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Szint</Label>
+            <Select value={attributes.course_level || "beginner"} onValueChange={(v) => set("course_level", v)}>
+              <SelectTrigger className="rounded-none"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="beginner">Kezdő</SelectItem>
+                <SelectItem value="intermediate">Haladó</SelectItem>
+                <SelectItem value="advanced">Profi</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Teljes hossz (perc)</Label>
+            <Input type="number" className="rounded-none" value={attributes.course_minutes || ""} onChange={(e) => set("course_minutes", e.target.value)} placeholder="pl. 240" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <Label className="text-xs">Hozzáférés (nap)</Label>
+            <Input type="number" className="rounded-none" value={attributes.access_days || ""} onChange={(e) => set("access_days", e.target.value)} placeholder="üres = örök" />
+          </div>
+          <div>
+            <Label className="text-xs">Kezdés dátuma</Label>
+            <Input type="date" className="rounded-none" value={attributes.course_start || ""} onChange={(e) => set("course_start", e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-xs">Oklevél</Label>
+            <div className="flex items-center gap-2 h-10">
+              <Switch checked={!!attributes.certificate} onCheckedChange={(v) => set("certificate", v)} />
+              <span className="text-xs text-muted-foreground">{attributes.certificate ? "Igen" : "Nem"}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs">Tananyag – modulok / leckék ({lessons.length})</Label>
+            <button type="button" className="text-xs border border-foreground/20 px-2 py-1 hover:border-foreground"
+              onClick={() => setLessons([...lessons, { title: "", module: "", minutes: "", free: false }])}>+ Lecke</button>
+          </div>
+          {lessons.map((l, i) => (
+            <div key={i} className="grid grid-cols-[1fr_1fr_80px_auto_auto] gap-1 items-center">
+              <Input className="rounded-none" placeholder="Modul" value={l.module || ""}
+                onChange={(e) => setLessons(lessons.map((x, ix) => ix === i ? { ...x, module: e.target.value } : x))} />
+              <Input className="rounded-none" placeholder="Lecke címe" value={l.title || ""}
+                onChange={(e) => setLessons(lessons.map((x, ix) => ix === i ? { ...x, title: e.target.value } : x))} />
+              <Input type="number" className="rounded-none" placeholder="perc" value={l.minutes || ""}
+                onChange={(e) => setLessons(lessons.map((x, ix) => ix === i ? { ...x, minutes: e.target.value } : x))} />
+              <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                <Switch checked={!!l.free} onCheckedChange={(v) => setLessons(lessons.map((x, ix) => ix === i ? { ...x, free: v } : x))} />
+                ingyenes
+              </div>
+              <button type="button" onClick={() => setLessons(lessons.filter((_, ix) => ix !== i))}>
+                <X className="h-3 w-3 text-destructive" />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div>
+          <Label className="text-xs">Tananyag fájlok (opcionális)</Label>
+          <Input type="file" multiple className="rounded-none" disabled={uploading}
+            onChange={(e) => { const fs = e.target.files; if (fs) Array.from(fs).forEach((f) => void uploadFile(f)); }} />
+          <div className="space-y-1 mt-2">
+            {(attributes.digital_files || []).map((f: any, i: number) => (
+              <div key={i} className="flex items-center justify-between border border-foreground/20 px-2 py-1 text-xs">
+                <span className="truncate">{f.name}</span>
+                <button type="button" onClick={() => set("digital_files", (attributes.digital_files || []).filter((_: any, x: number) => x !== i))}>
+                  <X className="h-3 w-3 text-destructive" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <Label className="text-xs">Kinek szól / előfeltételek</Label>
+          <Textarea className="rounded-none" rows={2} value={attributes.course_audience || ""} onChange={(e) => set("course_audience", e.target.value)} placeholder="pl. kezdő webshop tulajdonosoknak, előismeret nem szükséges" />
+        </div>
+      </div>
+    );
+  }
+
   // Szolgáltatás
+
   return (
     <div className="border border-foreground/20 p-3 space-y-3">
       <Label className="text-sm font-bold uppercase tracking-wider">Szolgáltatás beállítások</Label>
