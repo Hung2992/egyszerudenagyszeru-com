@@ -1,5 +1,5 @@
 // Készlet és árazás központ: gyors készletmódosítás, tömeges árazás, alacsony készlet riasztás.
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -180,8 +180,8 @@ const PartnerInventoryTab = ({ partnerId }: Props) => {
               const hasVars = variants.some((v) => v.product_id === p.id);
               const s = effStock(p);
               return (
-                <>
-                  <TableRow key={p.id}>
+                <Fragment key={p.id}>
+                  <TableRow>
                     <TableCell>
                       <div className="font-medium">{p.title}</div>
                       <div className="text-[11px] text-muted-foreground">{[p.brand, p.product_type, p.sku].filter(Boolean).join(" • ") || "—"}</div>
@@ -235,7 +235,7 @@ const PartnerInventoryTab = ({ partnerId }: Props) => {
                       <TableCell />
                     </TableRow>
                   ))}
-                </>
+                </Fragment>
               );
             })}
           </TableBody>
