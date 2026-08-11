@@ -208,7 +208,7 @@ const PartnerOrdersTab = ({ partnerId }: Props) => {
                     </div>
                   )}
 
-                  {items.length > 0 && <OrderFulfillmentPlan items={items} />}
+                  {items.length > 0 && <OrderFulfillmentPlan items={items} orderId={o.id} partnerId={partnerId} />}
 
 
                   {o.shipping_address && (

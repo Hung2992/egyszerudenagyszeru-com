@@ -11,11 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { LogOut, Copy, Check, Download, Banknote, BarChart3, Megaphone, User as UserIcon, ListChecks, RefreshCw, Link2, FileSpreadsheet, Store, Package, Workflow, FlaskConical, Puzzle, Bot, LayoutDashboard, ShoppingBag, Boxes, Sparkles, Wallet, Users, Target } from "lucide-react";
+import { LogOut, Copy, Check, Download, Banknote, BarChart3, Megaphone, User as UserIcon, ListChecks, RefreshCw, Link2, FileSpreadsheet, Store, Package, Workflow, FlaskConical, Puzzle, Bot, LayoutDashboard, ShoppingBag, Boxes, Sparkles, Wallet, Users, Target, KeyRound } from "lucide-react";
 import { copyToClipboard } from "@/lib/clipboard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import StorefrontEditorTab from "@/components/partner/StorefrontEditorTab";
 import PartnerProductsTab from "@/components/partner/PartnerProductsTab";
+import PartnerDigitalDeliveryTab from "@/components/partner/PartnerDigitalDeliveryTab";
 import PartnerMarketingHub from "@/components/partner/PartnerMarketingHub";
 import PartnerWorkflowsTab from "@/components/partner/PartnerWorkflowsTab";
 import PartnerAbTestsTab from "@/components/partner/PartnerAbTestsTab";
@@ -286,6 +287,7 @@ const PartnerPortal = () => {
 
             <TabsTrigger value="storefront" className="rounded-none"><Store className="h-4 w-4 mr-2" />Saját webshop</TabsTrigger>
             <TabsTrigger value="products" className="rounded-none"><Package className="h-4 w-4 mr-2" />Termékek</TabsTrigger>
+            <TabsTrigger value="digital" className="rounded-none"><KeyRound className="h-4 w-4 mr-2" />Digitális kiszolgálás</TabsTrigger>
             <TabsTrigger value="referrals" className="rounded-none"><ListChecks className="h-4 w-4 mr-2" />Ajánlások</TabsTrigger>
             <TabsTrigger value="payouts" className="rounded-none"><Banknote className="h-4 w-4 mr-2" />Kifizetések</TabsTrigger>
             <TabsTrigger value="marketing" className="rounded-none"><Megaphone className="h-4 w-4 mr-2" />Marketing</TabsTrigger>
@@ -333,6 +335,11 @@ const PartnerPortal = () => {
           <TabsContent value="products" className="mt-6">
             <PartnerProductsTab partnerId={partner.id} />
           </TabsContent>
+
+          <TabsContent value="digital" className="mt-6">
+            <PartnerDigitalDeliveryTab partnerId={partner.id} />
+          </TabsContent>
+
 
           <TabsContent value="workflows" className="mt-6">
             <PartnerWorkflowsTab partnerId={partner.id} />
