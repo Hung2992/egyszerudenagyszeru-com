@@ -36,6 +36,7 @@ const PartnerAiTeamTab = ({ partnerId }: Props) => {
   const [question, setQuestion] = useState("");
   const [busy, setBusy] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const metrics = usePartnerAgentMetrics(partnerId);
 
   const ask = async (agent: Agent, q: string) => {
     if (!q.trim()) return;
