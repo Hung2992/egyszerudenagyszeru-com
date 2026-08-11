@@ -122,6 +122,75 @@ async function busPublish(sb: any, eventType: string, payload: unknown, correlat
   } catch (_) { /* nem kritikus */ }
 }
 
+/** ✅ Rollback Integrity Check: ellenőrzés → konzisztencia → QA → üzleti check */
+async function runIntegrityCheck(sb: any, partnerId: string, attempted: any[], stats: any) {
+  const checks: any[] = [];
+
+  // 1. Ellenőrzés: minden érintett rekord tényleg visszaállt?
+  let verified = 0;
+  const mismatched: any[] = [];
+  for (const e of attempted) {
+    const { data: row } = await sb.from(e.table).select("*").eq("id", e.id).eq("partner_id", partnerId).maybeSingle();
+    if (e.delete) {
+      if (!row) verified++; else mismatched.push({ id: e.id, table: e.table, reason: "still_exists" });
+      continue;
+    }
+    if (!row) { mismatched.push({ id: e.id, table: e.table, reason: "missing" }); continue; }
+    const bad = Object.keys(e.values || {}).filter((k) => String(row[k] ?? "") !== String(e.values[k] ?? ""));
+    if (bad.length) mismatched.push({ id: e.id, table: e.table, reason: "value_mismatch", fields: bad });
+    else verified++;
+  }
+  checks.push({
+    key: "verify", label: "Rekordok visszaállítása",
+    ok: mismatched.length === 0,
+    detail: `${verified}/${attempted.length} elem ellenőrizve`, issues: mismatched,
+  });
+
+  // 2. Konzisztencia + 4. üzleti check: árképzés / készlet épsége
+  const { data: products } = await sb.from("partner_products")
+    .select("id,title,price_huf,compare_price_huf,status,stock_quantity")
+    .eq("partner_id", partnerId).limit(500);
+  const priceIssues = (products || []).filter((p: any) =>
+    p.status === "active" && (p.price_huf == null || Number(p.price_huf) <= 0)
+  ).map((p: any) => ({ id: p.id, title: p.title, reason: "invalid_price" }));
+  const compareIssues = (products || []).filter((p: any) =>
+    p.compare_price_huf != null && Number(p.compare_price_huf) > 0 && Number(p.compare_price_huf) < Number(p.price_huf || 0)
+  ).map((p: any) => ({ id: p.id, title: p.title, reason: "compare_price_lower_than_price" }));
+  checks.push({
+    key: "consistency", label: "Állapot konzisztencia",
+    ok: priceIssues.length === 0,
+    detail: priceIssues.length ? `${priceIssues.length} termék hibás árral` : "Minden aktív terméknek érvényes ára van",
+    issues: priceIssues,
+  });
+  checks.push({
+    key: "business", label: "Üzleti / árképzési ellenőrzés",
+    ok: compareIssues.length === 0,
+    detail: compareIssues.length ? `${compareIssues.length} terméknél az áthúzott ár kisebb az árnál` : "Kosár és árképzés rendben",
+    issues: compareIssues,
+  });
+
+  // 3. QA: webshop minőségi pontszám nem romlott-e
+  const { data: sf } = await sb.from("partner_storefronts")
+    .select("id,quality_score").eq("partner_id", partnerId).maybeSingle();
+  const score = sf?.quality_score ?? null;
+  checks.push({
+    key: "qa", label: "Webshop minőségi pontszám",
+    ok: score == null || Number(score) >= 60,
+    detail: score == null ? "Nincs QA pontszám (kihagyva)" : `Aktuális pontszám: ${score}`,
+    issues: [],
+  });
+
+  const ok = checks.every((c) => c.ok) && stats.failures.length === 0;
+  return {
+    ok,
+    summary: `${stats.restored}/${stats.total} elem helyreállítva`,
+    restored: stats.restored, total: stats.total,
+    skipped: stats.skipped?.length || 0, failed: stats.failures?.length || 0,
+    checks, checked_at: new Date().toISOString(),
+  };
+}
+
+
 /** Egy lépés végrehajtása. Visszaadja az előtte/utána állapotot és a rollback adatot. */
 async function executeStep(sb: any, partnerId: string, storefrontId: string | null, step: any) {
   const p = step?.params || {};
