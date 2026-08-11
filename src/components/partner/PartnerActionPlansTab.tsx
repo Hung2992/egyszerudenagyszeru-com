@@ -9,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2, Rocket, CheckCircle2, XCircle, BarChart3, Target, Undo2, ScrollText } from "lucide-react";
 import PartnerAutopilotCard from "./PartnerAutopilotCard";
 import PartnerActionAuditTrail from "./PartnerActionAuditTrail";
+import RollbackPreviewDialog from "./RollbackPreviewDialog";
 
 interface Props { partnerId: string }
 
@@ -50,6 +51,7 @@ const PartnerActionPlansTab = ({ partnerId }: Props) => {
   const [goal, setGoal] = useState("Növeld a bevételemet.");
   const [busy, setBusy] = useState<string | null>(null);
   const [openAudit, setOpenAudit] = useState<string | null>(null);
+  const [rollbackPlan, setRollbackPlan] = useState<string | null>(null);
 
 
   const load = useCallback(async () => {
@@ -202,8 +204,8 @@ const PartnerActionPlansTab = ({ partnerId }: Props) => {
             )}
             {(plan.status === "executed" || plan.status === "measured") && (plan.rollback_data?.length ?? 0) > 0 && (
               <Button size="sm" variant="destructive" className="rounded-none" disabled={busy !== null}
-                onClick={() => void call("rollback", { plan_id: plan.id }, `r-${plan.id}`)}>
-                {busy === `r-${plan.id}` ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Undo2 className="h-4 w-4 mr-2" />}
+                onClick={() => setRollbackPlan(plan.id)}>
+                <Undo2 className="h-4 w-4 mr-2" />
                 Visszavonás (rollback)
               </Button>
             )}
@@ -231,6 +233,13 @@ const PartnerActionPlansTab = ({ partnerId }: Props) => {
 
         </Card>
       ))}
+
+      <RollbackPreviewDialog
+        planId={rollbackPlan}
+        partnerId={partnerId}
+        onClose={() => setRollbackPlan(null)}
+        onDone={() => void load()}
+      />
     </div>
   );
 };
