@@ -9,13 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Trash2, Send, X, Edit3, Check } from "lucide-react";
+import { Plus, Trash2, Send, X, Edit3, Check, Sparkles } from "lucide-react";
 import { uploadPartnerMedia } from "@/lib/partner-storage";
 import MediaImage from "./MediaImage";
 import ProductAttributesFields from "./ProductAttributesFields";
 import VariantMatrix, { Variant } from "./VariantMatrix";
 import DigitalServiceFields from "./DigitalServiceFields";
 import ProductCapabilityMatrix from "./ProductCapabilityMatrix";
+import AiProductBuilderDialog from "./AiProductBuilderDialog";
 import {
   FULFILLMENTS, fulfillmentLabel, fulfillmentIcon, fulfillmentHint, fulfillmentOfType,
   capabilitiesOf, defaultTypeOf, stockLabel, checkoutModeOf, checkoutModeLabel, orderFlow, summaryOf,
@@ -76,6 +77,12 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
   const allDevices = useMemo(() => catalog.filter(c => c.category === "device").map(c => ({ brand: c.brand!, model: c.model! })), [catalog]);
 
   const startNew = () => { setEditing(null); setForm(empty); setOpen(true); };
+  const [studioOpen, setStudioOpen] = useState(false);
+  const applyStudio = (patch: Record<string, any>) => {
+    setEditing(null);
+    setForm({ ...empty, ...patch });
+    setOpen(true);
+  };
   const startEdit = (p: any) => {
     setEditing(p);
     const attrs = p.attributes || {};
@@ -190,8 +197,21 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold uppercase tracking-widest">Termékeim ({products.length})</h2>
-        <Button onClick={startNew} className="rounded-none uppercase tracking-wider"><Plus className="h-4 w-4 mr-1" /> Új termék</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setStudioOpen(true)} className="rounded-none uppercase tracking-wider">
+            <Sparkles className="h-4 w-4 mr-1" /> AI Product Studio
+          </Button>
+          <Button onClick={startNew} className="rounded-none uppercase tracking-wider"><Plus className="h-4 w-4 mr-1" /> Új termék</Button>
+        </div>
       </div>
+
+      <AiProductBuilderDialog
+        partnerId={partnerId}
+        open={studioOpen}
+        onOpenChange={setStudioOpen}
+        initialFulfillment={(["digital", "course", "service"].includes(ff) ? ff : "digital") as "digital" | "course" | "service"}
+        onApply={applyStudio}
+      />
 
       {products.length === 0 ? (
         <Card className="rounded-none border-foreground/20 p-8 text-center text-muted-foreground">
