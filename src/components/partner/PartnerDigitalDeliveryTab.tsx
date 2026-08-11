@@ -12,6 +12,8 @@ import {
   Copy, KeyRound, Download, GraduationCap, CalendarClock, Sparkles,
   RefreshCw, ShieldAlert, History, Loader2,
 } from "lucide-react";
+import FulfillmentHealthPanel, { type Health } from "./FulfillmentHealthPanel";
+
 
 interface Props { partnerId: string }
 
