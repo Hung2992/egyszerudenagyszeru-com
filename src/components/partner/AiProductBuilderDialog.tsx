@@ -150,7 +150,7 @@ const AiProductBuilderDialog = ({ partnerId, open, onOpenChange, initialFulfillm
     setApplying(false);
     toast({ title: "AI termék betöltve a szerkesztőbe" });
     onOpenChange(false);
-    setResult(null); setIdea(""); setPrice(""); setStep(0);
+    setResult(null); setIdea(""); setPrice(""); setStep(0); setHistory([]); setChanges([]);
   };
 
   const total = Number(result?.qa?.total ?? 0);
