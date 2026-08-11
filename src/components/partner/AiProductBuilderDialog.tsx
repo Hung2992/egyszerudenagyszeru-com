@@ -13,6 +13,7 @@ import { toast } from "@/hooks/use-toast";
 import { Sparkles, Loader2, Check, AlertTriangle } from "lucide-react";
 import { uploadPartnerMedia } from "@/lib/partner-storage";
 import { fulfillmentIcon, fulfillmentLabel, defaultTypeOf } from "@/lib/product-schema";
+import ImprovementReportCard, { type ImprovementReport } from "./ImprovementReportCard";
 
 type StudioFulfillment = "digital" | "course" | "service";
 
@@ -65,10 +66,11 @@ const AiProductBuilderDialog = ({ partnerId, open, onOpenChange, initialFulfillm
   const [improving, setImproving] = useState(false);
   const [history, setHistory] = useState<number[]>([]);
   const [changes, setChanges] = useState<{ area: string; what: string }[]>([]);
+  const [report, setReport] = useState<ImprovementReport | null>(null);
 
   const run = async () => {
     if (idea.trim().length < 10) { toast({ title: "Írd le bővebben az ötleted", variant: "destructive" }); return; }
-    setLoading(true); setResult(null); setStep(1); setHistory([]); setChanges([]);
+    setLoading(true); setResult(null); setStep(1); setHistory([]); setChanges([]); setReport(null);
     const timer = setInterval(() => setStep((s) => (s < PIPELINE.length - 1 ? s + 1 : s)), 1400);
     const { data, error } = await supabase.functions.invoke("partner-product-builder", {
       body: { partner_id: partnerId, fulfillment: ff, idea: idea.trim(), price_huf: Number(price) || 0 },
@@ -109,6 +111,7 @@ const AiProductBuilderDialog = ({ partnerId, open, onOpenChange, initialFulfillm
     setResult({ ...result, spec: data.spec, qa: data.qa });
     setHistory((h) => [...h, ...rounds.slice(1).map((r) => Number(r.total ?? 0))]);
     setChanges(rounds.flatMap((r) => r.changes || []));
+    if (data?.report) setReport(data.report as ImprovementReport);
     const newTotal = Number(data?.qa?.total ?? 0);
     toast({
       title: data?.reached ? `💎 Elérte a prémium szintet: ${newTotal}/100` : `Javítva: ${newTotal}/100`,
@@ -134,6 +137,7 @@ const AiProductBuilderDialog = ({ partnerId, open, onOpenChange, initialFulfillm
     if (s.checkout) attrs.ai_checkout = s.checkout;
     attrs.ai_premium_score = result.qa?.total ?? null;
     attrs.ai_generated = true;
+    if (report) attrs.ai_improvement_report = report;
 
     onApply({
       fulfillment_type: ff,
@@ -150,7 +154,7 @@ const AiProductBuilderDialog = ({ partnerId, open, onOpenChange, initialFulfillm
     setApplying(false);
     toast({ title: "AI termék betöltve a szerkesztőbe" });
     onOpenChange(false);
-    setResult(null); setIdea(""); setPrice(""); setStep(0); setHistory([]); setChanges([]);
+    setResult(null); setIdea(""); setPrice(""); setStep(0); setHistory([]); setChanges([]); setReport(null);
   };
 
   const total = Number(result?.qa?.total ?? 0);
@@ -249,6 +253,8 @@ const AiProductBuilderDialog = ({ partnerId, open, onOpenChange, initialFulfillm
                   Az AI csak a gyenge területeket írja át, majd újra lefuttatja a QA-t. Publikálás csak a te jóváhagyásoddal.
                 </p>
               </div>
+
+              {report && <ImprovementReportCard report={report} />}
 
               {changes.length > 0 && (
                 <div className="border border-accent/40 p-3 space-y-1">

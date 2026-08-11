@@ -111,7 +111,50 @@ async function generateCover(prompt: string): Promise<string | null> {
   }
 }
 
+// --- Improvement Report segédek ---
+// Ezeket a mezőket a partner adja meg / üzletileg érzékenyek: ha nem változtak, külön kiemeljük.
+const PROTECTED_PATHS = [
+  "price_huf",
+  "compare_price_huf",
+  "slug",
+  "attributes.license_terms",
+  "attributes.download_limit",
+  "attributes.access_days",
+  "attributes.digital_delivery",
+  "attributes.certificate",
+  "attributes.cancellation_policy",
+];
+
+const readPath = (obj: any, path: string) =>
+  path.split(".").reduce((a: any, k) => (a && typeof a === "object" ? a[k] : undefined), obj);
+
+const stable = (v: unknown) => JSON.stringify(v ?? null);
+
+function diffPaths(before: any, after: any, prefix = "", depth = 0): string[] {
+  const out: string[] = [];
+  const keys = new Set([...Object.keys(before || {}), ...Object.keys(after || {})]);
+  for (const k of keys) {
+    const path = prefix ? `${prefix}.${k}` : k;
+    const a = before?.[k];
+    const b = after?.[k];
+    if (stable(a) === stable(b)) continue;
+    const bothPlainObjects =
+      a && b && typeof a === "object" && typeof b === "object" && !Array.isArray(a) && !Array.isArray(b);
+    if (bothPlainObjects && depth < 2) out.push(...diffPaths(a, b, path, depth + 1));
+    else out.push(path);
+  }
+  return out;
+}
+
+const makeRunId = () => {
+  const d = new Date();
+  const day = d.toISOString().slice(0, 10);
+  const rnd = Math.floor(Math.random() * 900 + 100);
+  return `IMP-${day}-${rnd}`;
+};
+
 Deno.serve(async (req) => {
+
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -148,6 +191,7 @@ Deno.serve(async (req) => {
 
     // ---------- 💎 PREMIUM AUTO-IMPROVE CIKLUS ----------
     // QA → gyenge területek → AI javítás → újra QA → új score, amíg el nem éri a célt.
+
     if (mode === "improve") {
       const inputSpec = body.spec;
       if (!inputSpec || typeof inputSpec !== "object") return json({ error: "Hiányzik a javítandó termék." }, 400);
@@ -187,6 +231,30 @@ ${JSON.stringify(spec).slice(0, 12000)}`,
         rounds.push({ round: r, total: Number(qa?.total ?? 0), scores: qa?.scores ?? {}, changes });
       }
 
+      // 📄 IMPROVEMENT REPORT — mi változott, mi maradt érintetlen, QA végállapot
+      const changedPaths = diffPaths(inputSpec, spec);
+      const unchangedPaths = PROTECTED_PATHS.filter((p) => !changedPaths.includes(p) && readPath(inputSpec, p) !== undefined);
+      const report = {
+        run_id: makeRunId(),
+        created_at: new Date().toISOString(),
+        fulfillment,
+        target,
+        before: Number(rounds[0]?.total ?? 0),
+        after: Number(qa?.total ?? 0),
+        rounds: Math.max(0, rounds.length - 1),
+        max_rounds: maxRounds,
+        reached: Number(qa?.total ?? 0) >= target,
+        changed: changedPaths,
+        unchanged: unchangedPaths,
+        qa_areas: Object.entries(qa?.scores ?? {}).map(([area, score]) => ({
+          area,
+          score: Number(score),
+          passed: Number(score) >= target,
+        })),
+        open_issues: (qa?.issues ?? []).filter((i: any) => i?.severity === "error").length,
+        changes: rounds.flatMap((r: any) => r.changes || []),
+      };
+
       return json({
         ok: true,
         fulfillment,
@@ -194,9 +262,11 @@ ${JSON.stringify(spec).slice(0, 12000)}`,
         qa,
         rounds,
         target,
+        report,
         reached: Number(qa?.total ?? 0) >= target,
       });
     }
+
 
     // ---------- ÉPÍTÉS ----------
     const priceHint = Number(body.price_huf || 0) > 0 ? `A partner által megadott célár: ${Number(body.price_huf)} Ft.` : "Az árat te javasold a magyar piac alapján.";
