@@ -297,8 +297,9 @@ const PartnerPortal = () => {
             <PartnerPluginsTab partnerId={partner.id} />
           </TabsContent>
 
-
-          <TabsContent value="overview" className="mt-6 space-y-6">
+          <TabsContent value="ai_marketplace" className="mt-6">
+            <PartnerAiMarketplaceTab partnerId={partner.id} />
+          </TabsContent>
             <Card className="rounded-none border-foreground/20 p-6">
               <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">A te kuponkódod</p>
               <div className="flex items-center gap-3 flex-wrap">
