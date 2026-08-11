@@ -5835,6 +5835,48 @@ export type Database = {
           },
         ]
       }
+      partner_fulfillment_audit: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          after_state: Json | null
+          before_state: Json | null
+          created_at: string
+          customer_email: string | null
+          id: string
+          partner_id: string
+          reason: string | null
+          resource_id: string | null
+          resource_type: string
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          after_state?: Json | null
+          before_state?: Json | null
+          created_at?: string
+          customer_email?: string | null
+          id?: string
+          partner_id: string
+          reason?: string | null
+          resource_id?: string | null
+          resource_type: string
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          after_state?: Json | null
+          before_state?: Json | null
+          created_at?: string
+          customer_email?: string | null
+          id?: string
+          partner_id?: string
+          reason?: string | null
+          resource_id?: string | null
+          resource_type?: string
+        }
+        Relationships: []
+      }
       partner_landing_pages: {
         Row: {
           active: boolean
