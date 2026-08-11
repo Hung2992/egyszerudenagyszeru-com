@@ -15,6 +15,11 @@ import MediaImage from "./MediaImage";
 import ProductAttributesFields from "./ProductAttributesFields";
 import VariantMatrix, { Variant } from "./VariantMatrix";
 import DigitalServiceFields from "./DigitalServiceFields";
+import {
+  FULFILLMENTS, fulfillmentLabel, fulfillmentIcon, fulfillmentHint, fulfillmentOfType,
+  capabilitiesOf, defaultTypeOf, stockLabel, checkoutModeOf, checkoutModeLabel, orderFlow, summaryOf,
+  type Fulfillment,
+} from "@/lib/product-schema";
 
 interface Props { partnerId: string; }
 
@@ -22,9 +27,6 @@ const statusLabel: Record<string, string> = {
   draft: "Vázlat", pending_review: "Jóváhagyásra vár", active: "Aktív", paused: "Szünetel", rejected: "Elutasítva",
 };
 
-const fulfillmentLabel: Record<string, string> = {
-  physical: "Fizikai termék", digital: "Digitális termék", service: "Szolgáltatás",
-};
 
 const empty: any = {
   title: "", slug: "", description: "", price_huf: 0, compare_price_huf: null,
@@ -60,7 +62,7 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
 
   useEffect(() => { void load(); void loadCatalog(); }, [partnerId]);
 
-  const fulfillmentOfType = (pt: string) => pt?.startsWith("digital_") ? "digital" : pt?.startsWith("service_") ? "service" : "physical";
+  // teljesítési típus feloldás a központi sémából (@/lib/product-schema)
   const allTypes = useMemo(() => catalog.filter(c => c.category === "type"), [catalog]);
   const types = useMemo(
     () => allTypes.filter(c => fulfillmentOfType(c.product_type) === (form.fulfillment_type || "physical")),
@@ -173,12 +175,14 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
   };
 
   const t = form.product_type;
-  const ff: "physical" | "digital" | "service" = form.fulfillment_type || "physical";
+  const ff: Fulfillment = (form.fulfillment_type as Fulfillment) || "physical";
+  const caps = capabilitiesOf(ff);
   const isPhysical = ff === "physical";
-  const isClothing = isPhysical && (t === "clothing" || t === "shoes");
-  const isCase = isPhysical && (t === "phone_case" || t === "screen_protector");
+  const isClothing = caps.sizes && (t === "clothing" || t === "shoes");
+  const isCase = caps.devices && (t === "phone_case" || t === "screen_protector");
   const isPhone = isPhysical && t === "phone";
   const sizeOptions = sizesForType(t);
+
 
 
   return (
@@ -207,7 +211,7 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
                   {allTypes.find(x => x.product_type === p.product_type)?.label || p.product_type}
                 </Badge>
                 <Badge className="absolute bottom-2 left-2 rounded-none uppercase text-[10px]" variant="secondary">
-                  {fulfillmentLabel[p.fulfillment_type || "physical"]}
+                  {fulfillmentIcon[fulfillmentOfType(p.product_type)]} {fulfillmentLabel[(p.fulfillment_type as Fulfillment) || fulfillmentOfType(p.product_type)]}
                 </Badge>
 
               </div>
@@ -215,14 +219,11 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
                 <div className="font-bold text-sm line-clamp-1">{p.title}</div>
                 <div className="text-accent font-bold">{(p.price_huf || 0).toLocaleString("hu-HU")} Ft</div>
                 <div className="text-[10px] text-muted-foreground">
-                  {(p.fulfillment_type || "physical") === "physical"
-                    ? <>Készlet: {p.stock_qty}</>
-                    : (p.fulfillment_type === "service"
-                      ? <>Szolgáltatás{p.attributes?.duration_min ? ` · ${p.attributes.duration_min} perc` : ""}</>
-                      : <>Digitális{p.attributes?.digital_format ? ` · ${p.attributes.digital_format}` : ""}</>)}
+                  {summaryOf((p.fulfillment_type as Fulfillment) || fulfillmentOfType(p.product_type), p.attributes || {}, p.stock_qty)}
                   {" · SKU: "}{p.sku || "—"}
                   {p.brand && <> · {p.brand}{p.model ? ` ${p.model}` : ""}</>}
                 </div>
+
 
                 {Array.isArray(p.sizes) && p.sizes.length > 0 && (
                   <div className="text-[10px] text-muted-foreground">Méretek: {p.sizes.join(", ")}</div>
@@ -252,24 +253,35 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
             {/* Mit adsz el? */}
             <div>
               <Label>Mit adsz el? *</Label>
-              <div className="grid grid-cols-3 gap-2 mt-1">
-                {(["physical", "digital", "service"] as const).map(k => (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1">
+                {FULFILLMENTS.map(k => (
                   <button type="button" key={k}
                     onClick={() => {
-                      const firstType = allTypes.find(x => fulfillmentOfType(x.product_type) === k)?.product_type
-                        || (k === "digital" ? "digital_download" : k === "service" ? "service_consulting" : "clothing");
+                      const firstType = allTypes.find(x => fulfillmentOfType(x.product_type) === k)?.product_type || defaultTypeOf(k);
                       setForm({ ...form, fulfillment_type: k, product_type: firstType, sizes: [], compatible_devices: [] });
                     }}
-                    className={`px-3 py-2 text-xs font-bold uppercase tracking-wider border ${ff === k ? "bg-accent text-accent-foreground border-accent" : "border-foreground/20 hover:border-foreground"}`}>
-                    {fulfillmentLabel[k]}
+                    className={`px-3 py-2 text-xs font-bold uppercase tracking-wider border text-left ${ff === k ? "bg-accent text-accent-foreground border-accent" : "border-foreground/20 hover:border-foreground"}`}>
+                    {fulfillmentIcon[k]} {fulfillmentLabel[k]}
                   </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">{fulfillmentHint[ff]}</p>
+            </div>
+
+            {/* AI által felépített folyamat előnézet */}
+            <div className="border border-foreground/20 p-3 space-y-1">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Automatikusan beállított folyamat</div>
+              <div className="text-xs">Fizetés után: <span className="font-bold">{checkoutModeLabel[checkoutModeOf(ff)]}</span></div>
+              <div className="flex flex-wrap gap-1 pt-1">
+                {orderFlow[ff].map((s, i) => (
+                  <Badge key={s.key} variant="outline" className="rounded-none text-[10px]">{i + 1}. {s.label}</Badge>
                 ))}
               </div>
             </div>
 
             {/* Termék típus */}
             <div>
-              <Label>{ff === "service" ? "Szolgáltatás típusa *" : "Termék típusa *"}</Label>
+              <Label>{ff === "service" ? "Szolgáltatás típusa *" : ff === "course" ? "Képzés típusa *" : "Termék típusa *"}</Label>
               <Select value={form.product_type} onValueChange={(v) => setForm({ ...form, product_type: v, sizes: [], compatible_devices: [], brand: "", model: "" })}>
                 <SelectTrigger className="rounded-none"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -285,16 +297,17 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
               <div><Label>Ár (Ft) *</Label><Input type="number" className="rounded-none" value={form.price_huf} onChange={e => setForm({ ...form, price_huf: e.target.value })} /></div>
               <div><Label>Áthúzott ár</Label><Input type="number" className="rounded-none" value={form.compare_price_huf || ""} onChange={e => setForm({ ...form, compare_price_huf: e.target.value })} /></div>
               <div>
-                <Label>{ff === "physical" ? "Készlet" : ff === "service" ? "Foglalható helyek" : "Elérhető darab"}</Label>
+                <Label>{stockLabel[ff]}</Label>
                 <Input type="number" className="rounded-none" value={form.stock_qty} onChange={e => setForm({ ...form, stock_qty: e.target.value })} placeholder={ff === "digital" ? "0 = korlátlan" : ""} />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
-              <div><Label>Kategória / alkategória</Label><Input className="rounded-none" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder={ff === "service" ? "pl. Szerviz" : "pl. Póló, Hátlap"} /></div>
+              <div><Label>Kategória / alkategória</Label><Input className="rounded-none" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} placeholder={ff === "service" ? "pl. Szerviz" : ff === "course" ? "pl. Marketing" : "pl. Póló, Hátlap"} /></div>
               <div><Label>SKU</Label><Input className="rounded-none" value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} /></div>
-              {isPhysical && <div><Label>Súly (g)</Label><Input type="number" className="rounded-none" value={form.weight_g || ""} onChange={e => setForm({ ...form, weight_g: e.target.value })} /></div>}
+              {caps.weight && <div><Label>Súly (g)</Label><Input type="number" className="rounded-none" value={form.weight_g || ""} onChange={e => setForm({ ...form, weight_g: e.target.value })} /></div>}
             </div>
+
 
             {/* Digitális / szolgáltatás mezők */}
             <DigitalServiceFields
@@ -397,7 +410,7 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
             />
 
             {/* Variánsok mátrix: méret/modell × szín × készlet (csak fizikai termékeknél) */}
-            {isPhysical && (
+            {caps.variants && (
               <VariantMatrix
                 mode={isCase ? "device" : isClothing ? "size" : "simple"}
                 sizes={form.sizes || []}
@@ -416,7 +429,7 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
               />
             )}
 
-            {isPhysical && (
+            {caps.material && (
               <div className="grid grid-cols-2 gap-2">
                 <div><Label>Anyag</Label><Input className="rounded-none" value={form.material} onChange={e => setForm({ ...form, material: e.target.value })} placeholder="pl. 100% pamut / szilikon" /></div>
                 <div><Label>Származási hely</Label><Input className="rounded-none" value={form.origin_country} onChange={e => setForm({ ...form, origin_country: e.target.value })} placeholder="pl. Magyarország" /></div>
