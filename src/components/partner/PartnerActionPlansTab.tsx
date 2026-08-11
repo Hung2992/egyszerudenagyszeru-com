@@ -49,6 +49,8 @@ const PartnerActionPlansTab = ({ partnerId }: Props) => {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [goal, setGoal] = useState("Növeld a bevételemet.");
   const [busy, setBusy] = useState<string | null>(null);
+  const [openAudit, setOpenAudit] = useState<string | null>(null);
+
 
   const load = useCallback(async () => {
     const { data } = await supabase
