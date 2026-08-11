@@ -79,3 +79,6 @@ project_id = "meyxhsgnryuupwpddxav"
   [functions.ai-agent-bus-sync]
     verify_jwt = false
 
+
+  [functions.partner-product-builder]
+    verify_jwt = true
