@@ -76,6 +76,12 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
   const allDevices = useMemo(() => catalog.filter(c => c.category === "device").map(c => ({ brand: c.brand!, model: c.model! })), [catalog]);
 
   const startNew = () => { setEditing(null); setForm(empty); setOpen(true); };
+  const [studioOpen, setStudioOpen] = useState(false);
+  const applyStudio = (patch: Record<string, any>) => {
+    setEditing(null);
+    setForm({ ...empty, ...patch });
+    setOpen(true);
+  };
   const startEdit = (p: any) => {
     setEditing(p);
     const attrs = p.attributes || {};
