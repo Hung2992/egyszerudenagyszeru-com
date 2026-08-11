@@ -709,7 +709,7 @@ ${JSON.stringify(pbBest.map((p) => ({ tipus: p.project_type, keres: String(p.req
 ${JSON.stringify(refineFeedback)}
 
 Eredeti kérés: """${message.slice(0, 2000)}"""
-Jelenlegi konfiguráció: ${JSON.stringify(currentConfig)}${playbookHint}`
+Jelenlegi konfiguráció: ${JSON.stringify(currentConfig)}${playbookHint}${installedHint}${memoryHint}`
       : `Márka: ${partner.brand_name || "-"}
 ${typeHint}
 Márka-memória (korábbi döntések): ${JSON.stringify(mem?.memory ?? {})}
