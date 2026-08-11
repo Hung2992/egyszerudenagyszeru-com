@@ -280,6 +280,7 @@ const PartnerPortal = () => {
             <TabsTrigger value="inventory" className="rounded-none"><Boxes className="h-4 w-4 mr-2" />Készlet & árazás</TabsTrigger>
             <TabsTrigger value="finance" className="rounded-none"><Wallet className="h-4 w-4 mr-2" />Pénzügy</TabsTrigger>
             <TabsTrigger value="ai_team" className="rounded-none"><Users className="h-4 w-4 mr-2" />AI Csapatom</TabsTrigger>
+            <TabsTrigger value="action_plans" className="rounded-none"><Target className="h-4 w-4 mr-2" />AI intézkedések</TabsTrigger>
             <TabsTrigger value="advisor" className="rounded-none"><Sparkles className="h-4 w-4 mr-2" />AI asszisztens</TabsTrigger>
             <TabsTrigger value="overview" className="rounded-none"><BarChart3 className="h-4 w-4 mr-2" />Jutalék</TabsTrigger>
 
