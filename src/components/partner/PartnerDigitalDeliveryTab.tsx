@@ -105,7 +105,9 @@ export default function PartnerDigitalDeliveryTab({ partnerId }: Props) {
     setIssues(((data as any).issues || []) as Issue[]);
     setSummary((data as any).summary || "");
     setStats((data as any).stats || null);
+    setHealth((data as any).health || null);
   };
+
 
   const handleIssue = async (issue: Issue) => {
     const fix = AUTO_FIXABLE[issue.action_key];
