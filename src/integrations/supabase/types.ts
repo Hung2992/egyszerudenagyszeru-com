@@ -4790,6 +4790,71 @@ export type Database = {
           },
         ]
       }
+      partner_action_plans: {
+        Row: {
+          approved_at: string | null
+          baseline: Json
+          created_at: string
+          executed_at: string | null
+          execution_log: Json
+          expected_impact: string | null
+          goal: string
+          id: string
+          measured_at: string | null
+          partner_id: string
+          result: Json
+          risk_level: string | null
+          status: string
+          steps: Json
+          summary: string | null
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          baseline?: Json
+          created_at?: string
+          executed_at?: string | null
+          execution_log?: Json
+          expected_impact?: string | null
+          goal: string
+          id?: string
+          measured_at?: string | null
+          partner_id: string
+          result?: Json
+          risk_level?: string | null
+          status?: string
+          steps?: Json
+          summary?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          baseline?: Json
+          created_at?: string
+          executed_at?: string | null
+          execution_log?: Json
+          expected_impact?: string | null
+          goal?: string
+          id?: string
+          measured_at?: string | null
+          partner_id?: string
+          result?: Json
+          risk_level?: string | null
+          status?: string
+          steps?: Json
+          summary?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_action_plans_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_ai_build_snapshots: {
         Row: {
           before_config: Json

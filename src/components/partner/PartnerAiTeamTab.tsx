@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Bot, Send } from "lucide-react";
+import { Loader2, Bot, Send, AlertTriangle } from "lucide-react";
+import { usePartnerAgentMetrics, AgentMetricGrid } from "@/components/partner/PartnerAgentMetrics";
 
 interface Props { partnerId: string }
 
@@ -35,6 +36,7 @@ const PartnerAiTeamTab = ({ partnerId }: Props) => {
   const [question, setQuestion] = useState("");
   const [busy, setBusy] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const metrics = usePartnerAgentMetrics(partnerId);
 
   const ask = async (agent: Agent, q: string) => {
     if (!q.trim()) return;
@@ -75,9 +77,21 @@ const PartnerAiTeamTab = ({ partnerId }: Props) => {
         </p>
       </Card>
 
+      {metrics && metrics.alerts.length > 0 && (
+        <Card className="rounded-none p-4">
+          <p className="font-semibold flex items-center gap-2 text-sm">
+            <AlertTriangle className="h-4 w-4 text-destructive" /> Riasztások
+          </p>
+          <ul className="mt-2 space-y-1 text-sm text-muted-foreground list-disc pl-5">
+            {metrics.alerts.map((a) => <li key={a}>{a}</li>)}
+          </ul>
+        </Card>
+      )}
+
       <div className="grid md:grid-cols-2 gap-3">
         {AGENTS.map((a) => {
           const open = active === a.key;
+          const panel = metrics ? (metrics as any)[a.key] : null;
           return (
             <Card key={a.key} className="rounded-none p-4 space-y-3">
               <div className="flex items-start justify-between gap-2">
@@ -87,6 +101,10 @@ const PartnerAiTeamTab = ({ partnerId }: Props) => {
                 </div>
                 <Badge variant="secondary" className="rounded-none text-[10px]">{a.role}</Badge>
               </div>
+
+              {Array.isArray(panel) && panel.length > 0 && <AgentMetricGrid items={panel} />}
+
+
 
               {answers[a.key] && (
                 <div className="border border-border p-3 text-sm whitespace-pre-wrap">{answers[a.key]}</div>

@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { LogOut, Copy, Check, Download, Banknote, BarChart3, Megaphone, User as UserIcon, ListChecks, RefreshCw, Link2, FileSpreadsheet, Store, Package, Workflow, FlaskConical, Puzzle, Bot, LayoutDashboard, ShoppingBag, Boxes, Sparkles, Wallet, Users } from "lucide-react";
+import { LogOut, Copy, Check, Download, Banknote, BarChart3, Megaphone, User as UserIcon, ListChecks, RefreshCw, Link2, FileSpreadsheet, Store, Package, Workflow, FlaskConical, Puzzle, Bot, LayoutDashboard, ShoppingBag, Boxes, Sparkles, Wallet, Users, Target } from "lucide-react";
 import { copyToClipboard } from "@/lib/clipboard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import StorefrontEditorTab from "@/components/partner/StorefrontEditorTab";
@@ -28,6 +28,7 @@ import PartnerAiAdvisorTab from "@/components/partner/PartnerAiAdvisorTab";
 import PartnerCommandBar from "@/components/partner/PartnerCommandBar";
 import PartnerFinanceTab from "@/components/partner/PartnerFinanceTab";
 import PartnerAiTeamTab from "@/components/partner/PartnerAiTeamTab";
+import PartnerActionPlansTab from "@/components/partner/PartnerActionPlansTab";
 
 
 
@@ -279,6 +280,7 @@ const PartnerPortal = () => {
             <TabsTrigger value="inventory" className="rounded-none"><Boxes className="h-4 w-4 mr-2" />Készlet & árazás</TabsTrigger>
             <TabsTrigger value="finance" className="rounded-none"><Wallet className="h-4 w-4 mr-2" />Pénzügy</TabsTrigger>
             <TabsTrigger value="ai_team" className="rounded-none"><Users className="h-4 w-4 mr-2" />AI Csapatom</TabsTrigger>
+            <TabsTrigger value="action_plans" className="rounded-none"><Target className="h-4 w-4 mr-2" />AI intézkedések</TabsTrigger>
             <TabsTrigger value="advisor" className="rounded-none"><Sparkles className="h-4 w-4 mr-2" />AI asszisztens</TabsTrigger>
             <TabsTrigger value="overview" className="rounded-none"><BarChart3 className="h-4 w-4 mr-2" />Jutalék</TabsTrigger>
 
@@ -313,6 +315,11 @@ const PartnerPortal = () => {
           <TabsContent value="ai_team" className="mt-6">
             <PartnerAiTeamTab partnerId={partner.id} />
           </TabsContent>
+
+          <TabsContent value="action_plans" className="mt-6">
+            <PartnerActionPlansTab partnerId={partner.id} />
+          </TabsContent>
+
 
           <TabsContent value="advisor" className="mt-6">
             <PartnerAiAdvisorTab partnerId={partner.id} />
