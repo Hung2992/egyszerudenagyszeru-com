@@ -715,7 +715,7 @@ ${typeHint}
 Márka-memória (korábbi döntések): ${JSON.stringify(mem?.memory ?? {})}
 Jelenlegi konfiguráció: ${JSON.stringify(currentConfig)}
 Termékek: ${JSON.stringify((prods || []).slice(0, 10))}
-Architect terv: ${JSON.stringify(agentPlan)}${playbookHint}
+Architect terv: ${JSON.stringify(agentPlan)}${playbookHint}${installedHint}${memoryHint}
 
 A partner kérése: """${message.slice(0, 4000)}"""`;
 
