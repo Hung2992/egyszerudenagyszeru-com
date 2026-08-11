@@ -151,11 +151,20 @@ const PartnerActionPlansTab = ({ partnerId }: Props) => {
                     {s.state === "failed" && <XCircle className="h-4 w-4 inline mr-1 text-destructive" />}
                     {s.title}
                   </p>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 flex-wrap">
                     <Badge variant="outline" className="rounded-none text-[10px]">{TYPE_LABEL[s.type] || s.type}</Badge>
                     <Badge variant="secondary" className="rounded-none text-[10px]">Hatás: {s.impact}</Badge>
+                    {s.risk && (
+                      <Badge variant="outline" className="rounded-none text-[10px]">
+                        {RISK_ICON[s.risk] || "🟢"} {s.risk}
+                      </Badge>
+                    )}
+                    {s.state === "needs_approval" && (
+                      <Badge variant="destructive" className="rounded-none text-[10px]">Jóváhagyás kell</Badge>
+                    )}
                   </div>
                 </div>
+
                 {s.why && <p className="text-xs text-muted-foreground">{s.why}</p>}
                 {s.result && <p className="text-xs">{s.result}</p>}
               </div>
