@@ -1,4 +1,4 @@
-// AI intézkedések: elemzés → terv → jóváhagyás → végrehajtás → mérés.
+// AI intézkedések: cél → elemzés → terv → jóváhagyás → végrehajtás → mérés → tanulás.
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { Card } from "@/components/ui/card";
@@ -6,18 +6,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Rocket, CheckCircle2, XCircle, BarChart3, Target } from "lucide-react";
+import { Loader2, Rocket, CheckCircle2, XCircle, BarChart3, Target, Undo2, ScrollText } from "lucide-react";
+import PartnerAutopilotCard from "./PartnerAutopilotCard";
+import PartnerActionAuditTrail from "./PartnerActionAuditTrail";
 
 interface Props { partnerId: string }
 
 interface Step {
   idx: number; type: string; title: string; why: string; impact: string;
-  state?: string; result?: string; params?: Record<string, unknown>;
+  state?: string; result?: string; risk?: string; params?: Record<string, unknown>;
 }
 interface Plan {
   id: string; goal: string; summary: string | null; status: string;
   expected_impact: string | null; risk_level: string | null;
   steps: Step[]; result: Record<string, number> | null; created_at: string;
+  approved_by_email?: string | null; approved_at?: string | null;
+  approval_mode?: string | null; source?: string | null;
+  correlation_id?: string | null; rollback_data?: unknown[] | null;
 }
 
 const GOALS = [
@@ -32,14 +37,20 @@ const TYPE_LABEL: Record<string, string> = {
   workflow: "Automatizmus", manual: "Kézi teendő",
 };
 
+const RISK_ICON: Record<string, string> = { alacsony: "🟢", "közepes": "🟡", magas: "🔴" };
+
 const STATUS_LABEL: Record<string, string> = {
-  proposed: "Jóváhagyásra vár", executed: "Végrehajtva", measured: "Lemérve", discarded: "Elvetve",
+  proposed: "Jóváhagyásra vár", executed: "Végrehajtva", measured: "Lemérve",
+  discarded: "Elvetve", rolled_back: "Visszavonva",
 };
+
 
 const PartnerActionPlansTab = ({ partnerId }: Props) => {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [goal, setGoal] = useState("Növeld a bevételemet.");
   const [busy, setBusy] = useState<string | null>(null);
+  const [openAudit, setOpenAudit] = useState<string | null>(null);
+
 
   const load = useCallback(async () => {
     const { data } = await supabase
@@ -102,6 +113,9 @@ const PartnerActionPlansTab = ({ partnerId }: Props) => {
         </div>
       </Card>
 
+      <PartnerAutopilotCard partnerId={partnerId} onPlan={() => void load()} />
+
+
       {plans.length === 0 && (
         <Card className="rounded-none p-6 text-center text-sm text-muted-foreground">
           Még nincs intézkedési terved. Írd be a célod és kérj tervet az AI-tól.
@@ -137,11 +151,20 @@ const PartnerActionPlansTab = ({ partnerId }: Props) => {
                     {s.state === "failed" && <XCircle className="h-4 w-4 inline mr-1 text-destructive" />}
                     {s.title}
                   </p>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 flex-wrap">
                     <Badge variant="outline" className="rounded-none text-[10px]">{TYPE_LABEL[s.type] || s.type}</Badge>
                     <Badge variant="secondary" className="rounded-none text-[10px]">Hatás: {s.impact}</Badge>
+                    {s.risk && (
+                      <Badge variant="outline" className="rounded-none text-[10px]">
+                        {RISK_ICON[s.risk] || "🟢"} {s.risk}
+                      </Badge>
+                    )}
+                    {s.state === "needs_approval" && (
+                      <Badge variant="destructive" className="rounded-none text-[10px]">Jóváhagyás kell</Badge>
+                    )}
                   </div>
                 </div>
+
                 {s.why && <p className="text-xs text-muted-foreground">{s.why}</p>}
                 {s.result && <p className="text-xs">{s.result}</p>}
               </div>
@@ -177,7 +200,35 @@ const PartnerActionPlansTab = ({ partnerId }: Props) => {
                 Eredmény mérése
               </Button>
             )}
+            {(plan.status === "executed" || plan.status === "measured") && (plan.rollback_data?.length ?? 0) > 0 && (
+              <Button size="sm" variant="destructive" className="rounded-none" disabled={busy !== null}
+                onClick={() => void call("rollback", { plan_id: plan.id }, `r-${plan.id}`)}>
+                {busy === `r-${plan.id}` ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Undo2 className="h-4 w-4 mr-2" />}
+                Visszavonás (rollback)
+              </Button>
+            )}
+            <Button size="sm" variant="ghost" className="rounded-none"
+              onClick={() => setOpenAudit(openAudit === plan.id ? null : plan.id)}>
+              <ScrollText className="h-4 w-4 mr-2" />
+              {openAudit === plan.id ? "Napló elrejtése" : "Audit napló"}
+            </Button>
           </div>
+
+          {(plan.approved_by_email || plan.approval_mode) && (
+            <p className="text-[11px] text-muted-foreground">
+              Jóváhagyta: {plan.approved_by_email || "—"}
+              {plan.approved_at ? ` · ${new Date(plan.approved_at).toLocaleString("hu-HU")}` : ""}
+              {plan.approval_mode ? ` · mód: ${plan.approval_mode === "autopilot" ? "autopilot" : "kézi"}` : ""}
+              {plan.source === "autopilot" ? " · forrás: 🚀 autopilot" : ""}
+            </p>
+          )}
+
+          {openAudit === plan.id && (
+            <div className="border border-border p-3">
+              <PartnerActionAuditTrail actionId={plan.id} />
+            </div>
+          )}
+
         </Card>
       ))}
     </div>
