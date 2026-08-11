@@ -13,6 +13,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { Truck, RefreshCw, Search, Download } from "lucide-react";
 
+import OrderFulfillmentPlan from "./OrderFulfillmentPlan";
+
 interface Props { partnerId: string }
 
 interface POrder {
@@ -205,6 +207,9 @@ const PartnerOrdersTab = ({ partnerId }: Props) => {
                       ))}
                     </div>
                   )}
+
+                  {items.length > 0 && <OrderFulfillmentPlan items={items} />}
+
 
                   {o.shipping_address && (
                     <div className="text-xs text-muted-foreground">
