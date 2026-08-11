@@ -5838,6 +5838,7 @@ export type Database = {
       partner_fulfillment_audit: {
         Row: {
           action: string
+          action_id: string
           actor_user_id: string | null
           after_state: Json | null
           before_state: Json | null
@@ -5845,12 +5846,15 @@ export type Database = {
           customer_email: string | null
           id: string
           partner_id: string
+          plan_id: string | null
           reason: string | null
           resource_id: string | null
           resource_type: string
+          result: string
         }
         Insert: {
           action: string
+          action_id?: string
           actor_user_id?: string | null
           after_state?: Json | null
           before_state?: Json | null
@@ -5858,12 +5862,15 @@ export type Database = {
           customer_email?: string | null
           id?: string
           partner_id: string
+          plan_id?: string | null
           reason?: string | null
           resource_id?: string | null
           resource_type: string
+          result?: string
         }
         Update: {
           action?: string
+          action_id?: string
           actor_user_id?: string | null
           after_state?: Json | null
           before_state?: Json | null
@@ -5871,9 +5878,11 @@ export type Database = {
           customer_email?: string | null
           id?: string
           partner_id?: string
+          plan_id?: string | null
           reason?: string | null
           resource_id?: string | null
           resource_type?: string
+          result?: string
         }
         Relationships: []
       }
