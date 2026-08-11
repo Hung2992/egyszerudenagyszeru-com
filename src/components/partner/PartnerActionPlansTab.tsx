@@ -1,4 +1,4 @@
-// AI intézkedések: elemzés → terv → jóváhagyás → végrehajtás → mérés.
+// AI intézkedések: cél → elemzés → terv → jóváhagyás → végrehajtás → mérés → tanulás.
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { Card } from "@/components/ui/card";
@@ -6,18 +6,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Rocket, CheckCircle2, XCircle, BarChart3, Target } from "lucide-react";
+import { Loader2, Rocket, CheckCircle2, XCircle, BarChart3, Target, Undo2, ScrollText } from "lucide-react";
+import PartnerAutopilotCard from "./PartnerAutopilotCard";
+import PartnerActionAuditTrail from "./PartnerActionAuditTrail";
 
 interface Props { partnerId: string }
 
 interface Step {
   idx: number; type: string; title: string; why: string; impact: string;
-  state?: string; result?: string; params?: Record<string, unknown>;
+  state?: string; result?: string; risk?: string; params?: Record<string, unknown>;
 }
 interface Plan {
   id: string; goal: string; summary: string | null; status: string;
   expected_impact: string | null; risk_level: string | null;
   steps: Step[]; result: Record<string, number> | null; created_at: string;
+  approved_by_email?: string | null; approved_at?: string | null;
+  approval_mode?: string | null; source?: string | null;
+  correlation_id?: string | null; rollback_data?: unknown[] | null;
 }
 
 const GOALS = [
@@ -32,9 +37,13 @@ const TYPE_LABEL: Record<string, string> = {
   workflow: "Automatizmus", manual: "Kézi teendő",
 };
 
+const RISK_ICON: Record<string, string> = { alacsony: "🟢", "közepes": "🟡", magas: "🔴" };
+
 const STATUS_LABEL: Record<string, string> = {
-  proposed: "Jóváhagyásra vár", executed: "Végrehajtva", measured: "Lemérve", discarded: "Elvetve",
+  proposed: "Jóváhagyásra vár", executed: "Végrehajtva", measured: "Lemérve",
+  discarded: "Elvetve", rolled_back: "Visszavonva",
 };
+
 
 const PartnerActionPlansTab = ({ partnerId }: Props) => {
   const [plans, setPlans] = useState<Plan[]>([]);
