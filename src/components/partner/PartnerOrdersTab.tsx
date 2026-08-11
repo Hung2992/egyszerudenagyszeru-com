@@ -13,6 +13,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { Truck, RefreshCw, Search, Download } from "lucide-react";
 
+import OrderFulfillmentPlan from "./OrderFulfillmentPlan";
+
 interface Props { partnerId: string }
 
 interface POrder {
