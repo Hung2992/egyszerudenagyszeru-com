@@ -211,7 +211,7 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
                   {allTypes.find(x => x.product_type === p.product_type)?.label || p.product_type}
                 </Badge>
                 <Badge className="absolute bottom-2 left-2 rounded-none uppercase text-[10px]" variant="secondary">
-                  {fulfillmentLabel[p.fulfillment_type || "physical"]}
+                  {fulfillmentIcon[fulfillmentOfType(p.product_type)]} {fulfillmentLabel[(p.fulfillment_type as Fulfillment) || fulfillmentOfType(p.product_type)]}
                 </Badge>
 
               </div>
@@ -219,14 +219,11 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
                 <div className="font-bold text-sm line-clamp-1">{p.title}</div>
                 <div className="text-accent font-bold">{(p.price_huf || 0).toLocaleString("hu-HU")} Ft</div>
                 <div className="text-[10px] text-muted-foreground">
-                  {(p.fulfillment_type || "physical") === "physical"
-                    ? <>Készlet: {p.stock_qty}</>
-                    : (p.fulfillment_type === "service"
-                      ? <>Szolgáltatás{p.attributes?.duration_min ? ` · ${p.attributes.duration_min} perc` : ""}</>
-                      : <>Digitális{p.attributes?.digital_format ? ` · ${p.attributes.digital_format}` : ""}</>)}
+                  {summaryOf((p.fulfillment_type as Fulfillment) || fulfillmentOfType(p.product_type), p.attributes || {}, p.stock_qty)}
                   {" · SKU: "}{p.sku || "—"}
                   {p.brand && <> · {p.brand}{p.model ? ` ${p.model}` : ""}</>}
                 </div>
+
 
                 {Array.isArray(p.sizes) && p.sizes.length > 0 && (
                   <div className="text-[10px] text-muted-foreground">Méretek: {p.sizes.join(", ")}</div>
