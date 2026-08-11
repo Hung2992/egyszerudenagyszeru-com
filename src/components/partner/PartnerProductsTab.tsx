@@ -196,8 +196,21 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold uppercase tracking-widest">Termékeim ({products.length})</h2>
-        <Button onClick={startNew} className="rounded-none uppercase tracking-wider"><Plus className="h-4 w-4 mr-1" /> Új termék</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setStudioOpen(true)} className="rounded-none uppercase tracking-wider">
+            <Sparkles className="h-4 w-4 mr-1" /> AI Product Studio
+          </Button>
+          <Button onClick={startNew} className="rounded-none uppercase tracking-wider"><Plus className="h-4 w-4 mr-1" /> Új termék</Button>
+        </div>
       </div>
+
+      <AiProductBuilderDialog
+        partnerId={partnerId}
+        open={studioOpen}
+        onOpenChange={setStudioOpen}
+        initialFulfillment={(["digital", "course", "service"].includes(ff) ? ff : "digital") as "digital" | "course" | "service"}
+        onApply={applyStudio}
+      />
 
       {products.length === 0 ? (
         <Card className="rounded-none border-foreground/20 p-8 text-center text-muted-foreground">
