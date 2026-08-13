@@ -82,9 +82,33 @@ serve(async (req) => {
   const url = new URL(req.url);
   const env = (url.searchParams.get("env") || "sandbox") as StripeEnv;
 
+  let claimedEventId: string | null = null;
+
   try {
-    const event = await verifyWebhook(req, env);
-    console.log("Received event:", event.type, "env:", env);
+    const event = (await verifyWebhook(req, env)) as any;
+    console.log("Received event:", event.type, "env:", env, "id:", event.id);
+
+    // --- Event-level idempotencia: ugyanaz a Stripe event csak egyszer dolgozható fel ---
+    const eventId: string | undefined = event.id;
+    if (eventId) {
+      const { data: claimed, error: claimError } = await supabase.rpc("claim_webhook_event", {
+        _provider: `stripe:${env}`,
+        _event_id: eventId,
+        _event_type: event.type,
+      });
+      if (claimError) {
+        console.error("claim_webhook_event failed:", claimError);
+        return new Response("Idempotency check failed", { status: 500 });
+      }
+      if (!claimed) {
+        console.log(`Duplicate webhook event ${eventId} ignored`);
+        return new Response(JSON.stringify({ received: true, duplicate: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      claimedEventId = eventId;
+    }
 
     switch (event.type) {
       case "checkout.session.completed": {
