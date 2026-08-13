@@ -12077,6 +12077,45 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_events: {
+        Row: {
+          attempts: number
+          created_at: string
+          event_id: string
+          event_type: string | null
+          id: string
+          last_error: string | null
+          processed_at: string | null
+          provider: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          event_id: string
+          event_type?: string | null
+          id?: string
+          last_error?: string | null
+          processed_at?: string | null
+          provider: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          event_id?: string
+          event_type?: string | null
+          id?: string
+          last_error?: string | null
+          processed_at?: string | null
+          provider?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       welcome20_send_log: {
         Row: {
           coupon_code: string
@@ -12619,6 +12658,10 @@ export type Database = {
       }
       can_manage_drops: { Args: { _user_id: string }; Returns: boolean }
       check_and_bump_learn_quota: { Args: { _kind?: string }; Returns: boolean }
+      claim_webhook_event: {
+        Args: { _event_id: string; _event_type: string; _provider: string }
+        Returns: boolean
+      }
       cleanup_expired_ai_cache: { Args: never; Returns: number }
       cleanup_expired_drop_holds: {
         Args: never
@@ -12627,6 +12670,15 @@ export type Database = {
           expired_winners: number
           opened_scheduled: number
         }[]
+      }
+      complete_webhook_event: {
+        Args: {
+          _error: string
+          _event_id: string
+          _ok: boolean
+          _provider: string
+        }
+        Returns: undefined
       }
       decay_ai_knowledge_quality: { Args: never; Returns: number }
       delete_email: {

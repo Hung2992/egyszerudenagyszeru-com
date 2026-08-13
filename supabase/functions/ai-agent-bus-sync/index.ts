@@ -5,12 +5,15 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { setContext, publish } from "../_shared/agent-bus.ts";
+import { requireInternalOrAdmin } from "../_shared/internal-auth.ts";
 
 const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const guard = await requireInternalOrAdmin(req);
+  if (!guard.ok) return guard.response;
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
