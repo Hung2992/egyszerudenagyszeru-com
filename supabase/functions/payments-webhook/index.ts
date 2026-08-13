@@ -226,12 +226,30 @@ serve(async (req) => {
         console.log("Unhandled event:", event.type);
     }
 
+    if (claimedEventId) {
+      await supabase.rpc("complete_webhook_event", {
+        _provider: `stripe:${env}`,
+        _event_id: claimedEventId,
+        _ok: true,
+        _error: null,
+      });
+    }
+
     return new Response(JSON.stringify({ received: true }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("Webhook error:", e);
+    if (claimedEventId) {
+      // sikertelen feldolgozás -> újrapróbálhatóra állítjuk (Stripe retry)
+      await supabase.rpc("complete_webhook_event", {
+        _provider: `stripe:${env}`,
+        _event_id: claimedEventId,
+        _ok: false,
+        _error: String((e as Error)?.message || e).slice(0, 500),
+      }).catch(() => {});
+    }
     return new Response("Webhook error", { status: 400 });
   }
 });
