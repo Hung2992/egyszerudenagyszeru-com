@@ -12,6 +12,8 @@ interface SendAppEmailResponse {
   error?: string;
 }
 
+import { supabase } from "@/integrations/supabase/client";
+
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 const PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
@@ -21,12 +23,22 @@ export async function sendAppEmail({
   idempotencyKey,
   templateData,
 }: SendAppEmailParams): Promise<SendAppEmailResponse> {
+  // Bejelentkezett felhasználó esetén a saját JWT-jével hívunk, hogy a szerver
+  // oldali jogosultság-ellenőrzés azonosítani tudja a küldőt.
+  let accessToken = PUBLISHABLE_KEY;
+  try {
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.access_token) accessToken = data.session.access_token;
+  } catch {
+    /* anonim hívás marad */
+  }
+
   const response = await fetch(`${FUNCTIONS_URL}/send-transactional-email`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       apikey: PUBLISHABLE_KEY,
-      Authorization: `Bearer ${PUBLISHABLE_KEY}`,
+      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({
       templateName,
