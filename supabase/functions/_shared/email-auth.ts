@@ -56,23 +56,21 @@ export async function authorizeEmailSend(
   // 1) Belső service_role hívás (edge függvények, cron)
   if (serviceKey && safeEqual(bearer, serviceKey)) return { ok: true, caller: 'service' }
 
-  // 2) Felhasználói JWT
-  if (!safeEqual(bearer, anonKey)) {
-    let userId: string | null = null
-    let userEmail: string | null = null
-    try {
-      const anon = createClient(Deno.env.get('SUPABASE_URL')!, anonKey, {
-        auth: { persistSession: false },
-      })
-      const { data } = await anon.auth.getUser(bearer)
-      userId = data?.user?.id ?? null
-      userEmail = data?.user?.email?.toLowerCase() ?? null
-    } catch {
-      userId = null
-    }
+  // 2) Felhasználói JWT (ha a token valódi user sessionhöz tartozik)
+  let userId: string | null = null
+  let userEmail: string | null = null
+  try {
+    const anon = createClient(Deno.env.get('SUPABASE_URL')!, anonKey || bearer, {
+      auth: { persistSession: false },
+    })
+    const { data } = await anon.auth.getUser(bearer)
+    userId = data?.user?.id ?? null
+    userEmail = data?.user?.email?.toLowerCase() ?? null
+  } catch {
+    userId = null
+  }
 
-    if (!userId) return { ok: false, status: 401, error: 'Érvénytelen hitelesítési token' }
-
+  if (userId) {
     if (userEmail && userEmail === normalizedRecipient) {
       return { ok: true, caller: 'self', userId }
     }
@@ -82,6 +80,7 @@ export async function authorizeEmailSend(
 
     return { ok: false, status: 403, error: 'Nincs jogosultság más címzettnek e-mailt küldeni' }
   }
+
 
   // 3) Anonim (publishable kulcs) — csak publikus sablon + bizonyított címzett
   const publicRule = PUBLIC_TEMPLATES[templateName]
