@@ -94,7 +94,7 @@ export async function authorizeEmailSend(
   const { data: proof, error } = await admin
     .from(publicRule.table)
     .select('id')
-    .eq(publicRule.column, normalizedRecipient)
+    .ilike(publicRule.column, normalizedRecipient)
     .gte('created_at', new Date(Date.now() - 15 * 60_000).toISOString())
     .limit(1)
     .maybeSingle()
