@@ -2,6 +2,7 @@ import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
+import { authorizeEmailSend } from '../_shared/email-auth.ts'
 
 // Configuration baked in at scaffold time — do NOT change these manually.
 // To update, re-run the email domain setup flow.
@@ -31,9 +32,8 @@ function generateToken(): string {
     .join('')
 }
 
-// Auth note: this function uses verify_jwt = true in config.toml, so Supabase's
-// gateway validates the caller's JWT (anon or service_role) before the request
-// reaches this code. No in-function auth check is needed.
+// Auth: a gateway JWT-ellenőrzésén felül in-function jogosultság-ellenőrzés fut
+// (lásd ../_shared/email-auth.ts). Az anon kulcs önmagában NEM elegendő.
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -125,6 +125,19 @@ Deno.serve(async (req) => {
 
   // Create Supabase client with service role (bypasses RLS)
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+  // 1.5 Jogosultság-ellenőrzés (anon spam / arbitrary recipient védelem)
+  const authResult = await authorizeEmailSend(req, {
+    templateName,
+    recipient: effectiveRecipient,
+    admin: supabase,
+  })
+  if (!authResult.ok) {
+    return new Response(JSON.stringify({ error: authResult.error }), {
+      status: authResult.status,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
 
   // 2. Check suppression list (fail-closed: if we can't verify, don't send)
   const { data: suppressed, error: suppressionError } = await supabase
