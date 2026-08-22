@@ -271,7 +271,6 @@ serve(async (req) => {
       },
     });
 
-    console.log("[QA] raw session:", JSON.stringify(session).slice(0, 800));
     return jsonResponse({ clientSecret: session.client_secret, order_id: order.id });
   } catch (error: unknown) {
     console.error("Checkout session error:", error);
