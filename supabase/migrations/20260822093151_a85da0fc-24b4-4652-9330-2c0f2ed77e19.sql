@@ -1,0 +1,1 @@
+UPDATE public.shop_products SET is_active = false, stock = 0 WHERE id = '0a000000-0000-4000-8000-000000000001';
