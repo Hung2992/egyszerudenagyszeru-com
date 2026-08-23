@@ -313,10 +313,31 @@ serve(async (req) => {
       },
     });
 
-    return jsonResponse({ clientSecret: session.client_secret, order_id: order.id });
+    // ── 7. Validate the Stripe session before declaring success ──────
+    const clientSecret = typeof session?.client_secret === "string" ? session.client_secret.trim() : "";
+    const sessionId = typeof session?.id === "string" ? session.id.trim() : "";
+    const validSession =
+      sessionId.startsWith("cs_") &&
+      clientSecret.length > 20 &&
+      (session as any)?.object === "checkout.session";
+
+    if (!validSession) {
+      console.error("Invalid Stripe checkout session response", {
+        hasSession: !!session,
+        sessionIdPresent: !!sessionId,
+        clientSecretPresent: !!clientSecret,
+        status: (session as any)?.status ?? null,
+      });
+      await compensate("invalid_stripe_session");
+      return jsonResponse({ error: "A fizetés indítása jelenleg nem elérhető", fallback: true }, 502);
+    }
+
+    return jsonResponse({ clientSecret, session_id: sessionId, order_id: order.id });
   } catch (error: unknown) {
+    // Detailed reason stays server-side only — never leak credentials/connector internals.
     console.error("Checkout session error:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return jsonResponse({ error: message, fallback: true }, 500);
+    await compensate("checkout_exception");
+    return jsonResponse({ error: "A fizetés indítása jelenleg nem elérhető", fallback: true }, 502);
   }
 });
+
