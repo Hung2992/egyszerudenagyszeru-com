@@ -202,6 +202,7 @@ serve(async (req) => {
       if (updErr || !updated) {
         return jsonResponse({ error: "Kupon érvényesítési hiba, próbáld újra.", fallback: false }, 409);
       }
+      couponClaim = { id: coupon.id, previousCount: coupon.used_count };
     }
 
     // ── 3.5 Server-side shipping fee ─────────────────────────────────
