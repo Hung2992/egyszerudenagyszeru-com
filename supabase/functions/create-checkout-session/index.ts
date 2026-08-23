@@ -111,6 +111,7 @@ serve(async (req) => {
     const env = (environment || "sandbox") as StripeEnv;
     const stripe = createStripeClient(env);
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    compensationClient = supabase;
 
     // ── 1. Validate product prices from DB ──────────────────────────
     const productIds = [...new Set((orderData.items as OrderItem[]).map((i: OrderItem) => i.productId))];
