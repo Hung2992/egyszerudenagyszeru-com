@@ -32,7 +32,46 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Compensation state (must live outside `try` so the catch block can roll back)
+  let compensationClient: any = null;
+  let createdOrderId: string | null = null;
+  let couponClaim: { id: string; previousCount: number } | null = null;
+  let compensationDone = false;
+
+  // Idempotent compensation: revert the order + coupon side effects of a failed checkout.
+  const compensate = async (reason: string) => {
+    if (compensationDone) return;
+    compensationDone = true;
+    if (!compensationClient) return;
+    if (createdOrderId) {
+      try {
+        // Only remove orders that never became payable.
+        await compensationClient
+          .from("orders")
+          .delete()
+          .eq("id", createdOrderId)
+          .eq("status", "awaiting_payment");
+      } catch (e) {
+        console.error("compensation: order rollback failed", { orderId: createdOrderId, e });
+      }
+    }
+    if (couponClaim) {
+      try {
+        // Optimistic revert — no-op if another request already changed the counter.
+        await compensationClient
+          .from("coupons")
+          .update({ used_count: couponClaim.previousCount })
+          .eq("id", couponClaim.id)
+          .eq("used_count", couponClaim.previousCount + 1);
+      } catch (e) {
+        console.error("compensation: coupon rollback failed", { couponId: couponClaim.id, e });
+      }
+    }
+    console.error("checkout compensation executed", { reason, orderId: createdOrderId });
+  };
+
   try {
+
     const { orderData, returnUrl, environment } = await req.json();
 
     if (!orderData || !orderData.items || orderData.items.length === 0) {
@@ -72,6 +111,7 @@ serve(async (req) => {
     const env = (environment || "sandbox") as StripeEnv;
     const stripe = createStripeClient(env);
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    compensationClient = supabase;
 
     // ── 1. Validate product prices from DB ──────────────────────────
     const productIds = [...new Set((orderData.items as OrderItem[]).map((i: OrderItem) => i.productId))];
@@ -162,6 +202,7 @@ serve(async (req) => {
       if (updErr || !updated) {
         return jsonResponse({ error: "Kupon érvényesítési hiba, próbáld újra.", fallback: false }, 409);
       }
+      couponClaim = { id: coupon.id, previousCount: coupon.used_count };
     }
 
     // ── 3.5 Server-side shipping fee ─────────────────────────────────
@@ -185,6 +226,7 @@ serve(async (req) => {
 
     // Stripe minimum for HUF is 175
     if (netTotalHuf < 175) {
+      await compensate("min_amount_not_reached");
       return jsonResponse({ error: "A rendelés összege legalább 175 Ft kell legyen.", fallback: false }, 400);
     }
 
@@ -208,6 +250,7 @@ serve(async (req) => {
     if (orderError) {
       throw new Error(`Order creation failed: ${orderError.message}`);
     }
+    createdOrderId = order.id;
 
     // ── 6. Build Stripe line items from validated prices ────────────
     const toStripeAmount = (huf: number) => Math.round(huf * 100);
@@ -271,10 +314,31 @@ serve(async (req) => {
       },
     });
 
-    return jsonResponse({ clientSecret: session.client_secret, order_id: order.id });
+    // ── 7. Validate the Stripe session before declaring success ──────
+    const clientSecret = typeof session?.client_secret === "string" ? session.client_secret.trim() : "";
+    const sessionId = typeof session?.id === "string" ? session.id.trim() : "";
+    const validSession =
+      sessionId.startsWith("cs_") &&
+      clientSecret.length > 20 &&
+      (session as any)?.object === "checkout.session";
+
+    if (!validSession) {
+      console.error("Invalid Stripe checkout session response", {
+        hasSession: !!session,
+        sessionIdPresent: !!sessionId,
+        clientSecretPresent: !!clientSecret,
+        status: (session as any)?.status ?? null,
+      });
+      await compensate("invalid_stripe_session");
+      return jsonResponse({ error: "A fizetés indítása jelenleg nem elérhető", fallback: true }, 502);
+    }
+
+    return jsonResponse({ clientSecret, session_id: sessionId, order_id: order.id });
   } catch (error: unknown) {
+    // Detailed reason stays server-side only — never leak credentials/connector internals.
     console.error("Checkout session error:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return jsonResponse({ error: message, fallback: true }, 500);
+    await compensate("checkout_exception");
+    return jsonResponse({ error: "A fizetés indítása jelenleg nem elérhető", fallback: true }, 502);
   }
 });
+
