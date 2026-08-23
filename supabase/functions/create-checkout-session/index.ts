@@ -32,7 +32,46 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Compensation state (must live outside `try` so the catch block can roll back)
+  let compensationClient: any = null;
+  let createdOrderId: string | null = null;
+  let couponClaim: { id: string; previousCount: number } | null = null;
+  let compensationDone = false;
+
+  // Idempotent compensation: revert the order + coupon side effects of a failed checkout.
+  const compensate = async (reason: string) => {
+    if (compensationDone) return;
+    compensationDone = true;
+    if (!compensationClient) return;
+    if (createdOrderId) {
+      try {
+        // Only remove orders that never became payable.
+        await compensationClient
+          .from("orders")
+          .delete()
+          .eq("id", createdOrderId)
+          .eq("status", "awaiting_payment");
+      } catch (e) {
+        console.error("compensation: order rollback failed", { orderId: createdOrderId, e });
+      }
+    }
+    if (couponClaim) {
+      try {
+        // Optimistic revert — no-op if another request already changed the counter.
+        await compensationClient
+          .from("coupons")
+          .update({ used_count: couponClaim.previousCount })
+          .eq("id", couponClaim.id)
+          .eq("used_count", couponClaim.previousCount + 1);
+      } catch (e) {
+        console.error("compensation: coupon rollback failed", { couponId: couponClaim.id, e });
+      }
+    }
+    console.error("checkout compensation executed", { reason, orderId: createdOrderId });
+  };
+
   try {
+
     const { orderData, returnUrl, environment } = await req.json();
 
     if (!orderData || !orderData.items || orderData.items.length === 0) {
