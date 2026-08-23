@@ -226,6 +226,7 @@ serve(async (req) => {
 
     // Stripe minimum for HUF is 175
     if (netTotalHuf < 175) {
+      await compensate("min_amount_not_reached");
       return jsonResponse({ error: "A rendelés összege legalább 175 Ft kell legyen.", fallback: false }, 400);
     }
 
