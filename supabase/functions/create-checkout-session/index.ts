@@ -249,6 +249,7 @@ serve(async (req) => {
     if (orderError) {
       throw new Error(`Order creation failed: ${orderError.message}`);
     }
+    createdOrderId = order.id;
 
     // ── 6. Build Stripe line items from validated prices ────────────
     const toStripeAmount = (huf: number) => Math.round(huf * 100);
