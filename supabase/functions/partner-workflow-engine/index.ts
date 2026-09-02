@@ -195,10 +195,44 @@ Deno.serve(async (req) => {
       : raw;
     const action = body.action ?? "compile";
 
+    // --- 0) Hitelesítés + tenant feloldás ---
+    const bearer = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const isInternal = !!bearer && !!serviceKey && bearer === serviceKey;
+
+    let callerUserId: string | null = null;
+    let isAdmin = false;
+    let partnerIds: string[] = [];
+
+    if (!isInternal) {
+      if (!bearer) return json({ error: "Hitelesítés szükséges" }, 401);
+      const anon = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        auth: { persistSession: false },
+      });
+      const { data: userData } = await anon.auth.getUser(bearer);
+      if (!userData?.user) return json({ error: "Hitelesítés szükséges" }, 401);
+      callerUserId = userData.user.id;
+
+      const { data: adminFlag } = await admin.rpc("has_role", { _user_id: callerUserId, _role: "admin" });
+      isAdmin = !!adminFlag;
+
+      const { data: myPartners } = await admin.from("partners").select("id").eq("user_id", callerUserId);
+      partnerIds = (myPartners ?? []).map((p: { id: string }) => p.id);
+
+      if (!isAdmin && partnerIds.length === 0) {
+        return json({ error: "Nincs partner jogosultság" }, 403);
+      }
+    }
+
+    const ownsPartner = (pid: string | null | undefined) =>
+      isInternal || isAdmin || (!!pid && partnerIds.includes(pid));
+
     // --- 1) Természetes nyelv -> workflow ---
     if (action === "compile") {
       if (!body.prompt) return json({ error: "prompt kötelező" }, 400);
-      const spec = await callAI(COMPILE_SYSTEM, String(body.prompt));
+      const prompt = String(body.prompt);
+      if (prompt.length > 4000) return json({ error: "A prompt túl hosszú (max 4000 karakter)" }, 400);
+      const spec = await callAI(COMPILE_SYSTEM, prompt);
       if (!TRIGGERS.includes(spec.trigger_event)) spec.trigger_event = "order.created";
       spec.steps = (spec.steps ?? []).filter((s: any) => STEP_TYPES.includes(s?.type));
       return json({ ok: true, workflow: spec });
@@ -206,14 +240,17 @@ Deno.serve(async (req) => {
 
     // --- 2) Kézi / teszt futtatás ---
     if (action === "run" || action === "test") {
+      if (!UUID_RE.test(String(body.workflow_id ?? ""))) return json({ error: "Érvénytelen workflow azonosító" }, 400);
       const { data: wf } = await admin.from("partner_workflows").select("*").eq("id", body.workflow_id).maybeSingle();
       if (!wf) return json({ error: "workflow nem található" }, 404);
+      if (!ownsPartner(wf.partner_id)) return json({ error: "Nincs jogosultság ehhez a folyamathoz" }, 403);
       const res = await executeWorkflow(admin, wf, body.payload ?? {}, action === "test");
       return json({ ok: true, ...res });
     }
 
-    // --- 3) Esemény szétosztás minden aktív folyamatra ---
+    // --- 3) Esemény szétosztás minden aktív folyamatra (csak belső / admin hívó) ---
     if (action === "dispatch") {
+      if (!isInternal && !isAdmin) return json({ error: "Csak belső hívó indíthat szétosztást" }, 403);
       const event = String(body.event ?? "");
       const { data: wfs } = await admin.from("partner_workflows")
         .select("*").eq("trigger_event", event).eq("is_active", true).limit(50);
@@ -223,6 +260,7 @@ Deno.serve(async (req) => {
       }
       return json({ ok: true, event, executed: out.length, results: out });
     }
+
 
     // --- 4) A/B variáns generálás ---
     if (action === "ab_generate") {
