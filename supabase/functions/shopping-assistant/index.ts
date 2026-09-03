@@ -4,6 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.104.1'
 import {
   getFromCache, saveToCache, checkQuota, incrementQuota, logMonitoring, getUserIdFromRequest,
 } from '../_shared/ai-utils.ts'
+import { rateLimitDb } from '../_shared/internal-auth.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -177,6 +178,10 @@ async function getOrderDetails(admin: any, authedUserId: string | null, args: an
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
+
+  // 🛡️ IP alapú rate limit (vendég vásárlóknak is nyitott végpont)
+  const limited = await rateLimitDb(req, { limit: 15, windowSeconds: 60, key: 'shopping-assistant' })
+  if (limited) return limited
 
   try {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')

@@ -50,9 +50,20 @@ async function dispatchToSubscribers(supabase: SupabaseLike, ev: { id: string; s
       const started = Date.now();
       let status = "sent";
       try {
+        // Belső (saját projekt) webhookoknál service_role hitelesítés,
+        // külső URL-re SOHA nem küldünk titkot.
+        const selfBase = Deno.env.get("SUPABASE_URL") || "";
+        const isInternalTarget = !!selfBase && String(s.webhook_url).startsWith(selfBase);
         const r = await fetch(s.webhook_url, {
           method: "POST",
-          headers: { "Content-Type": "application/json", "x-bus-event-id": ev.id, "x-bus-source": ev.source },
+          headers: {
+            "Content-Type": "application/json",
+            "x-bus-event-id": ev.id,
+            "x-bus-source": ev.source,
+            ...(isInternalTarget
+              ? { Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""}` }
+              : {}),
+          },
           body: JSON.stringify({ bus_event: { id: ev.id, event_type: ev.eventType, source: ev.source, target: ev.target ?? null, severity: ev.severity ?? "info", payload: ev.payload ?? {} } }),
         });
         status = `${r.status}`;

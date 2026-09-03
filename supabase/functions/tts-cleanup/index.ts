@@ -2,6 +2,7 @@
 // Cron-on fut naponta, de manuálisan is hívható az adminból.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { requireInternalOrAdmin } from "../_shared/internal-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,6 +11,10 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  // 🔐 Csak belső cron/service hívó vagy admin
+  const guard = await requireInternalOrAdmin(req);
+  if (!guard.ok) return guard.response;
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
