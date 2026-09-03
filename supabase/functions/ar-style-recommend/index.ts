@@ -2,7 +2,7 @@
 // POST { product_id, product_name, product_category?, product_colors?, occasion? }
 // Válasz: { outfit_tip: string, suggestions: [{ category, keywords, why }], matched_products: [...] }
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.104.1';
-import { rateLimit } from '../_shared/internal-auth.ts';
+import { rateLimitDb } from '../_shared/internal-auth.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   // 🛡️ Publikus AI végpont: IP alapú rate limit az erőforrás-kimerítés ellen
-  const limited = rateLimit(req, { limit: 10, windowMs: 60_000, key: 'ar-style' });
+  const limited = await rateLimitDb(req, { limit: 10, windowSeconds: 60, key: 'ar-style' });
   if (limited) return limited;
 
   try {

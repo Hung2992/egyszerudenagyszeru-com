@@ -116,3 +116,32 @@ export function rateLimit(req: Request, opts: { limit: number; windowMs: number;
   }
   return null;
 }
+
+/** Elosztott (adatbázis-alapú) rate limit — izolátumok között is működik. */
+export async function rateLimitDb(
+  req: Request,
+  opts: { limit: number; windowSeconds: number; key?: string },
+): Promise<Response | null> {
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("cf-connecting-ip") ||
+    "unknown";
+  const bucketKey = `${opts.key || "default"}:${ip}`;
+  try {
+    const { data, error } = await serviceClient().rpc("hit_rate_limit", {
+      _key: bucketKey,
+      _limit: opts.limit,
+      _window_seconds: opts.windowSeconds,
+    });
+    if (error) return null; // hiba esetén ne blokkoljuk a forgalmat
+    if (data === false) {
+      return new Response(JSON.stringify({ error: "Túl sok kérés, próbáld később" }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": String(opts.windowSeconds) },
+      });
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
