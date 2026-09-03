@@ -1,5 +1,6 @@
 // Reflexív önfejlesztés: az AI kiértékeli saját válaszát és tanul belőle
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { requireInternalOrAdmin } from "../_shared/internal-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
