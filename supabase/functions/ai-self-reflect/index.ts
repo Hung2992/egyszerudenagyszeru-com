@@ -35,6 +35,11 @@ async function callAI(messages: any[], tools?: any[]) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  // 🔐 Csak belső hívó (service/cron) vagy bejelentkezett admin — AI hitel- és
+  // adatbázis-írás védelme (korábban teljesen nyitott volt).
+  const guard = await requireInternalOrAdmin(req);
+  if (!guard.ok) return guard.response;
+
   try {
     const {
       user_question,
