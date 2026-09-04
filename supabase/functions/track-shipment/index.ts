@@ -2,6 +2,7 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@3";
+import { rateLimitDb } from "../_shared/internal-auth.ts";
 
 const Q = z.object({
   tracking: z.string().trim().min(3).optional(),
@@ -13,6 +14,8 @@ const Q = z.object({
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const limited = await rateLimitDb(req, { limit: 20, windowSeconds: 60, key: "track-shipment" });
+  if (limited) return limited;
   try {
     const url = new URL(req.url);
     const parsed = Q.safeParse({
