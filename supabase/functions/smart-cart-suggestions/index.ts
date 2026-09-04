@@ -1,6 +1,6 @@
 // Smart Cart Suggestions - AI-alapú kosár-kiegészítő ajánlatok
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.104.1'
-import { rateLimit } from '../_shared/internal-auth.ts'
+import { rateLimitDb } from '../_shared/internal-auth.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,7 +10,7 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
 
-  const limited = rateLimit(req, { limit: 30, windowMs: 60_000, key: 'smart-cart' })
+  const limited = await rateLimitDb(req, { limit: 30, windowSeconds: 60, key: 'smart-cart' })
   if (limited) return limited
 
   try {

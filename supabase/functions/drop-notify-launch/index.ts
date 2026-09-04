@@ -2,9 +2,13 @@
 // Cron: 5 percenként. T-15 perc előtt küld egyszer.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.104.1';
 import { dropCors, dropJson } from '../_shared/drop-utils.ts';
+import { requireInternalOrAdmin } from '../_shared/internal-auth.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: dropCors });
+  // 🔐 Csak belső cron/service hívó vagy admin (tömeges e-mail küldés!)
+  const guard = await requireInternalOrAdmin(req);
+  if (!guard.ok) return guard.response;
   try {
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
     const now = new Date();
