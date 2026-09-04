@@ -1,6 +1,7 @@
 // AI Agent Runner — dispatch bármely agent futtatásához
 // Aggresszív mód: minden agent automatán fut, mindent naplóz.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.104.1";
+import { requireInternalOrAdmin } from "../_shared/internal-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -288,21 +289,14 @@ Deno.serve(async (req) => {
     if (!apiKey) return json({ error: "LOVABLE_API_KEY missing" }, 500);
 
     const auth = req.headers.get("Authorization") || "";
-    const isCron = req.headers.get("x-cron-secret") === Deno.env.get("CRON_SECRET");
+    // 🔐 Egységes belső/admin hitelesítés (erős, konstans idejű titok-összevetés)
+    const guard = await requireInternalOrAdmin(req);
+    if (!guard.ok) return guard.response;
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       auth ? { global: { headers: { Authorization: auth } } } : undefined,
     );
-
-    if (!isCron) {
-      if (!auth.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
-      const { data: userData } = await supabase.auth.getUser();
-      const uid = userData?.user?.id;
-      if (!uid) return json({ error: "Unauthorized" }, 401);
-      const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: uid, _role: "admin" });
-      if (!isAdmin) return json({ error: "Admin required" }, 403);
-    }
 
     const body = await req.json().catch(() => ({}));
     const slug = String(body?.agent_slug || "").toLowerCase();
