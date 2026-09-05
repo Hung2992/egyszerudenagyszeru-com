@@ -633,6 +633,9 @@ Deno.serve(async (req) => {
   } catch (e) {
     const msg = e instanceof Error ? e.message : "unknown_error";
     console.error("[partner-action-engine]", msg);
-    return json({ error: msg }, msg === "rate_limit" ? 429 : msg === "credits_exhausted" ? 402 : 500);
+    // Belső hibaüzenet nem szivároghat ki a kliensnek.
+    if (msg === "rate_limit") return json({ error: "rate_limit" }, 429);
+    if (msg === "credits_exhausted") return json({ error: "credits_exhausted" }, 402);
+    return json({ error: "internal_error" }, 500);
   }
 });
