@@ -282,10 +282,13 @@ Deno.serve(async (req) => {
     const { data: { user } } = await sb.auth.getUser();
     if (!user) return json({ error: "unauthorized" }, 401);
 
-    const body = await req.json().catch(() => ({}));
+    const raw = await req.json().catch(() => ({}));
+    const body = (raw && typeof raw === "object" && !Array.isArray(raw)) ? raw as Record<string, unknown> : {};
     const partnerId = String(body.partner_id || "");
     const action = String(body.action || "propose");
-    if (!partnerId) return json({ error: "partner_id required" }, 400);
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(partnerId)) {
+      return json({ error: "partner_id required" }, 400);
+    }
 
     const { data: partner } = await sb.from("partners").select("id").eq("id", partnerId).eq("user_id", user.id).maybeSingle();
     if (!partner) return json({ error: "not_partner" }, 403);
