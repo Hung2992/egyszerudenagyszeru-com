@@ -133,7 +133,9 @@ export async function rateLimitDb(
       _limit: opts.limit,
       _window_seconds: opts.windowSeconds,
     });
-    if (error) return null; // hiba esetén ne blokkoljuk a forgalmat
+    // Ha az adatbázis nem elérhető, ne maradjon védtelen a végpont:
+    // izolátumon belüli memória-limitre esünk vissza (fail-safe, nem fail-open).
+    if (error) return rateLimit(req, { limit: opts.limit, windowMs: opts.windowSeconds * 1000, key: opts.key });
     if (data === false) {
       return new Response(JSON.stringify({ error: "Túl sok kérés, próbáld később" }), {
         status: 429,
@@ -142,6 +144,6 @@ export async function rateLimitDb(
     }
     return null;
   } catch {
-    return null;
+    return rateLimit(req, { limit: opts.limit, windowMs: opts.windowSeconds * 1000, key: opts.key });
   }
 }
