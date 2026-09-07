@@ -580,7 +580,7 @@ Deno.serve(async (req) => {
 
     // Jogosultság (RLS is véd)
     const { data: partner } = await supabase
-      .from("partners").select("id, brand_name").eq("id", partnerId).maybeSingle();
+      .from("partners").select("id, company_name").eq("id", partnerId).maybeSingle();
     if (!partner) return json({ error: "Nincs jogosultságod ehhez a partnerhez" }, 403);
 
     // Kontextus
@@ -658,7 +658,7 @@ Készíts egy JAVÍTOTT verziót: erősebb hero cím, meggyőzőbb alcím, konve
         ...convo.slice(-8),
         {
           role: "user",
-          content: `Márka: ${partner.brand_name || "-"}\n${typeHint}\nVan már konfiguráció: ${sf ? "igen" : "nem"}\nKérés: ${message}`,
+          content: `Márka: ${partner.company_name || "-"}\n${typeHint}\nVan már konfiguráció: ${sf ? "igen" : "nem"}\nKérés: ${message}`,
         },
       ], meter);
       const agentPlan = Array.isArray(plan?.plan) ? plan.plan.slice(0, 10) : [];
@@ -719,7 +719,7 @@ ${JSON.stringify(refineFeedback)}
 
 Eredeti kérés: """${message.slice(0, 2000)}"""
 Jelenlegi konfiguráció: ${JSON.stringify(currentConfig)}${playbookHint}${installedHint}${memoryHint}`
-      : `Márka: ${partner.brand_name || "-"}
+      : `Márka: ${partner.company_name || "-"}
 ${typeHint}
 Márka-memória (korábbi döntések): ${JSON.stringify(mem?.memory ?? {})}
 Jelenlegi konfiguráció: ${JSON.stringify(currentConfig)}
