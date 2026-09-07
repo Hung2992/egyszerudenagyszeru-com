@@ -57,3 +57,101 @@ Dátum: 2026-09-04 · Minden PASS valós futásidejű hívás eredménye. Ami ne
 - **QA adat:** NEM lett törölve
 
 Státusz: **CONDITIONALLY PRODUCTION READY** — az AI-réteg runtime-mal bizonyítottan zárt (másodlagos és kerülő útvonalakkal együtt); egyedüli nyitott pont a fizetési connector.
+
+---
+
+# AI SECURITY — FINAL REGRESSION (Phase 3)
+Dátum: 2026-09-05 (UTC) · Módszer: valós runtime hívások a deployolt Edge Functionökre, két izolált QA partner munkamenettel (Partner A `847dd052…1926` / Partner B `33546b6f…c271`).
+
+## 1. Old secret negative test — `ai-agent-run` (PASS)
+| Hívás | Eredmény |
+|---|---|
+| régi secret `x-cron-secret: lovable_cron_2026` | 403 `Érvénytelen belső titok` |
+| üres secret | 401 |
+| rossz secret (`wrong`) | 403 |
+| módosított secret (`lovable_cron_2027`) | 403 |
+| hiányzó header | 401 |
+| anon publishable kulcs | 401 |
+| malformed JWT | 401 |
+| rossz headernév (`x-internal-secret`) | 401 |
+
+## 2. Agent launcher authorization (PASS)
+| Hívás | Eredmény |
+|---|---|
+| anon | 401 |
+| normál user JWT | 403 `Adminisztrátori jogosultság szükséges` |
+| user JWT + body-ban `role:"admin"`, `is_admin:true`, idegen `partner_id` | 403 (body-ból nem emelhető jogosultság) |
+
+## 3. Email sender regression — `send-transactional-email` / `drop-notify-launch` (PASS)
+| Hívás | Eredmény |
+|---|---|
+| `drop-notify-launch` anon | 401 |
+| `drop-notify-launch` normál user | 403 |
+| `drop-notify-launch` régi cron secret | 403 |
+| `send-transactional-email` anon (auth header nélkül) | 401 |
+| invalid JWT | 401 `UNAUTHORIZED_INVALID_JWT_FORMAT` |
+| user → tetszőleges címzett | 403 `Nincs jogosultság más címzettnek e-mailt küldeni` |
+| user → saját cím | 200 (self ág, suppression működik) |
+| anon + privát sablon | 401 |
+| anon + publikus sablon, nem bizonyított címzett | 403 |
+| ismeretlen / path-traversal sablonnév | 404 (nincs fájlrendszer-hozzáférés) |
+| auth szolgáltatás degradált állapotban | 401 (fail-closed, nem küld) |
+
+## 4. AI tool / action regression — `partner-action-engine`, `partner-workflow-engine` (PASS)
+| Hívás | Eredmény |
+|---|---|
+| action-engine anon | 401 |
+| A → saját partner `propose` | 200 (jogos) |
+| B → A `propose/approve/execute/rollback/rollback_preview/delete_all` | mind 403 `not_partner` |
+| A → nem létező plan `approve/rollback` | 404 |
+| ismeretlen action | 400 `unknown_action` |
+| idegen UUID partner_id | 403 |
+| workflow `run` anon | 401 |
+| workflow `dispatch` user JWT-vel | 403 `Csak belső hívó indíthat szétosztást` |
+| workflow ismeretlen action | 400 |
+| workflow érvénytelen UUID | 400 |
+
+## 5. Cron / internal auth review (PASS)
+`ai-self-reflect`, `tts-cleanup`, `drop-cleanup`, `ai-knowledge-consolidate-cron`: anon → 401, normál user JWT → 403. Minden ütemezett job az erős belső titkot használja (a korábbi kitalálható titok 0 jobban maradt).
+
+## 6. Input limits / error leakage (PASS, 1 javítással)
+| Bemenet | Előtte | Utána |
+|---|---|---|
+| `null` body | **500 + belső hibaüzenet** | 400 `partner_id required` |
+| tömb / malformed JSON | 400 | 400 |
+| nem-UUID partner_id | 403 | 400 (UUID validáció) |
+| 60 000 karakteres prompt | elfogadva | cél 500 karakterre vágva, UUID-gate előtte |
+Hibaválaszokban nem jelent meg stack trace, API kulcs, service_role kulcs, belső URL vagy adatbázis-adat.
+
+## 7. Új találatok és javítások ebben a fázisban
+- **P2 – belső hibaüzenet szivárgás** (`partner-action-engine`): a catch ág a nyers hibaüzenetet adta vissza, és `null` body 500-at okozott. Javítva: `internal_error`, szigorú body/UUID validáció. Deployolva, runtime-mal ellenőrizve.
+- **P2 – rate limit fail-open** (`_shared/internal-auth.ts`): adatbázis-hiba esetén a korlátozó teljesen kikapcsolt. Javítva: memóriaalapú tartalék korlátozásra esik vissza (fail-safe). Deployolva.
+
+## 8. Végső mátrix — AI Security Final Regression
+| Teszt | Eredmény | Bizonyíték |
+|---|---|---|
+| Old secret negative test | PASS | runtime 401/403 |
+| Agent launcher authorization | PASS | runtime 401/403 |
+| Email sender authorization | PASS | runtime 401/403/404 |
+| Email mass-send / arbitrary recipient | PASS | runtime 403 |
+| AI tool / privileged action security | PASS | runtime 401/403/400/404 |
+| Tenant isolation (B → A) | PASS | runtime 403 minden actionre |
+| Cron / internal auth | PASS | runtime 401/403 |
+| Input limits | PASS | runtime 400 |
+| Error leakage | PASS | válaszok ellenőrizve |
+| Race condition (párhuzamos privilegizált hívás) | PASS | 5 párhuzamos hívás, mind elutasítva, nincs duplikált végrehajtás |
+| TypeScript | PASS | 0 hiba |
+| Unit/integration tesztek | PASS | 67/67 |
+| Rate limiting (429) | **NOT VERIFIED (ebben a körben)** | a háttéradatbázis ismételt kiesése (503 PGRST002 / pooler unavailable) miatt a DB-alapú számláló nem volt reprodukálhatóan tesztelhető; a `hit_rate_limit` függvény közvetlen hívása helyesen adott `false`-t a limit felett |
+| Prompt injection (teljes 10 pontos újrafuttatás) | NOT VERIFIED (ebben a körben) | a Phase 2-ben futott 7/7 + kombinált tesztek PASS-ok, most a háttérkiesés miatt nem futtatható újra |
+| AI Builder end-to-end | NOT VERIFIED (ebben a körben) | háttérkiesés |
+
+## 9. Összegzés
+- **P0: 0**
+- **P1: 0**
+- **P2: 2 — mindkettő javítva és deployolva** (belső hibaüzenet szivárgás, rate limit fail-open)
+- **Fixed findings:** partner-action-engine hibakezelés + input validáció, rate limiter fail-safe tartalék
+- **New findings:** nincs P0/P1 szintű új találat
+- **External blockers:** (1) ismétlődő háttéradatbázis-kiesés (503 PGRST002 / pooler unavailable) — emiatt a rate limit 429, a prompt injection újrafuttatás és az AI Builder E2E ebben a körben NOT VERIFIED; (2) lejárt Stripe credential — a bankkártyás fizetés végpontig tesztje továbbra is külön, AI-tól független NOT VERIFIED tétel.
+- **Státusz:** az AI Security regresszió kritikus authorization / tenant isolation / secret-kezelési részei runtime-mal bizonyítottan PASS. Mivel három terület NOT VERIFIED maradt, a rendszer **NEM** minősül production readynek — státusz: CONDITIONALLY PRODUCTION READY.
+- QA adat nem lett törölve.
