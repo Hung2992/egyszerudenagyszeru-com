@@ -155,3 +155,55 @@ Hibaválaszokban nem jelent meg stack trace, API kulcs, service_role kulcs, bels
 - **External blockers:** (1) ismétlődő háttéradatbázis-kiesés (503 PGRST002 / pooler unavailable) — emiatt a rate limit 429, a prompt injection újrafuttatás és az AI Builder E2E ebben a körben NOT VERIFIED; (2) lejárt Stripe credential — a bankkártyás fizetés végpontig tesztje továbbra is külön, AI-tól független NOT VERIFIED tétel.
 - **Státusz:** az AI Security regresszió kritikus authorization / tenant isolation / secret-kezelési részei runtime-mal bizonyítottan PASS. Mivel három terület NOT VERIFIED maradt, a rendszer **NEM** minősül production readynek — státusz: CONDITIONALLY PRODUCTION READY.
 - QA adat nem lett törölve.
+
+---
+
+## FINAL AI VERIFICATION (utolsó kör)
+
+### Rendszerstabilitás
+- Data API: 200 (3/3), Auth settings: 200, `smart-cart-suggestions`: 200, `shopping-assistant`: 200 (valós válasz).
+- AI provider: a kör közepén kimerültek az AI kreditek → HTTP 402 ("Elfogytak az AI kreditek").
+
+### 1. Rate limit — PASS (runtime)
+- `track-shipment`: 40 szekvenciális kérés → 19× 404, majd a 20. kéréstől 429.
+- `smart-cart-suggestions`: párhuzamos flood 40 kérés → vegyes 200 / 429.
+- Header-manipuláció → 403 (WAF), nem limiter-bypass.
+- DB-kiesés alatti fallback limiter: NOT VERIFIED (nem volt kontrollált kiesés).
+
+### 2. Prompt injection regresszió — PASS
+- 13/13 valós kérés 200; egyik válaszban sincs `eyJhbGciOi`, `service_role`, `SUPABASE_SERVICE`, `LOVABLE_API_KEY`, `sk_*` szivárgás.
+- Lefedve: system override, ignore-previous, secret/API-key/service_role extraction, tool abuse, role escalation, approval bypass, cross-tenant, indirect/product-data/memory/encoded injection.
+
+### 3. AI Builder E2E
+- **AI Product Studio (`partner-product-builder`) — PASS**: hitelesített Partner A build (digital) → HTTP 200, teljes lánc (Architect → Content → Pricing → Checkout → Access/License → QA), QA total **96/100** (content 98, product_page 95, checkout 95, seo 98, experience 95, upsell 98), kötelező `attributes` mezők hiánytalanul (digital_delivery, digital_format, license_terms, download_limit, access_days, digital_contents), SEO meta hossz-limitek rendben, séma valid.
+- **Multi-agent web builder (`partner-web-agent`) — NOT VERIFIED**: a lánc futtatását az AI provider 402 (kredit kimerülés) blokkolta.
+
+### 4. Új hiba javítva (P2, funkcionális)
+- `partner-web-agent`: nem létező `partners.brand_name` oszlopot kérdezett le → minden hitelesített build hamis **403 "Nincs jogosultságod ehhez a partnerhez"** hibát adott. Javítva `company_name`-re, deployolva. (Nem biztonsági regresszió; a jogosultság-ellenőrzés továbbra is RLS-alapú.)
+
+### 5. AI Builder security — PASS
+| Teszt | Eredmény |
+|---|---|
+| web-agent anonim | 401 |
+| web-agent cross-tenant (Partner B) | 403 |
+| web-agent érvénytelen partner id | 403 |
+| product-builder anonim | 401 |
+| product-builder cross-tenant | 403 |
+| action-engine cross-tenant approve | 403 `not_partner` |
+| action-engine null body | 400 |
+| product-builder prompt-injection build | NOT VERIFIED (402 kredit) |
+
+### 6. Regresszió
+- TypeScript: **0 hiba**
+- Vitest: **67/67 PASS** (8 fájl)
+- Auth / tenant isolation / internal auth / service_role / email auth / error leakage: PASS (runtime, fenti bizonyítékok)
+
+### 7. STÁTUSZ
+- **PASS**: rate limit (normál + párhuzamos), prompt injection (13/13), AI Product Studio E2E, AI Builder security negatív tesztek, TypeScript, 67/67 teszt, tenant isolation, error leakage.
+- **FAIL**: nincs.
+- **NOT VERIFIED**: multi-agent web builder teljes lánc (402), prompt-injection build a builderben (402), DB-kiesés alatti fallback limiter (nem volt kontrollált kiesés), Stripe kártyás E2E (lejárt credential — külön blocker).
+- **P0: 0 | P1: 0 | P2: 1 (javítva: partner-web-agent hibás oszlopnév)**
+- Külső blokkolók: AI kredit kimerülés (402), lejárt Stripe API kulcs.
+- QA adat: megtartva, nem törölve.
+
+**Összesített státusz: CONDITIONALLY PRODUCTION READY** — az AI security rész lezárhatónak tekinthető, de a web builder teljes láncát AI-kredit feltöltés után újra kell futtatni.
