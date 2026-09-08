@@ -207,3 +207,46 @@ Hibaválaszokban nem jelent meg stack trace, API kulcs, service_role kulcs, bels
 - QA adat: megtartva, nem törölve.
 
 **Összesített státusz: CONDITIONALLY PRODUCTION READY** — az AI security rész lezárhatónak tekinthető, de a web builder teljes láncát AI-kredit feltöltés után újra kell futtatni.
+
+---
+
+## Végleges AI Builder E2E lezárási kísérlet — 2026-09-08 13:59 UTC
+
+### Előfeltétel-ellenőrzés (AI kredit)
+Valós runtime hívás a Lovable AI Gateway felé (`POST /v1/chat/completions`, `google/gemini-3.1-flash-lite`):
+
+```
+HTTP 402
+{"status":402,"type":"payment_required","title":"Not enough credits",
+ "props":{"requires":"top_up","retryable":false}, "request_id":"97b7ce08cc538ed5b366e23fda5b8328"}
+```
+
+A válasz `retryable: false`, `requires: top_up` — terminális hiba, újrapróbálás értelmetlen és tiltott.
+Emiatt a teljes AI Builder lánc (Architect → Designer → Frontend → Commerce → SEO → Content → Media → QA → Final output)
+**nem futtatható le**, így egyetlen agent stage sem jelölhető PASS-nak.
+
+### Elvégzett lépések
+- Kredit-elérhetőség valós runtime ellenőrzése: **402**.
+- Nem futott AI Builder E2E, nem futott build-környezeti negatív biztonsági kör (ugyanaz a 402 blokkolja).
+- **Nem módosítottam működő biztonsági kódot** (nem volt új runtime-bizonyított hiba).
+- **QA adat nem lett törölve.**
+
+### Végleges AI státusz
+
+| Terület | Státusz | Bizonyíték |
+|---|---|---|
+| AI Security (auth, tenant isolation, rate limit, prompt injection, error leakage) | **PASS** | korábbi runtime körök: 401/403, 429 a 20. kéréstől, 13/13 injection – 0 leakage |
+| AI Termékstúdió (partner-product-builder) teljes lánc | **PASS** | valós futás, QA score 96/100 |
+| AI Builder (partner-web-agent) teljes E2E | **NOT VERIFIED** | HTTP 402 credit exhaustion (retryable:false) |
+| AI Builder build-környezeti negatív biztonsági kör | **NOT VERIFIED** | ugyanaz a 402 blokkolja |
+| Stripe payment E2E | **NOT VERIFIED** (külön blokkoló) | lejárt Stripe API kulcs (`api_key_expired`) |
+
+- **P0: 0**
+- **P1: 0**
+- **P2: 0 új** (a korábbi partner-web-agent oszlopnév-hiba javítva és deployolva)
+
+**New findings:** nincs (a teszt nem tudott lefutni).
+**Fixed findings:** nincs új javítás ebben a körben.
+**External blockers:** (1) AI kredit kimerülés – workspace feltöltés szükséges; (2) lejárt Stripe credential.
+
+**Összesített státusz: CONDITIONALLY PRODUCTION READY** — AI Security lezárható; az AI Builder teljes E2E kizárólag kreditfeltöltés után, egyetlen futtatással zárható le.
