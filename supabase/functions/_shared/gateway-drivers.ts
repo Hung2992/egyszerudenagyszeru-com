@@ -1,5 +1,6 @@
 // APEX saját átjáró (gateway) — szolgáltató-illesztők és útvonalválasztás.
 // A partner saját fiókja elsőbbséget élvez a platform fiókjaival szemben.
+// Támogatott illesztők: apex_modem (saját GSM/LTE modem bridge), http_generic, twilio, gatewayapi.
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 
 export type GatewayChannel = "sms" | "whatsapp" | "voice";
