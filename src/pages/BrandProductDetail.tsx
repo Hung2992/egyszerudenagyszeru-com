@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/untyped-client";
-import { ArrowLeft, ShoppingBag, CalendarClock } from "lucide-react";
+import { ArrowLeft, ShoppingBag, CalendarClock, Truck } from "lucide-react";
 import MediaImage from "@/components/partner/MediaImage";
 import { toast } from "@/hooks/use-toast";
 
@@ -68,6 +68,17 @@ const BrandProductDetail = () => {
       to: a.work_to || "17:00",
       daysLabel: days.sort((x, y) => x - y).map((d) => DAY_NAMES[d - 1]).join(", "),
     };
+  })();
+
+  // Szállítási részletek fizikai termékhez (partner beállításaiból)
+  const shipping = (() => {
+    const fee = a.shipping_fee_huf;
+    const feeLabel = fee === 0 || fee === "0"
+      ? "Ingyenes szállítás"
+      : fee
+        ? `Szállítási díj: ${Number(fee).toLocaleString("hu-HU")} Ft`
+        : "Szállítási díj a fizetésnél";
+    return { feeLabel, time: a.shipping_time || "2-5 munkanap" };
   })();
 
   const jsonLd = {
