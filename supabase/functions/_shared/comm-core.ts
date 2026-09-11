@@ -119,6 +119,9 @@ export type DeliveryResult = {
   provider: string | null;
   providerId?: string | null;
   error?: string | null;
+  accountId?: string | null;
+  routeId?: string | null;
+  country?: string | null;
 };
 
 /* ---------------- Opt-in / opt-out (STOP kezelés) ---------------- */
