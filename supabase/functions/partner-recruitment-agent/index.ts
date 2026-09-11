@@ -525,35 +525,49 @@ Adj minden napra minden platformra egy posztot. Ez ${days * platforms.length} po
     if (action === "video_variants") {
       const videoId = String(body?.video_id || "");
       if (!/^[0-9a-f-]{36}$/i.test(videoId)) return json({ error: "video_id required" }, 400, req);
-      const count = Math.min(3, Math.max(1, Number(body?.count) || 2));
+
+      const PRESETS: Record<string, any> = {
+        energetic: { key: "energetic", label: "Energikus / mozis", voice: "verse", style: "cinematic" },
+        calm: { key: "calm", label: "Nyugodt / letisztult", voice: "sage", style: "minimal" },
+        warm: { key: "warm", label: "Meleg / dokumentum", voice: "ballad", style: "documentary" },
+      };
+      const p = PRESETS[String(body?.preset || "")] || PRESETS.energetic;
 
       const { data: vid } = await supabase
         .from("partner_recruitment_videos").select("*").eq("id", videoId).maybeSingle();
       if (!vid) return json({ error: "not_found" }, 404, req);
-      const scenes: any[] = Array.isArray(vid.script) ? vid.script.slice(0, 6) : [];
+      const scenes: any[] = Array.isArray(vid.script) ? vid.script.slice(0, 5) : [];
       if (!scenes.length) return json({ error: "no_script" }, 400, req);
 
-      const presets = [
-        { key: "energetic", label: "Energikus / mozis", voice: "verse", style: "cinematic" },
-        { key: "calm", label: "Nyugodt / letisztult", voice: "sage", style: "minimal" },
-        { key: "warm", label: "Meleg / dokumentum", voice: "ballad", style: "documentary" },
-      ].slice(0, count);
+      // Egy változat / kérés, jelenetek párhuzamosan -> nem fut timeoutba
+      const styleHint = STYLES[p.style] || STYLES.cinematic;
+      const sc = await Promise.all(scenes.map(async (s: any, i: number) => {
+        const visual = `${String(s?.visual || vid.thumbnail_prompt || "modern business scene")}. Style: ${styleHint}`;
+        const line = String(s?.voiceover || "").trim();
+        const [imageUrl, audio] = await Promise.all([
+          generateImage(LOVABLE_API_KEY, visual, vid.platform, supabase),
+          line ? generateSpeech(LOVABLE_API_KEY, line, p.voice, supabase) : Promise.resolve(null),
+        ]);
+        return {
+          scene: i + 1,
+          seconds: s?.seconds || null,
+          text_overlay: s?.text_overlay || null,
+          voiceover: line || null,
+          image_url: imageUrl,
+          audio_url: audio?.url || null,
+        };
+      }));
 
-      const built: any[] = [];
-      for (const p of presets) {
-        const sc = await buildSceneAssets(LOVABLE_API_KEY, supabase, vid, scenes, p.voice, p.style);
-        built.push({ ...p, scenes: sc, created_at: new Date().toISOString() });
-      }
-
+      const built = { ...p, scenes: sc, created_at: new Date().toISOString() };
       const existing = Array.isArray(vid.variants) ? vid.variants : [];
-      const merged = [...existing.filter((v: any) => !built.some((b) => b.key === v?.key)), ...built];
+      const merged = [...existing.filter((v: any) => String(v?.key) !== p.key), built];
 
       const { data: upd, error: vErr } = await supabase
         .from("partner_recruitment_videos")
         .update({ variants: merged, status: "assets_ready", updated_at: new Date().toISOString() })
         .eq("id", videoId).select().single();
       if (vErr) return json({ error: vErr.message }, 500, req);
-      return json({ ok: true, video: upd }, 200, req);
+      return json({ ok: true, variant: built.key, video: upd }, 200, req);
     }
 
 

@@ -122,16 +122,27 @@ const RecruitmentVideoRenderer = ({ video, onUpdated }: Props) => {
 
   const makeVariants = async () => {
     setBusy("variants");
+    const presets = ["energetic", "calm"];
+    let done = 0;
     try {
-      const { data, error } = await supabase.functions.invoke("partner-recruitment-agent", {
-        body: { action: "video_variants", video_id: video.id, count: 2 },
-      });
-      if (error) throw new Error((data as any)?.error || error.message);
-      if ((data as any)?.error) throw new Error((data as any).error);
-      toast({ title: "Videóváltozatok elkészültek" });
-      onUpdated();
+      for (const preset of presets) {
+        const { data, error } = await supabase.functions.invoke("partner-recruitment-agent", {
+          body: { action: "video_variants", video_id: video.id, preset },
+        });
+        if (error) throw new Error((data as any)?.error || error.message);
+        if ((data as any)?.error) throw new Error((data as any).error);
+        done++;
+        toast({ title: `Változat kész (${done}/${presets.length})` });
+        onUpdated();
+      }
     } catch (e: any) {
-      toast({ title: "Hiba", description: e?.message || "Nem sikerült", variant: "destructive" });
+      toast({
+        title: "Hiba",
+        description: done
+          ? `${done} változat elkészült, a többi nem: ${e?.message || "ismeretlen hiba"}`
+          : e?.message || "Nem sikerült",
+        variant: "destructive",
+      });
     } finally {
       setBusy(null);
     }
