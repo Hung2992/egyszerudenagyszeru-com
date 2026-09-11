@@ -452,7 +452,6 @@ const BrandHub = () => {
               <input className={inputCls} style={inputStyle} type="password" placeholder="Jelszó" value={auth.password} onChange={(e) => setAuth({ ...auth, password: e.target.value })} />
               <div className="flex gap-2">
                 <button className="flex-1 px-4 py-2 text-xs uppercase" style={{ background: accent, color: bg }} disabled={busy} onClick={() => void doAuth("in")}>Belépés</button>
-                <button className="flex-1 border px-4 py-2 text-xs uppercase" style={{ borderColor: `${text}44`, color: text }} disabled={busy} onClick={() => void doAuth("up")}>Regisztráció</button>
               </div>
             </div>
           )

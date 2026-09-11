@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMemo } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,9 +9,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
 import { Eye, EyeOff } from "lucide-react";
-import { sendAppEmail } from "@/lib/app-email";
 
-type AuthMode = "login" | "register" | "forgot";
+type AuthMode = "login" | "forgot";
 
 const translateAuthError = (msg: string): string => {
   const map: Record<string, string> = {
@@ -40,7 +39,6 @@ const Auth = () => {
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -51,42 +49,6 @@ const Auth = () => {
     setLoading(false);
     if (error) toast({ title: "Hiba", description: translateAuthError(error.message), variant: "destructive" });
     else { toast({ title: "Sikeres bejelentkezés!" }); navigate(redirectPath, { replace: true }); }
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password.length < 6) {
-      toast({ title: "Hiba", description: "A jelszónak legalább 6 karakter hosszúnak kell lennie.", variant: "destructive" });
-      return;
-    }
-    setLoading(true);
-    const { data, error } = await supabase.auth.signUp({
-      email, password,
-      options: { emailRedirectTo: `${window.location.origin}${redirectPath}`, data: { display_name: displayName } },
-    });
-    setLoading(false);
-    if (error) toast({ title: "Hiba", description: translateAuthError(error.message), variant: "destructive" });
-    else {
-      if (data.session && data.user?.email) {
-        try {
-          await sendAppEmail({
-            templateName: "welcome",
-            recipientEmail: data.user.email,
-            idempotencyKey: `welcome-${data.user.id}`,
-            templateData: { name: displayName },
-          });
-        } catch (emailError) {
-          console.error("Welcome email error:", emailError);
-        }
-      }
-
-      if (data.user && !data.session) {
-        toast({ title: "Sikerült!", description: "Erősítsd meg az email címedet." });
-      } else {
-        toast({ title: "Sikeres regisztráció!" });
-        navigate(redirectPath, { replace: true });
-      }
-    }
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -113,10 +75,9 @@ const Auth = () => {
     }
   };
 
-  const titles: Record<AuthMode, string> = { login: "BELÉPÉS", register: "REGISZTRÁCIÓ", forgot: "JELSZÓ VISSZAÁLLÍTÁS" };
+  const titles: Record<AuthMode, string> = { login: "BELÉPÉS", forgot: "JELSZÓ VISSZAÁLLÍTÁS" };
   const descriptions: Record<AuthMode, string> = {
-    login: "Üdv újra. Jelentkezz be a fiókodba.",
-    register: "Hozd létre a fiókodat.",
+    login: "Lépj be a partnerfiókoddal.",
     forgot: "Küldünk egy visszaállítási linket.",
   };
 
@@ -130,14 +91,8 @@ const Auth = () => {
               <CardDescription className="text-xs">{descriptions[mode]}</CardDescription>
             </CardHeader>
 
-            <form onSubmit={mode === "login" ? handleLogin : mode === "register" ? handleRegister : handleForgotPassword}>
+            <form onSubmit={mode === "login" ? handleLogin : handleForgotPassword}>
               <CardContent className="space-y-4">
-                {mode === "register" && (
-                  <div className="space-y-2">
-                    <Label htmlFor="displayName" className="text-xs uppercase tracking-wider">Név</Label>
-                    <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Neved" className="rounded-none h-11 text-sm" required />
-                  </div>
-                )}
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-xs uppercase tracking-wider">Email</Label>
                   <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@cimed.hu" className="rounded-none h-11 text-sm" required />
@@ -164,17 +119,11 @@ const Auth = () => {
                     <button type="button" className="text-xs text-muted-foreground hover:text-foreground uppercase tracking-wider" onClick={() => setMode("forgot")}>
                       Elfelejtett jelszó?
                     </button>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground text-center">
                       Nincs fiókod?{" "}
-                      <button type="button" className="text-accent hover:underline font-medium" onClick={() => setMode("register")}>Regisztrálj</button>
+                      <Link to="/partner-regisztracio" className="text-accent hover:underline font-medium">Partner regisztráció</Link>
                     </p>
                   </>
-                )}
-                {mode === "register" && (
-                  <p className="text-xs text-muted-foreground">
-                    Van fiókod?{" "}
-                    <button type="button" className="text-accent hover:underline font-medium" onClick={() => setMode("login")}>Lépj be</button>
-                  </p>
                 )}
                 {mode === "forgot" && (
                   <button type="button" className="text-xs text-accent hover:underline font-medium uppercase tracking-wider" onClick={() => setMode("login")}>
