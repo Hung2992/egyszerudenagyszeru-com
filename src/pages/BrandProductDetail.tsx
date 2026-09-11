@@ -12,6 +12,35 @@ const BrandProductDetail = () => {
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeImg, setActiveImg] = useState(0);
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [bookingSaving, setBookingSaving] = useState(false);
+  const [bookingDone, setBookingDone] = useState(false);
+  const [form, setForm] = useState({ customer_name: "", customer_email: "", customer_phone: "", starts_at: "", notes: "" });
+
+  const submitBooking = async () => {
+    if (!slug || !productSlug) return;
+    setBookingSaving(true);
+    const { data, error } = await supabase.functions.invoke("create-public-booking", {
+      body: { store_slug: slug, product_slug: productSlug, ...form, starts_at: form.starts_at ? new Date(form.starts_at).toISOString() : "" },
+    });
+    setBookingSaving(false);
+    const err = (error as any) || (data && (data as any).error);
+    if (err) {
+      const code = typeof err === "string" ? err : "";
+      const msgs: Record<string, string> = {
+        invalid_name: "Add meg a neved.",
+        invalid_email: "Az e-mail cím nem érvényes.",
+        invalid_date: "Válassz érvényes időpontot.",
+        too_soon: "Legalább 30 perccel előbbre foglalj.",
+        closed_day: "Ezen a napon nincs nyitva.",
+        not_bookable: "Ez a tétel nem foglalható.",
+      };
+      toast({ title: "Foglalás sikertelen", description: msgs[code] || "Próbáld újra kicsit később.", variant: "destructive" });
+      return;
+    }
+    setBookingDone(true);
+    toast({ title: "Foglalás rögzítve", description: "A visszaigazolást elküldtük e-mailben." });
+  };
 
   useEffect(() => {
     (async () => {
@@ -221,7 +250,8 @@ const BrandProductDetail = () => {
           <button
             onClick={() => {
               if (isBookable && a.booking_url) { window.open(String(a.booking_url), "_blank", "noopener"); return; }
-              toast({ title: "Hamarosan", description: isBookable ? "Az online időpontfoglalás a következő frissítésben érkezik." : "A checkout funkció a következő frissítésben érkezik." });
+              if (isBookable) { setBookingOpen(true); return; }
+              toast({ title: "Hamarosan", description: "A checkout funkció a következő frissítésben érkezik." });
             }}
             disabled={!isBookable && !isDigital && !isCourse && product.stock_qty <= 0}
             className="w-full py-4 uppercase tracking-widest font-bold border-2 disabled:opacity-30"
@@ -229,6 +259,36 @@ const BrandProductDetail = () => {
           >
             {isBookable ? "Időpont foglalása" : (isDigital || isCourse) ? "Megvásárlom" : product.stock_qty > 0 ? "Kosárba" : "Elfogyott"}
           </button>
+
+          {bookingOpen && (
+            <div className="border p-4 space-y-3" style={{ borderColor: sf.accent_color }}>
+              {bookingDone ? (
+                <div className="space-y-1">
+                  <div className="text-lg font-bold" style={{ color: sf.accent_color }}>Foglalás rögzítve</div>
+                  <p className="text-sm opacity-80">A visszaigazolást elküldtük a megadott e-mail címre.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="text-xs uppercase tracking-widest opacity-70">Időpontfoglalás</div>
+                  <input className="w-full bg-transparent border p-3 text-sm" style={{ borderColor: `${sf.text_color}30` }}
+                    placeholder="Neved" value={form.customer_name} onChange={e => setForm({ ...form, customer_name: e.target.value })} />
+                  <input type="email" className="w-full bg-transparent border p-3 text-sm" style={{ borderColor: `${sf.text_color}30` }}
+                    placeholder="E-mail cím" value={form.customer_email} onChange={e => setForm({ ...form, customer_email: e.target.value })} />
+                  <input className="w-full bg-transparent border p-3 text-sm" style={{ borderColor: `${sf.text_color}30` }}
+                    placeholder="Telefonszám (nem kötelező)" value={form.customer_phone} onChange={e => setForm({ ...form, customer_phone: e.target.value })} />
+                  <input type="datetime-local" className="w-full bg-transparent border p-3 text-sm" style={{ borderColor: `${sf.text_color}30` }}
+                    value={form.starts_at} onChange={e => setForm({ ...form, starts_at: e.target.value })} />
+                  <textarea className="w-full bg-transparent border p-3 text-sm" style={{ borderColor: `${sf.text_color}30` }} rows={2}
+                    placeholder="Megjegyzés (nem kötelező)" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
+                  <button disabled={bookingSaving} onClick={() => void submitBooking()}
+                    className="w-full py-3 uppercase tracking-widest font-bold border-2 disabled:opacity-40"
+                    style={{ borderColor: sf.accent_color, color: sf.accent_color }}>
+                    {bookingSaving ? "Küldés…" : "Foglalás elküldése"}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
