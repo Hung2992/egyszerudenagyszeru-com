@@ -1,33 +1,56 @@
-// Nyilvános partneri szerződéssablon (v1.4) – ugyanaz a szöveg, amelyet a
-// partner_contracts generáló DB függvény a KYC jóváhagyás után aláírásra ad ki.
-// A zárójelben szereplő adatok az aláíráskor töltődnek ki a konkrét adatokkal.
+CREATE OR REPLACE FUNCTION public.generate_partner_contract_on_kyc_approval()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_contract_number text;
+  v_address text;
+  v_body text;
+  v_owner public.owner_company_profile%ROWTYPE;
+BEGIN
+  IF NEW.status = 'approved' AND (OLD.status IS NULL OR OLD.status <> 'approved') THEN
+    IF EXISTS (SELECT 1 FROM public.partner_contracts WHERE kyc_submission_id = NEW.id) THEN
+      RETURN NEW;
+    END IF;
 
-export const PARTNER_CONTRACT_TEMPLATE = `PARTNERI SZERŐDÉS
+    SELECT * INTO v_owner FROM public.owner_company_profile WHERE is_current = true LIMIT 1;
+    IF v_owner.id IS NULL THEN
+      RAISE EXCEPTION 'No current owner_company_profile configured';
+    END IF;
 
-Szerződésszám: EDN-[ééééhhnn]-[azonosító]
-Kelt: [az aláíráskor]
-Cégadatok verzió: v[üzemeltetői verzió]
+    v_contract_number := 'EDN-' || to_char(now(),'YYYYMMDD') || '-' || upper(substr(replace(NEW.id::text,'-',''),1,6));
+    v_address := concat_ws(', ',
+      concat_ws(' ', NEW.address_zip, NEW.address_city),
+      NEW.address_street, NEW.address_country);
+
+    v_body := format($body$PARTNERI SZERZŐDÉS
+
+Szerződésszám: %s
+Kelt: %s
+Cégadatok verzió: v%s
 
 I. SZERZŐDŐ FELEK
 
 Üzemeltető:
-  [Az üzemeltető cég teljes neve]
-  Képviselő: [üzemeltető képviselőjének neve]
-  Adóazonosító jel: [üzemeltető adóazonosítója]
-  Adószám: [üzemeltető adószáma]
-  Közösségi adószám: [üzemeltető közösségi adószáma]
-  Székhely: [üzemeltető székhelye]
+  %s
+  Képviselő: %s
+  Adóazonosító jel: %s
+  Adószám: %s
+  Közösségi adószám: %s
+  Székhely: %s
 
 Partner:
-  Név: [teljes név]
-  Születési név: [születési név]
-  Születési hely, idő: [hely], [dátum]
-  Anyja neve: [anyja neve]
-  Lakcím: [lakcím]
-  Személyi igazolvány szám: [személyi ig. szám]
-  Adóazonosító: [adóazonosító]
-  E-mail: [e-mail cím]
-  Telefon: [telefonszám]
+  Név: %s
+  Születési név: %s
+  Születési hely, idő: %s, %s
+  Anyja neve: %s
+  Lakcím: %s
+  Személyi igazolvány szám: %s
+  Adóazonosító: %s
+  E-mail: %s
+  Telefon: %s
 
 II. A SZERZŐDÉS TÁRGYA
 Üzemeltető saját, zárt forráskódú, több-bérlős (multi-tenant) APEX üzleti szoftverplatformján elkülönített bérlői (tenant) felületet biztosít Partner részére. A platform egyetlen rendszerben egyesíti a weboldal-, webshop-, ügyfél- (CRM), naptár-, marketing-, kommunikációs-, pénzügyi-, logisztikai- és mesterséges intelligencia-modulokat, amelyek elérhetők asztali és mobil eszközön egyaránt.
@@ -65,7 +88,40 @@ VIII. PARTNERI RÉSZESDÉS ÉS ELSZÁMOLÁS
    • 1 000 000 Ft feletti bevételnél: minden további megkezdett 1 000 000 Ft bevétel után 10 000 Ft részesedés.
 2. A részesedést az Üzemeltető jogosult a Partner részére fizetendő kifizetésből levonni, illetve külön számlázni az elszámolási időszak lezárultával.
 3. A rendszer célja, hogy a Partner induláskor alacsonyabb forgalom mellett is fenntartható feltételekkel vehessen részt az együttműködésben, nagyobb forgalom esetén pedig a díj arányosan kiszámítható maradjon.
-4. A pontos elszámolási alapot, a bevétel meghatórozását és az elszámolás időszakát jelen szerződés, valamint a teljesített és kifizetett rendelések összesített bruttó összege határozza meg.
+4. A pontos elszámolási alapot, a bevétel meghatározását és az elszámolás időszakát jelen szerződés, valamint a teljesített és kifizetett rendelések összesített bruttó összege határozza meg.
 
 IX. JOGVITA
-Felek jogvitáikat a magyar bíróságok joghatósága alá rendelik.`;
+Felek jogvitáikat a magyar bíróságok joghatósága alá rendelik.
+$body$,
+      v_contract_number, to_char(now(),'YYYY-MM-DD'), v_owner.version,
+      v_owner.legal_name, v_owner.representative_name,
+      coalesce(v_owner.tax_identification_number,'-'),
+      v_owner.tax_number, coalesce(v_owner.eu_tax_number,'-'), v_owner.address,
+      NEW.full_name, coalesce(NEW.birth_name,'-'),
+      coalesce(NEW.birth_place,'-'), coalesce(NEW.birth_date::text,'-'),
+      coalesce(NEW.mother_name,'-'), v_address,
+      NEW.id_card_number, coalesce(NEW.tax_id,'-'),
+      NEW.email, coalesce(NEW.phone,'-'));
+
+    INSERT INTO public.partner_contracts (
+      user_id, kyc_submission_id, contract_number, contract_version, contract_body,
+      partner_full_name, partner_birth_name, partner_birth_place, partner_birth_date,
+      partner_mother_name, partner_address, partner_id_card_number, partner_tax_id,
+      partner_email, partner_phone,
+      owner_name, owner_representative, owner_tax_number, owner_address,
+      owner_profile_version, status
+    ) VALUES (
+      NEW.user_id, NEW.id, v_contract_number, 'v1.4', v_body,
+      NEW.full_name, NEW.birth_name, NEW.birth_place, NEW.birth_date,
+      NEW.mother_name, v_address, NEW.id_card_number, NEW.tax_id,
+      NEW.email, NEW.phone,
+      v_owner.legal_name, v_owner.representative_name, v_owner.tax_number, v_owner.address,
+      v_owner.version, 'pending_partner_signature'
+    );
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.generate_partner_contract_on_kyc_approval() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.generate_partner_contract_on_kyc_approval() TO authenticated, service_role;
