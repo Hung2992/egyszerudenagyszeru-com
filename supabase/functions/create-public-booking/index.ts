@@ -79,9 +79,21 @@ Deno.serve(async (req) => {
     .eq("starts_at", startsAt.toISOString()).maybeSingle();
   if (dup) return json({ success: true, appointment_id: dup.id, duplicate: true });
 
+  // Ha az ügyfél be van jelentkezve, a foglalást hozzákötjük a fiókjához
+  let customerUserId: string | null = null;
+  const authHeader = req.headers.get("Authorization") || "";
+  const jwt = authHeader.replace(/^Bearer\s+/i, "").trim();
+  if (jwt && jwt !== Deno.env.get("SUPABASE_ANON_KEY")) {
+    try {
+      const { data: u } = await svc.auth.getUser(jwt);
+      if (u?.user?.id) customerUserId = u.user.id;
+    } catch { /* vendégként folytatjuk */ }
+  }
+
   const { data: appt, error: insErr } = await svc.from("partner_appointments").insert({
     partner_id: store.partner_id,
     product_id: product.id,
+    customer_user_id: customerUserId,
     customer_email: email,
     customer_name: name,
     starts_at: startsAt.toISOString(),
