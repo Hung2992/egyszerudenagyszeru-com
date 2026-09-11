@@ -12,6 +12,7 @@ import StorefrontVersionDiff from "@/components/partner/StorefrontVersionDiff";
 import PartnerStorefrontAuditLogTab from "@/components/partner/PartnerStorefrontAuditLogTab";
 import AdminPartnerAuditSearch from "@/components/admin/AdminPartnerAuditSearch";
 import DomainProofTimeline from "@/components/partner/DomainProofTimeline";
+import PartnerApplicationsQueue from "@/components/admin/PartnerApplicationsQueue";
 
 const PORTAL_URL = "https://www.egyszerudenagyszeru.com/partner";
 
@@ -31,19 +32,21 @@ async function sendPartnerEmail(templateName: string, partnerId: string, templat
 }
 
 const PartnerApprovalsPanel = () => {
-  const [tab, setTab] = useState("storefronts");
+  const [tab, setTab] = useState("applications");
   return (
     <div className="space-y-4">
       <div>
         <h2 className="text-xl font-bold uppercase tracking-widest">Partner jóváhagyások</h2>
-        <p className="text-sm text-muted-foreground">Storefront publikációk, domain kérelmek, audit napló.</p>
+        <p className="text-sm text-muted-foreground">Partner jelentkezések, storefront publikációk, domain kérelmek, audit napló.</p>
       </div>
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="rounded-none">
+          <TabsTrigger value="applications" className="rounded-none"><ShieldCheck className="h-4 w-4 mr-1" /> Partner jelentkezések</TabsTrigger>
           <TabsTrigger value="storefronts" className="rounded-none"><Store className="h-4 w-4 mr-1" /> Storefront publikációk</TabsTrigger>
           <TabsTrigger value="domains" className="rounded-none"><Globe className="h-4 w-4 mr-1" /> Domain kérések</TabsTrigger>
           <TabsTrigger value="audit" className="rounded-none"><FileText className="h-4 w-4 mr-1" /> Audit napló</TabsTrigger>
         </TabsList>
+        <TabsContent value="applications"><PartnerApplicationsQueue /></TabsContent>
         <TabsContent value="storefronts"><StorefrontQueue /></TabsContent>
         <TabsContent value="domains"><DomainQueue /></TabsContent>
         <TabsContent value="audit"><AdminPartnerAuditSearch /></TabsContent>
