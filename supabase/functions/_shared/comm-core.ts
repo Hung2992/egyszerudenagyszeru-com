@@ -121,10 +121,30 @@ export type DeliveryResult = {
 };
 
 /**
- * Szolgáltató-független küldés. Ma Twilio (saját fiók vagy gateway) áll mögötte,
- * de a hívók számára ez rejtett — később bármelyik carrier becsatlakoztatható.
+ * Szolgáltató-független küldés.
+ * 1) A saját APEX átjáró (partner saját, majd platform szolgáltatói fiókjai).
+ * 2) Ha ott nincs bekötött fiók, a régi környezeti Twilio útvonal.
  */
-export async function deliver(channel: Channel, to: string, body: string): Promise<DeliveryResult> {
+export async function deliver(
+  channel: Channel,
+  to: string,
+  body: string,
+  opts?: { db?: SupabaseClient; partnerId?: string | null },
+): Promise<DeliveryResult> {
+  if (channel !== "email") {
+    const db = opts?.db ?? adminClient();
+    const own = await gatewaySend(db, {
+      channel: channel as GatewayChannel,
+      to,
+      body,
+      partnerId: opts?.partnerId ?? null,
+    });
+    if (own.status !== "no_provider") return own;
+  }
+  return await deliverLegacy(channel, to, body);
+}
+
+async function deliverLegacy(channel: Channel, to: string, body: string): Promise<DeliveryResult> {
   const SID = Deno.env.get("TWILIO_ACCOUNT_SID");
   const TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
