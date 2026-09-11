@@ -6,6 +6,7 @@ import { useState, useEffect, lazy, Suspense } from "react";
 
 const GiveawayBanner = lazy(() => import("@/components/GiveawayBanner"));
 const PreorderShowcase = lazy(() => import("@/components/PreorderShowcase"));
+const PartnerProductsShowcase = lazy(() => import("@/components/PartnerProductsShowcase"));
 const PersonalizedHero = lazy(() => import("@/components/PersonalizedHero"));
 
 const LAUNCH_DATE = new Date("2026-06-05T10:00:00+02:00").getTime();
@@ -189,6 +190,12 @@ const Index = () => {
       <Suspense fallback={null}>
         <PreorderShowcase />
       </Suspense>
+
+      {/* PARTNER MÁRKÁK TERMÉKEI */}
+      <Suspense fallback={null}>
+        <PartnerProductsShowcase limit={8} />
+      </Suspense>
+
 
       {/* HANGULAT szekció */}
       <section className="border-y border-border">
