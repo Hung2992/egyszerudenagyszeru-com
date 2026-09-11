@@ -1,0 +1,194 @@
+CREATE OR REPLACE FUNCTION public.generate_partner_contract_on_kyc_approval()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_contract_number text;
+  v_address text;
+  v_body text;
+  v_owner public.owner_company_profile%ROWTYPE;
+BEGIN
+  IF NEW.status = 'approved' AND (OLD.status IS NULL OR OLD.status <> 'approved') THEN
+    IF EXISTS (SELECT 1 FROM public.partner_contracts WHERE kyc_submission_id = NEW.id) THEN
+      RETURN NEW;
+    END IF;
+
+    SELECT * INTO v_owner FROM public.owner_company_profile WHERE is_current = true LIMIT 1;
+    IF v_owner.id IS NULL THEN
+      RAISE EXCEPTION 'No current owner_company_profile configured';
+    END IF;
+
+    v_contract_number := 'EDN-' || to_char(now(),'YYYYMMDD') || '-' || upper(substr(replace(NEW.id::text,'-',''),1,6));
+    v_address := concat_ws(', ',
+      concat_ws(' ', NEW.address_zip, NEW.address_city),
+      NEW.address_street, NEW.address_country);
+
+    v_body := format($body$PARTNERI EGYÜTTMŰKÖDÉSI SZERZŐDÉS
+
+Szerződésszám: %s
+Kelt: %s
+Szerződésverzió: v2.0
+Cégadatok verzió: v%s
+
+I. SZERZŐDŐ FELEK
+
+Üzemeltető:
+  %s
+  Képviselő: %s
+  Adószám: %s
+  Közösségi adószám: %s
+  Adóazonosító jel (egyéni vállalkozó / magánszemély esetén): %s
+  Székhely: %s
+
+Partner:
+  Név: %s
+  Születési név: %s
+  Születési hely, idő: %s, %s
+  Anyja neve: %s
+  Lakcím / székhely: %s
+  Személyi igazolvány szám: %s
+  Adóazonosító jel / adószám: %s
+  E-mail: %s
+  Telefon: %s
+
+A Partner a szerződéskötéskor nyilatkozik arról, hogy magánszemélyként, egyéni vállalkozóként vagy gazdasági társaság képviseletében jár el. Magánszemély esetén adóazonosító jel, vállalkozás esetén adószám (és képviselő) az irányadó adat; a másik mező ilyenkor nem alkalmazandó.
+
+II. FOGALOMMEGHATÁROZÁSOK
+1. Platform: az Üzemeltető zárt forráskódú, több-bérlős (multi-tenant) APEX üzleti szoftverrendszere.
+2. Partner Példány (tenant): a Partner számára elkülönített, saját adatokkal működő felület.
+3. Bruttó bevétel: a Partner Példányán keresztül leadott, a vevő által ténylegesen kifizetett és a Partner által teljesített megrendelések végösszege, ÁFÁ-val együtt.
+4. Elszámolási alap: a bruttó bevétel, az alábbi tételekkel csökkentve:
+   a) a vevőnek visszatérített összegek (elállás, garancia, jóváírás);
+   b) a sztornózott, meghiúsult vagy nem teljesített megrendelések összege;
+   c) a sikeres chargeback (bankkártyás visszaterhelés) összege;
+   d) a vevőre továbbhárított, ténylegesen felmerült szállítási díj;
+   e) a be nem folyt (kifizetetlen) megrendelések összege.
+   Részfizetés esetén kizárólag a ténylegesen befolyt és teljesítéssel fedezett rész számít bele. Ha a visszatérítés/chargeback egy már elszámolt időszakot érint, azt a következő elszámolási időszakban jóváírásként kell figyelembe venni.
+5. Elszámolási időszak: naptári hónap. Az elszámolás a tárgyhót követő hónap 10. napjáig készül el, a fizetési határidő a számla kiállításától számított 8 naptári nap.
+6. Éves göngyölítés: a sávos részesedés számítása naptári évenként újrainduló, göngyölített elszámolási alapon történik.
+
+III. A SZERZŐDÉS TÁRGYA
+Üzemeltető a Platformon elkülönített bérlői felületet biztosít a Partner részére. A Platform egyetlen rendszerben egyesíti a weboldal-, webshop-, ügyfél- (CRM), naptár-, marketing-, kommunikációs-, pénzügyi-, logisztikai- és mesterséges intelligencia-modulokat, asztali és mobil eszközön egyaránt.
+
+IV. A BIZTOSÍTOTT SZOFTVERÖSSZETEVŐK
+A Partner a szerződés hatálya alatt az alábbi modulokhoz kap hozzáférést:
+  1. Weboldal- és márkaoldal-motor: saját domain, landing oldalak, blog, SEO metaadatok, mobil megjelenés, verziókezelés és egykattintásos visszaállítás.
+  2. Webshop és termékkezelés: fizikai, digitális, oktatási/kurzus és szolgáltatás típusú termékek; variánsok, méretek, színek, készlet, licenckulcsok, letöltések, árazási szabályok, kosárelhagyás-kezelés.
+  3. Ügyfélkapcsolat-kezelés (CRM): érdeklődők, vásárlók, foglalások, előzmények, címkék, csoportok, napi teendők.
+  4. Naptár és online foglalás: idősávok, automatikus visszaigazolás, emlékeztetők, napi ügyféllista.
+  5. Marketing- és kampányközpont: szegmentált kampányok, hírlevelek, QR-kódok, UTM-linkek, A/B tesztelés, automatikus tölcsérek.
+  6. AI munkatársak: szöveg, kép, videó, kód, termékleírás, SEO tartalom, hirdetésszöveg, oldal- és webshop-generálás.
+  7. APEX kommunikációs platform: e-mail, SMS, WhatsApp, hanghívás, AI hang, CPaaS motor DLR-ekkel, opt-outtal, routinggal, újraküldéssel.
+  8. Vezetői és pénzügyi központ: rendelések, bevétel, részesedés, KPI, audit napló, kifizetések, visszatérítések.
+  9. Biztonság és tenant isolation: row-level security (RLS), szerepkör-alapú hozzáférés, változásnaplózás, rollback.
+
+V. HASZNÁLATI KERETEK ÉS KORLÁTOK
+1. A modulok használata a mindenkori Használati Keretek (Fair Use) dokumentum szerinti mennyiségi keretek között díjmentes. A keretek kiterjednek különösen a tárhelyre, sávszélességre, e-mail-, SMS-, WhatsApp- és hanghívás-darabszámra, AI-generálások számára, API-hívásokra és háttérfolyamatokra.
+2. A mindenkori keretek a Partner Központban folyamatosan megtekinthetők. Az Üzemeltető a kereteket a Partner előzetes, legalább 30 napos értesítése mellett módosíthatja.
+3. A kereten felüli felhasználás külön díjas; erről az Üzemeltető előzetesen tájékoztat, és a Partner jóváhagyása nélkül automatikus terhelés nem történik.
+4. Harmadik felek díjai (pl. távközlési szolgáltató, fizetési szolgáltató, domain-regisztrátor) nem részei a részesedésnek, azokat a Partner viseli.
+
+VI. PARTNERI RÉSZESEDÉS ÉS ELSZÁMOLÁS
+1. A Partner az Üzemeltető részére a II.4. pont szerinti elszámolási alap után részesedést fizet, az alábbiak szerint:
+   a) az elszámolási alap első 1 000 000 Ft-jára: az összeg 5 százaléka (legfeljebb 50 000 Ft);
+   b) az 1 000 000 Ft feletti részre: minden megkezdett további 1 000 000 Ft után 10 000 Ft fix összegű (nem százalékos) részesedés.
+2. Számítási példák (éves göngyölített elszámolási alapra):
+   • 400 000 Ft → 400 000 x 5 százalék = 20 000 Ft;
+   • 1 000 000 Ft → 50 000 Ft;
+   • 1 200 000 Ft → 50 000 Ft + 10 000 Ft (1 megkezdett millió) = 60 000 Ft;
+   • 2 000 000 Ft → 50 000 Ft + 10 000 Ft = 60 000 Ft;
+   • 2 000 001 Ft → 50 000 Ft + 20 000 Ft = 70 000 Ft;
+   • 5 000 000 Ft → 50 000 Ft + 40 000 Ft = 90 000 Ft;
+   • 10 000 000 Ft → 50 000 Ft + 90 000 Ft = 140 000 Ft.
+3. A b) pont szerinti 10 000 Ft rögzített, forintban meghatározott összeg, nem százalékos részesedés.
+4. A részesedés összege nettó összeg; az Üzemeltető a mindenkori jogszabályok szerinti ÁFÁ-t felszámítja.
+5. Az Üzemeltető a részesedést jogosult a Partner részére fizetendő kifizetésből levonni, vagy külön számlázni. Minden elszámolásról tételes, letölthető kimutatás készül a Partner Központban.
+6. A Partner az elszámolást annak közlésétől számított 15 napon belül írásban kifogásolhatja; a kifogásolt tételt a felek 15 napon belül egyeztetik.
+
+VII. A FELEK KÖTELEZETTSÉGEI
+1. A Partner kijelenti, hogy a KYC során megadott adatai valósak, és azok változását 8 napon belül bejelenti.
+2. A Partner betartja a hatályos jogszabályokat (Ptk., GDPR, Pmt. 2017. évi LIII. tv., fogyasztóvédelmi és e-kereskedelmi szabályok), és felel az általa értékesített termékekért, szolgáltatásokért, azok jogszerűségéért, valamint az általa közzétett tartalomért.
+3. Az Üzemeltető biztosítja a Platform és a partneri admin felület működését, karbantartását és fejlesztését.
+4. A Partner a hozzáférési adatait bizalmasan kezeli, és felel a saját felhasználói fiókjaiban végzett tevékenységért.
+
+VIII. SZELLEMI TULAJDON, ADATOK ÉS TARTALOM
+1. A Platform, annak forráskódja, architektúrája és minden összetevője az Üzemeltető kizárólagos szellemi tulajdona. A Partner nem kizárólagos, nem átruházható, a szerződés időtartamára szóló felhasználási jogot kap.
+2. A Partner ügyféladatai, rendelési adatai, termék- és tartalomadatai a Partnert illetik. A szerződés megszűnése esetén a Partner ezeket géppel olvasható (CSV/JSON) formátumban exportálhatja.
+3. A Partner által feltöltött szövegek, képek, videók és márkajelzések a Partner tulajdonában maradnak; a Partner az Üzemeltetőnek a szolgáltatás nyújtásához szükséges mértékű felhasználási jogot ad.
+4. Az AI által, a Partner utasítására generált tartalom felhasználási joga a Partnert illeti. A Partner tudomásul veszi, hogy a generatív tartalom egyediségéért és harmadik fél jogainak sértetlenségéért az Üzemeltető nem tud garanciát vállalni, ezért a publikálás előtti ellenőrzés a Partner feladata.
+5. Domain: a Partner saját nevén regisztrált domainje a Partneré. Ha a domaint az Üzemeltető regisztrálja a Partner javára, a szerződés megszűnésekor – a felmerült költségek megtérítése mellett – azt a Partnerre átruházza.
+
+IX. ADATVÉDELEM (GDPR)
+1. A KYC- és szerződéses adatok tekintetében az Üzemeltető önálló adatkezelő (jogalap: szerződés teljesítése és jogi kötelezettség, Pmt.).
+2. A Partner Példányán kezelt vevői és érdeklődői adatok tekintetében a Partner az adatkezelő, az Üzemeltető pedig adatfeldolgozó. Az Üzemeltető ezen adatokat kizárólag a Partner írásbeli utasítása és jelen szerződés szerint kezeli.
+3. A felek a GDPR 28. cikke szerinti adatfeldolgozói feltételeket az Adatfeldolgozói Megállapodásban (DPA) rögzítik, amely jelen szerződés elválaszthatatlan mellékletét képezi. Az igénybe vett további adatfeldolgozók (tárhely, e-mail-, SMS- és fizetési szolgáltatók) listáját az Üzemeltető közzéteszi, és változásukról előzetesen értesít.
+4. Adatvédelmi incidens esetén az Üzemeltető a tudomásszerzéstől számított 48 órán belül tájékoztatja a Partnert.
+5. A KYC adatok kezelésére a KYC Adatkezelési Tájékoztató is irányadó.
+
+X. RENDELKEZÉSRE ÁLLÁS ÉS FELELŐSSÉG
+1. Az Üzemeltető éves szinten 99,5 százalékos rendelkezésre állásra törekszik, az előre bejelentett karbantartások idejét ide nem számítva.
+2. Az Üzemeltető naponta biztonsági mentést készít, és 30 napos visszaállítási időablakot tart fenn.
+3. Az Üzemeltető felelőssége a neki felróható károkra korlátozódik; a felelősség felső határa a káreseményt megelőző 12 hónapban a Partner által ténylegesen megfizetett részesedés összege. E korlátozás nem terjed ki a szándékosan vagy súlyos gondatlansággal, illetve emberi életet, testi épséget vagy egészséget károsítva okozott károkra.
+4. Az Üzemeltető nem felel elmaradt haszonért, közvetett károkért, valamint harmadik fél szolgáltatásának (távközlési, fizetési, tárhely-, AI-szolgáltató) kieséséért.
+5. Az AI-modulok kimenete javaslat jellegű; annak üzleti, jogi vagy pénzügyi felhasználásáért a Partner felel.
+
+XI. A SZERZŐDÉS IDŐTARTAMA ÉS MEGSZŰNÉSE
+1. A szerződés határozatlan időre jön létre.
+2. Rendes felmondás: bármelyik fél indokolás nélkül, írásban, 30 napos felmondási idővel felmondhatja.
+3. Azonnali hatályú felmondás súlyos szerződésszegés esetén, így különösen: jogszabálysértő vagy tiltott termék értékesítése, valótlan KYC-adat, a Platform biztonságának veszélyeztetése, 30 napot meghaladó fizetési késedelem, vagy a Platform jogosulatlan másolása. Az azonnali felmondást megelőzően – ha a jogsértés orvosolható – a másik fél 8 napos írásbeli felszólítást kap.
+4. A megszűnés napján a Partner Példánya inaktiválásra kerül, de az adatok exportját az Üzemeltető további 30 napig biztosítja; ezt követően – a jogszabályi megőrzési kötelezettség (Pmt., Számv. tv.) alá eső adatok kivételével – az adatok véglegesen törlésre kerülnek.
+5. Megszűnés esetén a felek a megszűnés napjáig keletkezett elszámolási alap alapján 30 napon belül végelszámolnak. A megszűnés után befolyó, de korábban teljesített megrendelések bevétele is az elszámolás része.
+
+XII. AZ ALÁÍRÁS MÓDJA
+1. A szerződés a felek elektronikus úton tett, jelen felületen rögzített aláírásával jön létre. Az aláírás az eIDAS rendelet szerinti egyszerű elektronikus aláírásnak minősül.
+2. Az Üzemeltető az aláírás tényét, időpontját, az aláíró nevét, IP-címét és a dokumentum SHA-256 lenyomatát naplózza. A hash a dokumentum változatlanságának igazolására szolgál, önmagában nem minősül minősített elektronikus aláírásnak.
+3. Az aláírt dokumentum a rendszerben zárolt, módosítást a rendszer nem tesz lehetővé; módosítás kizárólag közös, írásbeli szerződésmódosítással lehetséges.
+4. A felek elfogadják, hogy jogvita esetén a naplóadatok és a hash bizonyítékként felhasználhatók.
+
+XIII. VEGYES ÉS ZÁRÓ RENDELKEZÉSEK
+1. A szerződés módosítása írásban érvényes. Az Üzemeltető a Platform általános feltételeit legalább 30 napos előzetes értesítéssel módosíthatja; ha a Partner a módosítást nem fogadja el, a hatálybalépésig rendkívüli felmondással élhet.
+2. A felek üzleti titokként kezelik a másik fél tudomásukra jutott adatait.
+3. A felek kapcsolattartása írásban, a szerződésben megadott e-mail címeken történik.
+4. Ha a szerződés bármely rendelkezése érvénytelen, az a többi rendelkezés érvényességét nem érinti.
+5. Alkalmazandó jog: a magyar jog, különösen a Ptk. A szerződésben nem szabályozott kérdésekben a magyar jogszabályok az irányadók.
+6. Jogvita esetén a felek elsődlegesen egyeztetnek. Ennek eredménytelensége esetén a jogvita elbírálására a magyar bíróságok rendelkeznek joghatósággal, az általános hatásköri és illetékességi szabályok szerint.
+
+MELLÉKLETEK
+  1. sz. melléklet: Használati Keretek (Fair Use)
+  2. sz. melléklet: Adatfeldolgozói Megállapodás (DPA)
+  3. sz. melléklet: KYC Adatkezelési Tájékoztató
+$body$,
+      v_contract_number, to_char(now(),'YYYY-MM-DD'), v_owner.version,
+      v_owner.legal_name, v_owner.representative_name,
+      v_owner.tax_number, coalesce(v_owner.eu_tax_number,'-'),
+      coalesce(v_owner.tax_identification_number,'-'), v_owner.address,
+      NEW.full_name, coalesce(NEW.birth_name,'-'),
+      coalesce(NEW.birth_place,'-'), coalesce(NEW.birth_date::text,'-'),
+      coalesce(NEW.mother_name,'-'), v_address,
+      NEW.id_card_number, coalesce(NEW.tax_id,'-'),
+      NEW.email, coalesce(NEW.phone,'-'));
+
+    INSERT INTO public.partner_contracts (
+      user_id, kyc_submission_id, contract_number, contract_version, contract_body,
+      partner_full_name, partner_birth_name, partner_birth_place, partner_birth_date,
+      partner_mother_name, partner_address, partner_id_card_number, partner_tax_id,
+      partner_email, partner_phone,
+      owner_name, owner_representative, owner_tax_number, owner_address,
+      owner_profile_version, status
+    ) VALUES (
+      NEW.user_id, NEW.id, v_contract_number, 'v2.0', v_body,
+      NEW.full_name, NEW.birth_name, NEW.birth_place, NEW.birth_date,
+      NEW.mother_name, v_address, NEW.id_card_number, NEW.tax_id,
+      NEW.email, NEW.phone,
+      v_owner.legal_name, v_owner.representative_name, v_owner.tax_number, v_owner.address,
+      v_owner.version, 'pending_partner_signature'
+    );
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.generate_partner_contract_on_kyc_approval() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.generate_partner_contract_on_kyc_approval() TO authenticated, service_role;
