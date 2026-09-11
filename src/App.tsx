@@ -162,6 +162,7 @@ const App = () => (
             <Route path="/legal/kyc-adatkezeles" element={<KycAdatkezeles />} />
             <Route path="/b/:slug" element={<BrandStorefront />} />
             <Route path="/b/:slug/termek/:productSlug" element={<BrandProductDetail />} />
+            <Route path="/b/:slug/oldal/:pageSlug" element={<BrandPage />} />
             <Route path="/s/:code" element={<PartnerShareRedirect />} />
             <Route path="/p/:partnerSlug/:landingSlug" element={<PartnerLanding />} />
             <Route path="/csomagkovetes" element={<TrackShipment />} />
