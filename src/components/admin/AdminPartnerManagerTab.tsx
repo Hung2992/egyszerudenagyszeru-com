@@ -167,6 +167,7 @@ const AdminPartnerManagerTab = () => {
           <Search className="h-4 w-4 text-muted-foreground" />
           <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Keresés név, cég, e-mail vagy márkaoldal alapján" className="rounded-none" />
           <Button variant="outline" className="rounded-none" onClick={() => void load()}>Frissítés</Button>
+          <Button className="rounded-none whitespace-nowrap" onClick={() => void publishAllStores()}>Összes márkaoldal élesítése</Button>
         </div>
 
         {loading ? (
