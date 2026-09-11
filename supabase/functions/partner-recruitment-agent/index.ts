@@ -536,7 +536,7 @@ Adj minden napra minden platformra egy posztot. Ez ${days * platforms.length} po
       const { data: vid } = await supabase
         .from("partner_recruitment_videos").select("*").eq("id", videoId).maybeSingle();
       if (!vid) return json({ error: "not_found" }, 404, req);
-      const scenes: any[] = Array.isArray(vid.script) ? vid.script.slice(0, 5) : [];
+      const scenes: any[] = Array.isArray(vid.script) ? vid.script.slice(0, 8) : [];
       if (!scenes.length) return json({ error: "no_script" }, 400, req);
 
       // Egy változat / kérés, jelenetek párhuzamosan -> nem fut timeoutba
