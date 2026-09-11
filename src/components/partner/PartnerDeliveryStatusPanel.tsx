@@ -14,6 +14,26 @@ type Row = {
   created_at: string;
   sent_at: string | null;
   delivered_at: string | null;
+  dlr_status: string | null;
+  dlr_code: string | null;
+  country_code: string | null;
+  attempts: number | null;
+  next_retry_at: string | null;
+};
+
+const DLR_LABEL: Record<string, string> = {
+  queued: "Sorban",
+  buffered: "Hálózatnál várakozik",
+  accepted: "Szolgáltató átvette",
+  sent: "Elküldve",
+  delivered: "Kézbesítve",
+  read: "Elolvasva",
+  undeliverable: "Nem kézbesíthető",
+  rejected: "Elutasítva",
+  expired: "Lejárt",
+  failed: "Sikertelen",
+  canceled: "Visszavonva",
+  unknown: "Ismeretlen",
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -76,7 +96,7 @@ export default function PartnerDeliveryStatusPanel({ partnerId }: { partnerId: s
     setLoading(true);
     const { data } = await supabase
       .from("messaging_outbox")
-      .select("id, channel, to_address, status, provider, error, created_at, sent_at, delivered_at")
+      .select("id, channel, to_address, status, provider, error, created_at, sent_at, delivered_at, dlr_status, dlr_code, country_code, attempts, next_retry_at")
       .eq("partner_id", partnerId)
       .order("created_at", { ascending: false })
       .limit(40);
@@ -139,6 +159,15 @@ export default function PartnerDeliveryStatusPanel({ partnerId }: { partnerId: s
                   <span>Kiment: {fmt(r.sent_at)}</span>
                   <span>Kézbesítve: {fmt(r.delivered_at)}</span>
                   {took && <span>Idő: {took}</span>}
+                  {r.dlr_status && (
+                    <span>
+                      Hálózati visszajelzés: {DLR_LABEL[r.dlr_status] || r.dlr_status}
+                      {r.dlr_code ? ` (${r.dlr_code})` : ""}
+                    </span>
+                  )}
+                  {r.country_code && <span>Ország: +{r.country_code}</span>}
+                  {(r.attempts ?? 0) > 1 && <span>Próbálkozás: {r.attempts}</span>}
+                  {r.next_retry_at && <span>Újrapróbálás: {fmt(r.next_retry_at)}</span>}
                 </div>
                 {r.status === "no_provider" && (
                   <p className="text-xs text-muted-foreground">
