@@ -278,16 +278,16 @@ const PartnerCalendarTab = ({ partnerId }: { partnerId: string }) => {
               <DialogTrigger asChild>
                 <Button size="sm" className="rounded-none"><Plus className="h-4 w-4 mr-1" />Új időpont</Button>
               </DialogTrigger>
-              <DialogContent className="rounded-none max-w-lg">
+              <DialogContent className="rounded-none max-w-lg w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto">
                 <DialogHeader><DialogTitle>Új időpont</DialogTitle></DialogHeader>
                 <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div><Label className="text-xs">Ügyfél neve</Label>
                       <Input className="rounded-none" value={draft.customer_name} onChange={e => setDraft({ ...draft, customer_name: e.target.value })} /></div>
                     <div><Label className="text-xs">E-mail</Label>
                       <Input className="rounded-none" value={draft.customer_email} onChange={e => setDraft({ ...draft, customer_email: e.target.value })} /></div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div><Label className="text-xs">Telefon</Label>
                       <Input className="rounded-none" value={draft.phone} onChange={e => setDraft({ ...draft, phone: e.target.value })} /></div>
                     <div><Label className="text-xs">Kapcsolódó szolgáltatás</Label>
@@ -307,7 +307,7 @@ const PartnerCalendarTab = ({ partnerId }: { partnerId: string }) => {
                     <div><Label className="text-xs">Hossz (perc)</Label>
                       <Input type="number" className="rounded-none" value={draft.duration_min} onChange={e => setDraft({ ...draft, duration_min: e.target.value })} /></div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div><Label className="text-xs">Helyszín</Label>
                       <Input className="rounded-none" value={draft.location} onChange={e => setDraft({ ...draft, location: e.target.value })} placeholder="Online / cím" /></div>
                     <div><Label className="text-xs">Állapot</Label>

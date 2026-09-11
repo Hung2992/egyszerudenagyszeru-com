@@ -195,9 +195,9 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <h2 className="text-lg font-bold uppercase tracking-widest">Termékeim ({products.length})</h2>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => setStudioOpen(true)} className="rounded-none uppercase tracking-wider">
             <Sparkles className="h-4 w-4 mr-1" /> AI Product Studio
           </Button>
@@ -268,7 +268,7 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl rounded-none max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl w-[calc(100vw-1.5rem)] rounded-none max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editing ? "Termék szerkesztése" : "Új termék"}</DialogTitle></DialogHeader>
           <div className="space-y-3">
             {/* Mit adsz el? */}

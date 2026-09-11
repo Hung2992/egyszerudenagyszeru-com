@@ -143,7 +143,7 @@ const AdminPartnerManagerTab = () => {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Card className="rounded-none p-4 flex items-center gap-3">
           <Users className="h-5 w-5 text-primary" />
           <div><div className="text-2xl font-bold">{rows.length}</div><div className="text-xs uppercase tracking-widest text-muted-foreground">Partner</div></div>
@@ -163,11 +163,15 @@ const AdminPartnerManagerTab = () => {
       <PartnerBookingsPanel partnerNames={partnerNames} />
 
       <Card className="rounded-none p-4">
-        <div className="flex items-center gap-2 mb-4">
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Keresés név, cég, e-mail vagy márkaoldal alapján" className="rounded-none" />
-          <Button variant="outline" className="rounded-none" onClick={() => void load()}>Frissítés</Button>
-          <Button className="rounded-none whitespace-nowrap" onClick={() => void publishAllStores()}>Összes márkaoldal élesítése</Button>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Keresés név, cég, e-mail vagy márkaoldal alapján" className="rounded-none w-full" />
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="rounded-none flex-1 sm:flex-none" onClick={() => void load()}>Frissítés</Button>
+            <Button className="rounded-none flex-1 sm:flex-none text-xs sm:text-sm" onClick={() => void publishAllStores()}>Összes márkaoldal élesítése</Button>
+          </div>
         </div>
 
         {loading ? (
@@ -179,7 +183,7 @@ const AdminPartnerManagerTab = () => {
             {filtered.map(r => {
               const st = stores[r.id];
               return (
-                <div key={r.id} className="border border-border p-3 flex flex-col lg:flex-row lg:items-center gap-3">
+                <div key={r.id} className="border border-border p-3 flex flex-col lg:flex-row lg:items-center gap-3 min-w-0">
                   <div className="flex-1 min-w-0">
                     <div className="font-bold truncate">{r.company_name || r.full_name || "Névtelen partner"}</div>
                     <div className="text-xs text-muted-foreground truncate">
@@ -215,17 +219,17 @@ const AdminPartnerManagerTab = () => {
       </Card>
 
       <Dialog open={!!edit} onOpenChange={o => !o && setEdit(null)}>
-        <DialogContent className="rounded-none max-w-lg">
+        <DialogContent className="rounded-none max-w-lg w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Partner szerkesztése</DialogTitle></DialogHeader>
           {edit && (
             <div className="space-y-3">
               <div><Label>Cégnév</Label><Input className="rounded-none" value={edit.company_name || ""} onChange={e => setEdit({ ...edit, company_name: e.target.value })} /></div>
               <div><Label>Kapcsolattartó</Label><Input className="rounded-none" value={edit.full_name || ""} onChange={e => setEdit({ ...edit, full_name: e.target.value })} /></div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><Label>E-mail</Label><Input className="rounded-none" value={edit.email || ""} onChange={e => setEdit({ ...edit, email: e.target.value })} /></div>
                 <div><Label>Telefon</Label><Input className="rounded-none" value={edit.phone || ""} onChange={e => setEdit({ ...edit, phone: e.target.value })} /></div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><Label>Státusz</Label><Input className="rounded-none" value={edit.status || ""} onChange={e => setEdit({ ...edit, status: e.target.value })} /></div>
                 <div><Label>Jutalék (%)</Label><Input type="number" className="rounded-none" value={edit.default_commission_percent ?? ""} onChange={e => setEdit({ ...edit, default_commission_percent: e.target.value === "" ? null : Number(e.target.value) })} /></div>
               </div>
