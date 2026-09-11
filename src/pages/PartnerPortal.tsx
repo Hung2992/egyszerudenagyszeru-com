@@ -112,8 +112,28 @@ const PartnerPortal = () => {
       navigate("/partner-onboarding");
       return;
     }
-    void logAccess("portal_entered", { status: partner.status });
+    // Szerződés kötelező: aláíratlan szerződéssel nincs belépés a Partner Központba.
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) { navigate("/auth"); return; }
+      const { data: c } = await supabase.from("partner_contracts")
+        .select("partner_signed_at,status")
+        .eq("user_id", session.user.id)
+        .order("created_at", { ascending: false }).limit(1).maybeSingle();
+      if (!c?.partner_signed_at) {
+        void logAccess("redirected", { reason: "contract_not_signed" });
+        toast({
+          title: "Szerződés aláírása szükséges",
+          description: "A Partner Központ csak az aláírt partneri szerződés után nyílik meg.",
+          variant: "destructive",
+        });
+        navigate("/partner-contract");
+        return;
+      }
+      void logAccess("portal_entered", { status: partner.status });
+    })();
   }, [loading, partner, isAdmin]);
+
 
   useEffect(() => {
     if (!partner) return;
