@@ -33,7 +33,6 @@ import { template as partnerDomainRejected } from './partner-domain-rejected.tsx
 import { template as partnerDomainDnsStatusChanged } from './partner-domain-dns-status-changed.tsx'
 import { template as partnerStorefrontVersionSubmitted } from './partner-storefront-version-submitted.tsx'
 import { template as appointmentConfirmation } from './appointment-confirmation.tsx'
-import { template as partnerFeatureAnnouncement } from './partner-feature-announcement.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'contact-confirmation': contactConfirmation,
@@ -60,6 +59,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'partner-domain-dns-status-changed': partnerDomainDnsStatusChanged,
   'partner-storefront-version-submitted': partnerStorefrontVersionSubmitted,
   'appointment-confirmation': appointmentConfirmation,
-  'partner-feature-announcement': partnerFeatureAnnouncement,
 }
 
