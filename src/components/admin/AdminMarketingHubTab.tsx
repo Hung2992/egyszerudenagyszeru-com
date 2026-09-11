@@ -279,7 +279,7 @@ export default function AdminMarketingHubTab() {
           <Card>
             <CardContent className="p-4 space-y-2 text-sm">
               <div className="flex items-center gap-2"><BarChart3 className="h-4 w-4" /> Küldési statisztikák a kampányküldések és események alapján készülnek.</div>
-              <div className="flex items-center gap-2 text-muted-foreground"><MessageSquare className="h-4 w-4" /> SMS / WhatsApp: előkészítve — Twilio csatlakozás után aktiválható.</div>
+              <div className="flex items-center gap-2 text-muted-foreground"><MessageSquare className="h-4 w-4" /> SMS / WhatsApp: saját APEX átjárón keresztül megy ki.</div>
             </CardContent>
           </Card>
         </TabsContent>
