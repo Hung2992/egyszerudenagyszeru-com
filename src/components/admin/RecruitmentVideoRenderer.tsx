@@ -96,8 +96,8 @@ const RecruitmentVideoRenderer = ({ video, onUpdated }: Props) => {
   }, [variantKey]);
 
   const isSquare = video.platform === "facebook";
-  const W = isSquare ? 1080 : 720;
-  const H = isSquare ? 1080 : 1280;
+  const W = 1080;
+  const H = isSquare ? 1080 : 1920;
 
   const setting = (n: number): SceneSetting => settings[n] ?? { enabled: true, dur: null };
   const patchSetting = (n: number, p: Partial<SceneSetting>) =>
