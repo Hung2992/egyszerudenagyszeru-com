@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { LogOut, Copy, Check, Download, Banknote, BarChart3, Megaphone, User as UserIcon, ListChecks, RefreshCw, Link2, FileSpreadsheet, Store, Package, Workflow, FlaskConical, Puzzle, Bot, LayoutDashboard, ShoppingBag, Boxes, Sparkles, Wallet, Users, Target, KeyRound, CalendarDays } from "lucide-react";
+import { LogOut, Copy, Check, Download, Banknote, BarChart3, Megaphone, User as UserIcon, ListChecks, RefreshCw, Link2, FileSpreadsheet, Store, Package, Workflow, FlaskConical, Puzzle, Bot, LayoutDashboard, ShoppingBag, Boxes, Sparkles, Wallet, Users, Target, KeyRound, CalendarDays, Mail } from "lucide-react";
 import { copyToClipboard } from "@/lib/clipboard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import StorefrontEditorTab from "@/components/partner/StorefrontEditorTab";
@@ -28,6 +28,7 @@ import PartnerInventoryTab from "@/components/partner/PartnerInventoryTab";
 import PartnerAiAdvisorTab from "@/components/partner/PartnerAiAdvisorTab";
 import PartnerCommandBar from "@/components/partner/PartnerCommandBar";
 import PartnerFinanceTab from "@/components/partner/PartnerFinanceTab";
+import PartnerCampaignsTab from "@/components/partner/PartnerCampaignsTab";
 import PartnerAiTeamTab from "@/components/partner/PartnerAiTeamTab";
 import PartnerActionPlansTab from "@/components/partner/PartnerActionPlansTab";
 import PartnerCalendarTab from "@/components/partner/PartnerCalendarTab";
@@ -365,6 +366,10 @@ const PartnerPortal = () => {
             <PartnerDigitalDeliveryTab partnerId={partner.id} />
           </TabsContent>
 
+
+          <TabsContent value="campaigns" className="mt-6">
+            <PartnerCampaignsTab partnerId={partner.id} />
+          </TabsContent>
 
           <TabsContent value="workflows" className="mt-6">
             <PartnerWorkflowsTab partnerId={partner.id} />
