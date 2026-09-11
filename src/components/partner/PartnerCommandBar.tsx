@@ -46,18 +46,29 @@ const PartnerCommandBar = ({ partnerId, onNavigate }: Props) => {
       const { data, error } = await supabase.functions.invoke("partner-command-router", {
         body: { partner_id: partnerId, prompt: q },
       });
-      if (error) throw new Error(error.message);
+      if (error) {
+        let detail = error.message;
+        try {
+          const res = (error as any)?.context;
+          if (res && typeof res.json === "function") {
+            const b = await res.json();
+            if (b?.error) detail = String(b.error);
+          }
+        } catch { /* marad az eredeti üzenet */ }
+        throw new Error(detail);
+      }
       if (data?.error) throw new Error(data.error);
       setResult(data as CommandResult);
     } catch (e: any) {
       const msg = String(e?.message || "");
-      toast({
-        title: "AI hiba",
-        description: msg.includes("rate_limit")
-          ? "Túl sok kérés – próbáld pár perc múlva."
-          : msg.includes("credits") ? "Elfogytak az AI kreditek." : msg || "Nem sikerült feldolgozni a kérést.",
-        variant: "destructive",
-      });
+      const friendly =
+        msg.includes("rate_limit") ? "Túl sok kérés – próbáld pár perc múlva."
+        : msg.includes("credits") || msg.includes("ai_blocked") ? "Elfogytak az AI kreditek – a munkatérhez kredit feltöltés kell, utána azonnal működik."
+        : msg.includes("not_partner") ? "Ehhez a partnerfiókhoz nincs jogosultságod."
+        : msg.includes("unauthorized") ? "Jelentkezz be újra."
+        : msg || "Nem sikerült feldolgozni a kérést.";
+      toast({ title: "AI hiba", description: friendly, variant: "destructive" });
+
     } finally {
       setBusy(false);
     }

@@ -24,7 +24,10 @@ async function callAI(system: string, user: string) {
   });
   if (res.status === 429) throw new Error("rate_limit");
   if (res.status === 402) throw new Error("credits_exhausted");
-  if (!res.ok) throw new Error(`ai_error_${res.status}: ${await res.text()}`);
+  if (res.status === 403) throw new Error("ai_blocked");
+  if (res.status === 401) throw new Error("ai_unauthorized");
+  if (!res.ok) throw new Error(`ai_error_${res.status}`);
+
   const j = await res.json();
   return j.choices?.[0]?.message?.content ?? "";
 }
