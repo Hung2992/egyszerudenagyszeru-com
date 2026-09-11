@@ -5,8 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import PartnerGatewayPanel from "./PartnerGatewayPanel";
-import PartnerCommSurvey from "./PartnerCommSurvey";
 
 type ApiKey = {
   id: string;
@@ -137,8 +135,7 @@ export default function PartnerCommunicationTab({ partnerId }: { partnerId: stri
 
   return (
     <div className="space-y-4">
-      <PartnerGatewayPanel partnerId={partnerId} />
-      <PartnerCommSurvey partnerId={partnerId} />
+
 
       <Card className="rounded-none">
         <CardHeader><CardTitle className="text-base">API kulcsok</CardTitle></CardHeader>
