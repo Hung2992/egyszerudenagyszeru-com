@@ -11,6 +11,7 @@ import { Loader2, Plus, Trash2, Activity, Server } from "lucide-react";
 
 interface Endpoint {
   id: string;
+  kind?: string | null;
   name: string;
   base_url: string;
   api_style: string;
@@ -32,6 +33,7 @@ interface Endpoint {
 }
 
 const emptyForm = {
+  kind: "text",
   name: "Saját AI szerver",
   base_url: "https://",
   api_style: "openai",
@@ -87,6 +89,7 @@ export default function AdminLocalAiTab() {
     if (!form.model.trim()) return toast.error("Add meg a modell nevét");
     setSaving(true);
     const { error } = await supabase.from("ai_local_endpoints").insert({
+      kind: form.kind,
       name: form.name.trim() || "Saját AI szerver",
       base_url: form.base_url.trim(),
       api_style: form.api_style,
