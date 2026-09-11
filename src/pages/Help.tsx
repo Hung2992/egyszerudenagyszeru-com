@@ -157,8 +157,8 @@ const CATEGORIES = [
     title: "Fiók és belépés",
     items: [
       {
-        q: "Kell regisztrálnom a vásárláshoz?",
-        a: "Nem kötelező, vendégként is rendelhetsz. De regisztrálva könnyebben követed a rendeléseidet, gyűjtesz hűségpontokat és gyorsabban fizethetsz legközelebb.",
+        q: "Kell belépnem a vásárláshoz?",
+        a: "Igen, rendelés leadásához be kell jelentkezned. Így követni tudod a rendeléseidet és a foglalásaidat.",
       },
       {
         q: "Elfelejtettem a jelszavam, mit tegyek?",
