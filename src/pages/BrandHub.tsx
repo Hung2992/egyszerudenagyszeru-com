@@ -334,12 +334,35 @@ const BrandHub = () => {
               </button>
             </div>
             <div className="space-y-2">
-              {news.length === 0 ? <p className="text-sm opacity-70">Még nincs közzétett hírlevél.</p> : news.map((n) => (
-                <Link key={n.id} to={`${base}/hirek/${n.slug}`} className="border p-3 block" style={{ borderColor: `${text}22` }}>
-                  <p className="text-sm font-medium">{n.subject}</p>
-                  {n.excerpt && <p className="text-xs opacity-70 mt-1">{n.excerpt}</p>}
-                </Link>
-              ))}
+              {news.length === 0 ? <p className="text-sm opacity-70">Még nincs közzétett hírlevél.</p> : news.map((n) => {
+                const d = myDeliveries.find((x) => x.blast_id === n.id);
+                const open = openNews === n.id;
+                return (
+                  <div key={n.id} className="border p-3" style={{ borderColor: `${text}22` }}>
+                    <button className="text-left w-full" onClick={() => setOpenNews(open ? null : n.id)}>
+                      <p className="text-sm font-medium">{n.subject}</p>
+                      {n.excerpt && <p className="text-xs opacity-70 mt-1">{n.excerpt}</p>}
+                      {n.published_at && <p className="text-[11px] opacity-50 mt-1">{new Date(n.published_at).toLocaleDateString("hu-HU")}</p>}
+                    </button>
+                    {d && (
+                      <p className="text-[11px] mt-2 opacity-80">
+                        {d.status === "sent"
+                          ? `Kiküldve neked: ${new Date(d.sent_at || d.created_at).toLocaleString("hu-HU")}`
+                          : `Küldés sikertelen${d.error ? `: ${d.error}` : ""}`}
+                      </p>
+                    )}
+                    {open && (
+                      <>
+                        {n.body_html
+                          ? <div className="text-sm mt-3 space-y-2 [&_a]:underline" dangerouslySetInnerHTML={{ __html: n.body_html }} />
+                          : <p className="text-sm mt-3 opacity-70">Ehhez a hírlevélhez nincs megjeleníthető tartalom.</p>}
+                        <Link to={`${base}/hirek/${n.slug}`} className="text-xs underline opacity-70 mt-3 inline-block">Megnyitás külön oldalon</Link>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+              {!session?.user && <p className="text-xs opacity-70">Lépj be a Fiókom fülön, hogy lásd, mely hírlevelek mentek ki a te címedre.</p>}
             </div>
           </div>
         )}
