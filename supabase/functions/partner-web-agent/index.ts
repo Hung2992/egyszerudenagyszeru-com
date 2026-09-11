@@ -794,14 +794,20 @@ Add vissza a JAVÍTOTT teljes JSON-t ugyanazzal a szerkezettel.`,
       }).select("id").maybeSingle();
       snapshotId = snap?.id ?? null;
 
-      if (sf?.id) {
-        const { error } = await supabase.from("partner_storefronts").update(patch).eq("id", sf.id);
-        applied = !error;
-        if (error) console.warn("[web-agent] update failed:", error.message);
-      } else {
-        const { error } = await supabase.from("partner_storefronts").insert({ partner_id: partnerId, ...patch });
-        applied = !error;
-        if (error) console.warn("[web-agent] insert failed:", error.message);
+      // Ha egy mező nem létezik a sémában, ne bukjon el a teljes építés:
+      // kiszedjük az ismeretlen oszlopot és újrapróbáljuk (max 8 kör).
+      const writePatch: Record<string, unknown> = { ...patch };
+      for (let attempt = 0; attempt < 8; attempt++) {
+        if (Object.keys(writePatch).length === 0) break;
+        const { error } = sf?.id
+          ? await supabase.from("partner_storefronts").update(writePatch).eq("id", sf.id)
+          : await supabase.from("partner_storefronts").insert({ partner_id: partnerId, ...writePatch });
+        if (!error) { applied = true; break; }
+        const bad = /Could not find the '([^']+)' column/.exec(error.message)?.[1];
+        console.warn("[web-agent] write failed:", error.message);
+        if (!bad || !(bad in writePatch)) break;
+        delete writePatch[bad];
+        delete (patch as Record<string, unknown>)[bad];
       }
     }
 
