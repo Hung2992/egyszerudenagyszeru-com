@@ -288,6 +288,8 @@ export default function AdminLocalAiTab() {
         </CardContent>
       </Card>
 
+      <AiMediaStudio title="AI kép és videó készítő (teszt)" />
+
       <Card>
         <CardHeader><CardTitle className="text-base">Hogyan indíts ingyen saját AI-t?</CardTitle></CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
