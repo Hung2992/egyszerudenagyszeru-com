@@ -234,8 +234,8 @@ const RecruitmentVideoRenderer = ({ video, onUpdated }: Props) => {
         const chunks: BlobPart[] = [];
         rec = new MediaRecorder(stream, {
           mimeType: mime,
-          videoBitsPerSecond: 12_000_000,
-          audioBitsPerSecond: 192_000,
+          videoBitsPerSecond: 16_000_000,
+          audioBitsPerSecond: 256_000,
         });
         rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
         done = new Promise<Blob>((resolve) => {
