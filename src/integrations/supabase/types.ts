@@ -4474,6 +4474,7 @@ export type Database = {
           id: string
           name: string
           open_count: number
+          provider_status: string | null
           scheduled_at: string | null
           sent_at: string | null
           sent_count: number
@@ -4491,6 +4492,7 @@ export type Database = {
           id?: string
           name: string
           open_count?: number
+          provider_status?: string | null
           scheduled_at?: string | null
           sent_at?: string | null
           sent_count?: number
@@ -4508,6 +4510,7 @@ export type Database = {
           id?: string
           name?: string
           open_count?: number
+          provider_status?: string | null
           scheduled_at?: string | null
           sent_at?: string | null
           sent_count?: number
