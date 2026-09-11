@@ -1208,6 +1208,66 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_local_endpoints: {
+        Row: {
+          api_key: string | null
+          api_style: string
+          base_url: string
+          created_at: string
+          enabled: boolean
+          failure_count: number
+          id: string
+          last_checked_at: string | null
+          last_error: string | null
+          last_status: string | null
+          model: string
+          name: string
+          priority: number
+          success_count: number
+          supports_json: boolean
+          timeout_ms: number
+          updated_at: string
+        }
+        Insert: {
+          api_key?: string | null
+          api_style?: string
+          base_url: string
+          created_at?: string
+          enabled?: boolean
+          failure_count?: number
+          id?: string
+          last_checked_at?: string | null
+          last_error?: string | null
+          last_status?: string | null
+          model: string
+          name: string
+          priority?: number
+          success_count?: number
+          supports_json?: boolean
+          timeout_ms?: number
+          updated_at?: string
+        }
+        Update: {
+          api_key?: string | null
+          api_style?: string
+          base_url?: string
+          created_at?: string
+          enabled?: boolean
+          failure_count?: number
+          id?: string
+          last_checked_at?: string | null
+          last_error?: string | null
+          last_status?: string | null
+          model?: string
+          name?: string
+          priority?: number
+          success_count?: number
+          supports_json?: boolean
+          timeout_ms?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_marketing_briefings: {
         Row: {
           ai_model: string | null
@@ -2267,6 +2327,27 @@ export type Database = {
           updated_at?: string
           usage_count?: number
           win_rate?: number
+        }
+        Relationships: []
+      }
+      ai_routing_settings: {
+        Row: {
+          allow_cloud_fallback: boolean
+          id: boolean
+          prefer_local: boolean
+          updated_at: string
+        }
+        Insert: {
+          allow_cloud_fallback?: boolean
+          id?: boolean
+          prefer_local?: boolean
+          updated_at?: string
+        }
+        Update: {
+          allow_cloud_fallback?: boolean
+          id?: boolean
+          prefer_local?: boolean
+          updated_at?: string
         }
         Relationships: []
       }
