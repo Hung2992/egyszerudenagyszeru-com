@@ -123,6 +123,44 @@ async function generateSpeech(
   }
 }
 
+const VOICES = ["alloy", "verse", "sage", "ballad", "coral"];
+const STYLES: Record<string, string> = {
+  cinematic: "cinematic, dramatic lighting, shallow depth of field, high contrast",
+  minimal: "clean minimal studio look, soft even lighting, lots of negative space",
+  documentary: "natural documentary photography, warm daylight, authentic real-life feel",
+};
+
+async function buildSceneAssets(
+  key: string,
+  supabase: any,
+  vid: any,
+  scenes: any[],
+  voice: string,
+  styleKey: string,
+) {
+  const styleHint = STYLES[styleKey] || STYLES.cinematic;
+  const out: any[] = [];
+  for (let i = 0; i < scenes.length; i++) {
+    const s = scenes[i] || {};
+    const visual = `${String(s.visual || vid.thumbnail_prompt || "modern business scene")}. Style: ${styleHint}`;
+    const line = String(s.voiceover || "").trim();
+    const [imageUrl, audio] = await Promise.all([
+      generateImage(key, visual, vid.platform, supabase),
+      line ? generateSpeech(key, line, voice, supabase) : Promise.resolve(null),
+    ]);
+    out.push({
+      scene: i + 1,
+      seconds: s.seconds || null,
+      text_overlay: s.text_overlay || null,
+      voiceover: line || null,
+      image_url: imageUrl,
+      audio_url: audio?.url || null,
+    });
+  }
+  return out;
+}
+
+
 async function scorePost(key: string, post: any) {
   const sys = `Te egy virális social media stratéga vagy. Elemezd EZT a poszttervet. Válasz CSAK JSON: {"viral_score":0-100,"hook_strength":0-100,"cta_strength":0-100,"clarity":0-100,"emotional_pull":0-100,"weaknesses":["..."],"improvements":["..."],"predicted_reach":"low|mid|high|viral"}`;
   const usr = `Platform: ${post.platform}\nHook: ${post.hook}\nBody: ${post.body}\nHashtags: ${(post.hashtags || []).join(" ")}\nCTA: ${post.cta || "—"}`;
