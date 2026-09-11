@@ -293,6 +293,67 @@ const DigitalServiceFields = ({ fulfillment, partnerId, attributes, setAttribute
           <Label className="text-xs">Kinek szól / előfeltételek</Label>
           <Textarea className="rounded-none" rows={2} value={attributes.course_audience || ""} onChange={(e) => set("course_audience", e.target.value)} placeholder="pl. kezdő webshop tulajdonosoknak, előismeret nem szükséges" />
         </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <Label className="text-xs">Max. létszám</Label>
+            <Input type="number" className="rounded-none" value={attributes.max_students || ""} onChange={(e) => set("max_students", e.target.value)} placeholder="pl. 20" />
+          </div>
+          <div>
+            <Label className="text-xs">Nyelv</Label>
+            <Input className="rounded-none" value={attributes.language || ""} onChange={(e) => set("language", e.target.value)} placeholder="pl. magyar" />
+          </div>
+          <div>
+            <Label className="text-xs">Oktató neve</Label>
+            <Input className="rounded-none" value={attributes.instructor || ""} onChange={(e) => set("instructor", e.target.value)} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <Label className="text-xs">Élő alkalmak (heti)</Label>
+            <Input className="rounded-none" value={attributes.live_schedule || ""} onChange={(e) => set("live_schedule", e.target.value)} placeholder="pl. kedd 18:00" />
+          </div>
+          <div>
+            <Label className="text-xs">Helyszín / platform</Label>
+            <Input className="rounded-none" value={attributes.course_platform || ""} onChange={(e) => set("course_platform", e.target.value)} placeholder="pl. Zoom, Budapest" />
+          </div>
+          <div>
+            <Label className="text-xs">Ütemezett kiadás (nap)</Label>
+            <Input type="number" className="rounded-none" value={attributes.drip_days || ""} onChange={(e) => set("drip_days", e.target.value)} placeholder="0 = mind azonnal" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <div className="flex items-center gap-2">
+            <Switch checked={!!attributes.community_access} onCheckedChange={(v) => set("community_access", v)} />
+            <span className="text-xs">Zárt közösség</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch checked={!!attributes.mentoring} onCheckedChange={(v) => set("mentoring", v)} />
+            <span className="text-xs">1:1 konzultáció</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch checked={!!attributes.lifetime_access} onCheckedChange={(v) => set("lifetime_access", v)} />
+            <span className="text-xs">Örök hozzáférés</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label className="text-xs">Részletfizetés (hány részlet)</Label>
+            <Input type="number" className="rounded-none" value={attributes.installments || ""} onChange={(e) => set("installments", e.target.value)} placeholder="pl. 3" />
+          </div>
+          <div>
+            <Label className="text-xs">Pénzvisszafizetési garancia</Label>
+            <Input className="rounded-none" value={attributes.refund_policy || ""} onChange={(e) => set("refund_policy", e.target.value)} placeholder="pl. 14 nap" />
+          </div>
+        </div>
+
+        <div>
+          <Label className="text-xs">Mit tanul meg a résztvevő (soronként egy)</Label>
+          <Textarea className="rounded-none" rows={3} value={attributes.learning_outcomes || ""} onChange={(e) => set("learning_outcomes", e.target.value)} placeholder={"Saját webshop indítása\nTermékfotózás alapjai"} />
+        </div>
       </div>
     );
   }
