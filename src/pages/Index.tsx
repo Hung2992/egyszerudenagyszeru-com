@@ -253,6 +253,29 @@ const Index = () => {
           </div>
         </section>
 
+        <section id="szerzodes" className="border-t border-border bg-card">
+          <div className="mx-auto max-w-7xl px-5 py-20 md:py-28 lg:px-8">
+            <div className="grid gap-10 lg:grid-cols-[1fr_1.2fr]">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Partneri együttműködés</p>
+                <h2 className="mt-4 text-4xl font-bold md:text-6xl">A szerződés.<br />Pontosan ezt írod alá.</h2>
+                <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground">Ez a teljes, nyilvános szerződéssablon (v1.1). A zárójeles mezők a KYC jóváhagyása után töltődnek ki a te adataiddal és az üzemeltető cégadataival. Az aláírt szerződés lezárul, SHA-256 hash-sel hitelesített, és módosíthatatlan marad.</p>
+                <div className="mt-8 flex flex-wrap items-center gap-4">
+                  <Button className="rounded-none bg-accent px-6 text-xs font-bold uppercase tracking-[0.12em] text-accent-foreground hover:bg-accent/90" onClick={goToRegistration}>Regisztráció és aláírás <ArrowRight /></Button>
+                  <p className="text-xs text-muted-foreground">Nem érsz el semmit rejtve – előbb olvasod, aztán írod alá.</p>
+                </div>
+              </div>
+              <div className="border border-border bg-background">
+                <div className="flex items-center gap-3 border-b border-border px-5 py-3">
+                  <FileSignature className="h-4 w-4 text-accent" />
+                  <p className="text-xs font-bold uppercase tracking-[0.14em]">Partneri szerződés · sablon v1.1</p>
+                </div>
+                <pre className="max-h-[560px] overflow-auto whitespace-pre-wrap p-5 font-mono text-xs leading-relaxed text-muted-foreground">{PARTNER_CONTRACT_TEMPLATE}</pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section className="border-y border-accent bg-accent text-accent-foreground">
           <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 px-5 py-14 md:flex-row md:items-center lg:px-8">
             <div><p className="text-xs font-bold uppercase tracking-[0.2em] opacity-70">Készen állsz?</p><h2 className="mt-2 text-3xl font-bold md:text-5xl">Béreld a teljes digitális rendszered egy helyről.</h2></div>
