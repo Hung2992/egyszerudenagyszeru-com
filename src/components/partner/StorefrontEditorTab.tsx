@@ -347,6 +347,7 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
           <TabsTrigger value="versions" className="rounded-none">Verziók</TabsTrigger>
           <TabsTrigger value="audit" className="rounded-none">Napló</TabsTrigger>
           <TabsTrigger value="preview" className="rounded-none">Élő előnézet</TabsTrigger>
+          <TabsTrigger value="pages" className="rounded-none">📄 AI Oldalak</TabsTrigger>
           <TabsTrigger value="share" className="rounded-none">Megosztás</TabsTrigger>
         </TabsList>
 
@@ -706,6 +707,11 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
         {/* LIVE PREVIEW */}
         <TabsContent value="preview">
           <StorefrontLivePreview storefrontId={sf?.id ?? null} slug={sf?.slug || ""} draft={sf} refreshKey={previewRefreshKey} />
+        </TabsContent>
+
+        {/* AI OLDALAK */}
+        <TabsContent value="pages">
+          <PartnerPagesTab partnerId={partnerId} storefrontSlug={sf?.slug || null} />
         </TabsContent>
 
         {/* SHARE TOKENS */}
