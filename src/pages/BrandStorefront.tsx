@@ -186,6 +186,13 @@ const BrandStorefront = () => {
             {sf.tiktok_url && <a href={sf.tiktok_url} target="_blank" rel="noreferrer"><Music2 className="h-5 w-5" /></a>}
             {sf.facebook_url && <a href={sf.facebook_url} target="_blank" rel="noreferrer"><Facebook className="h-5 w-5" /></a>}
             {sf.youtube_url && <a href={sf.youtube_url} target="_blank" rel="noreferrer"><Youtube className="h-5 w-5" /></a>}
+            <Link
+              to={params.slug ? `/b/${params.slug}/fiok` : "/fiok"}
+              className="flex items-center gap-1.5 border px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest"
+              style={{ borderColor: sf.accent_color, color: sf.accent_color }}
+            >
+              <User className="h-3.5 w-3.5" /> Fiók
+            </Link>
           </div>
         </div>
       </header>
