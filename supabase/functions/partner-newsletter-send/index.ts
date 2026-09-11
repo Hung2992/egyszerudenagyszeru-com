@@ -100,9 +100,23 @@ Deno.serve(async (req) => {
       });
       if (!res.ok) throw new Error(`${res.status}: ${(await res.text()).slice(0, 200)}`);
       sent++;
+      await db.from("partner_newsletter_deliveries").insert({
+        blast_id: blastId,
+        partner_id: partner.id,
+        email: r.email,
+        status: "sent",
+        sent_at: new Date().toISOString(),
+      });
     } catch (e) {
       failed++;
       console.error("newsletter send failed", String(e).slice(0, 200));
+      await db.from("partner_newsletter_deliveries").insert({
+        blast_id: blastId,
+        partner_id: partner.id,
+        email: r.email,
+        status: "failed",
+        error: String(e).slice(0, 300),
+      });
     }
   }
 

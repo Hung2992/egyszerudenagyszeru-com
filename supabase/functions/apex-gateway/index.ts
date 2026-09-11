@@ -3,7 +3,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { adminClient, json, logEvent } from "../_shared/comm-core.ts";
-import { encryptCredentials, gatewaySend, type GatewayChannel } from "../_shared/gateway-drivers.ts";
+import { decryptCredentials, encryptCredentials, gatewaySend, type GatewayChannel } from "../_shared/gateway-drivers.ts";
 import { requireInternalOrAdmin } from "../_shared/internal-auth.ts";
 
 const CHANNELS: GatewayChannel[] = ["sms", "whatsapp", "voice"];
@@ -141,6 +141,93 @@ Deno.serve(async (req) => {
         const { error } = await del;
         if (error) return json({ error: "db_error", details: error.message }, 500);
         return json({ ok: true });
+      }
+
+      // Valós fiók-ellenőrzés: a szolgáltatónál kérdezzük le, hogy a megadott adatok élnek-e.
+      case "verify_account": {
+        const p = scopePartner(payload.partner_id);
+        if (p instanceof Response) return p;
+        const id = String(payload.id || "");
+        if (!UUID.test(id)) return json({ error: "invalid_id" }, 400);
+        let q = db
+          .from("comm_provider_accounts")
+          .select("id, label, driver, endpoint, credentials_encrypted")
+          .eq("id", id);
+        q = p ? q.eq("partner_id", p) : q.is("partner_id", null);
+        const { data: acc, error: accErr } = await q.maybeSingle();
+        if (accErr) return json({ error: "db_error", details: accErr.message }, 500);
+        if (!acc) return json({ error: "not_found" }, 404);
+        if (!acc.credentials_encrypted) return json({ error: "missing_credentials" }, 400);
+
+        let creds: Record<string, string> = {};
+        try {
+          creds = await decryptCredentials(acc.credentials_encrypted as string);
+        } catch {
+          return json({ error: "credentials_unreadable" }, 500);
+        }
+
+        let ok = false;
+        let detail = "";
+        try {
+          if (acc.driver === "twilio") {
+            const sid = creds.account_sid;
+            const tok = creds.auth_token;
+            if (!sid || !tok) {
+              detail = "Hiányzó Twilio azonosítók";
+            } else {
+              const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}.json`, {
+                headers: { Authorization: `Basic ${btoa(`${sid}:${tok}`)}` },
+              });
+              const text = (await res.text()).slice(0, 300);
+              ok = res.ok;
+              detail = res.ok ? "Twilio fiók elérhető" : `${res.status}: ${text}`;
+            }
+          } else if (acc.driver === "gatewayapi") {
+            const tok = creds.api_token;
+            if (!tok) {
+              detail = "Hiányzó API token";
+            } else {
+              const res = await fetch("https://gatewayapi.com/rest/me", {
+                headers: { Authorization: `Token ${tok}` },
+              });
+              const text = (await res.text()).slice(0, 300);
+              ok = res.ok;
+              detail = res.ok ? "GatewayAPI fiók elérhető" : `${res.status}: ${text}`;
+            }
+          } else {
+            const url = acc.endpoint ? String(acc.endpoint) : "";
+            if (!/^https:\/\//i.test(url)) {
+              detail = "Hiányzó https végpont";
+            } else {
+              const headers: Record<string, string> = {};
+              if (creds.auth_header && creds.auth_value) headers[creds.auth_header] = creds.auth_value;
+              else if (creds.bearer_token) headers.Authorization = `Bearer ${creds.bearer_token}`;
+              const res = await fetch(url, { method: "GET", headers });
+              ok = res.status < 500;
+              detail = `${res.status}`;
+            }
+          }
+        } catch (e) {
+          detail = String(e).slice(0, 200);
+        }
+
+        await db
+          .from("comm_provider_accounts")
+          .update({
+            last_ok_at: ok ? new Date().toISOString() : null,
+            last_error: ok ? null : detail.slice(0, 400),
+          })
+          .eq("id", id);
+
+        await logEvent(db, {
+          partnerId: p,
+          event: "gateway.verify",
+          channel: null,
+          provider: String(acc.label || acc.driver),
+          detail: { ok, message: detail.slice(0, 200) },
+        });
+
+        return json({ ok, message: detail.slice(0, 300) }, ok ? 200 : 400);
       }
 
       case "send":
