@@ -3,7 +3,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { adminClient, json, logEvent } from "../_shared/comm-core.ts";
-import { encryptCredentials, gatewaySend, type GatewayChannel } from "../_shared/gateway-drivers.ts";
+import { decryptCredentials, encryptCredentials, gatewaySend, type GatewayChannel } from "../_shared/gateway-drivers.ts";
 import { requireInternalOrAdmin } from "../_shared/internal-auth.ts";
 
 const CHANNELS: GatewayChannel[] = ["sms", "whatsapp", "voice"];
