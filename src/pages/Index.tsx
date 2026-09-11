@@ -167,7 +167,7 @@ const Index = () => {
                 </Button>
               </div>
               <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-xs text-muted-foreground">
-                {["Saját márkanév", "Bővíthető modulok", "Központi kezelés"].map((item) => (
+                {["Saját domain", "Saját adatok", "Bérelhető rendszer", "Végpontig"].map((item) => (
                   <span key={item} className="flex items-center gap-2"><Check className="h-4 w-4 text-accent" />{item}</span>
                 ))}
               </div>
