@@ -4293,6 +4293,84 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_automation_queue: {
+        Row: {
+          automation_key: string
+          created_at: string
+          error: string | null
+          id: string
+          idempotency_key: string
+          recipient_email: string
+          send_at: string
+          sent_at: string | null
+          status: string
+          template_data: Json
+          template_name: string
+        }
+        Insert: {
+          automation_key: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          idempotency_key: string
+          recipient_email: string
+          send_at: string
+          sent_at?: string | null
+          status?: string
+          template_data?: Json
+          template_name: string
+        }
+        Update: {
+          automation_key?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          idempotency_key?: string
+          recipient_email?: string
+          send_at?: string
+          sent_at?: string | null
+          status?: string
+          template_data?: Json
+          template_name?: string
+        }
+        Relationships: []
+      }
+      marketing_automations: {
+        Row: {
+          active: boolean
+          created_at: string
+          delay_minutes: number
+          description: string | null
+          id: string
+          key: string
+          name: string
+          template_name: string
+          trigger_type: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          delay_minutes?: number
+          description?: string | null
+          id?: string
+          key: string
+          name: string
+          template_name: string
+          trigger_type: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          delay_minutes?: number
+          description?: string | null
+          id?: string
+          key?: string
+          name?: string
+          template_name?: string
+          trigger_type?: string
+        }
+        Relationships: []
+      }
       marketing_campaign_audit_log: {
         Row: {
           action: string
@@ -4335,6 +4413,57 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_campaign_sends: {
+        Row: {
+          campaign_id: string
+          contact_id: string | null
+          created_at: string
+          email: string
+          error: string | null
+          id: string
+          provider: string | null
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          campaign_id: string
+          contact_id?: string | null
+          created_at?: string
+          email: string
+          error?: string | null
+          id?: string
+          provider?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          campaign_id?: string
+          contact_id?: string | null
+          created_at?: string
+          email?: string
+          error?: string | null
+          id?: string
+          provider?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_campaign_sends_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_campaign_sends_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketing_campaigns: {
         Row: {
           campaign_type: string
@@ -4345,6 +4474,7 @@ export type Database = {
           id: string
           name: string
           open_count: number
+          provider_status: string | null
           scheduled_at: string | null
           sent_at: string | null
           sent_count: number
@@ -4362,6 +4492,7 @@ export type Database = {
           id?: string
           name: string
           open_count?: number
+          provider_status?: string | null
           scheduled_at?: string | null
           sent_at?: string | null
           sent_count?: number
@@ -4379,6 +4510,7 @@ export type Database = {
           id?: string
           name?: string
           open_count?: number
+          provider_status?: string | null
           scheduled_at?: string | null
           sent_at?: string | null
           sent_count?: number
@@ -4388,6 +4520,83 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      marketing_contacts: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string | null
+          partner_id: string | null
+          phone: string | null
+          source: string
+          status: string
+          tags: Json
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name?: string | null
+          partner_id?: string | null
+          phone?: string | null
+          source?: string
+          status?: string
+          tags?: Json
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string | null
+          partner_id?: string | null
+          phone?: string | null
+          source?: string
+          status?: string
+          tags?: Json
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      marketing_events: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          email: string | null
+          event_type: string
+          id: string
+          meta: Json
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          email?: string | null
+          event_type: string
+          id?: string
+          meta?: Json
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          email?: string | null
+          event_type?: string
+          id?: string
+          meta?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       marketing_segments: {
         Row: {
@@ -4422,6 +4631,33 @@ export type Database = {
           suggested_campaign?: Json | null
           updated_at?: string
           user_count?: number
+        }
+        Relationships: []
+      }
+      marketing_sms_log: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          phone: string
+          source: string | null
+          status: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          phone: string
+          source?: string | null
+          status?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          phone?: string
+          source?: string | null
+          status?: string
         }
         Relationships: []
       }
@@ -12763,6 +12999,10 @@ export type Database = {
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
+      }
+      enqueue_marketing_automation: {
+        Args: { p_data: Json; p_email: string; p_idem: string; p_key: string }
+        Returns: undefined
       }
       finalize_drop_reservation_for_order: {
         Args: { p_order_id: string }

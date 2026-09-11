@@ -35,6 +35,7 @@ const KEYWORD_MAP: Record<string, string[]> = {
   shipping_mgmt: ["szállítás", "futár", "kézbesítés", "logisztika"],
   inventory: ["készlet", "raktár", "stock"],
   seo_marketing: ["seo", "marketing", "google", "kereső"],
+  marketing_hub: ["marketing hub", "kampány", "hírlevél", "newsletter", "crm", "automatizmus", "email kampány", "sms", "brevo", "kontakt"],
   ai_marketing_studio: ["ai", "mesterséges", "stúdió", "reklám", "videó", "kreatív"],
   ai_pricing: ["áralku", "ai áralku", "kedvezmény", "diszkont", "pricing", "smart discount", "ajánlat", "margin", "szabály"],
   visual_search: ["vizuális", "kép", "fotó", "keresés", "camera", "visual", "photo", "search"],

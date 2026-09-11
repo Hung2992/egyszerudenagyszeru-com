@@ -34,8 +34,12 @@ import { template as partnerDomainDnsStatusChanged } from './partner-domain-dns-
 import { template as partnerStorefrontVersionSubmitted } from './partner-storefront-version-submitted.tsx'
 import { template as appointmentConfirmation } from './appointment-confirmation.tsx'
 import { template as partnerFeatureAnnouncement } from './partner-feature-announcement.tsx'
+import { template as purchaseFollowup } from './purchase-followup.tsx'
+import { template as abandonedCart } from './abandoned-cart.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
+  'purchase-followup': purchaseFollowup,
+  'abandoned-cart': abandonedCart,
   'contact-confirmation': contactConfirmation,
   'welcome': welcome,
   'order-confirmation': orderConfirmation,
