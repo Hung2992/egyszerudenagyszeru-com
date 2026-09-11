@@ -3261,6 +3261,269 @@ export type Database = {
           },
         ]
       }
+      comm_api_keys: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          key_hash: string
+          key_prefix: string
+          last_used_at: string | null
+          name: string
+          partner_id: string | null
+          rate_limit_per_min: number
+          revoked_at: string | null
+          scopes: string[]
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          key_hash: string
+          key_prefix: string
+          last_used_at?: string | null
+          name: string
+          partner_id?: string | null
+          rate_limit_per_min?: number
+          revoked_at?: string | null
+          scopes?: string[]
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          name?: string
+          partner_id?: string | null
+          rate_limit_per_min?: number
+          revoked_at?: string | null
+          scopes?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comm_api_keys_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comm_events: {
+        Row: {
+          channel: string | null
+          created_at: string
+          detail: Json
+          event: string
+          id: string
+          message_id: string | null
+          partner_id: string | null
+          provider: string | null
+        }
+        Insert: {
+          channel?: string | null
+          created_at?: string
+          detail?: Json
+          event: string
+          id?: string
+          message_id?: string | null
+          partner_id?: string | null
+          provider?: string | null
+        }
+        Update: {
+          channel?: string | null
+          created_at?: string
+          detail?: Json
+          event?: string
+          id?: string
+          message_id?: string | null
+          partner_id?: string | null
+          provider?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comm_events_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messaging_outbox"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comm_providers: {
+        Row: {
+          active: boolean
+          channel: string
+          config: Json
+          created_at: string
+          id: string
+          priority: number
+          provider: string
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          channel: string
+          config?: Json
+          created_at?: string
+          id?: string
+          priority?: number
+          provider: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          channel?: string
+          config?: Json
+          created_at?: string
+          id?: string
+          priority?: number
+          provider?: string
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      comm_usage: {
+        Row: {
+          channel: string
+          cost_total: number
+          created_at: string
+          day: string
+          failed_count: number
+          id: string
+          partner_id: string | null
+          provider: string | null
+          sent_count: number
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          cost_total?: number
+          created_at?: string
+          day?: string
+          failed_count?: number
+          id?: string
+          partner_id?: string | null
+          provider?: string | null
+          sent_count?: number
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          cost_total?: number
+          created_at?: string
+          day?: string
+          failed_count?: number
+          id?: string
+          partner_id?: string | null
+          provider?: string | null
+          sent_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      comm_webhook_deliveries: {
+        Row: {
+          attempts: number
+          created_at: string
+          error: string | null
+          event: string
+          id: string
+          next_retry_at: string | null
+          payload: Json
+          response_code: number | null
+          status: string
+          updated_at: string
+          webhook_id: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          error?: string | null
+          event: string
+          id?: string
+          next_retry_at?: string | null
+          payload?: Json
+          response_code?: number | null
+          status?: string
+          updated_at?: string
+          webhook_id: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          error?: string | null
+          event?: string
+          id?: string
+          next_retry_at?: string | null
+          payload?: Json
+          response_code?: number | null
+          status?: string
+          updated_at?: string
+          webhook_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comm_webhook_deliveries_webhook_id_fkey"
+            columns: ["webhook_id"]
+            isOneToOne: false
+            referencedRelation: "comm_webhooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comm_webhooks: {
+        Row: {
+          active: boolean
+          created_at: string
+          events: string[]
+          id: string
+          partner_id: string | null
+          secret: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          events?: string[]
+          id?: string
+          partner_id?: string | null
+          secret: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          events?: string[]
+          id?: string
+          partner_id?: string | null
+          secret?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comm_webhooks_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_messages: {
         Row: {
           created_at: string
@@ -4663,13 +4926,17 @@ export type Database = {
       }
       messaging_outbox: {
         Row: {
+          api_key_id: string | null
           attempts: number
           body: string
           channel: string
           created_at: string
+          delivered_at: string | null
           error: string | null
           id: string
+          idempotency_key: string | null
           metadata: Json
+          next_retry_at: string | null
           partner_id: string | null
           provider: string | null
           provider_message_id: string | null
@@ -4684,13 +4951,17 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          api_key_id?: string | null
           attempts?: number
           body: string
           channel: string
           created_at?: string
+          delivered_at?: string | null
           error?: string | null
           id?: string
+          idempotency_key?: string | null
           metadata?: Json
+          next_retry_at?: string | null
           partner_id?: string | null
           provider?: string | null
           provider_message_id?: string | null
@@ -4705,13 +4976,17 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          api_key_id?: string | null
           attempts?: number
           body?: string
           channel?: string
           created_at?: string
+          delivered_at?: string | null
           error?: string | null
           id?: string
+          idempotency_key?: string | null
           metadata?: Json
+          next_retry_at?: string | null
           partner_id?: string | null
           provider?: string | null
           provider_message_id?: string | null
@@ -4725,7 +5000,15 @@ export type Database = {
           to_address?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "messaging_outbox_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "comm_api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       messaging_templates: {
         Row: {
