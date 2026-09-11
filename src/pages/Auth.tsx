@@ -166,7 +166,7 @@ const Auth = () => {
                 <Button type="submit" className="w-full rounded-none h-11 uppercase tracking-wider text-xs" disabled={loading}>
                   {loading ? "Várj..." : titles[mode]}
                 </Button>
-                {mode === "login" && (
+                {mode !== "forgot" && (
                   <>
                     <button type="button" className="text-xs text-muted-foreground hover:text-foreground uppercase tracking-wider" onClick={() => setMode("forgot")}>
                       Elfelejtett jelszó?
