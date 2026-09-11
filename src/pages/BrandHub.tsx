@@ -178,6 +178,25 @@ const BrandHub = () => {
     toast({ title: mode === "in" ? "Beléptél" : "Fiók létrehozva", description: mode === "up" ? "Erősítsd meg az e-mail címed." : "" });
   };
 
+  const sendCustomerMessage = async () => {
+    if (!sf?.partner_id) { toast({ title: "Nem elérhető", description: "A szolgáltató nem fogad üzenetet.", variant: "destructive" }); return; }
+    setMsgBusy(true);
+    const { data, error } = await supabase.functions.invoke("customer-contact-partner", {
+      body: { partner_id: sf.partner_id, channel: msgChannel, message: msgBody.trim() },
+    });
+    setMsgBusy(false);
+    if (error) { toast({ title: "Küldés sikertelen", description: error.message, variant: "destructive" }); return; }
+    const status = (data as any)?.status || "queued";
+    setMsgLog((l) => [{ at: new Date().toISOString(), channel: msgChannel, status }, ...l].slice(0, 10));
+    setMsgBody("");
+    toast({
+      title: status === "sent" ? "Üzenet kiment" : "Üzenet rögzítve",
+      description: status === "sent" ? "" : "Nincs bekötött távközlési szolgáltató, ezért fizikai kézbesítés nem történt.",
+    });
+  };
+
+
+
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-black text-white text-sm">Betöltés…</div>;
   if (!sf) return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-black text-white p-4">
