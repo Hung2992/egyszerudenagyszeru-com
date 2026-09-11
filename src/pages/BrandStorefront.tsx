@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/untyped-client";
-import { Instagram, Music2, Facebook, Youtube, ShoppingBag, Flame, Star, ArrowRight, Eye } from "lucide-react";
+import { Instagram, Music2, Facebook, Youtube, ShoppingBag, Flame, Star, ArrowRight, Eye, User } from "lucide-react";
 import MediaImage from "@/components/partner/MediaImage";
 import { getPartnerSlugFromHostname, resolveCustomDomainSlug } from "@/lib/partner-subdomain";
 
