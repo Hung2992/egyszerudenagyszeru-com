@@ -124,7 +124,26 @@ const Auth = () => {
               <CardDescription className="text-xs">{descriptions[mode]}</CardDescription>
             </CardHeader>
 
-            <form onSubmit={mode === "login" ? handleLogin : handleForgotPassword}>
+            {mode !== "forgot" && (
+              <div className="grid grid-cols-2 gap-2 px-6 pb-4">
+                <button
+                  type="button"
+                  onClick={() => setMode("login")}
+                  className={`h-9 text-[10px] font-bold uppercase tracking-wider border ${mode === "login" ? "bg-accent text-accent-foreground border-accent" : "border-border text-muted-foreground"}`}
+                >
+                  Partner
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("admin")}
+                  className={`h-9 text-[10px] font-bold uppercase tracking-wider border ${mode === "admin" ? "bg-accent text-accent-foreground border-accent" : "border-border text-muted-foreground"}`}
+                >
+                  Szuper admin
+                </button>
+              </div>
+            )}
+
+            <form onSubmit={mode === "forgot" ? handleForgotPassword : handleLogin}>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-xs uppercase tracking-wider">Email</Label>
