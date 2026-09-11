@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Sparkles, ExternalLink, Trash2, RefreshCw, Globe } from "lucide-react";
+import AiServiceProductGenerator from "@/components/partner/AiServiceProductGenerator";
 
 interface Props { partnerId: string; storefrontSlug?: string | null; }
 
@@ -122,6 +123,7 @@ const PartnerPagesTab = ({ partnerId, storefrontSlug }: Props) => {
         ))}
       </div>
     </Card>
+    </div>
   );
 };
 
