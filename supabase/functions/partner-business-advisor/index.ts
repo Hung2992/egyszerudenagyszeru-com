@@ -47,9 +47,15 @@ Deno.serve(async (req) => {
     if (!partnerId) return json({ error: "partner_id required" }, 400);
 
     const { data: partner } = await supabase
-      .from("partners").select("id, full_name, company_name, coupon_code, status")
+      .from("partners").select("id, full_name, company_name, coupon_id, status")
       .eq("id", partnerId).eq("user_id", user.id).maybeSingle();
     if (!partner) return json({ error: "not_partner" }, 403);
+
+    let couponCode: string | null = null;
+    if (partner.coupon_id) {
+      const { data: coupon } = await supabase.from("coupons").select("code").eq("id", partner.coupon_id).maybeSingle();
+      couponCode = coupon?.code || null;
+    }
 
     const since = new Date(Date.now() - 30 * 864e5).toISOString();
     const [ordersRes, productsRes, sfRes] = await Promise.all([
@@ -69,7 +75,7 @@ Deno.serve(async (req) => {
     const sales = products.reduce((s: number, p: any) => s + Number(p.sales_count || 0), 0);
 
     const ctx = {
-      partner: { name: partner.company_name || partner.full_name, coupon: partner.coupon_code },
+      partner: { name: partner.company_name || partner.full_name, coupon: couponCode },
       webshop: sf ? {
         nev: sf.store_name, slogen: sf.tagline, publikalt: sf.is_published,
         sajat_domain: sf.custom_domain, domain_status: sf.custom_domain_status,

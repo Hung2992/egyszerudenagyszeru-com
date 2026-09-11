@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
     if (!prompt) return json({ error: "prompt required" }, 400);
 
     const { data: partner } = await supabase
-      .from("partners").select("id, full_name, company_name, coupon_code")
+      .from("partners").select("id, full_name, company_name")
       .eq("id", partnerId).eq("user_id", user.id).maybeSingle();
     if (!partner) return json({ error: "not_partner" }, 403);
 
