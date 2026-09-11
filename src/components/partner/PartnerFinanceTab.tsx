@@ -1,4 +1,4 @@
-// Partner pénzügyi központ: forgalom, jutalék, árrés, profitbecslés, legjobb/leggyengébb termékek.
+// Partner pénzügyi központ: forgalom, bérleti díj, árrés, profitbecslés, legjobb/leggyengébb termékek.
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { Card } from "@/components/ui/card";
@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, TrendingDown, Banknote, Percent, Wallet } from "lucide-react";
+import { TrendingUp, TrendingDown, Banknote, Percent, Wallet, Home } from "lucide-react";
+import { calculatePartnerRentalFee } from "@/lib/partner-rental-fee";
 
 interface Props { partnerId: string }
 
