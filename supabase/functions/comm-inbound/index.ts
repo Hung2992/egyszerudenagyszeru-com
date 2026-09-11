@@ -11,6 +11,7 @@ import {
   json,
   logEvent,
   normalizeAddress,
+  PLATFORM_OPTOUT_ID,
 } from "../_shared/comm-core.ts";
 
 const OPT_OUT_WORDS = new Set(["stop", "stopall", "unsubscribe", "cancel", "end", "quit", "leiratkozas", "leiratkozom"]);
@@ -78,14 +79,14 @@ Deno.serve(async (req) => {
   if (action === "opt_out") {
     await db.from("comm_opt_outs").upsert(
       {
-        partner_id: null,
+        partner_id: PLATFORM_OPTOUT_ID,
         channel,
         address,
         reason: `inbound:${keyword}`.slice(0, 120),
         opted_out_at: new Date().toISOString(),
         opted_in_at: null,
       },
-      { onConflict: "partner_id_key,channel,address" },
+      { onConflict: "partner_id,channel,address" },
     );
   } else if (action === "opt_in") {
     await db
@@ -93,7 +94,7 @@ Deno.serve(async (req) => {
       .update({ opted_in_at: new Date().toISOString() })
       .eq("channel", channel)
       .eq("address", address)
-      .is("partner_id", null);
+      .eq("partner_id", PLATFORM_OPTOUT_ID);
   }
 
   await logEvent(db, {
