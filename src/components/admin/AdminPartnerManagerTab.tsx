@@ -114,6 +114,23 @@ const AdminPartnerManagerTab = () => {
     toast({ title: on ? "Partner hozzáférés megadva" : "Partner hozzáférés visszavonva" });
   };
 
+  const partnerNames = useMemo(() => {
+    const m: Record<string, string> = {};
+    rows.forEach(r => { m[r.id] = r.company_name || r.full_name || "Névtelen partner"; });
+    return m;
+  }, [rows]);
+
+  const publishAllStores = async () => {
+    const pending = Object.values(stores).filter(s => !s.is_published);
+    if (!pending.length) { toast({ title: "Minden márkaoldal már élő" }); return; }
+    const { error } = await supabase.from("partner_storefronts")
+      .update({ is_published: true, updated_at: new Date().toISOString() })
+      .in("partner_id", pending.map(s => s.partner_id));
+    if (error) { toast({ title: "Élesítés sikertelen", description: error.message, variant: "destructive" }); return; }
+    toast({ title: `${pending.length} márkaoldal élesítve` });
+    void load();
+  };
+
   const toggleStore = async (row: Row, on: boolean) => {
     const st = stores[row.id];
     if (!st) { toast({ title: "Ennek a partnernek még nincs márkaoldala", variant: "destructive" }); return; }
@@ -142,6 +159,8 @@ const AdminPartnerManagerTab = () => {
       </div>
 
       <PartnerFeatureAnnouncement />
+
+      <PartnerBookingsPanel partnerNames={partnerNames} />
 
       <Card className="rounded-none p-4">
         <div className="flex items-center gap-2 mb-4">
