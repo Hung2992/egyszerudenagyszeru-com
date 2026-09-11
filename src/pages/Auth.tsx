@@ -10,7 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
 import { Eye, EyeOff } from "lucide-react";
 
-type AuthMode = "login" | "forgot";
+type AuthMode = "login" | "admin" | "forgot";
 
 const translateAuthError = (msg: string): string => {
   const map: Record<string, string> = {
@@ -45,10 +45,38 @@ const Auth = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const isAdminMode = mode === "admin";
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setLoading(false);
+      toast({ title: "Hiba", description: translateAuthError(error.message), variant: "destructive" });
+      return;
+    }
+
+    if (isAdminMode) {
+      const userId = data?.user?.id;
+      const { data: isAdmin, error: roleError } = await supabase.rpc("has_role", {
+        _user_id: userId,
+        _role: "admin",
+      });
+      setLoading(false);
+      if (roleError || !isAdmin) {
+        await supabase.auth.signOut();
+        toast({
+          title: "Nincs jogosultság",
+          description: "Ehhez a fiókhoz nem tartozik adminisztrátori hozzáférés.",
+          variant: "destructive",
+        });
+        return;
+      }
+      toast({ title: "Sikeres admin belépés!" });
+      navigate("/admin", { replace: true });
+      return;
+    }
+
     setLoading(false);
-    if (error) toast({ title: "Hiba", description: translateAuthError(error.message), variant: "destructive" });
-    else { toast({ title: "Sikeres bejelentkezés!" }); navigate(redirectPath, { replace: true }); }
+    toast({ title: "Sikeres bejelentkezés!" });
+    navigate(redirectPath, { replace: true });
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -75,9 +103,14 @@ const Auth = () => {
     }
   };
 
-  const titles: Record<AuthMode, string> = { login: "BELÉPÉS", forgot: "JELSZÓ VISSZAÁLLÍTÁS" };
+  const titles: Record<AuthMode, string> = {
+    login: "BELÉPÉS",
+    admin: "SZUPER ADMIN BELÉPÉS",
+    forgot: "JELSZÓ VISSZAÁLLÍTÁS",
+  };
   const descriptions: Record<AuthMode, string> = {
     login: "Lépj be a partnerfiókoddal.",
+    admin: "Csak adminisztrátori fiókkal.",
     forgot: "Küldünk egy visszaállítási linket.",
   };
 
@@ -91,7 +124,26 @@ const Auth = () => {
               <CardDescription className="text-xs">{descriptions[mode]}</CardDescription>
             </CardHeader>
 
-            <form onSubmit={mode === "login" ? handleLogin : handleForgotPassword}>
+            {mode !== "forgot" && (
+              <div className="grid grid-cols-2 gap-2 px-6 pb-4">
+                <button
+                  type="button"
+                  onClick={() => setMode("login")}
+                  className={`h-9 text-[10px] font-bold uppercase tracking-wider border ${mode === "login" ? "bg-accent text-accent-foreground border-accent" : "border-border text-muted-foreground"}`}
+                >
+                  Partner
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("admin")}
+                  className={`h-9 text-[10px] font-bold uppercase tracking-wider border ${mode === "admin" ? "bg-accent text-accent-foreground border-accent" : "border-border text-muted-foreground"}`}
+                >
+                  Szuper admin
+                </button>
+              </div>
+            )}
+
+            <form onSubmit={mode === "forgot" ? handleForgotPassword : handleLogin}>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-xs uppercase tracking-wider">Email</Label>
@@ -114,7 +166,7 @@ const Auth = () => {
                 <Button type="submit" className="w-full rounded-none h-11 uppercase tracking-wider text-xs" disabled={loading}>
                   {loading ? "Várj..." : titles[mode]}
                 </Button>
-                {mode === "login" && (
+                {mode !== "forgot" && (
                   <>
                     <button type="button" className="text-xs text-muted-foreground hover:text-foreground uppercase tracking-wider" onClick={() => setMode("forgot")}>
                       Elfelejtett jelszó?
