@@ -160,6 +160,49 @@ async function sendHttpGeneric(
   return { status: "sent", provider: acc.label, providerId: id };
 }
 
+/* ---------- Ország, tiltólista, átbocsátás ---------- */
+
+/** E.164 alapú országhívószám (a leghosszabb egyező előtag). */
+export function countryPrefixOf(to: string): string {
+  const digits = to.replace(/[^0-9]/g, "");
+  const known = ["1", "7", "20", "27", "30", "31", "32", "33", "34", "36", "39", "40", "41", "43", "44", "45", "46", "47", "48", "49", "51", "52", "53", "54", "55", "56", "57", "58", "60", "61", "62", "63", "64", "65", "66", "81", "82", "84", "86", "90", "91", "92", "93", "94", "95", "98", "212", "213", "216", "218", "220", "351", "352", "353", "354", "355", "356", "357", "358", "359", "370", "371", "372", "373", "374", "375", "376", "377", "378", "380", "381", "382", "383", "385", "386", "387", "389", "420", "421", "423", "852", "886", "971", "972", "974", "977", "998"];
+  let best = "";
+  for (const p of known) if (digits.startsWith(p) && p.length > best.length) best = p;
+  return best || digits.slice(0, 2);
+}
+
+/** Tiltólistán van-e a címzett vagy az országa (csalás/visszaélés védelem). */
+export async function isBlocked(
+  db: SupabaseClient,
+  channel: GatewayChannel,
+  to: string,
+): Promise<string | null> {
+  const address = to.replace(/^whatsapp:/i, "").replace(/[\s\-()]/g, "");
+  const country = countryPrefixOf(to);
+  const { data } = await db
+    .from("comm_blocklist")
+    .select("scope, value, reason, channel")
+    .in("value", [address, country])
+    .limit(10);
+  const hit = (data || []).find(
+    (r) =>
+      (!r.channel || r.channel === channel) &&
+      ((r.scope === "address" && r.value === address) || (r.scope === "country" && r.value === country)),
+  );
+  return hit ? (hit.reason || "blocklisted") : null;
+}
+
+/** Másodpercenkénti átbocsátás ellenőrzése szolgáltatói fiókonként. */
+async function throughputOk(db: SupabaseClient, accountId: string, maxTps: number): Promise<boolean> {
+  try {
+    const { data, error } = await db.rpc("comm_hit_throughput", { _account: accountId, _max_tps: maxTps });
+    if (error) return true;
+    return data !== false;
+  } catch {
+    return true;
+  }
+}
+
 /* ---------- Útvonalválasztás ---------- */
 
 export async function pickSender(
@@ -183,36 +226,90 @@ export async function pickSender(
   return account.default_sender ?? null;
 }
 
-/** A saját átjáró: kiválasztja a megfelelő szolgáltatói fiókot és kiküldi az üzenetet. */
+type RoutedAccount = ProviderAccount & {
+  priority: number;
+  max_tps: number;
+  allowed_countries: string[];
+  blocked_countries: string[];
+  consecutive_failures: number;
+  _routeId?: string | null;
+  _senderOverride?: string | null;
+};
+
+/** A saját átjáró: tiltólista → útválasztási szabályok → átbocsátás → küldés, tartalék szolgáltatóval. */
 export async function gatewaySend(
   db: SupabaseClient,
   input: { channel: GatewayChannel; to: string; body: string; partnerId?: string | null },
-): Promise<GatewayResult> {
+): Promise<GatewayResult & { accountId?: string | null; routeId?: string | null; country?: string }> {
   const { channel, to, body } = input;
   const partnerId = input.partnerId ?? null;
+  const country = countryPrefixOf(to);
+
+  const blocked = await isBlocked(db, channel, to);
+  if (blocked) return { status: "failed", provider: null, error: `blocked:${blocked}`, country };
 
   const { data: accounts } = await db
     .from("comm_provider_accounts")
-    .select("id, partner_id, label, driver, channels, endpoint, credentials_encrypted, default_sender, priority")
+    .select(
+      "id, partner_id, label, driver, channels, endpoint, credentials_encrypted, default_sender, priority, max_tps, allowed_countries, blocked_countries, consecutive_failures",
+    )
     .eq("active", true)
     .contains("channels", [channel])
     .or(partnerId ? `partner_id.eq.${partnerId},partner_id.is.null` : "partner_id.is.null")
     .order("priority", { ascending: true });
 
-  const ordered = (accounts || []).sort((a, b) => {
-    const own = (x: { partner_id: string | null }) => (partnerId && x.partner_id === partnerId ? 0 : 1);
-    return own(a) - own(b) || (a.priority ?? 100) - (b.priority ?? 100);
-  }) as (ProviderAccount & { priority: number })[];
+  let ordered = ((accounts || []) as RoutedAccount[]).filter((a) => {
+    const allow = a.allowed_countries || [];
+    const block = a.blocked_countries || [];
+    if (block.includes(country)) return false;
+    if (allow.length && !allow.includes(country)) return false;
+    return true;
+  });
+
+  // Útválasztási szabályok: ország- és csatorna-specifikus sorrend felülírja az alapértelmezettet.
+  const { data: rules } = await db
+    .from("comm_routing_rules")
+    .select("id, partner_id, channel, country_prefix, provider_account_id, priority, sender_override")
+    .eq("active", true)
+    .eq("channel", channel)
+    .in("country_prefix", [country, "*"])
+    .or(partnerId ? `partner_id.eq.${partnerId},partner_id.is.null` : "partner_id.is.null")
+    .order("priority", { ascending: true });
+
+  const ruleFor = new Map<string, { id: string; rank: number; sender: string | null }>();
+  (rules || []).forEach((r, idx) => {
+    if (!r.provider_account_id || ruleFor.has(r.provider_account_id)) return;
+    const specificity = (r.country_prefix === "*" ? 1000 : 0) + (r.partner_id ? 0 : 100);
+    ruleFor.set(r.provider_account_id, {
+      id: r.id,
+      rank: specificity + (r.priority ?? 100) + idx,
+      sender: r.sender_override ?? null,
+    });
+  });
+
+  ordered = ordered
+    .map((a) => {
+      const rule = ruleFor.get(a.id);
+      return { ...a, _routeId: rule?.id ?? null, _senderOverride: rule?.sender ?? null, priority: rule ? rule.rank : (a.priority ?? 100) + 5000 };
+    })
+    .sort((a, b) => {
+      const own = (x: RoutedAccount) => (partnerId && x.partner_id === partnerId ? 0 : 1);
+      return own(a) - own(b) || a.priority - b.priority || (a.consecutive_failures ?? 0) - (b.consecutive_failures ?? 0);
+    });
 
   if (!ordered.length) {
-    return { status: "no_provider", provider: null, error: "Nincs bekötött saját átjáró-szolgáltató" };
+    return { status: "no_provider", provider: null, error: "Nincs bekötött saját átjáró-szolgáltató", country };
   }
 
   let lastError: string | null = null;
   for (const acc of ordered) {
     try {
+      if (!(await throughputOk(db, acc.id, acc.max_tps ?? 10))) {
+        lastError = `${acc.label}: átbocsátási korlát (${acc.max_tps ?? 10}/mp)`;
+        continue;
+      }
       const creds = acc.credentials_encrypted ? await decryptCredentials(acc.credentials_encrypted) : {};
-      const sender = await pickSender(db, partnerId, channel, acc);
+      const sender = acc._senderOverride || (await pickSender(db, partnerId, channel, acc));
       if (!sender) {
         lastError = `${acc.label}: nincs feladó szám`;
         continue;
@@ -224,21 +321,28 @@ export async function gatewaySend(
             ? await sendGatewayApi(acc, creds, channel, to, body, sender)
             : await sendHttpGeneric(acc, creds, channel, to, body, sender);
 
+      const failures = result.status === "sent" ? 0 : (acc.consecutive_failures ?? 0) + 1;
       await db
         .from("comm_provider_accounts")
         .update(
           result.status === "sent"
-            ? { last_ok_at: new Date().toISOString(), last_error: null }
-            : { last_error: (result.error || "ismeretlen hiba").slice(0, 300) },
+            ? { last_ok_at: new Date().toISOString(), last_error: null, consecutive_failures: 0, health: "healthy" }
+            : {
+                last_error: (result.error || "ismeretlen hiba").slice(0, 300),
+                consecutive_failures: failures,
+                health: failures >= 5 ? "down" : "degraded",
+              },
         )
         .eq("id", acc.id);
 
-      if (result.status === "sent") return result;
+      if (result.status === "sent") {
+        return { ...result, accountId: acc.id, routeId: acc._routeId ?? null, country };
+      }
       lastError = result.error ?? null;
     } catch (e) {
       lastError = String(e).slice(0, 300);
     }
   }
 
-  return { status: "failed", provider: null, error: lastError || "Minden szolgáltató sikertelen" };
+  return { status: "failed", provider: null, error: lastError || "Minden szolgáltató sikertelen", country };
 }
