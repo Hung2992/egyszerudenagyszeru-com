@@ -7,6 +7,7 @@ import {
   CalendarDays,
   Check,
   ChevronRight,
+  FileSignature,
   FileText,
   Globe2,
   Lock,
@@ -24,6 +25,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import heroImage from "@/assets/apex-business-platform-hero.jpg";
+import { PARTNER_CONTRACT_TEMPLATE } from "@/content/partnerContractTemplate";
 
 const modules = [
   {
