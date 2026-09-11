@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { lazyRetry } from "@/lib/lazy-retry";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 const Sonner = lazy(lazyRetry(() => import("@/components/ui/sonner").then(m => ({ default: m.Toaster }))));
@@ -8,7 +8,6 @@ const Toaster = lazy(lazyRetry(() => import("@/components/ui/toaster").then(m =>
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/contexts/CartContext";
 import Index from "./pages/Index.tsx";
-import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner.tsx";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { useReferralCapture } from "@/hooks/useReferralCapture";
 import { usePasswordRecoveryRedirect } from "@/hooks/usePasswordRecoveryRedirect";
@@ -16,6 +15,22 @@ import { getPartnerSlugFromHostname } from "@/lib/partner-subdomain";
 
 const PageTracker = () => { usePageTracking(); useReferralCapture(); usePasswordRecoveryRedirect(); return null; };
 const partnerSubdomainSlug = getPartnerSlugFromHostname();
+
+const CommerceTools = () => {
+  const { pathname } = useLocation();
+  if (pathname === "/" && !partnerSubdomainSlug) return null;
+  return (
+    <Suspense fallback={null}>
+      <CartDrawer />
+      <AbandonedCartReminder />
+      <GiveawayPopup />
+      <CookieConsentBanner />
+      <AiShoppingAssistant />
+      <VisualSearch />
+      <VoiceShopping />
+    </Suspense>
+  );
+};
 
 // Lazy-loaded components that appear with delay or on interaction
 const CartDrawer = lazy(lazyRetry(() => import("@/components/CartDrawer")));
@@ -106,16 +121,7 @@ const App = () => (
         </Suspense>
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <PageTracker />
-          <PaymentTestModeBanner />
-          <Suspense fallback={null}>
-            <CartDrawer />
-            <AbandonedCartReminder />
-            <GiveawayPopup />
-            <CookieConsentBanner />
-            <AiShoppingAssistant />
-            <VisualSearch />
-            <VoiceShopping />
-          </Suspense>
+          <CommerceTools />
           <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-background text-foreground"><div className="h-6 w-6 animate-spin rounded-none border-2 border-foreground border-t-transparent" /></div>}>
           <Routes>
             <Route path="/" element={partnerSubdomainSlug ? <BrandStorefront /> : <Index />} />

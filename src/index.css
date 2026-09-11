@@ -24,7 +24,7 @@
     --muted: 0 0% 14%;
     --muted-foreground: 0 0% 55%;
 
-    --accent: 45 100% 55%;
+    --accent: 45 53% 54%;
     --accent-foreground: 0 0% 4%;
 
     --destructive: 0 72% 51%;
@@ -34,7 +34,7 @@
     --input: 0 0% 16%;
     --ring: 0 0% 100%;
 
-    --radius: 0.5rem;
+    --radius: 0rem;
 
     --sidebar-background: 0 0% 6%;
     --sidebar-foreground: 0 0% 95%;
@@ -59,7 +59,7 @@
     --secondary-foreground: 0 0% 95%;
     --muted: 0 0% 14%;
     --muted-foreground: 0 0% 55%;
-    --accent: 45 100% 55%;
+    --accent: 45 53% 54%;
     --accent-foreground: 0 0% 4%;
     --destructive: 0 62% 40%;
     --destructive-foreground: 0 0% 100%;
@@ -84,7 +84,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', sans-serif;
+    font-family: 'DM Sans', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
