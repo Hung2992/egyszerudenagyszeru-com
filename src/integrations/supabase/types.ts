@@ -13085,6 +13085,13 @@ export type Database = {
           strategy_name: string
         }[]
       }
+      public_product_day_status: {
+        Args: { _product_id: string }
+        Returns: {
+          booked_today: number
+          next_booking_at: string
+        }[]
+      }
       purge_expired_kyc: { Args: never; Returns: number }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
