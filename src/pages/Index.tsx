@@ -147,16 +147,16 @@ const Index = () => {
             <div className="max-w-3xl">
               <div className="mb-7 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.2em] text-accent">
                 <span className="h-px w-8 bg-accent" />
-                Weboldal · Webshop · Üzleti rendszer · AI
+                Bérelhető üzleti szoftver · Végpontig
               </div>
-              <h1 className="max-w-4xl text-5xl font-bold leading-[0.98] md:text-7xl lg:text-8xl">
-                Egyszerű <span className="text-accent">de</span><br />Nagyszerű.
+              <h1 className="max-w-4xl text-4xl font-bold leading-[0.98] md:text-6xl lg:text-7xl">
+                Weboldal. Webshop.<br /><span className="text-accent">Ügyvitel. AI.</span><br />Egy rendszerben.
               </h1>
               <p className="mt-7 max-w-2xl text-lg font-medium leading-relaxed text-foreground md:text-xl">
-                A komplett szoftver, amely felépíti és működteti a vállalkozásod digitális rendszerét.
+                Az Egyszerű de Nagyszerű nem weboldalkészítő. Komplett, bérelhető vállalkozásirányítási platform.
               </p>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
-                Professzionális weboldal és webshop, termék- és szolgáltatásértékesítés, ügyfélkezelés, időpontfoglalás, marketing, kommunikáció, pénzügyi áttekintés és AI munkatársak — egyetlen bérelhető rendszerben.
+                Építs saját weboldalt és webshopot, árulj terméket, szolgáltatást, kurzust és digitális tartalmat, kezeld ügyfeleidet, naptáradat, kampányaidat, SMS/email kommunikációdat, szállításodat és pénzügyeidet — mindezt egy központból, saját márkáddal.
               </p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                 <Button size="lg" className="h-14 rounded-none bg-accent px-8 text-xs font-bold uppercase tracking-[0.14em] text-accent-foreground hover:bg-accent/90" onClick={goToRegistration}>
