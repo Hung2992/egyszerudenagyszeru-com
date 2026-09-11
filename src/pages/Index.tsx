@@ -7,6 +7,7 @@ import {
   CalendarDays,
   Check,
   ChevronRight,
+  FileSignature,
   FileText,
   Globe2,
   Lock,
@@ -24,6 +25,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import heroImage from "@/assets/apex-business-platform-hero.jpg";
+import { PARTNER_CONTRACT_TEMPLATE } from "@/content/partnerContractTemplate";
 
 const modules = [
   {
@@ -111,6 +113,7 @@ const Index = () => {
             <button onClick={scrollToModules} className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground">Képességek</button>
             <a href="#mukodes" className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground">Hogyan működik</a>
             <a href="#biztonsag" className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground">Biztonság</a>
+            <a href="#szerzodes" className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground">Szerződés</a>
           </nav>
 
           <div className="hidden items-center gap-2 md:flex">
@@ -127,6 +130,7 @@ const Index = () => {
             <button onClick={() => { scrollToModules(); setMenuOpen(false); }} className="block w-full border-b border-border py-4 text-left text-sm">Képességek</button>
             <a href="#mukodes" onClick={() => setMenuOpen(false)} className="block border-b border-border py-4 text-sm">Hogyan működik</a>
             <a href="#biztonsag" onClick={() => setMenuOpen(false)} className="block border-b border-border py-4 text-sm">Biztonság</a>
+            <a href="#szerzodes" onClick={() => setMenuOpen(false)} className="block border-b border-border py-4 text-sm">Szerződés</a>
             <Button className="mt-5 w-full rounded-none bg-accent text-accent-foreground" onClick={goToRegistration}>Regisztráció <ArrowRight /></Button>
           </nav>
         )}
@@ -251,6 +255,29 @@ const Index = () => {
           </div>
         </section>
 
+        <section id="szerzodes" className="border-t border-border bg-card">
+          <div className="mx-auto max-w-7xl px-5 py-20 md:py-28 lg:px-8">
+            <div className="grid gap-10 lg:grid-cols-[1fr_1.2fr]">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Partneri együttműködés</p>
+                <h2 className="mt-4 text-4xl font-bold md:text-6xl">A szerződés.<br />Pontosan ezt írod alá.</h2>
+                <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground">Ez a teljes, nyilvános szerződéssablon (v1.1). A zárójeles mezők a KYC jóváhagyása után töltődnek ki a te adataiddal és az üzemeltető cégadataival. Az aláírt szerződés lezárul, SHA-256 hash-sel hitelesített, és módosíthatatlan marad.</p>
+                <div className="mt-8 flex flex-wrap items-center gap-4">
+                  <Button className="rounded-none bg-accent px-6 text-xs font-bold uppercase tracking-[0.12em] text-accent-foreground hover:bg-accent/90" onClick={goToRegistration}>Regisztráció és aláírás <ArrowRight /></Button>
+                  <p className="text-xs text-muted-foreground">Nem érsz el semmit rejtve – előbb olvasod, aztán írod alá.</p>
+                </div>
+              </div>
+              <div className="border border-border bg-background">
+                <div className="flex items-center gap-3 border-b border-border px-5 py-3">
+                  <FileSignature className="h-4 w-4 text-accent" />
+                  <p className="text-xs font-bold uppercase tracking-[0.14em]">Partneri szerződés · sablon v1.1</p>
+                </div>
+                <pre className="max-h-[560px] overflow-auto whitespace-pre-wrap p-5 font-mono text-xs leading-relaxed text-muted-foreground">{PARTNER_CONTRACT_TEMPLATE}</pre>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section className="border-y border-accent bg-accent text-accent-foreground">
           <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 px-5 py-14 md:flex-row md:items-center lg:px-8">
             <div><p className="text-xs font-bold uppercase tracking-[0.2em] opacity-70">Készen állsz?</p><h2 className="mt-2 text-3xl font-bold md:text-5xl">Béreld a teljes digitális rendszered egy helyről.</h2></div>
@@ -262,7 +289,7 @@ const Index = () => {
       <footer className="bg-background">
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-14 md:grid-cols-3 lg:px-8">
           <div><p className="font-heading text-sm font-bold uppercase tracking-[0.12em]">Egyszerű <span className="text-accent">de</span> Nagyszerű</p><p className="mt-3 max-w-xs text-xs leading-relaxed text-muted-foreground">Bérelhető weboldal-, webshop-, CRM-, naptár-, marketing-, kommunikációs és AI rendszer vállalkozásoknak. Egy platform, egy adatmodell, egy igazság.</p></div>
-          <nav className="flex flex-col gap-3 text-xs text-muted-foreground"><button onClick={scrollToModules} className="text-left hover:text-foreground">Képességek</button><button onClick={() => navigate("/partner-regisztracio")} className="text-left hover:text-foreground">Partner regisztráció</button><button onClick={() => navigate("/auth")} className="text-left hover:text-foreground">Belépés</button></nav>
+          <nav className="flex flex-col gap-3 text-xs text-muted-foreground"><button onClick={scrollToModules} className="text-left hover:text-foreground">Képességek</button><a href="#szerzodes" className="text-left hover:text-foreground">Partneri szerződés</a><button onClick={() => navigate("/partner-regisztracio")} className="text-left hover:text-foreground">Partner regisztráció</button><button onClick={() => navigate("/auth")} className="text-left hover:text-foreground">Belépés</button></nav>
           <nav className="flex flex-col gap-3 text-xs text-muted-foreground"><button onClick={() => navigate("/legal/adatvedelem")} className="text-left hover:text-foreground">Adatvédelem</button><button onClick={() => navigate("/legal/aszf")} className="text-left hover:text-foreground">Általános feltételek</button><button onClick={() => navigate("/contact")} className="text-left hover:text-foreground">Kapcsolat</button></nav>
         </div>
         <div className="border-t border-border px-5 py-5 text-center text-[10px] uppercase tracking-[0.16em] text-muted-foreground">© 2026 Egyszerű de Nagyszerű · Minden jog fenntartva</div>
