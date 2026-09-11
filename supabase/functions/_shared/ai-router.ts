@@ -166,9 +166,7 @@ export async function aiChat(opts: AiChatOptions): Promise<AiChatResult> {
           last_status: "ok",
           last_checked_at: new Date().toISOString(),
           last_error: null,
-          success_count: undefined,
         }).eq("id", ep.id).then(() => {}, () => {});
-        db.rpc("noop_placeholder").then(() => {}, () => {});
         return { content, source: "local", provider: ep.name };
       } catch (e) {
         const msg = (e as Error).message?.slice(0, 300) || "unknown";
