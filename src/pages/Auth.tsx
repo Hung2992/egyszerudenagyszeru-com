@@ -103,9 +103,14 @@ const Auth = () => {
     }
   };
 
-  const titles: Record<AuthMode, string> = { login: "BELÉPÉS", forgot: "JELSZÓ VISSZAÁLLÍTÁS" };
+  const titles: Record<AuthMode, string> = {
+    login: "BELÉPÉS",
+    admin: "SZUPER ADMIN BELÉPÉS",
+    forgot: "JELSZÓ VISSZAÁLLÍTÁS",
+  };
   const descriptions: Record<AuthMode, string> = {
     login: "Lépj be a partnerfiókoddal.",
+    admin: "Csak adminisztrátori fiókkal.",
     forgot: "Küldünk egy visszaállítási linket.",
   };
 
