@@ -384,7 +384,9 @@ export async function gatewaySend(
           ? await sendTwilio(acc, creds, channel, to, body, sender)
           : acc.driver === "gatewayapi"
             ? await sendGatewayApi(acc, creds, channel, to, body, sender)
-            : await sendHttpGeneric(acc, creds, channel, to, body, sender);
+            : acc.driver === "apex_modem"
+              ? await sendApexModem(acc, creds, channel, to, body, sender)
+              : await sendHttpGeneric(acc, creds, channel, to, body, sender);
 
       const failures = result.status === "sent" ? 0 : (acc.consecutive_failures ?? 0) + 1;
       await db
