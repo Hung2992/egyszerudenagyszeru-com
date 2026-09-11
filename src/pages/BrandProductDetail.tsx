@@ -115,10 +115,55 @@ const BrandProductDetail = () => {
             {product.compare_price_huf && <span className="line-through opacity-50">{product.compare_price_huf.toLocaleString("hu-HU")} Ft</span>}
           </div>
           {product.description && <p className="opacity-80 whitespace-pre-wrap">{product.description}</p>}
+
+          {dayStatus && (
+            <div className="border p-4 space-y-2" style={{ borderColor: `${sf.text_color}20` }}>
+              <div className="flex items-center gap-2 text-xs uppercase tracking-widest opacity-70">
+                <CalendarClock className="h-4 w-4" /> Mai állapot
+              </div>
+              <div className="text-lg font-bold" style={{ color: dayStatus.open ? sf.accent_color : undefined }}>
+                {dayStatus.open ? `Ma foglalható · ${dayStatus.from}–${dayStatus.to}` : "Ma nem foglalható"}
+              </div>
+              <div className="text-xs opacity-70 space-y-1">
+                <div>Nyitva: {dayStatus.daysLabel}</div>
+                {a.service_duration && <div>Egy alkalom: {a.service_duration}</div>}
+                {a.min_notice_hours && <div>Legkorábban {a.min_notice_hours} órával előre foglalható</div>}
+                {a.deposit_percent && <div>Előleg: {a.deposit_percent}%</div>}
+                {a.cancellation_policy && <div>Lemondás: {a.cancellation_policy}</div>}
+              </div>
+            </div>
+          )}
+
+          {product.product_type === "digital" && (
+            <div className="text-xs opacity-70 space-y-1">
+              {a.delivery_method && <div>Átadás: {a.delivery_method === "file" ? "letölthető fájl" : a.delivery_method === "link" ? "hozzáférési link" : a.delivery_method === "license" ? "licenckulcs" : "e-mailben"}</div>}
+              {a.digital_version && <div>Verzió: {a.digital_version}</div>}
+              {a.file_size && <div>Fájlméret: {a.file_size}</div>}
+              {a.language && <div>Nyelv: {a.language}</div>}
+              {a.free_updates && <div>Ingyenes frissítések</div>}
+              {a.support_period && <div>Támogatás: {a.support_period}</div>}
+              {a.refund_policy && <div>Garancia: {a.refund_policy}</div>}
+            </div>
+          )}
+
+          {product.product_type === "course" && (
+            <div className="text-xs opacity-70 space-y-1">
+              {a.course_duration && <div>Időtartam: {a.course_duration}</div>}
+              {a.course_level && <div>Szint: {a.course_level}</div>}
+              {a.instructor && <div>Oktató: {a.instructor}</div>}
+              {a.live_schedule && <div>Élő alkalmak: {a.live_schedule}</div>}
+              {a.course_platform && <div>Platform: {a.course_platform}</div>}
+              {a.max_students && <div>Max. létszám: {a.max_students} fő</div>}
+              {a.lifetime_access && <div>Örök hozzáférés</div>}
+            </div>
+          )}
+
           <div className="text-xs opacity-60 space-y-1">
             {product.material && <div>Anyag: {product.material}</div>}
             {product.origin_country && <div>Származás: {product.origin_country}</div>}
-            <div>Készlet: {product.stock_qty > 0 ? `${product.stock_qty} db` : "Elfogyott"}</div>
+            {isBookable
+              ? <div>Foglalható szolgáltatás</div>
+              : <div>Készlet: {product.stock_qty > 0 ? `${product.stock_qty} db` : "Elfogyott"}</div>}
           </div>
           <button
             onClick={() => toast({ title: "Hamarosan", description: "A checkout funkció a következő frissítésben érkezik." })}
