@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/untyped-client";
-import { ArrowLeft, ShoppingBag } from "lucide-react";
+import { ArrowLeft, ShoppingBag, CalendarClock } from "lucide-react";
 import MediaImage from "@/components/partner/MediaImage";
 import { toast } from "@/hooks/use-toast";
 
@@ -48,6 +48,27 @@ const BrandProductDetail = () => {
   );
 
   const css = { background: sf.bg_color, color: sf.text_color, fontFamily: sf.font_body, minHeight: "100vh" };
+
+  // Napi állapot foglalható (szolgáltatás / élő kurzus) termékeknél
+  const a: any = (product.attributes && typeof product.attributes === "object") ? product.attributes : {};
+  const ptype = String(product.product_type || "");
+  const isService = ptype === "service" || ptype.startsWith("service") || product.fulfillment_type === "service";
+  const isCourse = ptype === "course" || ptype.startsWith("course") || product.fulfillment_type === "course";
+  const isDigital = ptype === "digital" || product.fulfillment_type === "digital";
+  const isBookable = a.booking_enabled !== false && (isService || (isCourse && !!a.live_schedule));
+  const DAY_NAMES = ["H", "K", "Sze", "Cs", "P", "Szo", "V"];
+  const dayStatus = (() => {
+    if (!isBookable) return null;
+    const days: number[] = Array.isArray(a.work_days) && a.work_days.length ? a.work_days.map(Number) : [1, 2, 3, 4, 5];
+    const jsDay = new Date().getDay();
+    const isoDay = jsDay === 0 ? 7 : jsDay;
+    return {
+      open: days.includes(isoDay),
+      from: a.work_from || "09:00",
+      to: a.work_to || "17:00",
+      daysLabel: days.sort((x, y) => x - y).map((d) => DAY_NAMES[d - 1]).join(", "),
+    };
+  })();
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -115,18 +136,66 @@ const BrandProductDetail = () => {
             {product.compare_price_huf && <span className="line-through opacity-50">{product.compare_price_huf.toLocaleString("hu-HU")} Ft</span>}
           </div>
           {product.description && <p className="opacity-80 whitespace-pre-wrap">{product.description}</p>}
+
+          {dayStatus && (
+            <div className="border p-4 space-y-2" style={{ borderColor: `${sf.text_color}20` }}>
+              <div className="flex items-center gap-2 text-xs uppercase tracking-widest opacity-70">
+                <CalendarClock className="h-4 w-4" /> Mai állapot
+              </div>
+              <div className="text-lg font-bold" style={{ color: dayStatus.open ? sf.accent_color : undefined }}>
+                {dayStatus.open ? `Ma foglalható · ${dayStatus.from}–${dayStatus.to}` : "Ma nem foglalható"}
+              </div>
+              <div className="text-xs opacity-70 space-y-1">
+                <div>Nyitva: {dayStatus.daysLabel}</div>
+                {a.service_duration && <div>Egy alkalom: {a.service_duration}</div>}
+                {a.min_notice_hours && <div>Legkorábban {a.min_notice_hours} órával előre foglalható</div>}
+                {a.deposit_percent && <div>Előleg: {a.deposit_percent}%</div>}
+                {a.cancellation_policy && <div>Lemondás: {a.cancellation_policy}</div>}
+              </div>
+            </div>
+          )}
+
+          {isDigital && (
+            <div className="text-xs opacity-70 space-y-1">
+              {a.delivery_method && <div>Átadás: {a.delivery_method === "file" ? "letölthető fájl" : a.delivery_method === "link" ? "hozzáférési link" : a.delivery_method === "license" ? "licenckulcs" : "e-mailben"}</div>}
+              {a.digital_version && <div>Verzió: {a.digital_version}</div>}
+              {a.file_size && <div>Fájlméret: {a.file_size}</div>}
+              {a.language && <div>Nyelv: {a.language}</div>}
+              {a.free_updates && <div>Ingyenes frissítések</div>}
+              {a.support_period && <div>Támogatás: {a.support_period}</div>}
+              {a.refund_policy && <div>Garancia: {a.refund_policy}</div>}
+            </div>
+          )}
+
+          {isCourse && (
+            <div className="text-xs opacity-70 space-y-1">
+              {a.course_duration && <div>Időtartam: {a.course_duration}</div>}
+              {a.course_level && <div>Szint: {a.course_level}</div>}
+              {a.instructor && <div>Oktató: {a.instructor}</div>}
+              {a.live_schedule && <div>Élő alkalmak: {a.live_schedule}</div>}
+              {a.course_platform && <div>Platform: {a.course_platform}</div>}
+              {a.max_students && <div>Max. létszám: {a.max_students} fő</div>}
+              {a.lifetime_access && <div>Örök hozzáférés</div>}
+            </div>
+          )}
+
           <div className="text-xs opacity-60 space-y-1">
             {product.material && <div>Anyag: {product.material}</div>}
             {product.origin_country && <div>Származás: {product.origin_country}</div>}
-            <div>Készlet: {product.stock_qty > 0 ? `${product.stock_qty} db` : "Elfogyott"}</div>
+            {isBookable
+              ? <div>Foglalható szolgáltatás</div>
+              : <div>Készlet: {product.stock_qty > 0 ? `${product.stock_qty} db` : "Elfogyott"}</div>}
           </div>
           <button
-            onClick={() => toast({ title: "Hamarosan", description: "A checkout funkció a következő frissítésben érkezik." })}
-            disabled={product.stock_qty <= 0}
+            onClick={() => {
+              if (isBookable && a.booking_url) { window.open(String(a.booking_url), "_blank", "noopener"); return; }
+              toast({ title: "Hamarosan", description: isBookable ? "Az online időpontfoglalás a következő frissítésben érkezik." : "A checkout funkció a következő frissítésben érkezik." });
+            }}
+            disabled={!isBookable && !isDigital && !isCourse && product.stock_qty <= 0}
             className="w-full py-4 uppercase tracking-widest font-bold border-2 disabled:opacity-30"
             style={{ borderColor: sf.accent_color, color: sf.accent_color }}
           >
-            {product.stock_qty > 0 ? "Kosárba" : "Elfogyott"}
+            {isBookable ? "Időpont foglalása" : (isDigital || isCourse) ? "Megvásárlom" : product.stock_qty > 0 ? "Kosárba" : "Elfogyott"}
           </button>
         </div>
       </div>

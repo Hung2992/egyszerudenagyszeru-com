@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
     const action = String(body?.action || "text");
     const productId = body?.productId ?? null;
 
-    const PARTNER_ACTIONS = ["site", "page"];
+    const PARTNER_ACTIONS = ["site", "page", "service_product"];
     if (!isAdmin && !PARTNER_ACTIONS.includes(action)) {
       return json({ error: "Admin required" }, 403);
     }
@@ -515,6 +515,140 @@ A partner kérése az aloldalra:
         ok: true,
         page: saved,
         explanation: String(parsed.explanation || "Elkészült az aloldal."),
+      });
+    }
+
+    // ============= SERVICE / DIGITAL / COURSE PRODUCT (partner + admin) =============
+    if (action === "service_product") {
+      const prompt = String(body?.input?.prompt || "").trim();
+      if (prompt.length < 3) return json({ error: "Írd le, milyen terméket vagy szolgáltatást szeretnél" }, 400);
+      const wanted = String(body?.input?.product_type || "").trim();
+      const allowedTypes = ["digital", "course", "service"];
+      const forcedType = allowedTypes.includes(wanted) ? wanted : null;
+
+      const sys = `Te egy magyar e-kereskedelmi termékstratéga vagy. Digitális termékeket, online kurzusokat és szolgáltatásokat állítasz össze eladásra kész módon.
+Válaszod SZIGORÚAN érvényes JSON, minden szöveg magyarul, konkrét, nem AI-ízű.
+A "product_type" csak "digital", "course" vagy "service" lehet.
+Szolgáltatásnál és kurzusnál MINDIG töltsd ki az időpontfoglalási (naptár) beállításokat is.
+
+Add vissza pontosan ezt a struktúrát:
+{
+  "product_type": "digital|course|service",
+  "title": "termék neve, max 80 karakter",
+  "slug": "url-barat-slug",
+  "short_description": "1-2 mondat",
+  "description": "5-8 mondatos eladási leírás",
+  "price_huf": 19900,
+  "category": "kategória",
+  "tags": ["max 6 címke"],
+  "attributes": {
+    "delivery_method": "file|link|license|email",
+    "digital_version": "", "language": "magyar", "file_size": "", "demo_url": "",
+    "device_limit": "", "free_updates": true, "commercial_use": false,
+    "support_period": "", "refund_policy": "", "requirements": "",
+    "license_terms": "",
+    "course_mode": "online|live|onsite|hybrid", "course_level": "", "course_duration": "",
+    "max_students": "", "instructor": "", "live_schedule": "", "course_platform": "",
+    "drip_days": "", "community_access": false, "mentoring": false, "lifetime_access": false,
+    "installments": "", "learning_outcomes": "soronként egy eredmény",
+    "course_lessons": [{ "title": "", "duration": "", "free_preview": false }],
+    "service_duration": "", "service_location": "online|onsite|shop|hybrid",
+    "service_includes": "", "cancellation_policy": "", "service_warranty": "",
+    "booking_enabled": true,
+    "work_days": [1,2,3,4,5],
+    "work_from": "09:00", "work_to": "17:00",
+    "buffer_min": 15, "min_notice_hours": 24, "max_advance_days": 60,
+    "deposit_percent": "", "travel_fee": "", "rush_fee_percent": "",
+    "meeting_url": "",
+    "service_addons": [{ "name": "", "price": "" }]
+  },
+  "explanation": "1 mondat: mit készítettél"
+}
+Csak a választott típushoz tartozó mezőket töltsd értelmes tartalommal, a többit hagyd üresen.`;
+
+      const userMsg = `Márka: ${partner?.company_name || "(ismeretlen)"}
+${forcedType ? `Kötelező típus: ${forcedType}` : "Válaszd ki a legjobb típust a kérés alapján."}
+
+A partner kérése:
+"""${prompt.slice(0, 3000)}"""`;
+
+      const r = await fetch(AI_CHAT, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: SITE_MODEL,
+          messages: [{ role: "system", content: sys }, { role: "user", content: userMsg }],
+          response_format: { type: "json_object" },
+        }),
+      });
+
+      if (r.status === 429) return json({ error: "Túl sok kérés, próbáld pár másodperc múlva." }, 429);
+      if (r.status === 402) return json({ error: "Elfogytak az AI kreditek." }, 402);
+      if (!r.ok) return json({ error: `AI hiba (${r.status})` }, 502);
+
+      const d = await r.json();
+      const content = d?.choices?.[0]?.message?.content ?? "{}";
+      let parsed: any = {};
+      try { parsed = JSON.parse(content); }
+      catch { const m = content.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : {}; }
+
+      const title = String(parsed.title || "").trim().slice(0, 120);
+      if (!title) return json({ error: "Az AI nem adott vissza használható terméket. Próbáld részletesebben." }, 502);
+
+      const productType = allowedTypes.includes(String(parsed.product_type))
+        ? String(parsed.product_type)
+        : (forcedType || "service");
+
+      let slug = String(parsed.slug || "").trim().toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
+      if (!slug) {
+        slug = title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 70) || "termek";
+      }
+      slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
+
+      const attrs = (parsed.attributes && typeof parsed.attributes === "object") ? parsed.attributes : {};
+      if (productType !== "digital" && attrs.booking_enabled === undefined) attrs.booking_enabled = true;
+      if (Array.isArray(attrs.work_days)) {
+        attrs.work_days = attrs.work_days
+          .map((x: unknown) => Number(x))
+          .filter((n: number) => Number.isInteger(n) && n >= 1 && n <= 7);
+      }
+
+      const price = Number(parsed.price_huf);
+      const row: Record<string, unknown> = {
+        partner_id: partner.id,
+        slug,
+        title,
+        description: String(parsed.description || parsed.short_description || "").slice(0, 5000),
+        price_huf: Number.isFinite(price) && price > 0 ? Math.round(price) : 0,
+        category: String(parsed.category || "").slice(0, 80) || null,
+        tags: Array.isArray(parsed.tags) ? parsed.tags.slice(0, 6).map((t: unknown) => String(t).slice(0, 40)) : [],
+        product_type: productType,
+        fulfillment_type: productType,
+        attributes: attrs,
+        stock_qty: productType === "service" ? 0 : 9999,
+        status: "draft",
+      };
+
+      const { data: saved, error: saveErr } = await supabase
+        .from("partner_products").insert(row).select().maybeSingle();
+      if (saveErr) return json({ error: `Mentési hiba: ${saveErr.message}` }, 500);
+
+      await supabase.from("ai_product_generations").insert({
+        admin_user_id: userId,
+        kind: "service_product",
+        model: SITE_MODEL,
+        prompt: prompt.slice(0, 3000),
+        input: { partner_id: partner.id, product_type: productType },
+        output: { product_id: saved?.id, slug, product_type: productType },
+      });
+
+      return json({
+        ok: true,
+        product: saved,
+        explanation: String(parsed.explanation || "Elkészült a termék piszkozatként."),
       });
     }
 

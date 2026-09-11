@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Sparkles, ExternalLink, Trash2, RefreshCw, Globe } from "lucide-react";
+import AiServiceProductGenerator from "@/components/partner/AiServiceProductGenerator";
 
 interface Props { partnerId: string; storefrontSlug?: string | null; }
 
@@ -67,6 +68,8 @@ const PartnerPagesTab = ({ partnerId, storefrontSlug }: Props) => {
   const pageUrl = (p: any) => storefrontSlug ? `/b/${storefrontSlug}/oldal/${p.slug}` : null;
 
   return (
+    <div className="space-y-6">
+    <AiServiceProductGenerator partnerId={partnerId} />
     <Card className="rounded-none border-foreground/20 p-6 space-y-5">
       <div>
         <h3 className="font-bold uppercase tracking-widest text-sm flex items-center gap-2">
@@ -120,6 +123,7 @@ const PartnerPagesTab = ({ partnerId, storefrontSlug }: Props) => {
         ))}
       </div>
     </Card>
+    </div>
   );
 };
 
