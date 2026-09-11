@@ -31,7 +31,8 @@ Deno.serve(async (req) => {
   if (limited) return limited;
 
   const url = new URL(req.url);
-  const path = url.pathname.replace(/^\/functions\/v1\/apex-comm-api/, "").replace(/\/+$/, "") || "/";
+  const path =
+    url.pathname.replace(/^(\/functions\/v1)?\/apex-comm-api/, "").replace(/\/+$/, "") || "/";
 
   /* ---- GET /messages/:id ---- */
   if (req.method === "GET" && path.startsWith("/messages/")) {
