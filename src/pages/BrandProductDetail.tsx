@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/untyped-client";
-import { ArrowLeft, ShoppingBag } from "lucide-react";
+import { ArrowLeft, ShoppingBag, CalendarClock } from "lucide-react";
 import MediaImage from "@/components/partner/MediaImage";
 import { toast } from "@/hooks/use-toast";
 
@@ -48,6 +48,23 @@ const BrandProductDetail = () => {
   );
 
   const css = { background: sf.bg_color, color: sf.text_color, fontFamily: sf.font_body, minHeight: "100vh" };
+
+  // Napi állapot foglalható (szolgáltatás / élő kurzus) termékeknél
+  const a: any = (product.attributes && typeof product.attributes === "object") ? product.attributes : {};
+  const isBookable = a.booking_enabled !== false && (product.product_type === "service" || (product.product_type === "course" && !!a.live_schedule));
+  const DAY_NAMES = ["H", "K", "Sze", "Cs", "P", "Szo", "V"];
+  const dayStatus = (() => {
+    if (!isBookable) return null;
+    const days: number[] = Array.isArray(a.work_days) && a.work_days.length ? a.work_days.map(Number) : [1, 2, 3, 4, 5];
+    const jsDay = new Date().getDay();
+    const isoDay = jsDay === 0 ? 7 : jsDay;
+    return {
+      open: days.includes(isoDay),
+      from: a.work_from || "09:00",
+      to: a.work_to || "17:00",
+      daysLabel: days.sort((x, y) => x - y).map((d) => DAY_NAMES[d - 1]).join(", "),
+    };
+  })();
 
   const jsonLd = {
     "@context": "https://schema.org",
