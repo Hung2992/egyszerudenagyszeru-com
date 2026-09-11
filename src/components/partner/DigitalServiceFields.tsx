@@ -431,6 +431,102 @@ const DigitalServiceFields = ({ fulfillment, partnerId, attributes, setAttribute
         <Label className="text-xs">Lemondási feltételek</Label>
         <Textarea className="rounded-none" rows={2} value={attributes.cancellation_policy || ""} onChange={(e) => set("cancellation_policy", e.target.value)} placeholder="pl. 24 órán belüli lemondás díjköteles" />
       </div>
+
+      <div className="border-t border-foreground/20 pt-3 space-y-3">
+        <div className="flex items-center gap-2">
+          <Switch checked={attributes.booking_enabled !== false} onCheckedChange={(v) => set("booking_enabled", v)} />
+          <span className="text-xs font-bold uppercase tracking-wider">Időpontfoglalás a naptárban</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label className="text-xs">Munkanapok</Label>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {["H", "K", "Sze", "Cs", "P", "Szo", "V"].map((d, i) => {
+                const days: number[] = attributes.work_days || [1, 2, 3, 4, 5];
+                const idx = i + 1;
+                const on = days.includes(idx);
+                return (
+                  <button key={d} type="button"
+                    className={`px-2 py-1 text-xs border ${on ? "border-primary text-primary" : "border-foreground/20 text-muted-foreground"}`}
+                    onClick={() => set("work_days", on ? days.filter((x) => x !== idx) : [...days, idx].sort())}>
+                    {d}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs">Kezdés</Label>
+              <Input type="time" className="rounded-none" value={attributes.work_from || "09:00"} onChange={(e) => set("work_from", e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs">Zárás</Label>
+              <Input type="time" className="rounded-none" value={attributes.work_to || "17:00"} onChange={(e) => set("work_to", e.target.value)} />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <Label className="text-xs">Szünet két munka közt (perc)</Label>
+            <Input type="number" className="rounded-none" value={attributes.buffer_min || ""} onChange={(e) => set("buffer_min", e.target.value)} placeholder="pl. 15" />
+          </div>
+          <div>
+            <Label className="text-xs">Legkorábbi foglalás (óra)</Label>
+            <Input type="number" className="rounded-none" value={attributes.min_notice_hours || ""} onChange={(e) => set("min_notice_hours", e.target.value)} placeholder="pl. 24" />
+          </div>
+          <div>
+            <Label className="text-xs">Előre foglalható (nap)</Label>
+            <Input type="number" className="rounded-none" value={attributes.max_advance_days || ""} onChange={(e) => set("max_advance_days", e.target.value)} placeholder="pl. 60" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <Label className="text-xs">Előleg (%)</Label>
+            <Input type="number" className="rounded-none" value={attributes.deposit_percent || ""} onChange={(e) => set("deposit_percent", e.target.value)} placeholder="pl. 30" />
+          </div>
+          <div>
+            <Label className="text-xs">Kiszállási díj (Ft)</Label>
+            <Input type="number" className="rounded-none" value={attributes.travel_fee || ""} onChange={(e) => set("travel_fee", e.target.value)} placeholder="pl. 5000" />
+          </div>
+          <div>
+            <Label className="text-xs">Sürgősségi felár (%)</Label>
+            <Input type="number" className="rounded-none" value={attributes.rush_fee_percent || ""} onChange={(e) => set("rush_fee_percent", e.target.value)} placeholder="pl. 50" />
+          </div>
+        </div>
+
+        <div>
+          <Label className="text-xs">Online egyeztetés linkje</Label>
+          <Input className="rounded-none" value={attributes.meeting_url || ""} onChange={(e) => set("meeting_url", e.target.value)} placeholder="Zoom / Meet link" />
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs">Kiegészítő szolgáltatások ({(attributes.service_addons || []).length})</Label>
+            <button type="button" className="text-xs border border-foreground/20 px-2 py-1 hover:border-foreground"
+              onClick={() => set("service_addons", [...(attributes.service_addons || []), { name: "", price: "" }])}>+ Extra</button>
+          </div>
+          {(attributes.service_addons || []).map((a: any, i: number) => (
+            <div key={i} className="grid grid-cols-[1fr_120px_auto] gap-1 items-center">
+              <Input className="rounded-none" placeholder="Extra neve" value={a.name || ""}
+                onChange={(e) => set("service_addons", (attributes.service_addons || []).map((x: any, ix: number) => ix === i ? { ...x, name: e.target.value } : x))} />
+              <Input type="number" className="rounded-none" placeholder="Ft" value={a.price || ""}
+                onChange={(e) => set("service_addons", (attributes.service_addons || []).map((x: any, ix: number) => ix === i ? { ...x, price: e.target.value } : x))} />
+              <button type="button" onClick={() => set("service_addons", (attributes.service_addons || []).filter((_: any, ix: number) => ix !== i))}>
+                <X className="h-3 w-3 text-destructive" />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div>
+          <Label className="text-xs">Garancia / utómunka</Label>
+          <Input className="rounded-none" value={attributes.service_warranty || ""} onChange={(e) => set("service_warranty", e.target.value)} placeholder="pl. 6 hónap garancia" />
+        </div>
+      </div>
     </div>
   );
 };
