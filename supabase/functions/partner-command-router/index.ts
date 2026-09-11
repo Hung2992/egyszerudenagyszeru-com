@@ -137,6 +137,11 @@ Max 5 lépés, max 4 ügynök. needs_approval legyen true, ha valódi üzleti v�
   } catch (e) {
     const msg = e instanceof Error ? e.message : "unknown_error";
     console.error("[partner-command-router]", msg);
-    return json({ error: msg }, msg === "rate_limit" ? 429 : msg === "credits_exhausted" ? 402 : 500);
+    const status = msg === "rate_limit" ? 429
+      : msg === "credits_exhausted" ? 402
+      : msg === "ai_blocked" || msg === "ai_unauthorized" ? 402
+      : 500;
+    return json({ error: msg }, status);
   }
 });
+
