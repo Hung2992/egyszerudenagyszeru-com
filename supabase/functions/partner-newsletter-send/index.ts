@@ -64,6 +64,11 @@ Deno.serve(async (req) => {
     .update({ status: "sending", recipient_count: recipients.length })
     .eq("id", blastId);
 
+  const { data: sf } = await db
+    .from("partner_storefronts")
+    .select("slug")
+    .eq("partner_id", partner.id)
+    .maybeSingle();
   const brand = partner.company_name || partner.full_name || "Partnerünk";
   let sent = 0;
   let failed = 0;
@@ -86,8 +91,8 @@ Deno.serve(async (req) => {
             heading: blast.subject,
             intro: blast.excerpt || undefined,
             items: [{ text: String(blast.body_html || "").replace(/<[^>]+>/g, " ").slice(0, 1500) }],
-            cta_url: blast.slug && blast.published_on_site
-              ? `https://egyszerudenagyszeru.com/hirek/${blast.slug}`
+            cta_url: blast.slug && blast.published_on_site && sf?.slug
+              ? `https://egyszerudenagyszeru.com/b/${sf.slug}/hirek/${blast.slug}`
               : undefined,
             cta_label: "ELOLVASOM",
           },
