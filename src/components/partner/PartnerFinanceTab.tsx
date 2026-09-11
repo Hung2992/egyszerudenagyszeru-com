@@ -115,12 +115,12 @@ const PartnerFinanceTab = ({ partnerId }: Props) => {
           <p className="text-xl font-bold mt-1">{fmt(m.payout)}</p>
         </Card>
         <Card className="rounded-none p-4 border-l-4 border-l-accent">
-          <p className="text-xs text-muted-foreground flex items-center gap-1"><Home className="h-3 w-3" /> Bérleti díj (sávos)</p>
+          <p className="text-xs text-muted-foreground flex items-center gap-1"><Home className="h-3 w-3" /> Partneri részesedés</p>
           <p className="text-xl font-bold mt-1">{fmt(m.rentalFee)}</p>
-          <p className="text-xs text-muted-foreground mt-1">0–1M: 5%, 1–5M: 10K, 5M+: 50K+</p>
+          <p className="text-xs text-muted-foreground mt-1">1M Ft-ig: 5%, felette +10 000 Ft / 1M Ft</p>
         </Card>
         <Card className="rounded-none p-4 border-l-4 border-l-primary">
-          <p className="text-xs text-muted-foreground">Neked marad (bérleti díj levonva)</p>
+          <p className="text-xs text-muted-foreground">Neked marad (részesedés levonva)</p>
           <p className="text-xl font-bold mt-1">{fmt(m.netAfterRental)}</p>
         </Card>
       </div>

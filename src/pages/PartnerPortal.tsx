@@ -434,7 +434,7 @@ const PartnerPortal = () => {
                   </Button>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground mt-2">Bérleti díj: 0–1M bevételnél 5%, 1–5M-nél 10 000 Ft, 5M felett 50 000 Ft + 10 000 Ft / további 1M.</p>
+              <p className="text-xs text-muted-foreground mt-2">Partneri részesedés: 1 000 000 Ft bevételig 5%, felette minden további megkezdett 1 000 000 Ft után 10 000 Ft.</p>
               {referralLink && (
                 <p className="text-[10px] text-muted-foreground mt-1 font-mono break-all">{referralLink}</p>
               )}
