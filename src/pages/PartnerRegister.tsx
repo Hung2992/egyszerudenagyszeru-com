@@ -63,6 +63,30 @@ const PartnerRegister = () => {
     toast({ title: "Fiók létrehozva", description: "Erősítsd meg az e-mail címed, majd térj vissza ide." });
   };
 
+  const forgotPassword = async () => {
+    const email = form.email.trim();
+    if (!email.includes("@")) {
+      toast({ title: "Adj meg egy e-mail címet", description: "Ahhoz, hogy új jelszót küldjünk, kell az e-mail címed.", variant: "destructive" });
+      return;
+    }
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("request-password-recovery", {
+        body: { email, redirectTo: `${window.location.origin}/reset-password` },
+      });
+      if (error) throw error;
+      if ((data as any)?.rateLimited) {
+        toast({ title: "Túl sok próbálkozás", description: "Várj 1 órát, mielőtt újra próbálkozol.", variant: "destructive" });
+      } else {
+        toast({ title: "Elküldtük!", description: "Nézd meg az e-mail fiókod (a spam mappát is)." });
+      }
+    } catch (err: any) {
+      toast({ title: "Hiba", description: err?.message ?? "Nem sikerült elküldeni.", variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const signIn = async () => {
     setBusy(true);
     const { error } = await supabase.auth.signInWithPassword({ email: form.email.trim(), password: form.password });
@@ -128,6 +152,14 @@ const PartnerRegister = () => {
               <Button className="rounded-none flex-1" disabled={busy} onClick={() => void signUp()}>Fiók létrehozása</Button>
               <Button variant="outline" className="rounded-none flex-1" disabled={busy} onClick={() => void signIn()}>Már van fiókom</Button>
             </div>
+            <button
+              type="button"
+              className="text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground underline"
+              disabled={busy}
+              onClick={() => void forgotPassword()}
+            >
+              Elfelejtett jelszó?
+            </button>
           </Card>
         ) : alreadyPartner ? (
           <div className="space-y-3">
