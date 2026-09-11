@@ -178,7 +178,7 @@ const Index = () => {
         <section className="border-y border-border bg-card">
           <div className="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-border px-5 md:grid-cols-4 lg:px-8">
             {[
-              ["01", "Egy központ"], ["24/7", "AI támogatás"], ["100%", "Saját márka"], ["∞", "Bővíthetőség"],
+              ["1", "Egy rendszer"], ["0", "Külső eszköz"], ["Saját", "Domain & márka"], ["∞", "Modul & ügyfél"],
             ].map(([value, label]) => (
               <div key={label} className="px-4 py-7 text-center md:py-9">
                 <p className="text-2xl font-bold text-accent md:text-3xl">{value}</p>
