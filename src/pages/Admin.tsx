@@ -5570,12 +5570,10 @@ const Admin = () => {
                   {settings.notif_sms_enabled && (
                     <div className="space-y-3 pt-2 border-t border-dashed">
                       <div>
-                        <Label className="text-xs uppercase tracking-wider text-muted-foreground">SMS szolgáltató</Label>
+                        <Label className="text-xs uppercase tracking-wider text-muted-foreground">SMS küldés módja</Label>
                         <select value={settings.notif_sms_provider || "none"} onChange={e => setSettings({ ...settings, notif_sms_provider: e.target.value })} className="mt-1 flex h-10 w-full border border-input bg-background px-3 py-2 text-sm">
-                          <option value="none">Nincs kiválasztva</option>
-                          <option value="twilio">Twilio</option>
-                          <option value="nexmo">Vonage (Nexmo)</option>
-                          <option value="custom">Egyedi API</option>
+                          <option value="none">Kikapcsolva</option>
+                          <option value="apex">Saját APEX átjáró</option>
                         </select>
                       </div>
                       <label className="flex items-center justify-between border p-4 cursor-pointer hover:border-foreground/30 transition-colors">
