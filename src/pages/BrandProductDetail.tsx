@@ -12,6 +12,35 @@ const BrandProductDetail = () => {
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeImg, setActiveImg] = useState(0);
+  const [bookingOpen, setBookingOpen] = useState(false);
+  const [bookingSaving, setBookingSaving] = useState(false);
+  const [bookingDone, setBookingDone] = useState(false);
+  const [form, setForm] = useState({ customer_name: "", customer_email: "", customer_phone: "", starts_at: "", notes: "" });
+
+  const submitBooking = async () => {
+    if (!slug || !productSlug) return;
+    setBookingSaving(true);
+    const { data, error } = await supabase.functions.invoke("create-public-booking", {
+      body: { store_slug: slug, product_slug: productSlug, ...form, starts_at: form.starts_at ? new Date(form.starts_at).toISOString() : "" },
+    });
+    setBookingSaving(false);
+    const err = (error as any) || (data && (data as any).error);
+    if (err) {
+      const code = typeof err === "string" ? err : "";
+      const msgs: Record<string, string> = {
+        invalid_name: "Add meg a neved.",
+        invalid_email: "Az e-mail cím nem érvényes.",
+        invalid_date: "Válassz érvényes időpontot.",
+        too_soon: "Legalább 30 perccel előbbre foglalj.",
+        closed_day: "Ezen a napon nincs nyitva.",
+        not_bookable: "Ez a tétel nem foglalható.",
+      };
+      toast({ title: "Foglalás sikertelen", description: msgs[code] || "Próbáld újra kicsit később.", variant: "destructive" });
+      return;
+    }
+    setBookingDone(true);
+    toast({ title: "Foglalás rögzítve", description: "A visszaigazolást elküldtük e-mailben." });
+  };
 
   useEffect(() => {
     (async () => {
