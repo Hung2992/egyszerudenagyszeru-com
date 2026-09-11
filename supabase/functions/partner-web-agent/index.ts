@@ -37,8 +37,8 @@ const ALLOWED = [
   "hero_title", "hero_subtitle", "hero_cta_text", "hero_layout",
   "hero_badge_enabled", "hero_badge_text", "hero_overlay_opacity",
   "topbar_enabled", "topbar_text",
-  "section1_enabled", "section1_title", "section1_text",
-  "section2_enabled", "section2_title", "section2_text",
+  "section1_enabled", "section1_title", "section1_subtitle",
+  "section2_enabled", "section2_title", "section2_subtitle",
   "featured_products_enabled", "featured_products_title",
   "testimonials_enabled", "testimonials_title", "testimonials",
   "newsletter_enabled", "newsletter_title", "newsletter_subtitle",
@@ -370,7 +370,7 @@ function runQualityAssurance(
     note: missingReq.length ? `hiányzik: ${missingReq.slice(0, 5).join(", ")}` : "minden megvan",
   });
 
-  const textFields = ["display_name", "tagline", "hero_title", "hero_subtitle", "section1_title", "section1_text", "section2_title", "section2_text", "footer_text", "meta_description"];
+  const textFields = ["display_name", "tagline", "hero_title", "hero_subtitle", "section1_title", "section1_subtitle", "section2_title", "section2_subtitle", "footer_text", "meta_description"];
   const foundPlaceholder = textFields.find((f) => PLACEHOLDER_PATTERNS.test(s(f)));
   checks.push({
     name: "Nincs placeholder/teszt szöveg", squad: "content",
