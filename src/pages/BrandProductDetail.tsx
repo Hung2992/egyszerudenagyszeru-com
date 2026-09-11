@@ -51,7 +51,11 @@ const BrandProductDetail = () => {
 
   // Napi állapot foglalható (szolgáltatás / élő kurzus) termékeknél
   const a: any = (product.attributes && typeof product.attributes === "object") ? product.attributes : {};
-  const isBookable = a.booking_enabled !== false && (product.product_type === "service" || (product.product_type === "course" && !!a.live_schedule));
+  const ptype = String(product.product_type || "");
+  const isService = ptype === "service" || ptype.startsWith("service") || product.fulfillment_type === "service";
+  const isCourse = ptype === "course" || ptype.startsWith("course") || product.fulfillment_type === "course";
+  const isDigital = ptype === "digital" || product.fulfillment_type === "digital";
+  const isBookable = a.booking_enabled !== false && (isService || (isCourse && !!a.live_schedule));
   const DAY_NAMES = ["H", "K", "Sze", "Cs", "P", "Szo", "V"];
   const dayStatus = (() => {
     if (!isBookable) return null;
