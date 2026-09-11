@@ -3317,6 +3317,33 @@ export type Database = {
           },
         ]
       }
+      comm_blocklist: {
+        Row: {
+          channel: string | null
+          created_at: string
+          id: string
+          reason: string | null
+          scope: string
+          value: string
+        }
+        Insert: {
+          channel?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          scope?: string
+          value: string
+        }
+        Update: {
+          channel?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          scope?: string
+          value?: string
+        }
+        Relationships: []
+      }
       comm_events: {
         Row: {
           channel: string | null
@@ -3421,48 +3448,66 @@ export type Database = {
       comm_provider_accounts: {
         Row: {
           active: boolean
+          allowed_countries: string[]
+          blocked_countries: string[]
           channels: string[]
+          consecutive_failures: number
           created_at: string
           credentials_encrypted: string | null
+          daily_cap: number | null
           default_sender: string | null
           driver: string
           endpoint: string | null
+          health: string
           id: string
           label: string
           last_error: string | null
           last_ok_at: string | null
+          max_tps: number
           partner_id: string | null
           priority: number
           updated_at: string
         }
         Insert: {
           active?: boolean
+          allowed_countries?: string[]
+          blocked_countries?: string[]
           channels?: string[]
+          consecutive_failures?: number
           created_at?: string
           credentials_encrypted?: string | null
+          daily_cap?: number | null
           default_sender?: string | null
           driver: string
           endpoint?: string | null
+          health?: string
           id?: string
           label: string
           last_error?: string | null
           last_ok_at?: string | null
+          max_tps?: number
           partner_id?: string | null
           priority?: number
           updated_at?: string
         }
         Update: {
           active?: boolean
+          allowed_countries?: string[]
+          blocked_countries?: string[]
           channels?: string[]
+          consecutive_failures?: number
           created_at?: string
           credentials_encrypted?: string | null
+          daily_cap?: number | null
           default_sender?: string | null
           driver?: string
           endpoint?: string | null
+          health?: string
           id?: string
           label?: string
           last_error?: string | null
           last_ok_at?: string | null
+          max_tps?: number
           partner_id?: string | null
           priority?: number
           updated_at?: string
@@ -3513,6 +3558,60 @@ export type Database = {
         }
         Relationships: []
       }
+      comm_routing_rules: {
+        Row: {
+          active: boolean
+          channel: string
+          country_prefix: string
+          created_at: string
+          id: string
+          notes: string | null
+          partner_id: string | null
+          priority: number
+          provider_account_id: string | null
+          sender_override: string | null
+        }
+        Insert: {
+          active?: boolean
+          channel: string
+          country_prefix?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          partner_id?: string | null
+          priority?: number
+          provider_account_id?: string | null
+          sender_override?: string | null
+        }
+        Update: {
+          active?: boolean
+          channel?: string
+          country_prefix?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          partner_id?: string | null
+          priority?: number
+          provider_account_id?: string | null
+          sender_override?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comm_routing_rules_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comm_routing_rules_provider_account_id_fkey"
+            columns: ["provider_account_id"]
+            isOneToOne: false
+            referencedRelation: "comm_provider_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comm_sender_numbers: {
         Row: {
           active: boolean
@@ -3556,6 +3655,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      comm_throughput: {
+        Row: {
+          count: number
+          provider_account_id: string
+          second_bucket: number
+        }
+        Insert: {
+          count?: number
+          provider_account_id: string
+          second_bucket: number
+        }
+        Update: {
+          count?: number
+          provider_account_id?: string
+          second_bucket?: number
+        }
+        Relationships: []
       }
       comm_usage: {
         Row: {
@@ -5093,18 +5210,25 @@ export type Database = {
           attempts: number
           body: string
           channel: string
+          country_code: string | null
           created_at: string
           delivered_at: string | null
+          dlr_at: string | null
+          dlr_code: string | null
+          dlr_status: string | null
           error: string | null
           id: string
           idempotency_key: string | null
+          max_attempts: number
           metadata: Json
           next_retry_at: string | null
           partner_id: string | null
           provider: string | null
+          provider_account_id: string | null
           provider_message_id: string | null
           related_id: string | null
           related_type: string | null
+          route_id: string | null
           send_at: string
           sent_at: string | null
           status: string
@@ -5118,18 +5242,25 @@ export type Database = {
           attempts?: number
           body: string
           channel: string
+          country_code?: string | null
           created_at?: string
           delivered_at?: string | null
+          dlr_at?: string | null
+          dlr_code?: string | null
+          dlr_status?: string | null
           error?: string | null
           id?: string
           idempotency_key?: string | null
+          max_attempts?: number
           metadata?: Json
           next_retry_at?: string | null
           partner_id?: string | null
           provider?: string | null
+          provider_account_id?: string | null
           provider_message_id?: string | null
           related_id?: string | null
           related_type?: string | null
+          route_id?: string | null
           send_at?: string
           sent_at?: string | null
           status?: string
@@ -5143,18 +5274,25 @@ export type Database = {
           attempts?: number
           body?: string
           channel?: string
+          country_code?: string | null
           created_at?: string
           delivered_at?: string | null
+          dlr_at?: string | null
+          dlr_code?: string | null
+          dlr_status?: string | null
           error?: string | null
           id?: string
           idempotency_key?: string | null
+          max_attempts?: number
           metadata?: Json
           next_retry_at?: string | null
           partner_id?: string | null
           provider?: string | null
+          provider_account_id?: string | null
           provider_message_id?: string | null
           related_id?: string | null
           related_type?: string | null
+          route_id?: string | null
           send_at?: string
           sent_at?: string | null
           status?: string
@@ -13641,6 +13779,25 @@ export type Database = {
           expired_winners: number
           opened_scheduled: number
         }[]
+      }
+      comm_gateway_health: {
+        Args: never
+        Returns: {
+          consecutive_failures: number
+          delivered_24h: number
+          driver: string
+          failed_24h: number
+          health: string
+          label: string
+          last_error: string
+          last_ok_at: string
+          provider_account_id: string
+          sent_24h: number
+        }[]
+      }
+      comm_hit_throughput: {
+        Args: { _account: string; _max_tps: number }
+        Returns: boolean
       }
       complete_webhook_event: {
         Args: {
