@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
   });
 
   const { data: store } = await svc.from("partner_storefronts")
-    .select("partner_id, slug, display_name, is_published, contact_email, contact_phone")
+    .select("partner_id, slug, display_name, is_published, company_email, company_phone")
     .eq("slug", storeSlug).eq("is_published", true).maybeSingle();
   if (!store) return json({ error: "store_not_found" }, 404);
 
@@ -110,8 +110,8 @@ Deno.serve(async (req) => {
           duration_min: duration,
           location: String(attrs.service_location ?? "") || undefined,
           notes: notes || undefined,
-          contact_email: store.contact_email || undefined,
-          contact_phone: store.contact_phone || undefined,
+          contact_email: store.company_email || undefined,
+          contact_phone: store.company_phone || undefined,
         },
       },
     });
