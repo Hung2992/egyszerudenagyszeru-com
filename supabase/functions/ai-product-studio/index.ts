@@ -1,4 +1,5 @@
-// AI Product Studio – szöveg és képgenerálás termékekhez (admin only)
+// AI Product Studio – szöveg/képgenerálás termékekhez (admin),
+// plusz partner webshop/weboldal és aloldal generálás (partner + admin)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.104.1";
 
 const corsHeaders = {
@@ -11,6 +12,7 @@ const AI_CHAT = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const AI_IMG = "https://ai.gateway.lovable.dev/v1/images/generations";
 
 const TEXT_MODEL = "google/gemini-3.1-flash-lite";
+const SITE_MODEL = "google/gemini-3.6-flash";
 const IMAGE_MODEL = "google/gemini-3.1-flash-image";
 
 const json = (body: unknown, status = 200) =>
@@ -18,6 +20,63 @@ const json = (body: unknown, status = 200) =>
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+
+// Storefront mezők, amiket az AI írhat (csak létező partner_storefronts oszlopok!)
+const SITE_ALLOWED = [
+  "display_name", "tagline", "about_html",
+  "primary_color", "accent_color", "bg_color", "text_color",
+  "font_heading", "font_body", "theme_preset",
+  "hero_title", "hero_subtitle", "hero_cta_text", "hero_layout",
+  "hero_badge_enabled", "hero_badge_text", "hero_overlay_opacity", "hero_image_url",
+  "topbar_enabled", "topbar_text",
+  "section1_enabled", "section1_title", "section1_subtitle", "section1_cta_text", "section1_cta_url", "section1_image_url",
+  "section2_enabled", "section2_title", "section2_subtitle", "section2_cta_text", "section2_cta_url", "section2_image_url",
+  "featured_products_enabled", "featured_products_title",
+  "testimonials_enabled", "testimonials_title", "testimonials",
+  "newsletter_enabled", "newsletter_title", "newsletter_subtitle",
+  "footer_text", "footer_links",
+  "meta_title", "meta_description", "seo_keywords",
+  "instagram_url", "facebook_url", "tiktok_url", "youtube_url",
+];
+
+const SITE_SYSTEM = `Te egy magyar webshop- és weboldal-építő AI vagy. A partner természetes nyelven leírja, milyen webshopot/weboldalt szeretne,
+te pedig egy KOMPLETT storefront konfigurációt adsz vissza. Magyar szövegeket írj, meggyőző, márkához illő copyval.
+Színek HEX formátumban. Kizárólag érvényes JSON-t adj vissza, semmi mást.
+
+Séma (csak ezek a mezők léteznek!):
+{
+  "patch": {
+    "display_name": string, "tagline": string, "about_html": string (rövid HTML <p> bekezdésekkel),
+    "primary_color": "#xxxxxx", "accent_color": "#xxxxxx", "bg_color": "#xxxxxx", "text_color": "#xxxxxx",
+    "font_heading": string, "font_body": string, "theme_preset": "dark_minimal"|"light_clean"|"street_red",
+    "hero_title": string, "hero_subtitle": string, "hero_cta_text": string, "hero_layout": "split"|"center"|"full",
+    "hero_badge_enabled": bool, "hero_badge_text": string, "hero_overlay_opacity": number (0-1),
+    "topbar_enabled": bool, "topbar_text": string,
+    "section1_enabled": bool, "section1_title": string, "section1_subtitle": string, "section1_cta_text": string, "section1_cta_url": string,
+    "section2_enabled": bool, "section2_title": string, "section2_subtitle": string, "section2_cta_text": string, "section2_cta_url": string,
+    "featured_products_enabled": bool, "featured_products_title": string,
+    "testimonials_enabled": bool, "testimonials_title": string,
+    "testimonials": [{"name": string, "text": string, "rating": 5}],
+    "newsletter_enabled": bool, "newsletter_title": string, "newsletter_subtitle": string,
+    "footer_text": string, "footer_links": [{"label": string, "url": string}],
+    "meta_title": string (<60 karakter), "meta_description": string (<160 karakter), "seo_keywords": string,
+    "instagram_url": string, "facebook_url": string, "tiktok_url": string, "youtube_url": string
+  },
+  "explanation": "2-4 mondat magyarul, mit építettél"
+}`;
+
+const PAGE_SYSTEM = `Te egy magyar weboldal-szerkesztő AI vagy. A partner leírja, milyen aloldalt szeretne a webshopjához
+(pl. "Rólunk", "Szállítási infók", "Lookbook", "Akciók", "GYIK"), te pedig egy komplett, publikálásra kész oldalt adsz vissza.
+Magyar, természetes, márkához illő szöveg. A content_html mező TISZTA HTML legyen (csak <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em>, <blockquote>, <a> tagek), inline stílus és script NÉLKÜL.
+Kizárólag érvényes JSON-t adj vissza:
+{
+  "title": "Oldal címe",
+  "slug": "url-barat-slug-kisbetu-kotojel",
+  "content_html": "<h2>...</h2><p>...</p>...",
+  "meta_title": "max 60 karakter",
+  "meta_description": "max 160 karakter",
+  "explanation": "1-2 mondat magyarul"
+}`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -44,13 +103,42 @@ Deno.serve(async (req) => {
       _user_id: userId,
       _role: "admin",
     });
-    if (!isAdmin) return json({ error: "Admin required" }, 403);
 
     const body = await req.json().catch(() => ({}));
     const action = String(body?.action || "text");
     const productId = body?.productId ?? null;
 
-    // ============= TEXT GENERATION =============
+    const PARTNER_ACTIONS = ["site", "page"];
+    if (!isAdmin && !PARTNER_ACTIONS.includes(action)) {
+      return json({ error: "Admin required" }, 403);
+    }
+
+    // Partner feloldása partner akciókhoz (admin is megadhat partner_id-t)
+    let partner: any = null;
+    if (PARTNER_ACTIONS.includes(action)) {
+      const requestedPartnerId = String(body?.partner_id || "").trim();
+      if (isAdmin && requestedPartnerId) {
+        const { data } = await supabase.from("partners").select("id, company_name").eq("id", requestedPartnerId).maybeSingle();
+        partner = data;
+      } else {
+        const { data } = await supabase.from("partners").select("id, company_name").eq("user_id", userId).maybeSingle();
+        partner = data;
+      }
+      if (!partner) return json({ error: "Nincs partner fiókod ehhez a művelethez" }, 403);
+    }
+
+    // Egyszerű óránkénti AI rate limit (felhasználónként 30 generálás)
+    const oneHourAgo = new Date(Date.now() - 3600_000).toISOString();
+    const { count } = await supabase
+      .from("ai_product_generations")
+      .select("id", { count: "exact", head: true })
+      .eq("admin_user_id", userId)
+      .gte("created_at", oneHourAgo);
+    if ((count ?? 0) >= 30) {
+      return json({ error: "Túl sok AI kérés. Próbáld újra egy óra múlva." }, 429);
+    }
+
+    // ============= TEXT GENERATION (admin) =============
     if (action === "text") {
       const input = body?.input || {};
       const {
@@ -124,10 +212,8 @@ Add vissza pontosan ezt a JSON struktúrát (ne írj mást, csak a JSON-t):
         parsed = m ? JSON.parse(m[0]) : {};
       }
 
-      // SEO score
       const score = seoScore(parsed, keywords);
 
-      // audit
       await supabase.from("ai_product_generations").insert({
         product_id: productId,
         admin_user_id: userId,
@@ -141,7 +227,7 @@ Add vissza pontosan ezt a JSON struktúrát (ne írj mást, csak a JSON-t):
       return json({ ok: true, content: parsed, score });
     }
 
-    // ============= IMAGE GENERATION =============
+    // ============= IMAGE GENERATION (admin) =============
     if (action === "image") {
       const input = body?.input || {};
       const {
@@ -180,7 +266,6 @@ Add vissza pontosan ezt a JSON struktúrát (ne írj mást, csak a JSON-t):
         null;
       if (!b64) return json({ error: "Nincs kép a válaszban", raw: data }, 500);
 
-      // Upload to storage as PNG
       const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
       const path = `ai-studio/${productId || "no-product"}/${Date.now()}.png`;
       const { error: upErr } = await supabase.storage
@@ -204,7 +289,7 @@ Add vissza pontosan ezt a JSON struktúrát (ne írj mást, csak a JSON-t):
       return json({ ok: true, imageUrl, prompt });
     }
 
-    // ============= APPLY (partial) =============
+    // ============= APPLY (admin, partial) =============
     if (action === "apply") {
       if (!productId) return json({ error: "productId kötelező" }, 400);
       const fields = body?.fields || {};
@@ -242,6 +327,195 @@ Add vissza pontosan ezt a JSON struktúrát (ne írj mást, csak a JSON-t):
       });
 
       return json({ ok: true, applied: Object.keys(update) });
+    }
+
+    // ============= SITE GENERATION (partner + admin) =============
+    if (action === "site") {
+      const prompt = String(body?.input?.prompt || "").trim();
+      if (prompt.length < 3) return json({ error: "Írd le, milyen webshopot/weboldalt szeretnél" }, 400);
+
+      const { data: current } = await supabase
+        .from("partner_storefronts").select("*").eq("partner_id", partner.id).maybeSingle();
+
+      const userMsg = `Márka: ${partner.company_name || "(nincs megadva)"}
+Jelenlegi beállítások: ${JSON.stringify({
+        display_name: current?.display_name, tagline: current?.tagline,
+        hero_title: current?.hero_title, theme_preset: current?.theme_preset,
+      })}
+
+A partner kérése:
+"""${prompt.slice(0, 4000)}"""
+
+Készítsd el a teljes konfigurációt, publikálásra készen.`;
+
+      const r = await fetch(AI_CHAT, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: SITE_MODEL,
+          messages: [{ role: "system", content: SITE_SYSTEM }, { role: "user", content: userMsg }],
+          response_format: { type: "json_object" },
+        }),
+      });
+
+      if (r.status === 429) return json({ error: "Túl sok kérés, próbáld pár másodperc múlva." }, 429);
+      if (r.status === 402) return json({ error: "Elfogytak az AI kreditek." }, 402);
+      if (!r.ok) return json({ error: `AI hiba (${r.status})` }, 502);
+
+      const d = await r.json();
+      const content = d?.choices?.[0]?.message?.content ?? "{}";
+      let parsed: any = {};
+      try { parsed = JSON.parse(content); }
+      catch { const m = content.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : {}; }
+
+      const rawPatch = parsed.patch && typeof parsed.patch === "object" ? parsed.patch : {};
+      const patch: Record<string, unknown> = {};
+      for (const k of SITE_ALLOWED) if (rawPatch[k] !== undefined && rawPatch[k] !== null) patch[k] = rawPatch[k];
+
+      // Típusbiztosítás: seo_keywords tömb, featured_product_ids tömb
+      if (typeof patch.seo_keywords === "string") {
+        patch.seo_keywords = patch.seo_keywords.split(",").map((s) => s.trim()).filter(Boolean);
+      }
+      if (typeof patch.featured_product_ids === "string") {
+        patch.featured_product_ids = patch.featured_product_ids.split(",").map((s) => s.trim()).filter(Boolean);
+      }
+
+      if (!Object.keys(patch).length) {
+        return json({ error: "Az AI nem adott vissza használható konfigurációt. Próbáld részletesebben." }, 502);
+      }
+
+      let applied = false;
+      let applyError: string | null = null;
+      if (body?.auto_apply !== false) {
+        patch.updated_at = new Date().toISOString();
+
+        const slugify = (s: string) =>
+          s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+            .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+        const insertSlug = current?.id
+          ? undefined
+          : `${slugify(String(patch.display_name || partner.company_name || "shop")) || "shop"}-${String(partner.id).slice(0, 6)}`;
+
+        // Újrapróbálkozás: ismeretlen oszlop / hibás tömb esetén a problémás mezőt eldobjuk
+        for (let attempt = 0; attempt < 4; attempt++) {
+          const q = current?.id
+            ? supabase.from("partner_storefronts").update(patch).eq("id", current.id)
+            : supabase.from("partner_storefronts").insert({ ...patch, partner_id: partner.id, slug: insertSlug });
+          const { error: upErr } = await q;
+          if (!upErr) { applied = true; applyError = null; break; }
+          const msg = upErr.message || "";
+          const colMatch = msg.match(/Could not find the '([^']+)' column/);
+          if (colMatch && patch[colMatch[1]] !== undefined) { delete patch[colMatch[1]]; continue; }
+          const arrMatch = msg.match(/malformed array literal/i);
+          if (arrMatch) {
+            // dobjuk a nem-szöveg/number/bool mezőket, amelyek gyanúsan rossz formátumúak
+            let dropped = false;
+            for (const k of Object.keys(patch)) {
+              const v = patch[k];
+              if (v !== null && typeof v === "object" && k !== "testimonials" && k !== "footer_links") {
+                delete patch[k]; dropped = true;
+              }
+            }
+            if (dropped) continue;
+          }
+          applyError = msg;
+          break;
+        }
+      }
+
+      await supabase.from("ai_product_generations").insert({
+        admin_user_id: userId,
+        kind: "site",
+        model: SITE_MODEL,
+        prompt: prompt.slice(0, 4000),
+        input: { partner_id: partner.id },
+        output: { patch_keys: Object.keys(patch), applied, applyError },
+      });
+
+      if (applyError) return json({ error: `Mentési hiba: ${applyError}` }, 500);
+      return json({
+        ok: true,
+        applied,
+        patch,
+        explanation: String(parsed.explanation || "Elkészült a webshop/weboldal terve."),
+      });
+    }
+
+    // ============= PAGE GENERATION (partner + admin) =============
+    if (action === "page") {
+      const prompt = String(body?.input?.prompt || "").trim();
+      if (prompt.length < 3) return json({ error: "Írd le, milyen aloldalt szeretnél" }, 400);
+      const pageId = body?.page_id ? String(body.page_id) : null;
+
+      const { data: sfRow } = await supabase
+        .from("partner_storefronts").select("display_name, tagline").eq("partner_id", partner.id).maybeSingle();
+
+      const userMsg = `Márka: ${sfRow?.display_name || partner.company_name || "(ismeretlen)"}
+Mottó: ${sfRow?.tagline || ""}
+
+A partner kérése az aloldalra:
+"""${prompt.slice(0, 3000)}"""`;
+
+      const r = await fetch(AI_CHAT, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: SITE_MODEL,
+          messages: [{ role: "system", content: PAGE_SYSTEM }, { role: "user", content: userMsg }],
+          response_format: { type: "json_object" },
+        }),
+      });
+
+      if (r.status === 429) return json({ error: "Túl sok kérés, próbáld pár másodperc múlva." }, 429);
+      if (r.status === 402) return json({ error: "Elfogytak az AI kreditek." }, 402);
+      if (!r.ok) return json({ error: `AI hiba (${r.status})` }, 502);
+
+      const d = await r.json();
+      const content = d?.choices?.[0]?.message?.content ?? "{}";
+      let parsed: any = {};
+      try { parsed = JSON.parse(content); }
+      catch { const m = content.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : {}; }
+
+      const title = String(parsed.title || "").trim().slice(0, 120);
+      let slug = String(parsed.slug || "").trim().toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
+      const contentHtml = String(parsed.content_html || "");
+      if (!title || !contentHtml) return json({ error: "Az AI nem adott vissza használható oldalt. Próbáld részletesebben." }, 502);
+      if (!slug) slug = title.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80) || "oldal";
+
+      const row: Record<string, unknown> = {
+        partner_id: partner.id,
+        slug,
+        title,
+        content_html: contentHtml,
+        meta_title: String(parsed.meta_title || title).slice(0, 120),
+        meta_description: String(parsed.meta_description || "").slice(0, 300),
+      };
+
+      let saved: any = null;
+      if (pageId) {
+        const { data, error } = await supabase.from("partner_pages").update(row).eq("id", pageId).eq("partner_id", partner.id).select().maybeSingle();
+        if (error) return json({ error: `Mentési hiba: ${error.message}` }, 500);
+        saved = data;
+      } else {
+        const { data, error } = await supabase.from("partner_pages").upsert(row, { onConflict: "partner_id,slug" }).select().maybeSingle();
+        if (error) return json({ error: `Mentési hiba: ${error.message}` }, 500);
+        saved = data;
+      }
+
+      await supabase.from("ai_product_generations").insert({
+        admin_user_id: userId,
+        kind: "page",
+        model: SITE_MODEL,
+        prompt: prompt.slice(0, 3000),
+        input: { partner_id: partner.id },
+        output: { page_id: saved?.id, slug },
+      });
+
+      return json({
+        ok: true,
+        page: saved,
+        explanation: String(parsed.explanation || "Elkészült az aloldal."),
+      });
     }
 
     return json({ error: `Ismeretlen action: ${action}` }, 400);
