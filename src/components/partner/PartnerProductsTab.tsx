@@ -154,7 +154,7 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
         manufacturer: form.manufacturer || "",
         primary_image: form.primary_image || 0,
       },
-      status: submit ? "pending_review" : "draft",
+      status: submit ? "active" : (editing?.status === "active" ? "active" : "draft"),
     };
     const op = editing
       ? supabase.from("partner_products").update(payload).eq("id", editing.id)
@@ -162,14 +162,14 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
     const { error } = await op;
     setSaving(false);
     if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
-    toast({ title: submit ? "Beküldve jóváhagyásra" : "Mentve" });
+    toast({ title: submit ? "Élesítve – már látható a márkaoldaladon" : "Mentve" });
     setOpen(false); void load();
   };
 
   const submitForReview = async (p: any) => {
-    const { error } = await supabase.from("partner_products").update({ status: "pending_review" }).eq("id", p.id);
+    const { error } = await supabase.from("partner_products").update({ status: "active" }).eq("id", p.id);
     if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Beküldve jóváhagyásra" }); void load();
+    toast({ title: "Élesítve – már látható a márkaoldaladon" }); void load();
   };
   const pauseProduct = async (p: any) => {
     const next = p.status === "paused" ? "draft" : "paused";
@@ -257,7 +257,7 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
                 {p.rejection_reason && <div className="text-[10px] text-destructive">Indok: {p.rejection_reason}</div>}
                 <div className="flex flex-wrap gap-1">
                   <Button size="sm" variant="outline" className="rounded-none h-7 px-2" onClick={() => startEdit(p)}><Edit3 className="h-3 w-3" /></Button>
-                  {p.status === "draft" && <Button size="sm" className="rounded-none h-7 px-2 text-[10px]" onClick={() => submitForReview(p)}><Send className="h-3 w-3 mr-1" /> Beküld</Button>}
+                  {(p.status === "draft" || p.status === "pending_review") && <Button size="sm" className="rounded-none h-7 px-2 text-[10px]" onClick={() => submitForReview(p)}><Send className="h-3 w-3 mr-1" /> Élesítés</Button>}
                   {(p.status === "active" || p.status === "paused") && <Button size="sm" variant="outline" className="rounded-none h-7 px-2 text-[10px]" onClick={() => pauseProduct(p)}>{p.status === "paused" ? "Aktivál" : "Szünet"}</Button>}
                   <Button size="sm" variant="ghost" className="rounded-none h-7 px-2" onClick={() => remove(p)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
                 </div>
