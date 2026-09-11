@@ -141,6 +141,19 @@ export default function PartnerGatewayPanel({ partnerId }: { partnerId: string }
     setBusy(false);
   };
 
+  const verifyAccount = async (id: string) => {
+    setBusy(true);
+    try {
+      const res = await call({ action: "verify_account", id });
+      if (res.ok) toast.success("A fiók él és elérhető");
+      else toast.error(`Nem sikerült: ${String(res.message ?? res.error ?? "")}`.slice(0, 140));
+    } catch {
+      toast.error("A szolgáltató nem fogadta el a megadott adatokat");
+    }
+    setBusy(false);
+    void load();
+  };
+
   const removeAccount = async (id: string) => {
     try {
       await call({ action: "delete_account", id });
@@ -228,7 +241,17 @@ export default function PartnerGatewayPanel({ partnerId }: { partnerId: string }
           </div>
           <p className="text-xs text-muted-foreground">
             A hozzáférési adatokat titkosítva tároljuk, utólag senki nem tudja visszaolvasni őket.
+            Ezeket csak te látod és állíthatod – más partner nem fér hozzá.
           </p>
+          {driver === "twilio" && (
+            <div className="border p-3 text-xs text-muted-foreground space-y-1">
+              <p className="font-medium text-foreground">Twilio fiók bekötése lépésről lépésre</p>
+              <p>1. Lépj be a Twilio fiókodba, és másold ki az Account SID és Auth Token értéket.</p>
+              <p>2. Írd be őket fent, majd mentsd el a szolgáltatót.</p>
+              <p>3. Kattints a „Fiók ellenőrzése” gombra – ekkor tényleg megkérdezzük a Twiliót, hogy él-e a fiók.</p>
+              <p>4. Az alap feladó a Twilio számod nemzetközi formában (pl. +3630…). WhatsApp esetén a Twilio által jóváhagyott WhatsApp szám kell.</p>
+            </div>
+          )}
 
           <div className="space-y-2">
             {accounts.map((a) => (
@@ -245,6 +268,8 @@ export default function PartnerGatewayPanel({ partnerId }: { partnerId: string }
                   <Badge variant={a.active ? "default" : "secondary"} className="rounded-none">
                     {a.last_ok_at ? "működik" : a.active ? "aktív" : "kikapcsolva"}
                   </Badge>
+                  <Button size="sm" variant="outline" className="rounded-none" disabled={busy}
+                    onClick={() => verifyAccount(a.id)}>Fiók ellenőrzése</Button>
                   <Button size="sm" variant="outline" className="rounded-none" onClick={() => removeAccount(a.id)}>Törlés</Button>
                 </div>
               </div>
