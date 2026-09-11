@@ -71,18 +71,22 @@ VI. PARTNERI RÉSZESEDÉS ÉS ELSZÁMOLÁS
 1. A Partner az Üzemeltető részére a II.4. pont szerinti elszámolási alap után részesedést fizet, az alábbiak szerint:
    a) az elszámolási alap első 1 000 000 Ft-jára: az összeg 5 százaléka (legfeljebb 50 000 Ft);
    b) az 1 000 000 Ft feletti részre: minden megkezdett további 1 000 000 Ft után 10 000 Ft fix összegű (nem százalékos) részesedés.
-2. Számítási példák (éves göngyölített elszámolási alapra):
+2. A számítás képlete: ha az elszámolási alap (A) legfeljebb 1 000 000 Ft, a részesedés = A x 5 százalék. Ha A nagyobb, mint 1 000 000 Ft, a részesedés = 50 000 Ft + FELFELÉ KEREKÍTVE((A - 1 000 000) / 1 000 000) x 10 000 Ft. A "megkezdett millió" azt jelenti, hogy az 1 000 000 Ft feletti rész minden megkezdett (nem feltétlenül teljes) egymillió forintja után jár a 10 000 Ft.
+3. Számítási példák (éves göngyölített elszámolási alapra):
    • 400 000 Ft → 400 000 x 5 százalék = 20 000 Ft;
-   • 1 000 000 Ft → 50 000 Ft;
-   • 1 200 000 Ft → 50 000 Ft + 10 000 Ft (1 megkezdett millió) = 60 000 Ft;
-   • 2 000 000 Ft → 50 000 Ft + 10 000 Ft = 60 000 Ft;
-   • 2 000 001 Ft → 50 000 Ft + 20 000 Ft = 70 000 Ft;
+   • 1 000 000 Ft → 1 000 000 x 5 százalék = 50 000 Ft (a sáv felső határa, még nem indul új millió);
+   • 1 000 001 Ft → 50 000 Ft + 10 000 Ft (1. megkezdett millió) = 60 000 Ft;
+   • 1 200 000 Ft → 50 000 Ft + 10 000 Ft = 60 000 Ft;
+   • 1 999 999 Ft → 50 000 Ft + 10 000 Ft = 60 000 Ft;
+   • 2 000 000 Ft → 50 000 Ft + 10 000 Ft = 60 000 Ft (a 2 000 000 Ft még az 1. megkezdett millió utolsó forintja);
+   • 2 000 001 Ft → 50 000 Ft + 20 000 Ft = 70 000 Ft (itt indul a 2. megkezdett millió);
    • 5 000 000 Ft → 50 000 Ft + 40 000 Ft = 90 000 Ft;
    • 10 000 000 Ft → 50 000 Ft + 90 000 Ft = 140 000 Ft.
-3. A b) pont szerinti 10 000 Ft rögzített, forintban meghatározott összeg, nem százalékos részesedés.
-4. A részesedés összege nettó összeg; az Üzemeltető a mindenkori jogszabályok szerinti ÁFÁ-t felszámítja.
-5. Az Üzemeltető a részesedést jogosult a Partner részére fizetendő kifizetésből levonni, vagy külön számlázni. Minden elszámolásról tételes, letölthető kimutatás készül a Partner Központban.
-6. A Partner az elszámolást annak közlésétől számított 15 napon belül írásban kifogásolhatja; a kifogásolt tételt a felek 15 napon belül egyeztetik.
+4. A felek rögzítik, hogy az 1 000 000 Ft és 1 000 001 Ft közötti 10 000 Ft-os, illetve a 2 000 000 Ft és 2 000 001 Ft közötti további 10 000 Ft-os lépcső a felek tudatos, kifejezetten elfogadott megállapodása; a küszöbnél jelentkező ugrás nem minősül aránytalanságnak, mert felfelé korlátos (millióként legfeljebb 10 000 Ft) és a részesedés az elszámolási alap 5 százalékát összességében soha nem haladja meg.
+5. A b) pont szerinti 10 000 Ft rögzített, forintban meghatározott összeg, nem százalékos részesedés.
+6. A részesedés összege nettó összeg; az Üzemeltető a mindenkori jogszabályok szerinti ÁFÁ-t felszámítja.
+7. Az Üzemeltető a részesedést jogosult a Partner részére fizetendő kifizetésből levonni, vagy külön számlázni. Minden elszámolásról tételes, letölthető kimutatás készül a Partner Központban.
+8. A Partner az elszámolást annak közlésétől számított 15 napon belül írásban kifogásolhatja; a kifogásolt tételt a felek 15 napon belül egyeztetik.
 
 VII. A FELEK KÖTELEZETTSÉGEI
 1. A Partner kijelenti, hogy a KYC során megadott adatai valósak, és azok változását 8 napon belül bejelenti.
