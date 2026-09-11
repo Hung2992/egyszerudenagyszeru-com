@@ -128,6 +128,14 @@ const PartnerRegister = () => {
               <Button className="rounded-none flex-1" disabled={busy} onClick={() => void signUp()}>Fiók létrehozása</Button>
               <Button variant="outline" className="rounded-none flex-1" disabled={busy} onClick={() => void signIn()}>Már van fiókom</Button>
             </div>
+            <button
+              type="button"
+              className="text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground underline"
+              disabled={busy}
+              onClick={() => void forgotPassword()}
+            >
+              Elfelejtett jelszó?
+            </button>
           </Card>
         ) : alreadyPartner ? (
           <div className="space-y-3">
