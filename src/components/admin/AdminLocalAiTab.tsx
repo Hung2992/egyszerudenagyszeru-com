@@ -166,6 +166,26 @@ export default function AdminLocalAiTab() {
         <CardHeader><CardTitle className="text-base">Új szerver hozzáadása</CardTitle></CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div>
+            <Label>Mire használjuk?</Label>
+            <select
+              className="w-full h-10 border border-input bg-background px-3 text-sm"
+              value={form.kind}
+              onChange={(e) => {
+                const kind = e.target.value;
+                setForm({
+                  ...form,
+                  kind,
+                  api_style: kind === "text" ? "openai" : kind === "image" ? "a1111" : "apex_media",
+                  model: kind === "text" ? "llama3.1" : kind === "image" ? "sdxl" : "ltx-video",
+                });
+              }}
+            >
+              <option value="text">Szöveg / AI fejlesztő</option>
+              <option value="image">Képkészítés</option>
+              <option value="video">Videókészítés</option>
+            </select>
+          </div>
+          <div>
             <Label>Név</Label>
             <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
