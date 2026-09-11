@@ -6069,6 +6069,62 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_comm_survey: {
+        Row: {
+          account_owner: string | null
+          channels: string[]
+          created_at: string
+          id: string
+          message_types: string[]
+          monthly_volume: string | null
+          notes: string | null
+          partner_id: string
+          preferred_provider: string | null
+          sms_sender: string | null
+          status: string
+          updated_at: string
+          whatsapp_sender: string | null
+        }
+        Insert: {
+          account_owner?: string | null
+          channels?: string[]
+          created_at?: string
+          id?: string
+          message_types?: string[]
+          monthly_volume?: string | null
+          notes?: string | null
+          partner_id: string
+          preferred_provider?: string | null
+          sms_sender?: string | null
+          status?: string
+          updated_at?: string
+          whatsapp_sender?: string | null
+        }
+        Update: {
+          account_owner?: string | null
+          channels?: string[]
+          created_at?: string
+          id?: string
+          message_types?: string[]
+          monthly_volume?: string | null
+          notes?: string | null
+          partner_id?: string
+          preferred_provider?: string | null
+          sms_sender?: string | null
+          status?: string
+          updated_at?: string
+          whatsapp_sender?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_comm_survey_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: true
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_contract_audit_log: {
         Row: {
           actor_id: string | null
@@ -7059,6 +7115,54 @@ export type Database = {
             foreignKeyName: "partner_memory_consent_partner_id_fkey"
             columns: ["partner_id"]
             isOneToOne: true
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partner_newsletter_deliveries: {
+        Row: {
+          blast_id: string
+          created_at: string
+          email: string
+          error: string | null
+          id: string
+          partner_id: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          blast_id: string
+          created_at?: string
+          email: string
+          error?: string | null
+          id?: string
+          partner_id: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          blast_id?: string
+          created_at?: string
+          email?: string
+          error?: string | null
+          id?: string
+          partner_id?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_newsletter_deliveries_blast_id_fkey"
+            columns: ["blast_id"]
+            isOneToOne: false
+            referencedRelation: "partner_email_blasts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_newsletter_deliveries_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
             referencedRelation: "partners"
             referencedColumns: ["id"]
           },
