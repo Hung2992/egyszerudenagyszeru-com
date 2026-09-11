@@ -372,6 +372,14 @@ Készítsd el a teljes konfigurációt, publikálásra készen.`;
       const patch: Record<string, unknown> = {};
       for (const k of SITE_ALLOWED) if (rawPatch[k] !== undefined && rawPatch[k] !== null) patch[k] = rawPatch[k];
 
+      // Típusbiztosítás: seo_keywords tömb, featured_product_ids tömb
+      if (typeof patch.seo_keywords === "string") {
+        patch.seo_keywords = patch.seo_keywords.split(",").map((s) => s.trim()).filter(Boolean);
+      }
+      if (typeof patch.featured_product_ids === "string") {
+        patch.featured_product_ids = patch.featured_product_ids.split(",").map((s) => s.trim()).filter(Boolean);
+      }
+
       if (!Object.keys(patch).length) {
         return json({ error: "Az AI nem adott vissza használható konfigurációt. Próbáld részletesebben." }, 502);
       }
@@ -380,12 +388,39 @@ Készítsd el a teljes konfigurációt, publikálásra készen.`;
       let applyError: string | null = null;
       if (body?.auto_apply !== false) {
         patch.updated_at = new Date().toISOString();
-        const q = current?.id
-          ? supabase.from("partner_storefronts").update(patch).eq("id", current.id)
-          : supabase.from("partner_storefronts").insert({ ...patch, partner_id: partner.id });
-        const { error: upErr } = await q;
-        if (upErr) applyError = upErr.message;
-        else applied = true;
+
+        const slugify = (s: string) =>
+          s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+            .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+        const insertSlug = current?.id
+          ? undefined
+          : `${slugify(String(patch.display_name || partner.company_name || "shop")) || "shop"}-${String(partner.id).slice(0, 6)}`;
+
+        // Újrapróbálkozás: ismeretlen oszlop / hibás tömb esetén a problémás mezőt eldobjuk
+        for (let attempt = 0; attempt < 4; attempt++) {
+          const q = current?.id
+            ? supabase.from("partner_storefronts").update(patch).eq("id", current.id)
+            : supabase.from("partner_storefronts").insert({ ...patch, partner_id: partner.id, slug: insertSlug });
+          const { error: upErr } = await q;
+          if (!upErr) { applied = true; applyError = null; break; }
+          const msg = upErr.message || "";
+          const colMatch = msg.match(/Could not find the '([^']+)' column/);
+          if (colMatch && patch[colMatch[1]] !== undefined) { delete patch[colMatch[1]]; continue; }
+          const arrMatch = msg.match(/malformed array literal/i);
+          if (arrMatch) {
+            // dobjuk a nem-szöveg/number/bool mezőket, amelyek gyanúsan rossz formátumúak
+            let dropped = false;
+            for (const k of Object.keys(patch)) {
+              const v = patch[k];
+              if (v !== null && typeof v === "object" && k !== "testimonials" && k !== "footer_links") {
+                delete patch[k]; dropped = true;
+              }
+            }
+            if (dropped) continue;
+          }
+          applyError = msg;
+          break;
+        }
       }
 
       await supabase.from("ai_product_generations").insert({
