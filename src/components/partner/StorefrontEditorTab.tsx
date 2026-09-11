@@ -359,13 +359,6 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
           />
         </TabsContent>
 
-        {/* AI BUILDER */}
-        <TabsContent value="ai">
-          <AiSiteBuilderTab
-            partnerId={partnerId}
-            onApplied={(patch) => { setSf((cur: any) => ({ ...cur, ...patch })); setPreviewRefreshKey((k) => k + 1); void load(); }}
-          />
-        </TabsContent>
 
 
         {/* BASICS */}
