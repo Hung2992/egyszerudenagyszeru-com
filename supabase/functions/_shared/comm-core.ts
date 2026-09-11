@@ -2,6 +2,7 @@
 // Szolgáltató-független kézbesítés, API-kulcs hitelesítés, események, felhasználás, webhookok.
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { gatewaySend, type GatewayChannel } from "./gateway-drivers.ts";
 
 export const CHANNELS = ["sms", "whatsapp", "voice", "email"] as const;
 export type Channel = (typeof CHANNELS)[number];
