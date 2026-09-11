@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { ExternalLink, Search, ShieldCheck, Store, Users } from "lucide-react";
+import PartnerFeatureAnnouncement from "./PartnerFeatureAnnouncement";
 
 interface Row {
   id: string;
@@ -138,6 +139,8 @@ const AdminPartnerManagerTab = () => {
           <div><div className="text-2xl font-bold">{Object.values(roles).filter(Boolean).length}</div><div className="text-xs uppercase tracking-widest text-muted-foreground">Aktív hozzáférés</div></div>
         </Card>
       </div>
+
+      <PartnerFeatureAnnouncement />
 
       <Card className="rounded-none p-4">
         <div className="flex items-center gap-2 mb-4">
