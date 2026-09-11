@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, Plus, Trash2, Activity, Server } from "lucide-react";
+import AiMediaStudio from "@/components/ai/AiMediaStudio";
 
 interface Endpoint {
   id: string;
@@ -258,7 +259,9 @@ export default function AdminLocalAiTab() {
                     </Badge>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground break-all">{ep.base_url} · {ep.model} · {ep.api_style}</p>
+                <p className="text-xs text-muted-foreground break-all">
+                  {ep.kind === "image" ? "Kép" : ep.kind === "video" ? "Videó" : "Szöveg"} · {ep.base_url} · {ep.model} · {ep.api_style}
+                </p>
                 <p className="text-xs text-muted-foreground">
                   Sikeres: {ep.success_count ?? 0} · Hibás: {ep.failure_count ?? 0}
                   {ep.avg_latency_ms ? ` · Átlag válaszidő: ${Math.round(Number(ep.avg_latency_ms))} ms` : ""}
