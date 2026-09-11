@@ -221,7 +221,8 @@ const BrandProductDetail = () => {
           <button
             onClick={() => {
               if (isBookable && a.booking_url) { window.open(String(a.booking_url), "_blank", "noopener"); return; }
-              toast({ title: "Hamarosan", description: isBookable ? "Az online időpontfoglalás a következő frissítésben érkezik." : "A checkout funkció a következő frissítésben érkezik." });
+              if (isBookable) { setBookingOpen(true); return; }
+              toast({ title: "Hamarosan", description: "A checkout funkció a következő frissítésben érkezik." });
             }}
             disabled={!isBookable && !isDigital && !isCourse && product.stock_qty <= 0}
             className="w-full py-4 uppercase tracking-widest font-bold border-2 disabled:opacity-30"
