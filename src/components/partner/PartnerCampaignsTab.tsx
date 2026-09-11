@@ -63,7 +63,18 @@ const NEWSLETTER_TEMPLATES = [
   },
 ] as const;
 
+type Delivery = {
+  id: string;
+  email: string;
+  status: string;
+  error: string | null;
+  sent_at: string | null;
+  created_at: string;
+};
+
 export default function PartnerCampaignsTab({ partnerId }: { partnerId: string }) {
+  const [openDeliveries, setOpenDeliveries] = useState<string | null>(null);
+  const [deliveries, setDeliveries] = useState<Record<string, Delivery[]>>({});
   const [blasts, setBlasts] = useState<Blast[]>([]);
   const [subscribers, setSubscribers] = useState(0);
   const [storefrontSlug, setStorefrontSlug] = useState<string | null>(null);
@@ -141,6 +152,21 @@ export default function PartnerCampaignsTab({ partnerId }: { partnerId: string }
     if (data?.ok) toast.success(`Kiküldve ${data.sent} címzettnek`);
     else toast.error(data?.error || "Nem ment ki egyetlen levél sem");
     load();
+  };
+
+  const toggleDeliveries = async (blastId: string) => {
+    if (openDeliveries === blastId) {
+      setOpenDeliveries(null);
+      return;
+    }
+    setOpenDeliveries(blastId);
+    const { data } = await supabase
+      .from("partner_newsletter_deliveries")
+      .select("id, email, status, error, sent_at, created_at")
+      .eq("blast_id", blastId)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    setDeliveries((prev) => ({ ...prev, [blastId]: (data as Delivery[]) || [] }));
   };
 
   const togglePublish = async (b: Blast) => {
@@ -295,6 +321,10 @@ export default function PartnerCampaignsTab({ partnerId }: { partnerId: string }
                   <Globe className="h-4 w-4 mr-2" />
                   {b.published_on_site ? "Levétel a weboldalról" : "Kirakás a weboldalra"}
                 </Button>
+                <Button size="sm" variant="outline" className="rounded-none" onClick={() => toggleDeliveries(b.id)}>
+                  <Users className="h-4 w-4 mr-2" />
+                  {openDeliveries === b.id ? "Kézbesítések elrejtése" : "Kinek ment ki?"}
+                </Button>
                 {b.published_on_site && storefrontSlug && b.slug && (
                   <a
                     className="text-xs underline inline-flex items-center gap-1"
@@ -306,6 +336,24 @@ export default function PartnerCampaignsTab({ partnerId }: { partnerId: string }
                   </a>
                 )}
               </div>
+              {openDeliveries === b.id && (
+                <div className="border-t border-border pt-2 space-y-1">
+                  {(deliveries[b.id] || []).map((d) => (
+                    <div key={d.id} className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <span className="break-all">{d.email}</span>
+                      <span className="text-muted-foreground">
+                        {d.status === "sent" ? "kiküldve" : "sikertelen"}
+                        {" · "}
+                        {new Date(d.sent_at || d.created_at).toLocaleString("hu-HU")}
+                      </span>
+                      {d.error && <span className="text-destructive break-all">{d.error}</span>}
+                    </div>
+                  ))}
+                  {(deliveries[b.id] || []).length === 0 && (
+                    <p className="text-xs text-muted-foreground">Ehhez a hírlevélhez még nincs kézbesítési adat.</p>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </CardContent>
