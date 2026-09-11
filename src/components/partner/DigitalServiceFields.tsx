@@ -132,6 +132,63 @@ const DigitalServiceFields = ({ fulfillment, partnerId, attributes, setAttribute
           <Label className="text-xs">Licencfeltételek / felhasználási jog</Label>
           <Textarea className="rounded-none" rows={2} value={attributes.license_terms || ""} onChange={(e) => set("license_terms", e.target.value)} placeholder="pl. személyes használatra, tovább nem értékesíthető" />
         </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <Label className="text-xs">Verzió</Label>
+            <Input className="rounded-none" value={attributes.digital_version || ""} onChange={(e) => set("digital_version", e.target.value)} placeholder="pl. 2.1" />
+          </div>
+          <div>
+            <Label className="text-xs">Nyelv</Label>
+            <Input className="rounded-none" value={attributes.language || ""} onChange={(e) => set("language", e.target.value)} placeholder="pl. magyar" />
+          </div>
+          <div>
+            <Label className="text-xs">Fájlméret</Label>
+            <Input className="rounded-none" value={attributes.file_size || ""} onChange={(e) => set("file_size", e.target.value)} placeholder="pl. 240 MB" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label className="text-xs">Ingyenes minta / demó link</Label>
+            <Input className="rounded-none" value={attributes.demo_url || ""} onChange={(e) => set("demo_url", e.target.value)} placeholder="https://…" />
+          </div>
+          <div>
+            <Label className="text-xs">Eszközkorlát (hány gépen)</Label>
+            <Input type="number" className="rounded-none" value={attributes.device_limit || ""} onChange={(e) => set("device_limit", e.target.value)} placeholder="pl. 2" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <div className="flex items-center gap-2">
+            <Switch checked={!!attributes.free_updates} onCheckedChange={(v) => set("free_updates", v)} />
+            <span className="text-xs">Ingyenes frissítések</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch checked={!!attributes.watermark} onCheckedChange={(v) => set("watermark", v)} />
+            <span className="text-xs">Vízjel a fájlon</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch checked={!!attributes.commercial_use} onCheckedChange={(v) => set("commercial_use", v)} />
+            <span className="text-xs">Üzleti felhasználás</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label className="text-xs">Támogatás időtartama</Label>
+            <Input className="rounded-none" value={attributes.support_period || ""} onChange={(e) => set("support_period", e.target.value)} placeholder="pl. 6 hónap e-mail support" />
+          </div>
+          <div>
+            <Label className="text-xs">Pénzvisszafizetési garancia</Label>
+            <Input className="rounded-none" value={attributes.refund_policy || ""} onChange={(e) => set("refund_policy", e.target.value)} placeholder="pl. 14 nap" />
+          </div>
+        </div>
+
+        <div>
+          <Label className="text-xs">Rendszerkövetelmények</Label>
+          <Textarea className="rounded-none" rows={2} value={attributes.requirements || ""} onChange={(e) => set("requirements", e.target.value)} placeholder="pl. Windows 10+, 8 GB RAM" />
+        </div>
       </div>
     );
   }
