@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { FileSignature, CheckCircle2, Clock, Loader2, ShieldCheck, Download, XCircle, AlertTriangle } from "lucide-react";
+import PartnerCooperationProgress from "@/components/partner/PartnerCooperationProgress";
 
 const PartnerContract = () => {
   const navigate = useNavigate();
@@ -58,13 +59,16 @@ const PartnerContract = () => {
   if (!contract) {
     return (
       <div className="min-h-screen bg-background py-16 px-4">
-        <div className="max-w-2xl mx-auto border p-8 text-center space-y-4">
+        <div className="max-w-2xl mx-auto space-y-4">
+        <PartnerCooperationProgress />
+        <div className="border p-8 text-center space-y-4">
           <ShieldCheck className="w-12 h-12 mx-auto text-muted-foreground" />
           <h1 className="text-2xl font-bold">Nincs aktív szerződés</h1>
           <p className="text-sm text-muted-foreground">
             A szerződés automatikusan generálódik, amint a KYC adatkezelést az üzemeltető jóváhagyta.
           </p>
           <Button onClick={() => navigate("/partner-onboarding")}>KYC státusz</Button>
+        </div>
         </div>
       </div>
     );
@@ -81,6 +85,7 @@ const PartnerContract = () => {
   return (
     <div className="min-h-screen bg-background py-10 px-4">
       <div className="max-w-3xl mx-auto space-y-6">
+        <PartnerCooperationProgress />
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <FileSignature className="w-6 h-6 text-accent" />

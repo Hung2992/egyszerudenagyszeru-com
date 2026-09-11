@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { LogOut, Copy, Check, Download, Banknote, BarChart3, Megaphone, User as UserIcon, ListChecks, RefreshCw, Link2, FileSpreadsheet, Store, Package, Workflow, FlaskConical, Puzzle, Bot, LayoutDashboard, ShoppingBag, Boxes, Sparkles, Wallet, Users, Target, KeyRound, CalendarDays, Mail } from "lucide-react";
+import { LogOut, Copy, Check, Download, Banknote, BarChart3, Megaphone, User as UserIcon, ListChecks, RefreshCw, Link2, FileSpreadsheet, Store, Package, Workflow, FlaskConical, Puzzle, Bot, LayoutDashboard, ShoppingBag, Boxes, Sparkles, Wallet, Users, Target, KeyRound, CalendarDays, Mail, ShieldCheck } from "lucide-react";
 import { copyToClipboard } from "@/lib/clipboard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import StorefrontEditorTab from "@/components/partner/StorefrontEditorTab";
@@ -33,6 +33,7 @@ import PartnerCommunicationTab from "@/components/partner/PartnerCommunicationTa
 import PartnerAiTeamTab from "@/components/partner/PartnerAiTeamTab";
 import PartnerActionPlansTab from "@/components/partner/PartnerActionPlansTab";
 import PartnerCalendarTab from "@/components/partner/PartnerCalendarTab";
+import PartnerCooperationProgress from "@/components/partner/PartnerCooperationProgress";
 
 
 
@@ -108,7 +109,7 @@ const PartnerPortal = () => {
         description: "Lépj kapcsolatba az adminnal a hozzáférés visszaállításáért.",
         variant: "destructive",
       });
-      navigate("/");
+      navigate("/partner-onboarding");
       return;
     }
     void logAccess("portal_entered", { status: partner.status });
@@ -294,6 +295,7 @@ const PartnerPortal = () => {
               ["communication", "Kommunikációs API"],
               ["workflows", "Automatizálás"], ["abtests", "A/B teszt"], ["plugins", "Pluginok"],
               ["ai_marketplace", "AI Marketplace"], ["profile", "Profil"],
+              ["cooperation", "Együttműködés"],
             ].map(([v, label]) => <option key={v} value={v}>{label}</option>)}
           </select>
           <TabsList className="hidden md:flex rounded-none w-full justify-start overflow-x-auto">
@@ -321,6 +323,7 @@ const PartnerPortal = () => {
             <TabsTrigger value="plugins" className="rounded-none"><Puzzle className="h-4 w-4 mr-2" />Pluginok</TabsTrigger>
             <TabsTrigger value="ai_marketplace" className="rounded-none"><Bot className="h-4 w-4 mr-2" />AI Marketplace</TabsTrigger>
             <TabsTrigger value="profile" className="rounded-none"><UserIcon className="h-4 w-4 mr-2" />Profil</TabsTrigger>
+            <TabsTrigger value="cooperation" className="rounded-none"><ShieldCheck className="h-4 w-4 mr-2" />Együttműködés</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="mt-6">
@@ -550,6 +553,8 @@ const PartnerPortal = () => {
 
 
           <TabsContent value="profile" className="mt-6">
+            <div className="space-y-4">
+            <PartnerCooperationProgress />
             <Card className="rounded-none border-foreground/20 p-6 space-y-4 max-w-xl">
               <div><Label>Cégnév</Label><Input className="rounded-none" value={profileForm.company_name} onChange={(e) => setProfileForm(f => ({ ...f, company_name: e.target.value }))} /></div>
               <div><Label>Adószám</Label><Input className="rounded-none" value={profileForm.tax_number} onChange={(e) => setProfileForm(f => ({ ...f, tax_number: e.target.value }))} /></div>
@@ -560,6 +565,11 @@ const PartnerPortal = () => {
                 {profileSaving ? "Mentés…" : "Mentés"}
               </Button>
             </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="cooperation" className="mt-6">
+            <PartnerCooperationProgress />
           </TabsContent>
         </Tabs>
       </main>

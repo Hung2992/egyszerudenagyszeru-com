@@ -1,9 +1,11 @@
 # Egységes partneri együttműködési folyamat
 
 ## Cél
+
 Minden partner ugyanazon, jól követhető lépéssoron haladjon végig, és mindig lássa, hol tart.
 
 ## Megvalósítás
+
 1. Közös állapotjelző készül ezekkel a lépésekkel: partnerfiók, jelentkezés, KYC, partneri szerződés, admin aktiválás, Partner Központ.
 2. A partner-regisztráció a jelentkezés után automatikusan a KYC lépésre visz, nem egy lezárt várakozó nézetre.
 3. A KYC és szerződés oldal ugyanazt a lépéssort mutatja, az aktuális és következő teendővel.
@@ -12,6 +14,13 @@ Minden partner ugyanazon, jól követhető lépéssoron haladjon végig, és min
 6. Mobil nézetben is rövid, egymás alatti lépések és jól olvasható gombok jelennek meg.
 
 ## Ellenőrzés
+
 - Bejelentkezés nélküli és partneri belépési útvonal ellenőrzése.
 - Mobil nézet ellenőrzése.
 - TypeScript és célzott tesztek futtatása.
+- Regisztrált → 
+- KYC beküldve → 
+- KYC ellenőrzés alatt → 
+- Szerződés →
+-  Aktiválható →
+-  Aktív

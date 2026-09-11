@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "react-router-dom";
 import { ShieldCheck, Upload, Loader2, CheckCircle2, XCircle, Clock, ExternalLink } from "lucide-react";
+import PartnerCooperationProgress from "@/components/partner/PartnerCooperationProgress";
 
 interface Form {
   full_name: string;
@@ -95,10 +96,11 @@ const PartnerOnboarding = () => {
     if (!userId) return;
     const required: (keyof Form)[] = ["full_name","birth_place","birth_date","mother_name","id_card_number","address_card_number","address_zip","address_city","address_street","phone","email","bank_name","bank_account_holder","bank_account_number"];
     for (const k of required) if (!form[k]) { toast({ title: "Hiányzó adat", description: k, variant: "destructive" }); return; }
-    if (!existing && (!files.id_front || !files.id_back || !files.address_card || !files.selfie)) {
+    const isNewSubmission = !existing || existing.status === "rejected";
+    if (isNewSubmission && (!files.id_front || !files.id_back || !files.address_card || !files.selfie)) {
       toast({ title: "Hiányzó dokumentum", description: "Minden 4 fotót fel kell tölteni.", variant: "destructive" }); return;
     }
-    if (!existing && !consent) {
+    if (isNewSubmission && !consent) {
       toast({ title: "Hozzájárulás szükséges", description: "El kell fogadnod a KYC adatkezelési tájékoztatót.", variant: "destructive" }); return;
     }
     setSaving(true);
@@ -109,13 +111,13 @@ const PartnerOnboarding = () => {
     if (files.selfie) urls.selfie_url = await uploadFile("selfie", files.selfie);
 
     const payload: any = { ...form, ...urls, user_id: userId, status: "pending" as const };
-    if (!existing) {
+    if (isNewSubmission) {
       payload.consent_accepted = true;
       payload.consent_accepted_at = new Date().toISOString();
       payload.consent_version = "v1-2026-06";
     }
     let res;
-    if (existing && existing.status === "pending") {
+    if (existing?.status === "pending") {
       res = await supabase.from("tenant_kyc_submissions").update(payload).eq("id", existing.id);
     } else {
       res = await supabase.from("tenant_kyc_submissions").insert(payload);
@@ -129,11 +131,13 @@ const PartnerOnboarding = () => {
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin" /></div>;
 
-  const readonly = existing && (existing.status === "approved" || existing.status === "rejected");
+  const readonly = existing?.status === "approved";
+  const needsNewSubmission = !existing || existing.status === "rejected";
 
   return (
     <div className="min-h-screen bg-background py-10 px-4">
       <div className="max-w-3xl mx-auto space-y-6">
+        <PartnerCooperationProgress />
         <div className="border p-6 space-y-3">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-6 h-6 text-accent" />
@@ -203,7 +207,7 @@ const PartnerOnboarding = () => {
           <FileField label="Selfie igazolvánnyal *" file={files.selfie} onChange={f => setFiles({...files, selfie: f})} disabled={readonly} done={!!existing?.selfie_url} />
         </Section>
 
-        {!readonly && !existing && (
+        {!readonly && needsNewSubmission && (
           <div className="border p-4 bg-accent/5 space-y-3">
             <div className="flex items-start gap-3">
               <Checkbox id="kyc-consent" checked={consent} onCheckedChange={v => setConsent(v === true)} className="mt-0.5" />
@@ -215,8 +219,8 @@ const PartnerOnboarding = () => {
         )}
 
         {!readonly && (
-          <Button className="w-full" size="lg" onClick={submit} disabled={saving || (!existing && !consent)}>
-            {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Beadás...</> : existing?.status === "pending" ? "Adatok frissítése" : "KYC beadása"}
+          <Button className="w-full" size="lg" onClick={submit} disabled={saving || (needsNewSubmission && !consent)}>
+            {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Beadás...</> : existing?.status === "pending" ? "Adatok frissítése" : existing?.status === "rejected" ? "Javított KYC újraküldése" : "KYC beadása"}
           </Button>
         )}
       </div>
