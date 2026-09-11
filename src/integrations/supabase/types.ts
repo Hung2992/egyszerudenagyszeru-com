@@ -1041,6 +1041,48 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_generated_media: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          latency_ms: number | null
+          partner_id: string | null
+          prompt: string
+          provider: string | null
+          public_url: string
+          source: string
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          latency_ms?: number | null
+          partner_id?: string | null
+          prompt: string
+          provider?: string | null
+          public_url: string
+          source?: string
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          latency_ms?: number | null
+          partner_id?: string | null
+          prompt?: string
+          provider?: string | null
+          public_url?: string
+          source?: string
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_knowledge_chunks: {
         Row: {
           chunk_index: number
@@ -1220,6 +1262,7 @@ export type Database = {
           enabled: boolean
           failure_count: number
           id: string
+          kind: string
           last_checked_at: string | null
           last_error: string | null
           last_status: string | null
@@ -1243,6 +1286,7 @@ export type Database = {
           enabled?: boolean
           failure_count?: number
           id?: string
+          kind?: string
           last_checked_at?: string | null
           last_error?: string | null
           last_status?: string | null
@@ -1266,6 +1310,7 @@ export type Database = {
           enabled?: boolean
           failure_count?: number
           id?: string
+          kind?: string
           last_checked_at?: string | null
           last_error?: string | null
           last_status?: string | null
