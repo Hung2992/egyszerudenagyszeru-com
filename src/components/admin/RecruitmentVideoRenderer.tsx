@@ -281,6 +281,8 @@ const RecruitmentVideoRenderer = ({ video, onUpdated }: Props) => {
         ctx.fillRect(0, H - 8, W * ((idx + p) / prepared.length), 8);
       };
 
+      const XFADE = 1.2; // lágy átmenet a jelenetek között (mp)
+
       for (let i = 0; i < prepared.length; i++) {
         if (stopRef.current) break;
         const s = prepared[i];
@@ -298,7 +300,25 @@ const RecruitmentVideoRenderer = ({ video, onUpdated }: Props) => {
         await new Promise<void>((resolve) => {
           const tick = () => {
             const t = (performance.now() - start) / 1000;
-            drawScene(s, i, t, dur);
+            // Lágy kereszthalványítás: az előző jelenet fokozatosan tűnik el
+            if (t < XFADE && i > 0) {
+              const prev = prepared[i - 1];
+              drawScene(prev, i - 1, MIN_SCENE_SEC, MIN_SCENE_SEC);
+              ctx.save();
+              ctx.globalAlpha = Math.min(1, t / XFADE);
+              drawScene(s, i, t, dur);
+              ctx.restore();
+            } else {
+              drawScene(s, i, t, dur);
+            }
+            // Finom kihalvány a videó végén
+            if (i === prepared.length - 1 && dur - t < XFADE) {
+              ctx.save();
+              ctx.globalAlpha = Math.max(0, 1 - (dur - t) / XFADE) * 0.9;
+              ctx.fillStyle = "#0a0a0a";
+              ctx.fillRect(0, 0, W, H);
+              ctx.restore();
+            }
             setProgress(Math.round(((i + Math.min(1, t / dur)) / prepared.length) * 100));
             if (t >= dur || stopRef.current) return resolve();
             requestAnimationFrame(tick);
