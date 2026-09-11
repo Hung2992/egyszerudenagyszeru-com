@@ -812,11 +812,22 @@ Add vissza a JAVÍTOTT teljes JSON-t ugyanazzal a szerkezettel.`,
           ? await supabase.from("partner_storefronts").update(writePatch).eq("id", sf.id)
           : await supabase.from("partner_storefronts").insert({ partner_id: partnerId, ...writePatch });
         if (!error) { applied = true; break; }
-        const bad = /Could not find the '([^']+)' column/.exec(error.message)?.[1];
         console.warn("[web-agent] write failed:", error.message);
-        if (!bad || !(bad in writePatch)) break;
-        delete writePatch[bad];
-        delete (patch as Record<string, unknown>)[bad];
+        const bad = /Could not find the '([^']+)' column/.exec(error.message)?.[1];
+        if (bad && bad in writePatch) {
+          delete writePatch[bad];
+          delete (patch as Record<string, unknown>)[bad];
+          continue;
+        }
+        // Típushiba (pl. tömb oszlop) — az érintett mezőket kihagyjuk, a többi elkészül.
+        if (/malformed array literal|invalid input syntax/i.test(error.message)) {
+          let dropped = false;
+          for (const k of ARRAY_FIELDS) {
+            if (k in writePatch) { delete writePatch[k]; delete (patch as Record<string, unknown>)[k]; dropped = true; }
+          }
+          if (dropped) continue;
+        }
+        break;
       }
     }
 
