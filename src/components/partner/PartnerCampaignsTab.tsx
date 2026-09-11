@@ -33,6 +33,36 @@ const slugify = (s: string) =>
     .replace(/^-|-$/g, "")
     .slice(0, 60);
 
+const NEWSLETTER_TEMPLATES = [
+  {
+    label: "🆕 Új termékek",
+    subject: "Új termékek érkeztek hozzánk",
+    excerpt: "Friss darabok a kínálatunkban – nézd meg elsőként.",
+    body:
+      "Szia!\n\nÚj termékek érkeztek a webshopunkba. Összeszedtük neked a legjobbakat:\n\n• Termék 1 – rövid leírás\n• Termék 2 – rövid leírás\n• Termék 3 – rövid leírás\n\nNézd meg a kínálatot a weboldalunkon!\n\nÜdv,\na csapatunk",
+  },
+  {
+    label: "🎯 Akció",
+    subject: "Időszakos akció – csak most",
+    excerpt: "Kedvezmény a kiválasztott termékekre, korlátozott ideig.",
+    body:
+      "Szia!\n\nMost kedvezménnyel vihetsz el több terméket is. Az akció korlátozott ideig él, így érdemes sietni.\n\n• Mire vonatkozik: …\n• Mekkora a kedvezmény: …\n• Meddig tart: …\n\nJó vásárlást!",
+  },
+  {
+    label: "📅 Időpontfoglalás",
+    subject: "Foglalj időpontot online",
+    excerpt: "Mostantól pár kattintással foglalhatsz nálunk időpontot.",
+    body:
+      "Szia!\n\nMostantól a weboldalunkon közvetlenül foglalhatsz időpontot a szolgáltatásainkra. Válaszd ki a napot és az időpontot, a visszaigazolást e-mailben küldjük.\n\nVárunk szeretettel!",
+  },
+  {
+    label: "📣 Hír / bejelentés",
+    subject: "Fontos hír tőlünk",
+    excerpt: "Friss bejelentés a márkánkról.",
+    body: "Szia!\n\nSzeretnénk megosztani veled a legfrissebb hírünket:\n\n…\n\nKöszönjük, hogy velünk tartasz!",
+  },
+] as const;
+
 export default function PartnerCampaignsTab({ partnerId }: { partnerId: string }) {
   const [blasts, setBlasts] = useState<Blast[]>([]);
   const [subscribers, setSubscribers] = useState(0);
@@ -180,6 +210,25 @@ export default function PartnerCampaignsTab({ partnerId }: { partnerId: string }
           <CardTitle className="text-base">Új hírlevél</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {NEWSLETTER_TEMPLATES.map((t) => (
+              <Button
+                key={t.label}
+                type="button"
+                size="sm"
+                variant="outline"
+                className="rounded-none"
+                onClick={() => {
+                  setSubject(t.subject);
+                  setExcerpt(t.excerpt);
+                  setBody(t.body);
+                  toast.success(`Sablon betöltve: ${t.label}`);
+                }}
+              >
+                {t.label}
+              </Button>
+            ))}
+          </div>
           <Input
             className="rounded-none"
             placeholder="Tárgy (pl. Őszi újdonságok nálunk)"

@@ -29,6 +29,8 @@ function render(body: string, vars: Record<string, unknown>) {
  * kimenő listán marad `no_provider` állapotban — soha nem jelentünk hamis kézbesítést.
  */
 async function deliver(channel: Channel, to: string, body: string) {
+  const SID = Deno.env.get("TWILIO_ACCOUNT_SID");
+  const TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
   const FROM_SMS = Deno.env.get("MESSAGING_FROM_NUMBER");
@@ -37,47 +39,50 @@ async function deliver(channel: Channel, to: string, body: string) {
   if (channel === "email") {
     return { status: "no_provider", provider: null, error: "Az e-mail a tranzakciós rendszeren megy" };
   }
-  if (!LOVABLE_API_KEY || !TWILIO_API_KEY || (channel !== "voice" && !FROM_SMS && !FROM_WA)) {
+
+  // Saját Twilio fiók (közvetlen API) elsőbbséget élvez, utána a gateway-es kapcsolat.
+  const ownAccount = Boolean(SID && TOKEN);
+  const gateway = Boolean(LOVABLE_API_KEY && TWILIO_API_KEY);
+  if ((!ownAccount && !gateway) || (!FROM_SMS && !FROM_WA)) {
     return { status: "no_provider", provider: null, error: "Nincs bekötött távközlési szolgáltató" };
   }
 
-  const base = "https://connector-gateway.lovable.dev/twilio";
+  const url = (path: string) =>
+    ownAccount
+      ? `https://api.twilio.com/2010-04-01/Accounts/${SID}${path}`
+      : `https://connector-gateway.lovable.dev/twilio${path}`;
+  const authHeaders: Record<string, string> = ownAccount
+    ? { Authorization: `Basic ${btoa(`${SID}:${TOKEN}`)}` }
+    : { Authorization: `Bearer ${LOVABLE_API_KEY}`, "X-Connection-Api-Key": TWILIO_API_KEY! };
+  const provider = ownAccount ? "twilio_own" : "twilio_gateway";
+
+  const post = async (path: string, form: Record<string, string>) =>
+    await fetch(url(path), {
+      method: "POST",
+      headers: { ...authHeaders, "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(form),
+    });
+
   try {
     if (channel === "voice") {
-      const res = await fetch(`${base}/Calls.json`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "X-Connection-Api-Key": TWILIO_API_KEY,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          To: to,
-          From: FROM_SMS || "",
-          Twiml: `<Response><Say language="hu-HU">${body.slice(0, 500)}</Say></Response>`,
-        }),
+      const res = await post("/Calls.json", {
+        To: to,
+        From: FROM_SMS || "",
+        Twiml: `<Response><Say language="hu-HU">${body.slice(0, 500)}</Say></Response>`,
       });
       const txt = await res.text();
-      if (!res.ok) return { status: "failed", provider: "twilio", error: `${res.status}: ${txt.slice(0, 300)}` };
-      return { status: "sent", provider: "twilio", providerId: JSON.parse(txt)?.sid ?? null };
+      if (!res.ok) return { status: "failed", provider, error: `${res.status}: ${txt.slice(0, 300)}` };
+      return { status: "sent", provider, providerId: JSON.parse(txt)?.sid ?? null };
     }
 
     const from = channel === "whatsapp" ? `whatsapp:${FROM_WA || FROM_SMS}` : FROM_SMS!;
     const target = channel === "whatsapp" ? `whatsapp:${to.replace(/^whatsapp:/, "")}` : to;
-    const res = await fetch(`${base}/Messages.json`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "X-Connection-Api-Key": TWILIO_API_KEY,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({ To: target, From: from, Body: body }),
-    });
+    const res = await post("/Messages.json", { To: target, From: from, Body: body });
     const txt = await res.text();
-    if (!res.ok) return { status: "failed", provider: "twilio", error: `${res.status}: ${txt.slice(0, 300)}` };
-    return { status: "sent", provider: "twilio", providerId: JSON.parse(txt)?.sid ?? null };
+    if (!res.ok) return { status: "failed", provider, error: `${res.status}: ${txt.slice(0, 300)}` };
+    return { status: "sent", provider, providerId: JSON.parse(txt)?.sid ?? null };
   } catch (e) {
-    return { status: "failed", provider: "twilio", error: String(e).slice(0, 300) };
+    return { status: "failed", provider, error: String(e).slice(0, 300) };
   }
 }
 

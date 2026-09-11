@@ -13106,6 +13106,7 @@ export type Database = {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      dispatch_messaging_outbox: { Args: never; Returns: undefined }
       draw_raffle_winners: {
         Args: { p_drop_id: string }
         Returns: {
