@@ -202,6 +202,19 @@ Deno.serve(async (req) => {
   if (!body) return json({ error: "Üres üzenet" }, 400);
   if (body.length > 1600) body = body.slice(0, 1600);
 
+  // Csalás/visszaélés elleni sebességkorlát címzettenként (óránként max 10 üzenet).
+  if (channel !== "email") {
+    try {
+      const { data: ok } = await db.rpc("hit_rate_limit", {
+        _key: `commdest:${to.replace(/[^0-9+]/g, "")}`,
+        _limit: 10,
+        _window_seconds: 3600,
+      });
+      if (ok === false) return json({ error: "recipient_rate_limited" }, 429);
+    } catch { /* korlátozó nem elérhető — a küldés folytatódik */ }
+  }
+
+
   const { data: inserted, error } = await db
     .from("messaging_outbox")
     .insert({
