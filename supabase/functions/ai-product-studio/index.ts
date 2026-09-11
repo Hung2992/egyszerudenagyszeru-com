@@ -26,7 +26,7 @@ const SITE_ALLOWED = [
   "display_name", "tagline", "about_html",
   "primary_color", "accent_color", "bg_color", "text_color",
   "font_heading", "font_body", "theme_preset",
-  "hero_title", "hero_subtitle", "hero_cta_text", "hero_cta_url", "hero_layout",
+  "hero_title", "hero_subtitle", "hero_cta_text", "hero_layout",
   "hero_badge_enabled", "hero_badge_text", "hero_overlay_opacity", "hero_image_url",
   "topbar_enabled", "topbar_text",
   "section1_enabled", "section1_title", "section1_subtitle", "section1_cta_text", "section1_cta_url", "section1_image_url",
@@ -36,7 +36,7 @@ const SITE_ALLOWED = [
   "newsletter_enabled", "newsletter_title", "newsletter_subtitle",
   "footer_text", "footer_links",
   "meta_title", "meta_description", "seo_keywords",
-  "social_instagram", "social_facebook", "social_tiktok", "social_youtube",
+  "instagram_url", "facebook_url", "tiktok_url", "youtube_url",
 ];
 
 const SITE_SYSTEM = `Te egy magyar webshop- és weboldal-építő AI vagy. A partner természetes nyelven leírja, milyen webshopot/weboldalt szeretne,
@@ -49,7 +49,7 @@ Séma (csak ezek a mezők léteznek!):
     "display_name": string, "tagline": string, "about_html": string (rövid HTML <p> bekezdésekkel),
     "primary_color": "#xxxxxx", "accent_color": "#xxxxxx", "bg_color": "#xxxxxx", "text_color": "#xxxxxx",
     "font_heading": string, "font_body": string, "theme_preset": "dark_minimal"|"light_clean"|"street_red",
-    "hero_title": string, "hero_subtitle": string, "hero_cta_text": string, "hero_cta_url": string, "hero_layout": "split"|"center"|"full",
+    "hero_title": string, "hero_subtitle": string, "hero_cta_text": string, "hero_layout": "split"|"center"|"full",
     "hero_badge_enabled": bool, "hero_badge_text": string, "hero_overlay_opacity": number (0-1),
     "topbar_enabled": bool, "topbar_text": string,
     "section1_enabled": bool, "section1_title": string, "section1_subtitle": string, "section1_cta_text": string, "section1_cta_url": string,
@@ -60,7 +60,7 @@ Séma (csak ezek a mezők léteznek!):
     "newsletter_enabled": bool, "newsletter_title": string, "newsletter_subtitle": string,
     "footer_text": string, "footer_links": [{"label": string, "url": string}],
     "meta_title": string (<60 karakter), "meta_description": string (<160 karakter), "seo_keywords": string,
-    "social_instagram": string, "social_facebook": string, "social_tiktok": string, "social_youtube": string
+    "instagram_url": string, "facebook_url": string, "tiktok_url": string, "youtube_url": string
   },
   "explanation": "2-4 mondat magyarul, mit építettél"
 }`;
