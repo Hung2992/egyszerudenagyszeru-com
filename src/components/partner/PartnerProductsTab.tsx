@@ -488,7 +488,7 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
 
             <div className="flex gap-2 pt-2">
               <Button variant="outline" className="rounded-none flex-1" onClick={() => save(false)} disabled={saving}>Mentés vázlatként</Button>
-              <Button className="rounded-none flex-1" onClick={() => save(true)} disabled={saving}><Send className="h-4 w-4 mr-1" /> Beküld jóváhagyásra</Button>
+              <Button className="rounded-none flex-1" onClick={() => save(true)} disabled={saving}><Send className="h-4 w-4 mr-1" /> Mentés és élesítés</Button>
             </div>
           </div>
         </DialogContent>
