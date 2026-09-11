@@ -736,7 +736,16 @@ A partner kérése: """${message.slice(0, 4000)}"""`;
 
     const rawPatch = built?.patch && typeof built.patch === "object" ? built.patch : {};
     const patch: Record<string, unknown> = {};
-    for (const k of ALLOWED) if (rawPatch[k] !== undefined && rawPatch[k] !== null) patch[k] = rawPatch[k];
+    const ARRAY_FIELDS = new Set(["seo_keywords"]);
+    for (const k of ALLOWED) {
+      if (rawPatch[k] === undefined || rawPatch[k] === null) continue;
+      let v = rawPatch[k];
+      // Tömb típusú oszlopokba az AI néha vesszős szöveget ad — átalakítjuk.
+      if (ARRAY_FIELDS.has(k) && typeof v === "string") {
+        v = v.split(",").map((s: string) => s.trim()).filter(Boolean);
+      }
+      patch[k] = v;
+    }
 
     // ── 3) RÉTEG 2: Érdemes QA validáció az alkalmazás ELŐTT
     // A QA a teljes végeredményt vizsgálja (jelenlegi + patch együtt).
