@@ -10,7 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
 import { Eye, EyeOff } from "lucide-react";
 
-type AuthMode = "login" | "forgot";
+type AuthMode = "login" | "admin" | "forgot";
 
 const translateAuthError = (msg: string): string => {
   const map: Record<string, string> = {
