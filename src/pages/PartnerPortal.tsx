@@ -276,7 +276,25 @@ const PartnerPortal = () => {
         <PartnerCommandBar partnerId={partner.id} onNavigate={setTab} />
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="rounded-none w-full justify-start overflow-x-auto">
+          {/* Mobilon egyszerű választólista, hogy minden szekció olvashatóan elérhető legyen */}
+          <select
+            value={tab}
+            onChange={(e) => setTab(e.target.value)}
+            aria-label="Partner Központ szekció"
+            className="md:hidden w-full rounded-none border border-border bg-background px-3 py-3 text-sm font-medium"
+          >
+            {[
+              ["dashboard", "Irányítópult"], ["orders", "Rendelések & ügyfelek"], ["calendar", "Naptár"],
+              ["inventory", "Készlet & árazás"], ["finance", "Pénzügy"], ["ai_team", "AI Csapatom"],
+              ["action_plans", "AI intézkedések"], ["advisor", "AI asszisztens"], ["overview", "Jutalék"],
+              ["storefront", "Saját webshop"], ["products", "Termékek"], ["digital", "Digitális kiszolgálás"],
+              ["referrals", "Ajánlások"], ["payouts", "Kifizetések"], ["marketing", "Marketing"],
+              ["workflows", "Automatizálás"], ["abtests", "A/B teszt"], ["plugins", "Pluginok"],
+              ["ai_marketplace", "AI Marketplace"], ["profile", "Profil"],
+            ].map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+          </select>
+          <TabsList className="hidden md:flex rounded-none w-full justify-start overflow-x-auto">
+
             <TabsTrigger value="dashboard" className="rounded-none"><LayoutDashboard className="h-4 w-4 mr-2" />Irányítópult</TabsTrigger>
             <TabsTrigger value="orders" className="rounded-none"><ShoppingBag className="h-4 w-4 mr-2" />Rendelések & ügyfelek</TabsTrigger>
             <TabsTrigger value="calendar" className="rounded-none"><CalendarDays className="h-4 w-4 mr-2" />Naptár</TabsTrigger>
