@@ -40,9 +40,9 @@ const PartnerBookingsPanel = ({ partnerNames }: { partnerNames: Record<string, s
     setRows(list);
     const ids = Array.from(new Set(list.map(r => r.product_id).filter(Boolean))) as string[];
     if (ids.length) {
-      const { data: prods } = await supabase.from("partner_products").select("id, name").in("id", ids);
+      const { data: prods } = await supabase.from("partner_products").select("id, title").in("id", ids);
       const map: Record<string, string> = {};
-      ((prods as any[]) || []).forEach(p => { map[p.id] = p.name; });
+      ((prods as any[]) || []).forEach(p => { map[p.id] = p.title; });
       setProducts(map);
     }
     setLoading(false);
