@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
       detail: { via: "api" },
     });
 
-    const r = await deliver(channel, to, body);
+    const r = await deliver(channel, to, body, { db, partnerId: ctx.partnerId });
     await db
       .from("messaging_outbox")
       .update({

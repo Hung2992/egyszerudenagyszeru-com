@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { requireInternalOrAdmin, rateLimitDb } from "../_shared/internal-auth.ts";
+import { gatewaySend } from "../_shared/gateway-drivers.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -28,7 +29,21 @@ function render(body: string, vars: Record<string, unknown>) {
  * gatewayen keresztül), valóban kimegy az üzenet; ha nincs, az üzenet a saját
  * kimenő listán marad `no_provider` állapotban — soha nem jelentünk hamis kézbesítést.
  */
-async function deliver(channel: Channel, to: string, body: string) {
+async function deliver(channel: Channel, to: string, body: string, partnerId?: string | null) {
+  // 1) Saját APEX átjáró: partner saját szolgáltatói fiókjai, majd a platform fiókjai.
+  if (channel !== "email") {
+    const own = await gatewaySend(admin(), {
+      channel: channel as "sms" | "whatsapp" | "voice",
+      to,
+      body,
+      partnerId: partnerId ?? null,
+    });
+    if (own.status !== "no_provider") return own;
+  }
+  return await deliverLegacy(channel, to, body);
+}
+
+async function deliverLegacy(channel: Channel, to: string, body: string) {
   const SID = Deno.env.get("TWILIO_ACCOUNT_SID");
   const TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -110,7 +125,7 @@ Deno.serve(async (req) => {
   if (action === "dispatch") {
     const { data: due } = await db
       .from("messaging_outbox")
-      .select("id, channel, to_address, body, attempts")
+      .select("id, channel, to_address, body, attempts, partner_id")
       .in("status", ["queued", "no_provider"])
       .lte("send_at", new Date().toISOString())
       .order("send_at")
@@ -118,7 +133,7 @@ Deno.serve(async (req) => {
 
     let sent = 0, failed = 0, pending = 0;
     for (const row of due || []) {
-      const r = await deliver(row.channel as Channel, row.to_address, row.body);
+      const r = await deliver(row.channel as Channel, row.to_address, row.body, row.partner_id);
       await db
         .from("messaging_outbox")
         .update({
@@ -177,7 +192,7 @@ Deno.serve(async (req) => {
     .single();
   if (error) return json({ error: "Nem sikerült rögzíteni az üzenetet" }, 500);
 
-  const r = await deliver(channel, to, body);
+  const r = await deliver(channel, to, body, typeof payload.partnerId === "string" ? payload.partnerId : null);
   await db
     .from("messaging_outbox")
     .update({
