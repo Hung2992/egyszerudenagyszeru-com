@@ -172,7 +172,7 @@ const Checkout = () => {
     };
 
     loadCheckoutData();
-  }, []);
+  }, [navigate]);
 
   const applyAddress = (addr: SavedAddress) => {
     setName(addr.name);
