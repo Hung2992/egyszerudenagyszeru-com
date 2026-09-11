@@ -48,8 +48,44 @@ const emptyDraft = (day: string) => ({
   notes: "",
   product_id: "",
 });
+const fmtDate = (d: Date) => d.toLocaleDateString("hu-HU", { year: "numeric", month: "long", day: "numeric" });
+const fmtTime = (d: Date) => d.toLocaleTimeString("hu-HU", { hour: "2-digit", minute: "2-digit" });
+
+// Egy konkrét foglaláshoz küld visszaigazoló levelet az adott ügyfélnek.
+const sendConfirmation = async (
+  appt: { id: string; starts_at: string | null; duration_min: number | null; customer_name: string | null; customer_email: string | null; location: string | null; notes: string | null; product_id: string | null },
+  brandName: string,
+  serviceTitle: string,
+  contactEmail?: string | null,
+  contactPhone?: string | null,
+) => {
+  if (!appt.customer_email) return { skipped: true as const };
+  const d = appt.starts_at ? new Date(appt.starts_at) : null;
+  const { error } = await supabase.functions.invoke("send-transactional-email", {
+    body: {
+      templateName: "appointment-confirmation",
+      recipientEmail: appt.customer_email,
+      idempotencyKey: `appointment-confirmation-${appt.id}`,
+      templateData: {
+        customer_name: appt.customer_name || "",
+        brand_name: brandName,
+        service_title: serviceTitle,
+        date_label: d ? fmtDate(d) : "",
+        time_label: d ? fmtTime(d) : "",
+        duration_min: appt.duration_min || 60,
+        location: appt.location || "",
+        notes: appt.notes || "",
+        contact_email: contactEmail || "",
+        contact_phone: contactPhone || "",
+      },
+    },
+  });
+  return { skipped: false as const, error };
+};
 
 const PartnerCalendarTab = ({ partnerId }: { partnerId: string }) => {
+  const [partnerInfo, setPartnerInfo] = useState<{ company_name?: string; full_name?: string; email?: string; phone?: string }>({});
+  const [sendingId, setSendingId] = useState<string | null>(null);
   const [month, setMonth] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const [selected, setSelected] = useState(() => iso(new Date()));
   const [items, setItems] = useState<Appt[]>([]);
