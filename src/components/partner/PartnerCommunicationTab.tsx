@@ -136,6 +136,7 @@ export default function PartnerCommunicationTab({ partnerId }: { partnerId: stri
   return (
     <div className="space-y-4">
 
+      <PartnerDeliveryStatusPanel partnerId={partnerId} />
 
       <Card className="rounded-none">
         <CardHeader><CardTitle className="text-base">API kulcsok</CardTitle></CardHeader>
