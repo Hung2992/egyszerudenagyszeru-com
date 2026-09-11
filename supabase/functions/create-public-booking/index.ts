@@ -95,9 +95,15 @@ Deno.serve(async (req) => {
   if (insErr) return json({ error: "booking_failed" }, 502);
 
   // Visszaigazoló e-mail (nem blokkolja a foglalást)
+  let emailStatus = "skipped";
   try {
-    await svc.functions.invoke("send-transactional-email", {
-      body: {
+    const res = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-transactional-email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+      },
+      body: JSON.stringify({
         templateName: "appointment-confirmation",
         recipientEmail: email,
         idempotencyKey: `appointment-confirmation:${appt.id}`,
@@ -113,9 +119,12 @@ Deno.serve(async (req) => {
           contact_email: store.company_email || undefined,
           contact_phone: store.company_phone || undefined,
         },
-      },
+      }),
     });
-  } catch (_e) { /* e-mail hiba nem buktatja a foglalást */ }
+    emailStatus = res.ok ? "queued" : `failed_${res.status}`;
+  } catch (_e) {
+    emailStatus = "failed";
+  }
 
   return json({ success: true, appointment_id: appt.id, duration_min: duration });
 });
