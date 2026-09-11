@@ -91,6 +91,38 @@ async function generateImage(key: string, prompt: string, platform: string, supa
   } catch { return null; }
 }
 
+// Narráció hang (TTS) generálás -> mp3 feltöltés
+async function generateSpeech(
+  key: string,
+  text: string,
+  voice: string,
+  supabase: any,
+): Promise<{ url: string } | null> {
+  try {
+    const input = text.slice(0, 1500);
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/audio/speech", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "openai/gpt-4o-mini-tts", input, voice, response_format: "mp3" }),
+    });
+    if (!res.ok) {
+      console.error("tts failed", res.status);
+      return null;
+    }
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    const path = `recruitment/audio/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.mp3`;
+    const { error } = await supabase.storage.from("product-images").upload(path, bytes, {
+      contentType: "audio/mpeg", upsert: false,
+    });
+    if (error) return null;
+    const { data: pub } = supabase.storage.from("product-images").getPublicUrl(path);
+    return { url: pub.publicUrl };
+  } catch (e) {
+    console.error("tts error", (e as Error).message);
+    return null;
+  }
+}
+
 async function scorePost(key: string, post: any) {
   const sys = `Te egy virális social media stratéga vagy. Elemezd EZT a poszttervet. Válasz CSAK JSON: {"viral_score":0-100,"hook_strength":0-100,"cta_strength":0-100,"clarity":0-100,"emotional_pull":0-100,"weaknesses":["..."],"improvements":["..."],"predicted_reach":"low|mid|high|viral"}`;
   const usr = `Platform: ${post.platform}\nHook: ${post.hook}\nBody: ${post.body}\nHashtags: ${(post.hashtags || []).join(" ")}\nCTA: ${post.cta || "—"}`;
