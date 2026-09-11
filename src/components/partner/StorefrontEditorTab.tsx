@@ -361,6 +361,13 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
           />
         </TabsContent>
 
+        {/* AI KÉP ÉS VIDEÓ */}
+        <TabsContent value="media">
+          <AiMediaStudio partnerId={partnerId} />
+        </TabsContent>
+
+
+
 
 
         {/* BASICS */}
