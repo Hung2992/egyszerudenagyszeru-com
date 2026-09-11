@@ -89,7 +89,7 @@ const PartnerFinanceTab = ({ partnerId }: Props) => {
         </TabsList>
       </Tabs>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <Card className="rounded-none p-4">
           <p className="text-xs text-muted-foreground flex items-center gap-1"><Banknote className="h-3 w-3" /> Bruttó forgalom</p>
           <p className="text-xl font-bold mt-1">{fmt(m.gross)}</p>
@@ -101,10 +101,6 @@ const PartnerFinanceTab = ({ partnerId }: Props) => {
           )}
         </Card>
         <Card className="rounded-none p-4">
-          <p className="text-xs text-muted-foreground flex items-center gap-1"><Wallet className="h-3 w-3" /> Neked járó (payout)</p>
-          <p className="text-xl font-bold mt-1">{fmt(m.payout)}</p>
-        </Card>
-        <Card className="rounded-none p-4">
           <p className="text-xs text-muted-foreground flex items-center gap-1"><Percent className="h-3 w-3" /> Platformjutalék</p>
           <p className="text-xl font-bold mt-1">{fmt(m.fee)}</p>
           <p className="text-xs text-muted-foreground mt-1">{m.gross > 0 ? ((m.fee / m.gross) * 100).toFixed(1) : "0"}% a forgalomból</p>
@@ -113,6 +109,19 @@ const PartnerFinanceTab = ({ partnerId }: Props) => {
           <p className="text-xs text-muted-foreground">Átlagos kosárérték</p>
           <p className="text-xl font-bold mt-1">{fmt(m.avg)}</p>
           <p className="text-xs text-muted-foreground mt-1">{m.count} rendelés</p>
+        </Card>
+        <Card className="rounded-none p-4">
+          <p className="text-xs text-muted-foreground flex items-center gap-1"><Wallet className="h-3 w-3" /> Neked járó (payout)</p>
+          <p className="text-xl font-bold mt-1">{fmt(m.payout)}</p>
+        </Card>
+        <Card className="rounded-none p-4 border-l-4 border-l-accent">
+          <p className="text-xs text-muted-foreground flex items-center gap-1"><Home className="h-3 w-3" /> Bérleti díj (sávos)</p>
+          <p className="text-xl font-bold mt-1">{fmt(m.rentalFee)}</p>
+          <p className="text-xs text-muted-foreground mt-1">0–1M: 5%, 1–5M: 10K, 5M+: 50K+</p>
+        </Card>
+        <Card className="rounded-none p-4 border-l-4 border-l-primary">
+          <p className="text-xs text-muted-foreground">Neked marad (bérleti díj levonva)</p>
+          <p className="text-xl font-bold mt-1">{fmt(m.netAfterRental)}</p>
         </Card>
       </div>
 
