@@ -806,11 +806,17 @@ Add vissza a JAVÍTOTT teljes JSON-t ugyanazzal a szerkezettel.`,
       // Ha egy mező nem létezik a sémában, ne bukjon el a teljes építés:
       // kiszedjük az ismeretlen oszlopot és újrapróbáljuk (max 8 kör).
       const writePatch: Record<string, unknown> = { ...patch };
+      // Új webshop létrehozásakor kötelező egyedi slug
+      const slugBase = String(writePatch.display_name || "webshop")
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "webshop";
+      const newSlug = `${slugBase}-${partnerId.slice(0, 6)}`;
       for (let attempt = 0; attempt < 8; attempt++) {
         if (Object.keys(writePatch).length === 0) break;
         const { error } = sf?.id
           ? await supabase.from("partner_storefronts").update(writePatch).eq("id", sf.id)
-          : await supabase.from("partner_storefronts").insert({ partner_id: partnerId, ...writePatch });
+          : await supabase.from("partner_storefronts").insert({ partner_id: partnerId, slug: newSlug, ...writePatch });
         if (!error) { applied = true; break; }
         console.warn("[web-agent] write failed:", error.message);
         const bad = /Could not find the '([^']+)' column/.exec(error.message)?.[1];
