@@ -113,6 +113,7 @@ const Index = () => {
             <button onClick={scrollToModules} className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground">Képességek</button>
             <a href="#mukodes" className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground">Hogyan működik</a>
             <a href="#biztonsag" className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground">Biztonság</a>
+            <a href="#szerzodes" className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground">Szerződés</a>
           </nav>
 
           <div className="hidden items-center gap-2 md:flex">
@@ -129,6 +130,7 @@ const Index = () => {
             <button onClick={() => { scrollToModules(); setMenuOpen(false); }} className="block w-full border-b border-border py-4 text-left text-sm">Képességek</button>
             <a href="#mukodes" onClick={() => setMenuOpen(false)} className="block border-b border-border py-4 text-sm">Hogyan működik</a>
             <a href="#biztonsag" onClick={() => setMenuOpen(false)} className="block border-b border-border py-4 text-sm">Biztonság</a>
+            <a href="#szerzodes" onClick={() => setMenuOpen(false)} className="block border-b border-border py-4 text-sm">Szerződés</a>
             <Button className="mt-5 w-full rounded-none bg-accent text-accent-foreground" onClick={goToRegistration}>Regisztráció <ArrowRight /></Button>
           </nav>
         )}
