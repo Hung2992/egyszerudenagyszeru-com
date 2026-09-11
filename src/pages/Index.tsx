@@ -108,7 +108,7 @@ const Index = () => {
 
       <main>
         <section className="relative flex min-h-[720px] items-end overflow-hidden pt-16 md:min-h-[760px]">
-          <img src={heroImage} alt="Az APEX üzleti platform kezelőfelülete munka közben" width={1920} height={1080} className="absolute inset-0 h-full w-full object-cover object-[68%_center] md:object-center" fetchPriority="high" />
+          <img src={heroImage} alt="Az APEX üzleti platform kezelőfelülete munka közben" width={1920} height={1080} className="absolute inset-0 h-full w-full object-cover object-[68%_center] md:object-center" {...({ fetchpriority: "high" } as Record<string, string>)} />
           <div className="absolute inset-0 bg-background/25" />
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/10" />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/20" />
