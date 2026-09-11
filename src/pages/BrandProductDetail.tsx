@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/untyped-client";
-import { ArrowLeft, ShoppingBag, CalendarClock } from "lucide-react";
+import { ArrowLeft, ShoppingBag, CalendarClock, Truck } from "lucide-react";
 import MediaImage from "@/components/partner/MediaImage";
 import { toast } from "@/hooks/use-toast";
 
@@ -68,6 +68,17 @@ const BrandProductDetail = () => {
       to: a.work_to || "17:00",
       daysLabel: days.sort((x, y) => x - y).map((d) => DAY_NAMES[d - 1]).join(", "),
     };
+  })();
+
+  // Szállítási részletek fizikai termékhez (partner beállításaiból)
+  const shipping = (() => {
+    const fee = a.shipping_fee_huf;
+    const feeLabel = fee === 0 || fee === "0"
+      ? "Ingyenes szállítás"
+      : fee
+        ? `Szállítási díj: ${Number(fee).toLocaleString("hu-HU")} Ft`
+        : "Szállítási díj a fizetésnél";
+    return { feeLabel, time: a.shipping_time || "2-5 munkanap" };
   })();
 
   const jsonLd = {
@@ -176,6 +187,27 @@ const BrandProductDetail = () => {
               {a.course_platform && <div>Platform: {a.course_platform}</div>}
               {a.max_students && <div>Max. létszám: {a.max_students} fő</div>}
               {a.lifetime_access && <div>Örök hozzáférés</div>}
+            </div>
+          )}
+
+          {!isBookable && !isDigital && !isCourse && (
+            <div className="border p-4 space-y-2" style={{ borderColor: `${sf.text_color}20` }}>
+              <div className="flex items-center gap-2 text-xs uppercase tracking-widest opacity-70">
+                <Truck className="h-4 w-4" /> Szállítás
+              </div>
+              <div className="text-lg font-bold" style={{ color: sf.accent_color }}>
+                {shipping.feeLabel}
+              </div>
+              <div className="text-xs opacity-70 space-y-1">
+                <div>Várható kiszállítás: {shipping.time}</div>
+                {a.processing_time && <div>Feldolgozás: {a.processing_time}</div>}
+                {a.free_shipping_over_huf && <div>Ingyenes szállítás {Number(a.free_shipping_over_huf).toLocaleString("hu-HU")} Ft felett</div>}
+                {a.shipping_carrier && <div>Futár: {a.shipping_carrier}</div>}
+                {a.shipping_methods && <div>Átvétel: {a.shipping_methods}</div>}
+                {a.cod_available && <div>Utánvét lehetséges</div>}
+                {product.weight_g && <div>Súly: {product.weight_g} g</div>}
+                {a.shipping_note && <div>{a.shipping_note}</div>}
+              </div>
             </div>
           )}
 

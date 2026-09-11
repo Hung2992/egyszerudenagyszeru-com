@@ -747,6 +747,35 @@ A partner kérése: """${message.slice(0, 4000)}"""`;
       patch[k] = v;
     }
 
+    // ── Determinisztikus hosszkorlátozás: mobilon (390px) se törjön a hero,
+    // a CTA gomb felirata és a SEO meta cím se lógjon ki.
+    const LENGTH_LIMITS: Record<string, number> = {
+      display_name: 24,
+      tagline: 70,
+      hero_title: 78,
+      hero_subtitle: 104,
+      hero_cta_text: 22,
+      section1_title: 41,
+      section2_title: 41,
+      section1_cta_text: 22,
+      section2_cta_text: 22,
+      featured_products_title: 41,
+      testimonials_title: 41,
+      newsletter_title: 41,
+      meta_title: 60,
+      meta_description: 160,
+    };
+    const clip = (text: string, max: number) => {
+      const t = text.trim().replace(/\s+/g, " ");
+      if (t.length <= max) return t;
+      const cut = t.slice(0, max);
+      const sp = cut.lastIndexOf(" ");
+      return (sp > max * 0.6 ? cut.slice(0, sp) : cut).replace(/[\s.,;:–-]+$/, "");
+    };
+    for (const [field, max] of Object.entries(LENGTH_LIMITS)) {
+      if (typeof patch[field] === "string") patch[field] = clip(patch[field] as string, max);
+    }
+
     // ── 3) RÉTEG 2: Érdemes QA validáció az alkalmazás ELŐTT
     // A QA a teljes végeredményt vizsgálja (jelenlegi + patch együtt).
     const merged: Record<string, unknown> = { ...currentConfig, ...patch };
