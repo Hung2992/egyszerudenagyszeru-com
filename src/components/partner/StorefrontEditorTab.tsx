@@ -16,6 +16,7 @@ import PartnerDomainTab from "./PartnerDomainTab";
 import StorefrontVersionsTab from "./StorefrontVersionsTab";
 import StorefrontLivePreview from "./StorefrontLivePreview";
 import AiWebCreatorChat from "./AiWebCreatorChat";
+import AiMediaStudio from "@/components/ai/AiMediaStudio";
 import PartnerPagesTab from "./PartnerPagesTab";
 
 
@@ -330,6 +331,7 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
       <Tabs defaultValue="chat">
         <TabsList className="rounded-none flex flex-wrap h-auto">
           <TabsTrigger value="chat" className="rounded-none">🤖 AI fejlesztő</TabsTrigger>
+          <TabsTrigger value="media" className="rounded-none">🎨 AI kép & videó</TabsTrigger>
           
           <TabsTrigger value="basics" className="rounded-none">Alap</TabsTrigger>
           <TabsTrigger value="design" className="rounded-none">Megjelenés</TabsTrigger>
@@ -359,6 +361,13 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
             onApplied={(patch) => { setSf((cur: any) => ({ ...cur, ...patch })); setPreviewRefreshKey((k) => k + 1); void load(); }}
           />
         </TabsContent>
+
+        {/* AI KÉP ÉS VIDEÓ */}
+        <TabsContent value="media">
+          <AiMediaStudio partnerId={partnerId} />
+        </TabsContent>
+
+
 
 
 

@@ -8,9 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, Plus, Trash2, Activity, Server } from "lucide-react";
+import AiMediaStudio from "@/components/ai/AiMediaStudio";
 
 interface Endpoint {
   id: string;
+  kind?: string | null;
   name: string;
   base_url: string;
   api_style: string;
@@ -32,6 +34,7 @@ interface Endpoint {
 }
 
 const emptyForm = {
+  kind: "text",
   name: "Saját AI szerver",
   base_url: "https://",
   api_style: "openai",
@@ -87,6 +90,7 @@ export default function AdminLocalAiTab() {
     if (!form.model.trim()) return toast.error("Add meg a modell nevét");
     setSaving(true);
     const { error } = await supabase.from("ai_local_endpoints").insert({
+      kind: form.kind,
       name: form.name.trim() || "Saját AI szerver",
       base_url: form.base_url.trim(),
       api_style: form.api_style,
@@ -163,6 +167,26 @@ export default function AdminLocalAiTab() {
         <CardHeader><CardTitle className="text-base">Új szerver hozzáadása</CardTitle></CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div>
+            <Label>Mire használjuk?</Label>
+            <select
+              className="w-full h-10 border border-input bg-background px-3 text-sm"
+              value={form.kind}
+              onChange={(e) => {
+                const kind = e.target.value;
+                setForm({
+                  ...form,
+                  kind,
+                  api_style: kind === "text" ? "openai" : kind === "image" ? "a1111" : "apex_media",
+                  model: kind === "text" ? "llama3.1" : kind === "image" ? "sdxl" : "ltx-video",
+                });
+              }}
+            >
+              <option value="text">Szöveg / AI fejlesztő</option>
+              <option value="image">Képkészítés</option>
+              <option value="video">Videókészítés</option>
+            </select>
+          </div>
+          <div>
             <Label>Név</Label>
             <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
@@ -177,8 +201,22 @@ export default function AdminLocalAiTab() {
               value={form.api_style}
               onChange={(e) => setForm({ ...form, api_style: e.target.value })}
             >
-              <option value="openai">OpenAI-kompatibilis (LM Studio, llama.cpp, vLLM, Ollama /v1)</option>
-              <option value="ollama">Ollama natív (/api/chat)</option>
+              {form.kind === "text" && (
+                <>
+                  <option value="openai">OpenAI-kompatibilis (LM Studio, llama.cpp, vLLM, Ollama /v1)</option>
+                  <option value="ollama">Ollama natív (/api/chat)</option>
+                </>
+              )}
+              {form.kind === "image" && (
+                <>
+                  <option value="a1111">Stable Diffusion WebUI (AUTOMATIC1111)</option>
+                  <option value="openai">OpenAI-kompatibilis képgenerálás (/v1/images/generations)</option>
+                  <option value="apex_media">Saját híd (ComfyUI wrapper, /generate)</option>
+                </>
+              )}
+              {form.kind === "video" && (
+                <option value="apex_media">Saját videó híd (/generate)</option>
+              )}
             </select>
           </div>
           <div>
@@ -221,7 +259,9 @@ export default function AdminLocalAiTab() {
                     </Badge>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground break-all">{ep.base_url} · {ep.model} · {ep.api_style}</p>
+                <p className="text-xs text-muted-foreground break-all">
+                  {ep.kind === "image" ? "Kép" : ep.kind === "video" ? "Videó" : "Szöveg"} · {ep.base_url} · {ep.model} · {ep.api_style}
+                </p>
                 <p className="text-xs text-muted-foreground">
                   Sikeres: {ep.success_count ?? 0} · Hibás: {ep.failure_count ?? 0}
                   {ep.avg_latency_ms ? ` · Átlag válaszidő: ${Math.round(Number(ep.avg_latency_ms))} ms` : ""}
@@ -247,6 +287,8 @@ export default function AdminLocalAiTab() {
           ))}
         </CardContent>
       </Card>
+
+      <AiMediaStudio title="AI kép és videó készítő (teszt)" />
 
       <Card>
         <CardHeader><CardTitle className="text-base">Hogyan indíts ingyen saját AI-t?</CardTitle></CardHeader>
