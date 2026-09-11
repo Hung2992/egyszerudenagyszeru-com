@@ -68,22 +68,22 @@ V. HASZNÁLATI KERETEK ÉS KORLÁTOK
 4. Harmadik felek költségei és díjai (pl. távközlési szolgáltató, fizetési szolgáltató, domain-regisztrátor) nem részei a partneri részesedésnek, azokat a Partner viseli.
 
 VI. PARTNERI RÉSZESEDÉSI MODELL ÉS ELSZÁMOLÁS
-1. A Partner az együttműködés keretében a biztosított eszközöket, rendszereket és szolgáltatásokat használhatja, amelyek révén saját tevékenységét és bevételtermelő működését folytathatja. Az együttműködés ellenértéke nem fix szolgáltatási vagy használati díj, hanem kizárólag partneri részesedési modell alapján kerül meghatározásra: az Üzemeltető a Partner által elért, elszámolási alapot képező bevételből részesedik. Ahol jelen szerződés vagy annak melléklete bármely helyen díjat, ellenértéket vagy fizetendő összeget említ az Üzemeltető javára, azon a jelen VI. pont szerinti partneri részesedést kell érteni. A részesedési rendszer célja, hogy a Partner számára az együttműködés induló szakaszában, alacsonyabb forgalom mellett is kiszámítható és fenntartható feltételeket biztosítson, miközben magasabb bevétel esetén a partneri részesedés előre meghatározott és átlátható módon alakul.
+1. A Partner az együttműködés keretében a biztosított eszközöket, rendszereket és szolgáltatásokat használhatja, amelyek révén saját tevékenységét és bevételtermelő működését folytathatja. Az együttműködés ellenértéke nem fix szolgáltatási vagy használati díj, hanem kizárólag partneri részesedési modell alapján kerül meghatározásra: az Üzemeltető a Partner által elért, elszámolási alapot képező bevételből részesedik. Ahol jelen szerződés vagy annak melléklete bármely helyen díjat, ellenértéket vagy fizetendő összeget említ az Üzemeltető javára, azon a jelen VI. pont szerinti partneri részesedést kell érteni.
 2. A Partner az Üzemeltető részére a II.4. pont szerinti elszámolási alap után partneri részesedést teljesít, az alábbiak szerint:
    a) 1 000 000 Ft elszámolási alapig: 5 százalék partneri részesedés (legfeljebb 50 000 Ft);
-   b) 1 000 000 Ft feletti elszámolási alap esetén: az első 1 000 000 Ft után 50 000 Ft partneri részesedés, ezt követően minden megkezdett további 1 000 000 Ft után további 10 000 Ft fix összegű (nem százalékos) partneri részesedés.
-3. A számítás képlete: ha az elszámolási alap (A) legfeljebb 1 000 000 Ft, a részesedés = A x 5 százalék. Ha A nagyobb, mint 1 000 000 Ft, a részesedés = 50 000 Ft + FELFELÉ KEREKÍTVE((A - 1 000 000) / 1 000 000) x 10 000 Ft. A "megkezdett millió" azt jelenti, hogy az 1 000 000 Ft feletti rész minden megkezdett (nem feltétlenül teljes) egymillió forintja után jár a 10 000 Ft.
+   b) 1 000 000 Ft feletti elszámolási alap esetén: 10 000 Ft partneri részesedés az első megkezdett 1 000 000 Ft feletti rész után, és minden további megkezdett 1 000 000 Ft után további 10 000 Ft fix összegű (nem százalékos) partneri részesedés.
+3. A számítás képlete: ha az elszámolási alap (A) legfeljebb 1 000 000 Ft, a részesedés = A x 5 százalék. Ha A nagyobb, mint 1 000 000 Ft, a részesedés = FELFELÉ KEREKÍTVE((A - 1 000 000) / 1 000 000) x 10 000 Ft. A "megkezdett millió" azt jelenti, hogy az 1 000 000 Ft feletti rész minden megkezdett (nem feltétlenül teljes) egymillió forintja után jár a 10 000 Ft; az első ilyen megkezdett millió után is 10 000 Ft illeti meg az Üzemeltetőt.
 4. Számítási példák (éves göngyölített elszámolási alapra):
    • 400 000 Ft → 400 000 x 5 százalék = 20 000 Ft;
-   • 1 000 000 Ft → 1 000 000 x 5 százalék = 50 000 Ft (a sáv felső határa, még nem indul új millió);
-   • 1 000 001 Ft → 50 000 Ft + 10 000 Ft (1. megkezdett millió) = 60 000 Ft;
-   • 1 200 000 Ft → 50 000 Ft + 10 000 Ft = 60 000 Ft;
-   • 1 999 999 Ft → 50 000 Ft + 10 000 Ft = 60 000 Ft;
-   • 2 000 000 Ft → 50 000 Ft + 10 000 Ft = 60 000 Ft (a 2 000 000 Ft még az 1. megkezdett millió utolsó forintja);
-   • 2 000 001 Ft → 50 000 Ft + 20 000 Ft = 70 000 Ft (itt indul a 2. megkezdett millió);
-   • 5 000 000 Ft → 50 000 Ft + 40 000 Ft = 90 000 Ft;
-   • 10 000 000 Ft → 50 000 Ft + 90 000 Ft = 140 000 Ft.
-5. A felek rögzítik, hogy az 1 000 000 Ft és 1 000 001 Ft közötti 10 000 Ft-os, illetve a 2 000 000 Ft és 2 000 001 Ft közötti további 10 000 Ft-os lépcső a felek tudatos, kifejezetten elfogadott megállapodása; a küszöbnél jelentkező ugrás nem minősül aránytalanságnak, mert felfelé korlátos (millióként legfeljebb 10 000 Ft) és a részesedés az elszámolási alap 5 százalékát összességében soha nem haladja meg.
+   • 1 000 000 Ft → 1 000 000 x 5 százalék = 50 000 Ft (az 5 százalékos sáv felső határa);
+   • 1 000 001 Ft → 10 000 Ft (az 1 000 000 Ft feletti első megkezdett millió);
+   • 1 200 000 Ft → 10 000 Ft;
+   • 1 999 999 Ft → 10 000 Ft;
+   • 2 000 000 Ft → 10 000 Ft (még az első megkezdett millió végösszege);
+   • 2 000 001 Ft → 20 000 Ft (a második megkezdett millió indul);
+   • 5 000 000 Ft → 40 000 Ft;
+   • 10 000 000 Ft → 90 000 Ft.
+5. A felek rögzítik, hogy az 1 000 000 Ft feletti részesedés 10 000 Ft-ról indul, és minden megkezdett további millió 10 000 Ft-tal növekszik. Az 1 000 000 Ft és 1 000 001 Ft közötti eltérés a felek tudatos, kifejezetten elfogadott megállapodása, amelynek oka, hogy az 1 000 000 Ft-ig terjedő sáv százalékos, míg azt követően fix összegű részesedési modell érvényesül; ez a modell a nagyobb forgalom esetén kiszámítható, korlátos részesedést biztosít.
 6. A b) pont szerinti 10 000 Ft rögzített, forintban meghatározott összeg, nem százalékos részesedés.
 7. A részesedés összege nettó összeg; az Üzemeltető a mindenkori jogszabályok szerinti ÁFÁ-t felszámítja.
 8. Az Üzemeltető a részesedést jogosult a Partner részére fizetendő kifizetésből levonni, vagy külön számlázni. Minden elszámolásról tételes, letölthető kimutatás készül a Partner Központban.
