@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import { ExternalLink, Search, ShieldCheck, Store, Users } from "lucide-react";
 import PartnerFeatureAnnouncement from "./PartnerFeatureAnnouncement";
 import PartnerBookingsPanel from "./PartnerBookingsPanel";
+import AdminPartnerNewsletterPanel from "./AdminPartnerNewsletterPanel";
 
 interface Row {
   id: string;
@@ -161,6 +162,8 @@ const AdminPartnerManagerTab = () => {
       <PartnerFeatureAnnouncement />
 
       <PartnerBookingsPanel partnerNames={partnerNames} />
+
+      <AdminPartnerNewsletterPanel partnerNames={partnerNames} />
 
       <Card className="rounded-none p-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
