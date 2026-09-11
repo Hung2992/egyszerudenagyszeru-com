@@ -54,10 +54,12 @@ const PartnerFinanceTab = ({ partnerId }: Props) => {
     const gross = orders.reduce((s, o) => s + Number(o.total_huf || 0), 0);
     const payout = orders.reduce((s, o) => s + Number(o.partner_payout_huf || 0), 0);
     const fee = orders.reduce((s, o) => s + Number(o.platform_fee_huf || Math.max(0, Number(o.total_huf || 0) - Number(o.partner_payout_huf || 0))), 0);
+    const rentalFee = calculatePartnerRentalFee(gross);
+    const netAfterRental = Math.max(0, payout - rentalFee);
     const prevGross = prevOrders.reduce((s, o) => s + Number(o.total_huf || 0), 0);
     const growth = prevGross > 0 ? ((gross - prevGross) / prevGross) * 100 : null;
     const avg = orders.length ? gross / orders.length : 0;
-    return { gross, payout, fee, prevGross, growth, avg, count: orders.length };
+    return { gross, payout, fee, rentalFee, netAfterRental, prevGross, growth, avg, count: orders.length };
   }, [orders, prevOrders]);
 
   const ranked = useMemo(() => {
