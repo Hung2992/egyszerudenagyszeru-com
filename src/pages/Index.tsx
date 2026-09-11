@@ -257,8 +257,8 @@ const Index = () => {
 
         <section className="border-y border-accent bg-accent text-accent-foreground">
           <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 px-5 py-14 md:flex-row md:items-center lg:px-8">
-            <div><p className="text-xs font-bold uppercase tracking-[0.2em] opacity-70">Készen állsz?</p><h2 className="mt-2 text-3xl font-bold md:text-5xl">Indítsd el a saját weboldalad és üzleti rendszered.</h2></div>
-            <Button size="lg" className="h-14 rounded-none border border-accent-foreground bg-accent-foreground px-8 text-xs font-bold uppercase tracking-[0.14em] text-accent hover:bg-accent-foreground/90" onClick={goToRegistration}>Regisztráció <ArrowRight /></Button>
+            <div><p className="text-xs font-bold uppercase tracking-[0.2em] opacity-70">Készen állsz?</p><h2 className="mt-2 text-3xl font-bold md:text-5xl">Béreld a teljes digitális rendszered egy helyről.</h2></div>
+            <Button size="lg" className="h-14 rounded-none border border-accent-foreground bg-accent-foreground px-8 text-xs font-bold uppercase tracking-[0.14em] text-accent hover:bg-accent-foreground/90" onClick={goToRegistration}>Saját rendszer indítása <ArrowRight /></Button>
           </div>
         </section>
       </main>
