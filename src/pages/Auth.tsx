@@ -45,10 +45,38 @@ const Auth = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const isAdminMode = mode === "admin";
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setLoading(false);
+      toast({ title: "Hiba", description: translateAuthError(error.message), variant: "destructive" });
+      return;
+    }
+
+    if (isAdminMode) {
+      const userId = data?.user?.id;
+      const { data: isAdmin, error: roleError } = await supabase.rpc("has_role", {
+        _user_id: userId,
+        _role: "admin",
+      });
+      setLoading(false);
+      if (roleError || !isAdmin) {
+        await supabase.auth.signOut();
+        toast({
+          title: "Nincs jogosultság",
+          description: "Ehhez a fiókhoz nem tartozik adminisztrátori hozzáférés.",
+          variant: "destructive",
+        });
+        return;
+      }
+      toast({ title: "Sikeres admin belépés!" });
+      navigate("/admin", { replace: true });
+      return;
+    }
+
     setLoading(false);
-    if (error) toast({ title: "Hiba", description: translateAuthError(error.message), variant: "destructive" });
-    else { toast({ title: "Sikeres bejelentkezés!" }); navigate(redirectPath, { replace: true }); }
+    toast({ title: "Sikeres bejelentkezés!" });
+    navigate(redirectPath, { replace: true });
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
