@@ -1,5 +1,6 @@
 // Partner AI üzleti asszisztens: a partner saját adataiból ad napi javaslatokat és válaszol kérdésekre.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { aiChat } from "../_shared/ai-router.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,22 +12,12 @@ const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
 async function callAI(system: string, user: string, jsonMode: boolean) {
-  const key = Deno.env.get("LOVABLE_API_KEY");
-  if (!key) throw new Error("LOVABLE_API_KEY missing");
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [{ role: "system", content: system }, { role: "user", content: user }],
-      ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
-    }),
+  const { content } = await aiChat({
+    system, user, jsonMode,
+    cloudModel: "google/gemini-3.8-flash",
+    functionName: "partner-business-advisor",
   });
-  if (res.status === 429) throw new Error("rate_limit");
-  if (res.status === 402) throw new Error("credits_exhausted");
-  if (!res.ok) throw new Error(`ai_error_${res.status}: ${await res.text()}`);
-  const j = await res.json();
-  return j.choices?.[0]?.message?.content ?? "";
+  return content;
 }
 
 Deno.serve(async (req) => {

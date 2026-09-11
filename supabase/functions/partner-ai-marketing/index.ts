@@ -1,5 +1,6 @@
 // AI marketing generator: posts, captions, A/B variants, insights via Lovable AI Gateway.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { aiChat } from "../_shared/ai-router.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,23 +11,13 @@ const corsHeaders = {
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-async function callAI(systemPrompt: string, userPrompt: string, model = "google/gemini-2.5-flash") {
-  const key = Deno.env.get("LOVABLE_API_KEY");
-  if (!key) throw new Error("LOVABLE_API_KEY missing");
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
-      response_format: { type: "json_object" },
-    }),
+async function callAI(systemPrompt: string, userPrompt: string, model = "google/gemini-3.8-flash") {
+  const { content } = await aiChat({
+    system: systemPrompt, user: userPrompt, jsonMode: true,
+    cloudModel: model,
+    functionName: "partner-ai-marketing",
   });
-  if (res.status === 429) throw new Error("rate_limit");
-  if (res.status === 402) throw new Error("credits_exhausted");
-  if (!res.ok) throw new Error(`ai_error_${res.status}`);
-  const j = await res.json();
-  const txt = j.choices?.[0]?.message?.content ?? "{}";
+  const txt = content || "{}";
   try { return JSON.parse(txt); } catch { return { raw: txt }; }
 }
 

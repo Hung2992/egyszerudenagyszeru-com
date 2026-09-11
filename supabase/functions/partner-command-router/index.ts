@@ -1,5 +1,6 @@
 // Partner AI parancsmező: felismeri a partner szándékát, adatot gyűjt, választ ad és a megfelelő fülre irányít.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { aiChat } from "../_shared/ai-router.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,25 +12,12 @@ const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
 async function callAI(system: string, user: string) {
-  const key = Deno.env.get("LOVABLE_API_KEY");
-  if (!key) throw new Error("LOVABLE_API_KEY missing");
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-    body: JSON.stringify({
-      model: "google/gemini-3.6-flash",
-      messages: [{ role: "system", content: system }, { role: "user", content: user }],
-      response_format: { type: "json_object" },
-    }),
+  const { content } = await aiChat({
+    system, user, jsonMode: true,
+    cloudModel: "google/gemini-3.8-flash",
+    functionName: "partner-command-router",
   });
-  if (res.status === 429) throw new Error("rate_limit");
-  if (res.status === 402) throw new Error("credits_exhausted");
-  if (res.status === 403) throw new Error("ai_blocked");
-  if (res.status === 401) throw new Error("ai_unauthorized");
-  if (!res.ok) throw new Error(`ai_error_${res.status}`);
-
-  const j = await res.json();
-  return j.choices?.[0]?.message?.content ?? "";
+  return content;
 }
 
 // Melyik fülre navigáljunk az adott szándéknál
