@@ -190,9 +190,9 @@ const Index = () => {
 
         <section id="modulok" className="mx-auto max-w-7xl px-5 py-20 md:py-28 lg:px-8">
           <div className="mb-12 max-w-2xl">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Egyszerű de Nagyszerű szoftver</p>
-            <h2 className="mt-4 text-4xl font-bold leading-tight md:text-6xl">Nem csak weboldal.<br /><span className="text-muted-foreground">A teljes vállalkozásod rendszere.</span></h2>
-            <p className="mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground">A rendszer nem áll meg a honlap elkészítésénél. Összeköti az online értékesítést, az ügyfeleket, a napi feladatokat, a marketinget és az AI automatizálást.</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Modulok végpontig</p>
+            <h2 className="mt-4 text-4xl font-bold leading-tight md:text-6xl">Nem weboldalkészítő.<br /><span className="text-muted-foreground">Komplett üzleti szoftver.</span></h2>
+            <p className="mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground">Minden modul ugyanabban a rendszerben fut: egyetlen admin, egyetlen ügyfélbázis, egyetlen bevételi- és marketingadat. Nincs szükség külön Shopify-ra, Webflow-ra, Calendly-re, Mailchimpre vagy CRM-re.</p>
           </div>
 
           <div className="grid gap-px overflow-hidden border border-border bg-border md:grid-cols-3">
