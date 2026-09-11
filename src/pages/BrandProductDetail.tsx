@@ -155,7 +155,7 @@ const BrandProductDetail = () => {
             </div>
           )}
 
-          {product.product_type === "digital" && (
+          {isDigital && (
             <div className="text-xs opacity-70 space-y-1">
               {a.delivery_method && <div>Átadás: {a.delivery_method === "file" ? "letölthető fájl" : a.delivery_method === "link" ? "hozzáférési link" : a.delivery_method === "license" ? "licenckulcs" : "e-mailben"}</div>}
               {a.digital_version && <div>Verzió: {a.digital_version}</div>}
@@ -167,7 +167,7 @@ const BrandProductDetail = () => {
             </div>
           )}
 
-          {product.product_type === "course" && (
+          {isCourse && (
             <div className="text-xs opacity-70 space-y-1">
               {a.course_duration && <div>Időtartam: {a.course_duration}</div>}
               {a.course_level && <div>Szint: {a.course_level}</div>}
