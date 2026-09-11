@@ -3358,6 +3358,65 @@ export type Database = {
           },
         ]
       }
+      comm_provider_accounts: {
+        Row: {
+          active: boolean
+          channels: string[]
+          created_at: string
+          credentials_encrypted: string | null
+          default_sender: string | null
+          driver: string
+          endpoint: string | null
+          id: string
+          label: string
+          last_error: string | null
+          last_ok_at: string | null
+          partner_id: string | null
+          priority: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          channels?: string[]
+          created_at?: string
+          credentials_encrypted?: string | null
+          default_sender?: string | null
+          driver: string
+          endpoint?: string | null
+          id?: string
+          label: string
+          last_error?: string | null
+          last_ok_at?: string | null
+          partner_id?: string | null
+          priority?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          channels?: string[]
+          created_at?: string
+          credentials_encrypted?: string | null
+          default_sender?: string | null
+          driver?: string
+          endpoint?: string | null
+          id?: string
+          label?: string
+          last_error?: string | null
+          last_ok_at?: string | null
+          partner_id?: string | null
+          priority?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comm_provider_accounts_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comm_providers: {
         Row: {
           active: boolean
@@ -3393,6 +3452,50 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      comm_sender_numbers: {
+        Row: {
+          active: boolean
+          channel: string
+          created_at: string
+          id: string
+          label: string | null
+          partner_id: string | null
+          sender: string
+          updated_at: string
+          verified: boolean
+        }
+        Insert: {
+          active?: boolean
+          channel: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          partner_id?: string | null
+          sender: string
+          updated_at?: string
+          verified?: boolean
+        }
+        Update: {
+          active?: boolean
+          channel?: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          partner_id?: string | null
+          sender?: string
+          updated_at?: string
+          verified?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comm_sender_numbers_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       comm_usage: {
         Row: {
