@@ -2,6 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { requireInternalOrAdmin, rateLimitDb } from "../_shared/internal-auth.ts";
 import { gatewaySend } from "../_shared/gateway-drivers.ts";
+import { isOptedOut } from "../_shared/comm-core.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -30,6 +31,12 @@ function render(body: string, vars: Record<string, unknown>) {
  * kimenő listán marad `no_provider` állapotban — soha nem jelentünk hamis kézbesítést.
  */
 async function deliver(channel: Channel, to: string, body: string, partnerId?: string | null) {
+  // 0) Opt-out: leiratkozott címzettnek soha nem küldünk (STOP kezelés).
+  if (channel === "sms" || channel === "whatsapp" || channel === "voice") {
+    if (await isOptedOut(admin(), channel, to, partnerId ?? null)) {
+      return { status: "failed", provider: null, error: "opted_out" };
+    }
+  }
   // 1) Saját APEX átjáró: partner saját szolgáltatói fiókjai, majd a platform fiókjai.
   if (channel !== "email") {
     const own = await gatewaySend(admin(), {
