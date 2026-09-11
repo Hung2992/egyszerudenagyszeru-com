@@ -123,6 +123,44 @@ async function generateSpeech(
   }
 }
 
+const VOICES = ["alloy", "verse", "sage", "ballad", "coral"];
+const STYLES: Record<string, string> = {
+  cinematic: "cinematic, dramatic lighting, shallow depth of field, high contrast",
+  minimal: "clean minimal studio look, soft even lighting, lots of negative space",
+  documentary: "natural documentary photography, warm daylight, authentic real-life feel",
+};
+
+async function buildSceneAssets(
+  key: string,
+  supabase: any,
+  vid: any,
+  scenes: any[],
+  voice: string,
+  styleKey: string,
+) {
+  const styleHint = STYLES[styleKey] || STYLES.cinematic;
+  const out: any[] = [];
+  for (let i = 0; i < scenes.length; i++) {
+    const s = scenes[i] || {};
+    const visual = `${String(s.visual || vid.thumbnail_prompt || "modern business scene")}. Style: ${styleHint}`;
+    const line = String(s.voiceover || "").trim();
+    const [imageUrl, audio] = await Promise.all([
+      generateImage(key, visual, vid.platform, supabase),
+      line ? generateSpeech(key, line, voice, supabase) : Promise.resolve(null),
+    ]);
+    out.push({
+      scene: i + 1,
+      seconds: s.seconds || null,
+      text_overlay: s.text_overlay || null,
+      voiceover: line || null,
+      image_url: imageUrl,
+      audio_url: audio?.url || null,
+    });
+  }
+  return out;
+}
+
+
 async function scorePost(key: string, post: any) {
   const sys = `Te egy virális social media stratéga vagy. Elemezd EZT a poszttervet. Válasz CSAK JSON: {"viral_score":0-100,"hook_strength":0-100,"cta_strength":0-100,"clarity":0-100,"emotional_pull":0-100,"weaknesses":["..."],"improvements":["..."],"predicted_reach":"low|mid|high|viral"}`;
   const usr = `Platform: ${post.platform}\nHook: ${post.hook}\nBody: ${post.body}\nHashtags: ${(post.hashtags || []).join(" ")}\nCTA: ${post.cta || "—"}`;
@@ -405,8 +443,8 @@ Adj minden napra minden platformra egy posztot. Ez ${days * platforms.length} po
     if (action === "video_assets") {
       const videoId = String(body?.video_id || "");
       if (!/^[0-9a-f-]{36}$/i.test(videoId)) return json({ error: "video_id required" }, 400, req);
-      const voice = ["alloy", "verse", "sage", "ballad", "coral"].includes(String(body?.voice))
-        ? String(body.voice) : "alloy";
+      const voice = VOICES.includes(String(body?.voice)) ? String(body.voice) : "alloy";
+      const styleKey = STYLES[String(body?.style)] ? String(body.style) : "cinematic";
 
       const { data: vid } = await supabase
         .from("partner_recruitment_videos").select("*").eq("id", videoId).maybeSingle();
@@ -415,24 +453,7 @@ Adj minden napra minden platformra egy posztot. Ez ${days * platforms.length} po
       const scenes: any[] = Array.isArray(vid.script) ? vid.script.slice(0, 8) : [];
       if (!scenes.length) return json({ error: "no_script" }, 400, req);
 
-      const out: any[] = [];
-      for (let i = 0; i < scenes.length; i++) {
-        const s = scenes[i] || {};
-        const visual = String(s.visual || vid.thumbnail_prompt || "modern business scene");
-        const line = String(s.voiceover || "").trim();
-        const [imageUrl, audio] = await Promise.all([
-          generateImage(LOVABLE_API_KEY, visual, vid.platform, supabase),
-          line ? generateSpeech(LOVABLE_API_KEY, line, voice, supabase) : Promise.resolve(null),
-        ]);
-        out.push({
-          scene: i + 1,
-          seconds: s.seconds || null,
-          text_overlay: s.text_overlay || null,
-          voiceover: line || null,
-          image_url: imageUrl,
-          audio_url: audio?.url || null,
-        });
-      }
+      const out = await buildSceneAssets(LOVABLE_API_KEY, supabase, vid, scenes, voice, styleKey);
 
       const fullNarration = String(vid.narration || scenes.map((s: any) => s.voiceover).filter(Boolean).join(" ")).trim();
       const full = fullNarration ? await generateSpeech(LOVABLE_API_KEY, fullNarration, voice, supabase) : null;
@@ -449,6 +470,93 @@ Adj minden napra minden platformra egy posztot. Ez ${days * platforms.length} po
       if (updErr) return json({ error: updErr.message }, 500, req);
       return json({ ok: true, video: upd }, 200, req);
     }
+
+    // ============ SCENE AUDIO (szerkesztett narráció újragenerálása) ============
+    if (action === "scene_audio") {
+      const videoId = String(body?.video_id || "");
+      if (!/^[0-9a-f-]{36}$/i.test(videoId)) return json({ error: "video_id required" }, 400, req);
+      const sceneNo = Number(body?.scene);
+      const text = String(body?.text || "").trim();
+      const voice = VOICES.includes(String(body?.voice)) ? String(body.voice) : "alloy";
+      const variantKey = body?.variant_key ? String(body.variant_key) : null;
+      if (!Number.isFinite(sceneNo) || sceneNo < 1) return json({ error: "scene required" }, 400, req);
+      if (text.length < 2 || text.length > 1500) return json({ error: "A narráció 2–1500 karakter legyen." }, 400, req);
+
+      const { data: vid } = await supabase
+        .from("partner_recruitment_videos").select("*").eq("id", videoId).maybeSingle();
+      if (!vid) return json({ error: "not_found" }, 404, req);
+
+      const audio = await generateSpeech(LOVABLE_API_KEY, text, voice, supabase);
+      if (!audio) return json({ error: "tts_failed", message: "A hang generálása most nem sikerült." }, 502, req);
+
+      const patch = (arr: any[]) =>
+        (Array.isArray(arr) ? arr : []).map((s: any) =>
+          Number(s?.scene) === sceneNo ? { ...s, voiceover: text, audio_url: audio.url } : s);
+
+      const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
+      if (variantKey) {
+        const variants = (Array.isArray(vid.variants) ? vid.variants : []).map((v: any) =>
+          String(v?.key) === variantKey ? { ...v, scenes: patch(v.scenes) } : v);
+        update.variants = variants;
+      } else {
+        update.scene_images = patch(vid.scene_images);
+      }
+
+      const { data: upd, error: updErr } = await supabase
+        .from("partner_recruitment_videos").update(update).eq("id", videoId).select().single();
+      if (updErr) return json({ error: updErr.message }, 500, req);
+      return json({ ok: true, audio_url: audio.url, video: upd }, 200, req);
+    }
+
+    // ============ TIMING (vágás / időzítés mentése) ============
+    if (action === "video_timing") {
+      const videoId = String(body?.video_id || "");
+      if (!/^[0-9a-f-]{36}$/i.test(videoId)) return json({ error: "video_id required" }, 400, req);
+      const timing = body?.timing && typeof body.timing === "object" ? body.timing : {};
+      const { error: tErr } = await supabase
+        .from("partner_recruitment_videos")
+        .update({ timing, updated_at: new Date().toISOString() })
+        .eq("id", videoId);
+      if (tErr) return json({ error: tErr.message }, 500, req);
+      return json({ ok: true }, 200, req);
+    }
+
+    // ============ VIDEO VARIANTS (több változat: eltérő hang + képi stílus) ============
+    if (action === "video_variants") {
+      const videoId = String(body?.video_id || "");
+      if (!/^[0-9a-f-]{36}$/i.test(videoId)) return json({ error: "video_id required" }, 400, req);
+      const count = Math.min(3, Math.max(1, Number(body?.count) || 2));
+
+      const { data: vid } = await supabase
+        .from("partner_recruitment_videos").select("*").eq("id", videoId).maybeSingle();
+      if (!vid) return json({ error: "not_found" }, 404, req);
+      const scenes: any[] = Array.isArray(vid.script) ? vid.script.slice(0, 6) : [];
+      if (!scenes.length) return json({ error: "no_script" }, 400, req);
+
+      const presets = [
+        { key: "energetic", label: "Energikus / mozis", voice: "verse", style: "cinematic" },
+        { key: "calm", label: "Nyugodt / letisztult", voice: "sage", style: "minimal" },
+        { key: "warm", label: "Meleg / dokumentum", voice: "ballad", style: "documentary" },
+      ].slice(0, count);
+
+      const built: any[] = [];
+      for (const p of presets) {
+        const sc = await buildSceneAssets(LOVABLE_API_KEY, supabase, vid, scenes, p.voice, p.style);
+        built.push({ ...p, scenes: sc, created_at: new Date().toISOString() });
+      }
+
+      const existing = Array.isArray(vid.variants) ? vid.variants : [];
+      const merged = [...existing.filter((v: any) => !built.some((b) => b.key === v?.key)), ...built];
+
+      const { data: upd, error: vErr } = await supabase
+        .from("partner_recruitment_videos")
+        .update({ variants: merged, status: "assets_ready", updated_at: new Date().toISOString() })
+        .eq("id", videoId).select().single();
+      if (vErr) return json({ error: vErr.message }, 500, req);
+      return json({ ok: true, video: upd }, 200, req);
+    }
+
+
 
     // ============ MULTI-LANGUAGE TRANSLATE ============
     if (action === "translate_post") {

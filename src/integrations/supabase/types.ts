@@ -8319,7 +8319,9 @@ export type Database = {
           storyboard: Json | null
           thumbnail_prompt: string | null
           thumbnail_url: string | null
+          timing: Json
           updated_at: string
+          variants: Json
           video_url: string | null
         }
         Insert: {
@@ -8340,7 +8342,9 @@ export type Database = {
           storyboard?: Json | null
           thumbnail_prompt?: string | null
           thumbnail_url?: string | null
+          timing?: Json
           updated_at?: string
+          variants?: Json
           video_url?: string | null
         }
         Update: {
@@ -8361,7 +8365,9 @@ export type Database = {
           storyboard?: Json | null
           thumbnail_prompt?: string | null
           thumbnail_url?: string | null
+          timing?: Json
           updated_at?: string
+          variants?: Json
           video_url?: string | null
         }
         Relationships: [
