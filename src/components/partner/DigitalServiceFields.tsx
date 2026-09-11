@@ -20,7 +20,48 @@ const DigitalServiceFields = ({ fulfillment, partnerId, attributes, setAttribute
   const [uploading, setUploading] = useState(false);
   const set = (k: string, v: any) => setAttributes({ ...attributes, [k]: v });
 
-  if (fulfillment === "physical") return null;
+  if (fulfillment === "physical") {
+    return (
+      <div className="border border-foreground/20 p-3 space-y-3">
+        <Label className="text-sm font-bold uppercase tracking-wider">Szállítási beállítások</Label>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label className="text-xs">Szállítási idő</Label>
+            <Input className="rounded-none" value={attributes.shipping_time || ""} onChange={(e) => set("shipping_time", e.target.value)} placeholder="pl. 2-3 munkanap" />
+          </div>
+          <div>
+            <Label className="text-xs">Feldolgozási idő</Label>
+            <Input className="rounded-none" value={attributes.processing_time || ""} onChange={(e) => set("processing_time", e.target.value)} placeholder="pl. 1 munkanap" />
+          </div>
+          <div>
+            <Label className="text-xs">Szállítási díj (Ft)</Label>
+            <Input type="number" className="rounded-none" value={attributes.shipping_fee_huf ?? ""} onChange={(e) => set("shipping_fee_huf", e.target.value === "" ? "" : Number(e.target.value))} placeholder="pl. 1490" />
+          </div>
+          <div>
+            <Label className="text-xs">Ingyenes szállítás felett (Ft)</Label>
+            <Input type="number" className="rounded-none" value={attributes.free_shipping_over_huf ?? ""} onChange={(e) => set("free_shipping_over_huf", e.target.value === "" ? "" : Number(e.target.value))} placeholder="pl. 20000" />
+          </div>
+          <div>
+            <Label className="text-xs">Futárszolgálat</Label>
+            <Input className="rounded-none" value={attributes.shipping_carrier || ""} onChange={(e) => set("shipping_carrier", e.target.value)} placeholder="pl. GLS, Foxpost" />
+          </div>
+          <div>
+            <Label className="text-xs">Átvételi lehetőségek</Label>
+            <Input className="rounded-none" value={attributes.shipping_methods || ""} onChange={(e) => set("shipping_methods", e.target.value)} placeholder="pl. házhozszállítás, csomagpont" />
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch checked={!!attributes.cod_available} onCheckedChange={(v) => set("cod_available", v)} />
+          <span className="text-xs">Utánvét lehetséges</span>
+        </div>
+        <div>
+          <Label className="text-xs">Szállítási megjegyzés</Label>
+          <Textarea className="rounded-none" rows={2} value={attributes.shipping_note || ""} onChange={(e) => set("shipping_note", e.target.value)} placeholder="pl. 14:00 után leadott rendelés a következő nap indul" />
+        </div>
+      </div>
+    );
+  }
+
 
 
   const uploadFile = async (file: File) => {
