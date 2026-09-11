@@ -223,13 +223,17 @@ const RecruitmentVideoRenderer = ({ video, onUpdated }: Props) => {
       let rec: MediaRecorder | null = null;
       let done: Promise<Blob> | null = null;
       if (recording && dest) {
-        const stream = canvas.captureStream(30);
+        const stream = canvas.captureStream(60);
         dest.stream.getAudioTracks().forEach((t) => stream.addTrack(t));
         const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
           ? "video/webm;codecs=vp9,opus"
           : "video/webm";
         const chunks: BlobPart[] = [];
-        rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 4_000_000 });
+        rec = new MediaRecorder(stream, {
+          mimeType: mime,
+          videoBitsPerSecond: 12_000_000,
+          audioBitsPerSecond: 192_000,
+        });
         rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
         done = new Promise<Blob>((resolve) => {
           rec!.onstop = () => resolve(new Blob(chunks, { type: "video/webm" }));
