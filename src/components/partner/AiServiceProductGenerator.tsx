@@ -130,7 +130,7 @@ const AiServiceProductGenerator = ({ partnerId, onCreated }: Props) => {
             </div>
           )}
           <p className="text-[11px] text-muted-foreground">
-            A termék piszkozatként mentve – a Termékek fülön nézd át, majd küldd jóváhagyásra.
+            A termék piszkozatként mentve – a Termékek fülön nézd át, majd egy kattintással élesítsd.
           </p>
         </div>
       )}

@@ -16,6 +16,13 @@ const BrandProductDetail = () => {
   const [bookingSaving, setBookingSaving] = useState(false);
   const [bookingDone, setBookingDone] = useState(false);
   const [form, setForm] = useState({ customer_name: "", customer_email: "", customer_phone: "", starts_at: "", notes: "" });
+  const [live, setLive] = useState<{ booked_today: number; next_booking_at: string | null } | null>(null);
+
+  const loadLive = async (productId: string) => {
+    const { data } = await supabase.rpc("public_product_day_status", { _product_id: productId });
+    const row = Array.isArray(data) ? data[0] : data;
+    if (row) setLive(row as any);
+  };
 
   const submitBooking = async () => {
     if (!slug || !productSlug) return;
@@ -39,6 +46,7 @@ const BrandProductDetail = () => {
       return;
     }
     setBookingDone(true);
+    if (product?.id) void loadLive(product.id);
     toast({ title: "Foglalás rögzítve", description: "A visszaigazolást elküldtük e-mailben." });
   };
 
@@ -51,6 +59,7 @@ const BrandProductDetail = () => {
       setProduct(p);
       setLoading(false);
       if (p) {
+        void loadLive(p.id);
         await supabase.from("partner_products").update({ view_count: (p.view_count || 0) + 1 }).eq("id", p.id);
       }
     })();
@@ -186,6 +195,7 @@ const BrandProductDetail = () => {
                 {dayStatus.open ? `Ma foglalható · ${dayStatus.from}–${dayStatus.to}` : "Ma nem foglalható"}
               </div>
               <div className="text-xs opacity-70 space-y-1">
+                {live && <div>Mai foglalások: {live.booked_today}{live.next_booking_at ? ` · következő szabad időpont után: ${new Date(live.next_booking_at).toLocaleString("hu-HU", { dateStyle: "short", timeStyle: "short" })}` : ""}</div>}
                 <div>Nyitva: {dayStatus.daysLabel}</div>
                 {a.service_duration && <div>Egy alkalom: {a.service_duration}</div>}
                 {a.min_notice_hours && <div>Legkorábban {a.min_notice_hours} órával előre foglalható</div>}
