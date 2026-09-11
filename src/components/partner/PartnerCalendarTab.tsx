@@ -120,7 +120,23 @@ const PartnerCalendarTab = ({ partnerId }: { partnerId: string }) => {
   useEffect(() => {
     supabase.from("partner_products").select("id, title").eq("partner_id", partnerId).order("created_at", { ascending: false })
       .then(({ data }) => setProducts(data || []));
+    supabase.from("partners").select("company_name, full_name, email, phone").eq("id", partnerId).maybeSingle()
+      .then(({ data }) => setPartnerInfo(data || {}));
   }, [partnerId]);
+
+  const brandName = partnerInfo.company_name || partnerInfo.full_name || "Partner";
+  const titleOf = (productId: string | null) =>
+    products.find(p => p.id === productId)?.title || "Egyeztetett időpont";
+
+  const sendMail = async (a: Appt) => {
+    if (!a.customer_email) { toast({ title: "Nincs e-mail cím az ügyfélnél", variant: "destructive" }); return; }
+    setSendingId(a.id);
+    const res = await sendConfirmation(a, brandName, titleOf(a.product_id), partnerInfo.email, partnerInfo.phone);
+    setSendingId(null);
+    if (res.skipped) return;
+    if (res.error) { toast({ title: "A levél nem ment ki", description: res.error.message, variant: "destructive" }); return; }
+    toast({ title: "Visszaigazoló e-mail elküldve", description: a.customer_email });
+  };
 
   const byDay = useMemo(() => {
     const m = new Map<string, Appt[]>();
