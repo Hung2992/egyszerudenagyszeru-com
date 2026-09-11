@@ -261,10 +261,10 @@ export async function isBlocked(
 async function throughputOk(db: SupabaseClient, accountId: string, maxTps: number): Promise<boolean> {
   try {
     const { data, error } = await db.rpc("comm_hit_throughput", { _account: accountId, _max_tps: maxTps });
-    if (error) return true;
+    if (error) return false; // hiba esetén inkább ne küldjön (fail-closed)
     return data !== false;
   } catch {
-    return true;
+    return false;
   }
 }
 
