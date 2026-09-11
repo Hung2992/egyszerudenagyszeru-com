@@ -16,6 +16,7 @@ import PartnerDomainTab from "./PartnerDomainTab";
 import StorefrontVersionsTab from "./StorefrontVersionsTab";
 import StorefrontLivePreview from "./StorefrontLivePreview";
 import AiWebCreatorChat from "./AiWebCreatorChat";
+import PartnerPagesTab from "./PartnerPagesTab";
 
 
 import PreviewTokenManager from "./PreviewTokenManager";
