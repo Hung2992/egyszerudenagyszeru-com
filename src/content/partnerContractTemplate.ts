@@ -1,4 +1,4 @@
-// Nyilvános partneri szerződéssablon (v2.1) – ugyanaz a szöveg, amelyet a
+// Nyilvános partneri szerződéssablon (v2.2) – ugyanaz a szöveg, amelyet a
 // partner_contracts generáló DB függvény a KYC jóváhagyás után aláírásra ad ki.
 // A zárójelben szereplő adatok az aláíráskor töltődnek ki a konkrét adatokkal.
 
@@ -6,7 +6,7 @@ export const PARTNER_CONTRACT_TEMPLATE = `PARTNERI EGYÜTTMŰKÖDÉSI SZERZŐDÉ
 
 Szerződésszám: EDN-[ééééhhnn]-[azonosító]
 Kelt: [az aláíráskor]
-Szerződésverzió: v2.1
+Szerződésverzió: v2.2
 Cégadatok verzió: v[üzemeltetői verzió]
 
 I. SZERZŐDŐ FELEK
