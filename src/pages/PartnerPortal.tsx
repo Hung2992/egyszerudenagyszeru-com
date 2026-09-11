@@ -434,7 +434,7 @@ const PartnerPortal = () => {
                   </Button>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground mt-2">Minden teljesített rendelés után <strong>{fmt(partner.commission_per_order_amount)}</strong> jutalék.</p>
+              <p className="text-xs text-muted-foreground mt-2">Bérleti díj: 0–1M bevételnél 5%, 1–5M-nél 10 000 Ft, 5M felett 50 000 Ft + 10 000 Ft / további 1M.</p>
               {referralLink && (
                 <p className="text-[10px] text-muted-foreground mt-1 font-mono break-all">{referralLink}</p>
               )}

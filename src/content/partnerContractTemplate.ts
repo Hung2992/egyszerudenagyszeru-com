@@ -44,5 +44,14 @@ V. HATÁLYBALÉPÉS
 Jelen szerződés mindkét fél elektronikus aláírásával lép hatályba.
 A szerződés aláírás után lezárt, módosíthatatlan, SHA-256 hash-sel hitelesített.
 
-VI. JOGVITA
+VI. BÉRLETI DÍJ ÉS ELSZÁMOLÁS
+1. A Partner a platform bérleti díját a saját webshopján / márkaoldalán keletkező teljesített és kifizetett bruttó bevétel után fizeti az Üzemeltetőnek az alábbi sávos díjszabás szerint:
+   • 0 Ft-tól 1 000 000 Ft-ig: a bevétel 5%-a;
+   • 1 000 000 Ft-tól 5 000 000 Ft-ig: fix 10 000 Ft;
+   • 5 000 000 Ft felett: fix 50 000 Ft;
+   • 5 000 000 Ft fölött minden megkezdett további 1 000 000 Ft bevétel után további 10 000 Ft.
+2. A bérleti díjat az Üzemeltető jogosult a Partner részére fizetendő kifizetésből levonni, illetve külön számlázni az elszámolási időszak lezárultával.
+3. Az elszámolás alapja a teljesített és kifizetett rendelések, valamint a Partner által a platformon keresztül lebonyolított, bevételt eredményező tranzakciók összesített bruttó összege.
+
+VII. JOGVITA
 Felek jogvitáikat a magyar bíróságok joghatósága alá rendelik.`;
