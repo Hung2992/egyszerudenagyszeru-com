@@ -227,7 +227,7 @@ const Navbar = () => {
               </button>
               {!user && (
                 <Button className="mt-4 w-full rounded-none uppercase tracking-wider text-xs" onClick={() => navigate("/auth")}>
-                  Regisztráció ingyen
+                  Belépés
                 </Button>
               )}
             </nav>
