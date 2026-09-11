@@ -117,6 +117,22 @@ const PartnerCooperationProgress = ({ compact = false }: { compact?: boolean }) 
         })}
       </ol>
 
+      {progress.contractBody ? (
+        <div className="mt-4 border border-border">
+          <div className="flex items-center justify-between gap-2 border-b border-border bg-muted/30 px-3 py-2">
+            <p className="text-xs font-bold uppercase">Szerződés – pontosan ezt írod alá</p>
+            {progress.contractNumber && <p className="text-[10px] font-mono text-muted-foreground">{progress.contractNumber}</p>}
+          </div>
+          <pre className="max-h-72 overflow-auto whitespace-pre-wrap p-4 font-mono text-xs leading-relaxed">
+{progress.contractBody}
+          </pre>
+        </div>
+      ) : (
+        <p className="mt-4 border border-dashed border-border p-3 text-xs text-muted-foreground">
+          A szerződés teljes szövege itt jelenik meg, amint a KYC jóváhagyásra kerül – aláírás előtt mindig elolvashatod.
+        </p>
+      )}
+
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground">
           {active ? "Az együttműködés aktív." : progress.kycStatus === "pending" ? "A KYC ellenőrzése folyamatban van. Értesítést kapsz a döntésről." : progress.partnerSigned ? "A szerződés admin ellenjegyzésére és aktiválásra vár." : "Folytasd a következő lépéssel."}
