@@ -8309,14 +8309,18 @@ export type Database = {
           id: string
           music_suggestion: string | null
           narration: string | null
+          narration_audio_url: string | null
           platform: string
           post_id: string | null
+          rendered_at: string | null
+          scene_images: Json
           script: Json | null
           status: string
           storyboard: Json | null
           thumbnail_prompt: string | null
           thumbnail_url: string | null
           updated_at: string
+          video_url: string | null
         }
         Insert: {
           captions?: string | null
@@ -8326,14 +8330,18 @@ export type Database = {
           id?: string
           music_suggestion?: string | null
           narration?: string | null
+          narration_audio_url?: string | null
           platform: string
           post_id?: string | null
+          rendered_at?: string | null
+          scene_images?: Json
           script?: Json | null
           status?: string
           storyboard?: Json | null
           thumbnail_prompt?: string | null
           thumbnail_url?: string | null
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
           captions?: string | null
@@ -8343,14 +8351,18 @@ export type Database = {
           id?: string
           music_suggestion?: string | null
           narration?: string | null
+          narration_audio_url?: string | null
           platform?: string
           post_id?: string | null
+          rendered_at?: string | null
+          scene_images?: Json
           script?: Json | null
           status?: string
           storyboard?: Json | null
           thumbnail_prompt?: string | null
           thumbnail_url?: string | null
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: [
           {
