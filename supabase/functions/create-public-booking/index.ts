@@ -126,5 +126,5 @@ Deno.serve(async (req) => {
     emailStatus = "failed";
   }
 
-  return json({ success: true, appointment_id: appt.id, duration_min: duration });
+  return json({ success: true, appointment_id: appt.id, duration_min: duration, email: emailStatus });
 });
