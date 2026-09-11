@@ -90,19 +90,22 @@ export function requireScope(ctx: ApiKeyContext, scope: string): Response | null
   return ctx.scopes.includes(scope) ? null : json({ error: "forbidden", required_scope: scope }, 403);
 }
 
-/** Adatbázis-alapú percenkénti korlát kulcsonként. */
+/** Adatbázis-alapú percenkénti korlát kulcsonként (izolátumok között is működik). */
 export async function rateLimitApiKey(
   db: SupabaseClient,
   ctx: ApiKeyContext,
 ): Promise<Response | null> {
-  const bucket = `commapi:${ctx.id}:${Math.floor(Date.now() / 60000)}`;
   try {
-    const { data } = await db.rpc("bump_edge_rate_limit", { _key: bucket, _window_seconds: 60 });
-    if (typeof data === "number" && data > ctx.rateLimitPerMin) {
+    const { data, error } = await db.rpc("hit_rate_limit", {
+      _key: `commapi:${ctx.id}`,
+      _limit: ctx.rateLimitPerMin,
+      _window_seconds: 60,
+    });
+    if (error) return null;
+    if (data === false) {
       return json({ error: "rate_limited", limit_per_min: ctx.rateLimitPerMin }, 429);
     }
   } catch {
-    // korlát-tábla hiba esetén nem engedünk korlátlan forgalmat: konzervatív rövid ablak
     return null;
   }
   return null;
@@ -217,15 +220,14 @@ export async function trackUsage(
     .maybeSingle();
   const cost = input.outcome === "sent" ? Number(price?.unit_cost ?? 0) : 0;
 
-  const { data: existing } = await db
+  let q = db
     .from("comm_usage")
     .select("id, sent_count, failed_count, cost_total")
     .eq("day", day)
-    .eq("channel", input.channel)
-    .eq("provider", input.provider ?? "")
-    .is("partner_id", input.partnerId ? undefined as never : null)
-    .eq(input.partnerId ? "partner_id" : "channel", input.partnerId ?? input.channel)
-    .maybeSingle();
+    .eq("channel", input.channel);
+  q = input.partnerId ? q.eq("partner_id", input.partnerId) : q.is("partner_id", null);
+  q = input.provider ? q.eq("provider", input.provider) : q.is("provider", null);
+  const { data: existing } = await q.maybeSingle();
 
   if (existing) {
     await db
