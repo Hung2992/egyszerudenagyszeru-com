@@ -38,6 +38,10 @@ const BrandHub = () => {
   const [news, setNews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>("termekek");
+  const [msgChannel, setMsgChannel] = useState<"sms" | "whatsapp">("sms");
+  const [msgBody, setMsgBody] = useState("");
+  const [msgBusy, setMsgBusy] = useState(false);
+  const [msgLog, setMsgLog] = useState<{ at: string; channel: string; status: string }[]>([]);
 
   const [session, setSession] = useState<any>(null);
   const [myBookings, setMyBookings] = useState<any[]>([]);
@@ -173,6 +177,25 @@ const BrandHub = () => {
     if (error) { toast({ title: mode === "in" ? "Belépés sikertelen" : "Regisztráció sikertelen", description: error.message, variant: "destructive" }); return; }
     toast({ title: mode === "in" ? "Beléptél" : "Fiók létrehozva", description: mode === "up" ? "Erősítsd meg az e-mail címed." : "" });
   };
+
+  const sendCustomerMessage = async () => {
+    if (!sf?.partner_id) { toast({ title: "Nem elérhető", description: "A szolgáltató nem fogad üzenetet.", variant: "destructive" }); return; }
+    setMsgBusy(true);
+    const { data, error } = await supabase.functions.invoke("customer-contact-partner", {
+      body: { partner_id: sf.partner_id, channel: msgChannel, message: msgBody.trim() },
+    });
+    setMsgBusy(false);
+    if (error) { toast({ title: "Küldés sikertelen", description: error.message, variant: "destructive" }); return; }
+    const status = (data as any)?.status || "queued";
+    setMsgLog((l) => [{ at: new Date().toISOString(), channel: msgChannel, status }, ...l].slice(0, 10));
+    setMsgBody("");
+    toast({
+      title: status === "sent" ? "Üzenet kiment" : "Üzenet rögzítve",
+      description: status === "sent" ? "" : "Nincs bekötött távközlési szolgáltató, ezért fizikai kézbesítés nem történt.",
+    });
+  };
+
+
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-black text-white text-sm">Betöltés…</div>;
   if (!sf) return (
@@ -373,6 +396,43 @@ const BrandHub = () => {
               <div className="flex items-center justify-between gap-2 border p-3" style={{ borderColor: `${text}22` }}>
                 <span className="text-sm truncate">{session.user.email}</span>
                 <button className="text-xs underline opacity-70" onClick={() => void supabase.auth.signOut()}>Kilépés</button>
+              </div>
+              <div className="border p-3 space-y-2" style={{ borderColor: `${text}22` }}>
+                <h2 className="text-sm uppercase tracking-widest opacity-70">Üzenet a szolgáltatónak</h2>
+                <div className="flex gap-2">
+                  {(["sms", "whatsapp"] as const).map((c) => (
+                    <button
+                      key={c}
+                      className="px-3 py-1 text-xs uppercase border"
+                      style={c === msgChannel ? { background: accent, color: bg, borderColor: accent } : { borderColor: `${text}44`, color: text }}
+                      onClick={() => setMsgChannel(c)}
+                    >{c === "sms" ? "SMS" : "WhatsApp"}</button>
+                  ))}
+                </div>
+                <textarea
+                  className={inputCls}
+                  style={inputStyle}
+                  rows={3}
+                  maxLength={500}
+                  placeholder="Írd le, miben segíthetünk…"
+                  value={msgBody}
+                  onChange={(e) => setMsgBody(e.target.value)}
+                />
+                <button
+                  className="px-4 py-2 text-xs uppercase"
+                  style={{ background: accent, color: bg }}
+                  disabled={msgBusy || msgBody.trim().length < 3}
+                  onClick={() => void sendCustomerMessage()}
+                >{msgBusy ? "Küldés…" : "Küldés"}</button>
+                {msgLog.length > 0 && (
+                  <div className="space-y-1 pt-1">
+                    {msgLog.map((m, i) => (
+                      <p key={i} className="text-xs opacity-70">
+                        {new Date(m.at).toLocaleString("hu-HU")} · {m.channel.toUpperCase()} · {m.status === "sent" ? "kiment" : m.status === "no_provider" ? "rögzítve (nincs kézbesítési szolgáltató)" : m.status}
+                      </p>
+                    ))}
+                  </div>
+                )}
               </div>
               <h2 className="text-sm uppercase tracking-widest opacity-70">Foglalásaim</h2>
               {myBookings.length === 0 ? <p className="text-sm opacity-70">Még nincs foglalásod.</p> : myBookings.map((b) => (

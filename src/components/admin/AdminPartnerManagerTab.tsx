@@ -13,6 +13,8 @@ import { ExternalLink, Search, ShieldCheck, Store, Users } from "lucide-react";
 import PartnerFeatureAnnouncement from "./PartnerFeatureAnnouncement";
 import PartnerBookingsPanel from "./PartnerBookingsPanel";
 import AdminPartnerNewsletterPanel from "./AdminPartnerNewsletterPanel";
+import PartnerSalesPanel from "./PartnerSalesPanel";
+
 
 interface Row {
   id: string;
@@ -244,8 +246,12 @@ const AdminPartnerManagerTab = () => {
               <Button className="rounded-none w-full" disabled={saving} onClick={() => void savePartner()}>
                 {saving ? "Mentés..." : "Mentés"}
               </Button>
+              <div className="pt-4 border-t border-foreground/20">
+                <PartnerSalesPanel partnerId={edit.id} commissionPercent={edit.default_commission_percent} />
+              </div>
             </div>
           )}
+
         </DialogContent>
       </Dialog>
     </div>
