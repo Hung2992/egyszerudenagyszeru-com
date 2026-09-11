@@ -54,6 +54,8 @@ const About = lazy(lazyRetry(() => import("./pages/About.tsx")));
 const Egyuttmukodes = lazy(lazyRetry(() => import("./pages/Egyuttmukodes.tsx")));
 const PartnerOnboarding = lazy(lazyRetry(() => import("./pages/PartnerOnboarding.tsx")));
 const PartnerContract = lazy(lazyRetry(() => import("./pages/PartnerContract.tsx")));
+const PartnerRegister = lazy(lazyRetry(() => import("./pages/PartnerRegister.tsx")));
+const BrandHub = lazy(lazyRetry(() => import("./pages/BrandHub.tsx")));
 const LegalHub = lazy(lazyRetry(() => import("./pages/legal/LegalHub.tsx")));
 const Aszf = lazy(lazyRetry(() => import("./pages/legal/Aszf.tsx")));
 const Adatvedelem = lazy(lazyRetry(() => import("./pages/legal/Adatvedelem.tsx")));
@@ -165,6 +167,9 @@ const App = () => (
             <Route path="/b/:slug" element={<BrandStorefront />} />
             <Route path="/b/:slug/termek/:productSlug" element={<BrandProductDetail />} />
             <Route path="/b/:slug/oldal/:pageSlug" element={<BrandPage />} />
+            <Route path="/b/:slug/kozpont" element={<BrandHub />} />
+            <Route path="/kozpont" element={<BrandHub />} />
+            <Route path="/partner-regisztracio" element={<PartnerRegister />} />
             <Route path="/b/:slug/hirek" element={<BrandNews />} />
             <Route path="/b/:slug/hirek/:postSlug" element={<BrandNews />} />
             <Route path="/s/:code" element={<PartnerShareRedirect />} />
