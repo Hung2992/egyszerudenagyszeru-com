@@ -23,6 +23,12 @@ interface Endpoint {
   last_status: string | null;
   last_checked_at: string | null;
   last_error: string | null;
+  success_count: number | null;
+  failure_count: number | null;
+  avg_latency_ms: number | null;
+  consecutive_failures: number | null;
+  cooldown_until: string | null;
+  max_retries: number | null;
 }
 
 const emptyForm = {
@@ -216,6 +222,13 @@ export default function AdminLocalAiTab() {
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground break-all">{ep.base_url} · {ep.model} · {ep.api_style}</p>
+                <p className="text-xs text-muted-foreground">
+                  Sikeres: {ep.success_count ?? 0} · Hibás: {ep.failure_count ?? 0}
+                  {ep.avg_latency_ms ? ` · Átlag válaszidő: ${Math.round(Number(ep.avg_latency_ms))} ms` : ""}
+                  {ep.cooldown_until && new Date(ep.cooldown_until) > new Date()
+                    ? " · Ideiglenesen kihagyva (sok hiba)"
+                    : ""}
+                </p>
                 {ep.last_error && <p className="text-xs text-destructive break-all">{ep.last_error}</p>}
               </div>
               <div className="flex items-center gap-2">

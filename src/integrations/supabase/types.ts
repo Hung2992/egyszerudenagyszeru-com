@@ -1212,7 +1212,10 @@ export type Database = {
         Row: {
           api_key: string | null
           api_style: string
+          avg_latency_ms: number
           base_url: string
+          consecutive_failures: number
+          cooldown_until: string | null
           created_at: string
           enabled: boolean
           failure_count: number
@@ -1220,6 +1223,7 @@ export type Database = {
           last_checked_at: string | null
           last_error: string | null
           last_status: string | null
+          max_retries: number
           model: string
           name: string
           priority: number
@@ -1231,7 +1235,10 @@ export type Database = {
         Insert: {
           api_key?: string | null
           api_style?: string
+          avg_latency_ms?: number
           base_url: string
+          consecutive_failures?: number
+          cooldown_until?: string | null
           created_at?: string
           enabled?: boolean
           failure_count?: number
@@ -1239,6 +1246,7 @@ export type Database = {
           last_checked_at?: string | null
           last_error?: string | null
           last_status?: string | null
+          max_retries?: number
           model: string
           name: string
           priority?: number
@@ -1250,7 +1258,10 @@ export type Database = {
         Update: {
           api_key?: string | null
           api_style?: string
+          avg_latency_ms?: number
           base_url?: string
+          consecutive_failures?: number
+          cooldown_until?: string | null
           created_at?: string
           enabled?: boolean
           failure_count?: number
@@ -1258,6 +1269,7 @@ export type Database = {
           last_checked_at?: string | null
           last_error?: string | null
           last_status?: string | null
+          max_retries?: number
           model?: string
           name?: string
           priority?: number
@@ -13820,6 +13832,15 @@ export type Database = {
           _target_agent?: string
         }
         Returns: string
+      }
+      ai_endpoint_record: {
+        Args: {
+          _error?: string
+          _id: string
+          _latency_ms?: number
+          _ok: boolean
+        }
+        Returns: undefined
       }
       apply_meta_action: {
         Args: { _action_id: string; _user_id?: string }
