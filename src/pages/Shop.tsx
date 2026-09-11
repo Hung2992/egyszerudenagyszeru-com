@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import SizeQuiz from "@/components/SizeQuiz";
 import ProductWaitlist from "@/components/ProductWaitlist";
 import PersonalizedOffers from "@/components/PersonalizedOffers";
-import PartnerProductsShowcase from "@/components/PartnerProductsShowcase";
+
 
 interface Product {
   id: string;
@@ -644,9 +644,6 @@ const Shop = () => {
             ))}
           </div>
         )}
-
-        {/* Partner márkák termékei */}
-        <PartnerProductsShowcase limit={8} />
 
         {/* Recently Viewed */}
         {recentlyViewed.length > 0 && (
