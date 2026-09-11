@@ -330,7 +330,7 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
       <Tabs defaultValue="chat">
         <TabsList className="rounded-none flex flex-wrap h-auto">
           <TabsTrigger value="chat" className="rounded-none">🤖 AI fejlesztő</TabsTrigger>
-          <TabsTrigger value="ai" className="rounded-none">✨ AI építő</TabsTrigger>
+          
           <TabsTrigger value="basics" className="rounded-none">Alap</TabsTrigger>
           <TabsTrigger value="design" className="rounded-none">Megjelenés</TabsTrigger>
 
