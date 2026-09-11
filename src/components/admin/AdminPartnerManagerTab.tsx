@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "@/hooks/use-toast";
 import { ExternalLink, Search, ShieldCheck, Store, Users } from "lucide-react";
 import PartnerFeatureAnnouncement from "./PartnerFeatureAnnouncement";
+import PartnerBookingsPanel from "./PartnerBookingsPanel";
 
 interface Row {
   id: string;
