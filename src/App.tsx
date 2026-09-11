@@ -8,7 +8,6 @@ const Toaster = lazy(lazyRetry(() => import("@/components/ui/toaster").then(m =>
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/contexts/CartContext";
 import Index from "./pages/Index.tsx";
-import { PaymentTestModeBanner } from "./components/PaymentTestModeBanner.tsx";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { useReferralCapture } from "@/hooks/useReferralCapture";
 import { usePasswordRecoveryRedirect } from "@/hooks/usePasswordRecoveryRedirect";
