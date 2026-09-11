@@ -121,8 +121,39 @@ export type DeliveryResult = {
   error?: string | null;
 };
 
+/* ---------------- Opt-in / opt-out (STOP kezelés) ---------------- */
+
+export function normalizeAddress(raw: string): string {
+  return raw.replace(/^whatsapp:/i, "").replace(/[\s\-()]/g, "").toLowerCase();
+}
+
+/** Platform-szintű opt-out sorok „partnerje” (a partner_id oszlop nem lehet NULL az egyediség miatt). */
+export const PLATFORM_OPTOUT_ID = "00000000-0000-0000-0000-000000000000";
+
+/** Leiratkozott-e a címzett az adott csatornán (partner- vagy platform-szinten). */
+export async function isOptedOut(
+  db: SupabaseClient,
+  channel: Channel,
+  to: string,
+  partnerId?: string | null,
+): Promise<boolean> {
+  const address = normalizeAddress(to);
+  const ids = [PLATFORM_OPTOUT_ID];
+  if (partnerId) ids.push(partnerId);
+  const { data } = await db
+    .from("comm_opt_outs")
+    .select("id")
+    .eq("channel", channel)
+    .eq("address", address)
+    .is("opted_in_at", null)
+    .in("partner_id", ids)
+    .limit(1);
+  return (data || []).length > 0;
+}
+
 /**
  * Szolgáltató-független küldés.
+ * 0) Opt-out ellenőrzés — leiratkozott címzettnek soha nem küldünk.
  * 1) A saját APEX átjáró (partner saját, majd platform szolgáltatói fiókjai).
  * 2) Ha ott nincs bekötött fiók, a régi környezeti Twilio útvonal.
  */
@@ -132,6 +163,12 @@ export async function deliver(
   body: string,
   opts?: { db?: SupabaseClient; partnerId?: string | null },
 ): Promise<DeliveryResult> {
+  const db = opts?.db ?? adminClient();
+  if (channel === "sms" || channel === "whatsapp" || channel === "voice") {
+    if (await isOptedOut(db, channel, to, opts?.partnerId ?? null)) {
+      return { status: "failed", provider: null, error: "opted_out" };
+    }
+  }
   if (channel !== "email") {
     const db = opts?.db ?? adminClient();
     const own = await gatewaySend(db, {

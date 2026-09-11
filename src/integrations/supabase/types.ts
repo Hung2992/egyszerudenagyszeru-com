@@ -3358,6 +3358,66 @@ export type Database = {
           },
         ]
       }
+      comm_inbound_messages: {
+        Row: {
+          body: string
+          channel: string
+          created_at: string
+          from_address: string
+          id: string
+          provider_message_id: string | null
+        }
+        Insert: {
+          body: string
+          channel: string
+          created_at?: string
+          from_address: string
+          id?: string
+          provider_message_id?: string | null
+        }
+        Update: {
+          body?: string
+          channel?: string
+          created_at?: string
+          from_address?: string
+          id?: string
+          provider_message_id?: string | null
+        }
+        Relationships: []
+      }
+      comm_opt_outs: {
+        Row: {
+          address: string
+          channel: string
+          created_at: string
+          id: string
+          opted_in_at: string | null
+          opted_out_at: string
+          partner_id: string
+          reason: string | null
+        }
+        Insert: {
+          address: string
+          channel: string
+          created_at?: string
+          id?: string
+          opted_in_at?: string | null
+          opted_out_at?: string
+          partner_id: string
+          reason?: string | null
+        }
+        Update: {
+          address?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          opted_in_at?: string | null
+          opted_out_at?: string
+          partner_id?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
       comm_provider_accounts: {
         Row: {
           active: boolean
