@@ -200,8 +200,22 @@ export default function AdminLocalAiTab() {
               value={form.api_style}
               onChange={(e) => setForm({ ...form, api_style: e.target.value })}
             >
-              <option value="openai">OpenAI-kompatibilis (LM Studio, llama.cpp, vLLM, Ollama /v1)</option>
-              <option value="ollama">Ollama natív (/api/chat)</option>
+              {form.kind === "text" && (
+                <>
+                  <option value="openai">OpenAI-kompatibilis (LM Studio, llama.cpp, vLLM, Ollama /v1)</option>
+                  <option value="ollama">Ollama natív (/api/chat)</option>
+                </>
+              )}
+              {form.kind === "image" && (
+                <>
+                  <option value="a1111">Stable Diffusion WebUI (AUTOMATIC1111)</option>
+                  <option value="openai">OpenAI-kompatibilis képgenerálás (/v1/images/generations)</option>
+                  <option value="apex_media">Saját híd (ComfyUI wrapper, /generate)</option>
+                </>
+              )}
+              {form.kind === "video" && (
+                <option value="apex_media">Saját videó híd (/generate)</option>
+              )}
             </select>
           </div>
           <div>
