@@ -37,13 +37,14 @@ const ALLOWED = [
   "hero_title", "hero_subtitle", "hero_cta_text", "hero_layout",
   "hero_badge_enabled", "hero_badge_text", "hero_overlay_opacity",
   "topbar_enabled", "topbar_text",
-  "section1_enabled", "section1_title", "section1_subtitle",
-  "section2_enabled", "section2_title", "section2_subtitle",
+  "topbar_icon",
+  "section1_enabled", "section1_title", "section1_subtitle", "section1_cta_text", "section1_cta_url",
+  "section2_enabled", "section2_title", "section2_subtitle", "section2_cta_text", "section2_cta_url",
   "featured_products_enabled", "featured_products_title",
   "testimonials_enabled", "testimonials_title", "testimonials",
   "newsletter_enabled", "newsletter_title", "newsletter_subtitle",
   "footer_text", "footer_links",
-  "meta_title", "meta_description",
+  "meta_title", "meta_description", "seo_keywords",
 ];
 
 // ─────────────────────────────────────────────────────────────
