@@ -57,7 +57,7 @@ export default function AdminMarketingHubTab() {
 
   const createCampaign = async () => {
     if (!name.trim() || !subject.trim()) return toast.error("Név és tárgy kötelező");
-    const { error } = await supabase.from("marketing_campaigns").insert({ name, subject, body_html: body });
+    const { error } = await supabase.from("marketing_campaigns").insert({ name, subject, content: body });
     if (error) return toast.error("Mentés sikertelen");
     toast.success("Kampány létrehozva");
     setName(""); setSubject(""); setBody("");

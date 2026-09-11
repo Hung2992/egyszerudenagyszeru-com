@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
           sender: { name: "Egyszerű de Nagyszerű", email: "hello@egyszerudenagyszeru.com" },
           to: [{ email: c.email, name: c.name || undefined }],
           subject: campaign.subject,
-          htmlContent: campaign.body_html,
+          htmlContent: campaign.content,
         }),
       });
       if (!res.ok) {
