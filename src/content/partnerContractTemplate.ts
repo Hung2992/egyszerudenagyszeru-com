@@ -84,9 +84,9 @@ VI. PARTNERI RÉSZESEDÉS ÉS ELSZÁMOLÁS
    • 10 000 000 Ft → 50 000 Ft + 90 000 Ft = 140 000 Ft.
 4. A felek rögzítik, hogy az 1 000 000 Ft és 1 000 001 Ft közötti 10 000 Ft-os, illetve a 2 000 000 Ft és 2 000 001 Ft közötti további 10 000 Ft-os lépcső a felek tudatos, kifejezetten elfogadott megállapodása; a küszöbnél jelentkező ugrás nem minősül aránytalanságnak, mert felfelé korlátos (millióként legfeljebb 10 000 Ft) és a részesedés az elszámolási alap 5 százalékát összességében soha nem haladja meg.
 5. A b) pont szerinti 10 000 Ft rögzített, forintban meghatározott összeg, nem százalékos részesedés.
-4. A részesedés összege nettó összeg; az Üzemeltető a mindenkori jogszabályok szerinti ÁFÁ-t felszámítja.
-5. Az Üzemeltető a részesedést jogosult a Partner részére fizetendő kifizetésből levonni, vagy külön számlázni. Minden elszámolásról tételes, letölthető kimutatás készül a Partner Központban.
-6. A Partner az elszámolást annak közlésétől számított 15 napon belül írásban kifogásolhatja; a kifogásolt tételt a felek 15 napon belül egyeztetik.
+6. A részesedés összege nettó összeg; az Üzemeltető a mindenkori jogszabályok szerinti ÁFÁ-t felszámítja.
+7. Az Üzemeltető a részesedést jogosult a Partner részére fizetendő kifizetésből levonni, vagy külön számlázni. Minden elszámolásról tételes, letölthető kimutatás készül a Partner Központban.
+8. A Partner az elszámolást annak közlésétől számított 15 napon belül írásban kifogásolhatja; a kifogásolt tételt a felek 15 napon belül egyeztetik.
 
 VII. A FELEK KÖTELEZETTSÉGEI
 1. A Partner kijelenti, hogy a KYC során megadott adatai valósak, és azok változását 8 napon belül bejelenti.
