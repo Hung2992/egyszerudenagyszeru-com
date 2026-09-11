@@ -626,7 +626,7 @@ A partner kérése:
         category: String(parsed.category || "").slice(0, 80) || null,
         tags: Array.isArray(parsed.tags) ? parsed.tags.slice(0, 6).map((t: unknown) => String(t).slice(0, 40)) : [],
         product_type: productType,
-        fulfillment_type: productType === "digital" ? "digital_download" : (productType === "course" ? "course_access" : "service_booking"),
+        fulfillment_type: productType,
         attributes: attrs,
         stock_qty: productType === "service" ? 0 : 9999,
         status: "draft",
