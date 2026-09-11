@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { CalendarDays, ChevronLeft, ChevronRight, Clock, Mail, MapPin, Phone, Plus, User } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock, Mail, MapPin, MessageSquare, Phone, Plus, Send, User } from "lucide-react";
 
 interface Appt {
   id: string;
@@ -48,8 +48,44 @@ const emptyDraft = (day: string) => ({
   notes: "",
   product_id: "",
 });
+const fmtDate = (d: Date) => d.toLocaleDateString("hu-HU", { year: "numeric", month: "long", day: "numeric" });
+const fmtTime = (d: Date) => d.toLocaleTimeString("hu-HU", { hour: "2-digit", minute: "2-digit" });
+
+// Egy konkrét foglaláshoz küld visszaigazoló levelet az adott ügyfélnek.
+const sendConfirmation = async (
+  appt: { id: string; starts_at: string | null; duration_min: number | null; customer_name: string | null; customer_email: string | null; location: string | null; notes: string | null; product_id: string | null },
+  brandName: string,
+  serviceTitle: string,
+  contactEmail?: string | null,
+  contactPhone?: string | null,
+) => {
+  if (!appt.customer_email) return { skipped: true as const };
+  const d = appt.starts_at ? new Date(appt.starts_at) : null;
+  const { error } = await supabase.functions.invoke("send-transactional-email", {
+    body: {
+      templateName: "appointment-confirmation",
+      recipientEmail: appt.customer_email,
+      idempotencyKey: `appointment-confirmation-${appt.id}`,
+      templateData: {
+        customer_name: appt.customer_name || "",
+        brand_name: brandName,
+        service_title: serviceTitle,
+        date_label: d ? fmtDate(d) : "",
+        time_label: d ? fmtTime(d) : "",
+        duration_min: appt.duration_min || 60,
+        location: appt.location || "",
+        notes: appt.notes || "",
+        contact_email: contactEmail || "",
+        contact_phone: contactPhone || "",
+      },
+    },
+  });
+  return { skipped: false as const, error };
+};
 
 const PartnerCalendarTab = ({ partnerId }: { partnerId: string }) => {
+  const [partnerInfo, setPartnerInfo] = useState<{ company_name?: string; full_name?: string; email?: string; phone?: string }>({});
+  const [sendingId, setSendingId] = useState<string | null>(null);
   const [month, setMonth] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const [selected, setSelected] = useState(() => iso(new Date()));
   const [items, setItems] = useState<Appt[]>([]);
@@ -84,7 +120,23 @@ const PartnerCalendarTab = ({ partnerId }: { partnerId: string }) => {
   useEffect(() => {
     supabase.from("partner_products").select("id, title").eq("partner_id", partnerId).order("created_at", { ascending: false })
       .then(({ data }) => setProducts(data || []));
+    supabase.from("partners").select("company_name, full_name, email, phone").eq("id", partnerId).maybeSingle()
+      .then(({ data }) => setPartnerInfo(data || {}));
   }, [partnerId]);
+
+  const brandName = partnerInfo.company_name || partnerInfo.full_name || "Partner";
+  const titleOf = (productId: string | null) =>
+    products.find(p => p.id === productId)?.title || "Egyeztetett időpont";
+
+  const sendMail = async (a: Appt) => {
+    if (!a.customer_email) { toast({ title: "Nincs e-mail cím az ügyfélnél", variant: "destructive" }); return; }
+    setSendingId(a.id);
+    const res = await sendConfirmation(a, brandName, titleOf(a.product_id), partnerInfo.email, partnerInfo.phone);
+    setSendingId(null);
+    if (res.skipped) return;
+    if (res.error) { toast({ title: "A levél nem ment ki", description: res.error.message, variant: "destructive" }); return; }
+    toast({ title: "Visszaigazoló e-mail elküldve", description: a.customer_email });
+  };
 
   const byDay = useMemo(() => {
     const m = new Map<string, Appt[]>();
@@ -116,7 +168,7 @@ const PartnerCalendarTab = ({ partnerId }: { partnerId: string }) => {
     if (!draft.customer_name.trim()) { toast({ title: "Add meg az ügyfél nevét", variant: "destructive" }); return; }
     setSaving(true);
     const starts = new Date(`${draft.day}T${draft.time}:00`);
-    const { error } = await supabase.from("partner_appointments").insert({
+    const { data: inserted, error } = await supabase.from("partner_appointments").insert({
       partner_id: partnerId,
       customer_name: draft.customer_name.trim(),
       customer_email: draft.customer_email.trim() || null,
@@ -127,10 +179,20 @@ const PartnerCalendarTab = ({ partnerId }: { partnerId: string }) => {
       notes: draft.notes.trim() || null,
       product_id: draft.product_id || null,
       metadata: draft.phone.trim() ? { phone: draft.phone.trim() } : {},
-    });
+    }).select("id, starts_at, duration_min, customer_name, customer_email, location, notes, product_id").maybeSingle();
+    if (error) {
+      setSaving(false);
+      toast({ title: "Mentés sikertelen", description: error.message, variant: "destructive" });
+      return;
+    }
+    // Visszaigazoló e-mail az ügyfélnek (ha van e-mail címe)
+    let mailNote = "";
+    if (inserted?.customer_email) {
+      const res = await sendConfirmation(inserted as any, brandName, titleOf(inserted.product_id), partnerInfo.email, partnerInfo.phone);
+      mailNote = res.skipped ? "" : res.error ? "A visszaigazoló e-mail nem ment ki." : "Visszaigazoló e-mail elküldve.";
+    }
     setSaving(false);
-    if (error) { toast({ title: "Mentés sikertelen", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Időpont felvéve" });
+    toast({ title: "Időpont felvéve", description: mailNote || undefined });
     setOpen(false);
     setDraft(emptyDraft(selected));
     void load();
@@ -314,6 +376,20 @@ const PartnerCalendarTab = ({ partnerId }: { partnerId: string }) => {
                     {a.customer_email && (
                       <a href={`mailto:${a.customer_email}`} className="text-xs border border-border px-2 py-1 hover:border-primary flex items-center gap-1">
                         <Mail className="h-3 w-3" />E-mail
+                      </a>
+                    )}
+                    {a.customer_email && (
+                      <button
+                        onClick={() => void sendMail(a)}
+                        disabled={sendingId === a.id}
+                        className="text-xs border border-border px-2 py-1 hover:border-primary flex items-center gap-1 disabled:opacity-40"
+                      >
+                        <Send className="h-3 w-3" />{sendingId === a.id ? "Küldés..." : "Részletek küldése"}
+                      </button>
+                    )}
+                    {a.metadata?.phone && (
+                      <a href={`sms:${a.metadata.phone}`} className="text-xs border border-border px-2 py-1 hover:border-primary flex items-center gap-1">
+                        <MessageSquare className="h-3 w-3" />SMS
                       </a>
                     )}
                   </div>
