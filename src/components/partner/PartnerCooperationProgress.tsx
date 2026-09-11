@@ -10,6 +10,8 @@ type ProgressData = {
   kycStatus: string | null;
   contractStatus: string | null;
   partnerSigned: boolean;
+  contractBody: string | null;
+  contractNumber: string | null;
 };
 
 const initialProgress: ProgressData = {
@@ -18,6 +20,8 @@ const initialProgress: ProgressData = {
   kycStatus: null,
   contractStatus: null,
   partnerSigned: false,
+  contractBody: null,
+  contractNumber: null,
 };
 
 const PartnerCooperationProgress = ({ compact = false }: { compact?: boolean }) => {
@@ -37,7 +41,7 @@ const PartnerCooperationProgress = ({ compact = false }: { compact?: boolean }) 
       const [partnerRes, kycRes, contractRes] = await Promise.all([
         supabase.from("partners").select("status").eq("user_id", session.user.id).maybeSingle(),
         supabase.from("tenant_kyc_submissions").select("status").eq("user_id", session.user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
-        supabase.from("partner_contracts").select("status,partner_signed_at").eq("user_id", session.user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+        supabase.from("partner_contracts").select("status,partner_signed_at,contract_body,contract_number").eq("user_id", session.user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       ]);
 
       if (!cancelled) {
@@ -47,6 +51,8 @@ const PartnerCooperationProgress = ({ compact = false }: { compact?: boolean }) 
           kycStatus: kycRes.data?.status ?? null,
           contractStatus: contractRes.data?.status ?? null,
           partnerSigned: Boolean(contractRes.data?.partner_signed_at),
+          contractBody: contractRes.data?.contract_body ?? null,
+          contractNumber: contractRes.data?.contract_number ?? null,
         });
         setLoading(false);
       }
@@ -110,6 +116,22 @@ const PartnerCooperationProgress = ({ compact = false }: { compact?: boolean }) 
           );
         })}
       </ol>
+
+      {progress.contractBody ? (
+        <div className="mt-4 border border-border">
+          <div className="flex items-center justify-between gap-2 border-b border-border bg-muted/30 px-3 py-2">
+            <p className="text-xs font-bold uppercase">Szerződés – pontosan ezt írod alá</p>
+            {progress.contractNumber && <p className="text-[10px] font-mono text-muted-foreground">{progress.contractNumber}</p>}
+          </div>
+          <pre className="max-h-72 overflow-auto whitespace-pre-wrap p-4 font-mono text-xs leading-relaxed">
+{progress.contractBody}
+          </pre>
+        </div>
+      ) : (
+        <p className="mt-4 border border-dashed border-border p-3 text-xs text-muted-foreground">
+          A szerződés teljes szövege itt jelenik meg, amint a KYC jóváhagyásra kerül – aláírás előtt mindig elolvashatod.
+        </p>
+      )}
 
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground">
