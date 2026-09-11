@@ -15,7 +15,6 @@ import MediaImage from "./MediaImage";
 import PartnerDomainTab from "./PartnerDomainTab";
 import StorefrontVersionsTab from "./StorefrontVersionsTab";
 import StorefrontLivePreview from "./StorefrontLivePreview";
-import AiSiteBuilderTab from "./AiSiteBuilderTab";
 import AiWebCreatorChat from "./AiWebCreatorChat";
 
 
