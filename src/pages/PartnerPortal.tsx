@@ -288,7 +288,7 @@ const PartnerPortal = () => {
               ["inventory", "Készlet & árazás"], ["finance", "Pénzügy"], ["ai_team", "AI Csapatom"],
               ["action_plans", "AI intézkedések"], ["advisor", "AI asszisztens"], ["overview", "Jutalék"],
               ["storefront", "Saját webshop"], ["products", "Termékek"], ["digital", "Digitális kiszolgálás"],
-              ["referrals", "Ajánlások"], ["payouts", "Kifizetések"], ["marketing", "Marketing"],
+              ["referrals", "Ajánlások"], ["payouts", "Kifizetések"], ["marketing", "Marketing"], ["campaigns", "Hírlevelek"],
               ["workflows", "Automatizálás"], ["abtests", "A/B teszt"], ["plugins", "Pluginok"],
               ["ai_marketplace", "AI Marketplace"], ["profile", "Profil"],
             ].map(([v, label]) => <option key={v} value={v}>{label}</option>)}
@@ -311,6 +311,7 @@ const PartnerPortal = () => {
             <TabsTrigger value="referrals" className="rounded-none"><ListChecks className="h-4 w-4 mr-2" />Ajánlások</TabsTrigger>
             <TabsTrigger value="payouts" className="rounded-none"><Banknote className="h-4 w-4 mr-2" />Kifizetések</TabsTrigger>
             <TabsTrigger value="marketing" className="rounded-none"><Megaphone className="h-4 w-4 mr-2" />Marketing</TabsTrigger>
+            <TabsTrigger value="campaigns" className="rounded-none"><Mail className="h-4 w-4 mr-2" />Hírlevelek</TabsTrigger>
             <TabsTrigger value="workflows" className="rounded-none"><Workflow className="h-4 w-4 mr-2" />Automatizálás</TabsTrigger>
             <TabsTrigger value="abtests" className="rounded-none"><FlaskConical className="h-4 w-4 mr-2" />A/B teszt</TabsTrigger>
             <TabsTrigger value="plugins" className="rounded-none"><Puzzle className="h-4 w-4 mr-2" />Pluginok</TabsTrigger>
