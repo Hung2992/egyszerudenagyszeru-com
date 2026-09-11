@@ -41,6 +41,8 @@ const BrandHub = () => {
 
   const [session, setSession] = useState<any>(null);
   const [myBookings, setMyBookings] = useState<any[]>([]);
+  const [myDeliveries, setMyDeliveries] = useState<any[]>([]);
+  const [openNews, setOpenNews] = useState<string | null>(null);
   const [auth, setAuth] = useState({ email: "", password: "" });
 
   const [subEmail, setSubEmail] = useState("");
@@ -70,7 +72,7 @@ const BrandHub = () => {
       setSf(store);
       const [{ data: prods }, { data: blasts }] = await Promise.all([
         supabase.from("partner_products").select("*").eq("partner_id", store.partner_id).eq("status", "active").order("created_at", { ascending: false }),
-        supabase.from("partner_email_blasts").select("id, subject, excerpt, slug, published_at")
+        supabase.from("partner_email_blasts").select("id, subject, excerpt, slug, body_html, published_at")
           .eq("partner_id", store.partner_id).eq("published_on_site", true).order("published_at", { ascending: false }).limit(10),
       ]);
       if (!alive) return;
@@ -93,6 +95,19 @@ const BrandHub = () => {
   }, [session]);
 
   useEffect(() => { void loadMyBookings(); }, [loadMyBookings]);
+
+  // Saját hírlevél-kézbesítési státusz (csak a belépett ügyfél saját e-mail címére)
+  const loadMyDeliveries = useCallback(async () => {
+    if (!session?.user) { setMyDeliveries([]); return; }
+    const { data } = await supabase
+      .from("partner_newsletter_deliveries")
+      .select("id, blast_id, status, error, sent_at, created_at")
+      .order("created_at", { ascending: false })
+      .limit(30);
+    setMyDeliveries(data || []);
+  }, [session]);
+
+  useEffect(() => { void loadMyDeliveries(); }, [loadMyDeliveries]);
 
   const services = useMemo(() => products.filter(isBookable), [products]);
   const shopItems = useMemo(() => products.filter((p) => !isBookable(p)), [products]);
