@@ -208,15 +208,15 @@ const BrandStorefront = () => {
                 </span>
               </div>
             )}
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[0.9]" style={headingStyle}>
+            <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] md:leading-[0.9] break-words hyphens-auto" style={headingStyle}>
               {sf.hero_title || sf.display_name}
             </h1>
             {(sf.hero_subtitle || sf.tagline) && (
-              <p className="mt-5 text-sm md:text-base opacity-80 leading-relaxed max-w-md">
+              <p className="mt-4 md:mt-5 text-[15px] md:text-base opacity-80 leading-relaxed max-w-md break-words">
                 {sf.hero_subtitle || sf.tagline}
               </p>
             )}
-            <a href="#termekek" className="inline-flex items-center gap-2 mt-8 px-8 py-3 uppercase tracking-widest font-bold" style={{ background: sf.accent_color, color: sf.bg_color }}>
+            <a href="#termekek" className="inline-flex max-w-full items-center justify-center gap-2 mt-7 md:mt-8 px-5 sm:px-8 py-3 uppercase tracking-[0.12em] sm:tracking-widest text-[13px] sm:text-sm font-bold text-center break-words" style={{ background: sf.accent_color, color: sf.bg_color }}>
               {sf.hero_cta_text || "Vásárolj most"} <ArrowRight className="h-4 w-4" />
             </a>
           </div>
