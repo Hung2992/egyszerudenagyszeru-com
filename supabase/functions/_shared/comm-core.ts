@@ -127,6 +127,9 @@ export function normalizeAddress(raw: string): string {
   return raw.replace(/^whatsapp:/i, "").replace(/[\s\-()]/g, "").toLowerCase();
 }
 
+/** Platform-szintű opt-out sorok „partnerje” (a partner_id oszlop nem lehet NULL az egyediség miatt). */
+export const PLATFORM_OPTOUT_ID = "00000000-0000-0000-0000-000000000000";
+
 /** Leiratkozott-e a címzett az adott csatornán (partner- vagy platform-szinten). */
 export async function isOptedOut(
   db: SupabaseClient,
@@ -135,13 +138,15 @@ export async function isOptedOut(
   partnerId?: string | null,
 ): Promise<boolean> {
   const address = normalizeAddress(to);
+  const ids = [PLATFORM_OPTOUT_ID];
+  if (partnerId) ids.push(partnerId);
   const { data } = await db
     .from("comm_opt_outs")
     .select("id")
     .eq("channel", channel)
     .eq("address", address)
     .is("opted_in_at", null)
-    .or(partnerId ? `partner_id.eq.${partnerId},partner_id.is.null` : "partner_id.is.null")
+    .in("partner_id", ids)
     .limit(1);
   return (data || []).length > 0;
 }
