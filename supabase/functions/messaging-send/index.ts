@@ -130,33 +130,52 @@ Deno.serve(async (req) => {
   const action = typeof payload.action === "string" ? payload.action : "send";
 
   if (action === "dispatch") {
+    const nowIso = new Date().toISOString();
     const { data: due } = await db
       .from("messaging_outbox")
-      .select("id, channel, to_address, body, attempts, partner_id")
+      .select("id, channel, to_address, body, attempts, max_attempts, partner_id, next_retry_at")
       .in("status", ["queued", "no_provider"])
-      .lte("send_at", new Date().toISOString())
+      .lte("send_at", nowIso)
+      .or(`next_retry_at.is.null,next_retry_at.lte.${nowIso}`)
       .order("send_at")
       .limit(50);
 
-    let sent = 0, failed = 0, pending = 0;
+    let sent = 0, failed = 0, pending = 0, retried = 0;
     for (const row of due || []) {
-      const r = await deliver(row.channel as Channel, row.to_address, row.body, row.partner_id);
+      const attempts = (row.attempts ?? 0) + 1;
+      const maxAttempts = row.max_attempts ?? 3;
+      const r = await deliver(row.channel as Channel, row.to_address, row.body, row.partner_id) as {
+        status: string; provider: string | null; providerId?: string | null; error?: string | null;
+        accountId?: string | null; routeId?: string | null; country?: string | null;
+      };
+
+      // Újrapróbálkozás exponenciális várakozással; végleges hibáknál (opt-out, tiltás) nincs retry.
+      const permanent = (r.error || "").startsWith("opted_out") || (r.error || "").startsWith("blocked:");
+      const canRetry = r.status !== "sent" && !permanent && attempts < maxAttempts;
+      const backoffMin = Math.min(60, 2 ** (attempts - 1) * 2);
+
       await db
         .from("messaging_outbox")
         .update({
-          status: r.status,
+          status: canRetry ? "queued" : r.status,
           provider: r.provider,
-          provider_message_id: (r as { providerId?: string }).providerId ?? null,
+          provider_account_id: r.accountId ?? null,
+          route_id: r.routeId ?? null,
+          country_code: r.country ?? null,
+          provider_message_id: r.providerId ?? null,
           error: r.error ?? null,
-          attempts: (row.attempts ?? 0) + 1,
+          attempts,
+          next_retry_at: canRetry ? new Date(Date.now() + backoffMin * 60_000).toISOString() : null,
           sent_at: r.status === "sent" ? new Date().toISOString() : null,
         })
         .eq("id", row.id);
+
       if (r.status === "sent") sent++;
+      else if (canRetry) retried++;
       else if (r.status === "failed") failed++;
       else pending++;
     }
-    return json({ ok: true, processed: (due || []).length, sent, failed, pending });
+    return json({ ok: true, processed: (due || []).length, sent, failed, retried, pending });
   }
 
   const channel = String(payload.channel || "sms") as Channel;
