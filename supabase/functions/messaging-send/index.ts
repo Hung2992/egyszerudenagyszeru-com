@@ -28,7 +28,21 @@ function render(body: string, vars: Record<string, unknown>) {
  * gatewayen keresztül), valóban kimegy az üzenet; ha nincs, az üzenet a saját
  * kimenő listán marad `no_provider` állapotban — soha nem jelentünk hamis kézbesítést.
  */
-async function deliver(channel: Channel, to: string, body: string) {
+async function deliver(channel: Channel, to: string, body: string, partnerId?: string | null) {
+  // 1) Saját APEX átjáró: partner saját szolgáltatói fiókjai, majd a platform fiókjai.
+  if (channel !== "email") {
+    const own = await gatewaySend(admin(), {
+      channel: channel as "sms" | "whatsapp" | "voice",
+      to,
+      body,
+      partnerId: partnerId ?? null,
+    });
+    if (own.status !== "no_provider") return own;
+  }
+  return await deliverLegacy(channel, to, body);
+}
+
+async function deliverLegacy(channel: Channel, to: string, body: string) {
   const SID = Deno.env.get("TWILIO_ACCOUNT_SID");
   const TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
