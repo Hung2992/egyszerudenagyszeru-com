@@ -369,6 +369,55 @@ Adj minden napra minden platformra egy posztot. Ez ${days * platforms.length} po
       return json({ ok: true, video: ins }, 200, req);
     }
 
+    // ============ VIDEO ASSETS (valódi kép + hang jelenetenként) ============
+    if (action === "video_assets") {
+      const videoId = String(body?.video_id || "");
+      if (!/^[0-9a-f-]{36}$/i.test(videoId)) return json({ error: "video_id required" }, 400, req);
+      const voice = ["alloy", "verse", "sage", "ballad", "coral"].includes(String(body?.voice))
+        ? String(body.voice) : "alloy";
+
+      const { data: vid } = await supabase
+        .from("partner_recruitment_videos").select("*").eq("id", videoId).maybeSingle();
+      if (!vid) return json({ error: "not_found" }, 404, req);
+
+      const scenes: any[] = Array.isArray(vid.script) ? vid.script.slice(0, 8) : [];
+      if (!scenes.length) return json({ error: "no_script" }, 400, req);
+
+      const out: any[] = [];
+      for (let i = 0; i < scenes.length; i++) {
+        const s = scenes[i] || {};
+        const visual = String(s.visual || vid.thumbnail_prompt || "modern business scene");
+        const line = String(s.voiceover || "").trim();
+        const [imageUrl, audio] = await Promise.all([
+          generateImage(LOVABLE_API_KEY, visual, vid.platform, supabase),
+          line ? generateSpeech(LOVABLE_API_KEY, line, voice, supabase) : Promise.resolve(null),
+        ]);
+        out.push({
+          scene: i + 1,
+          seconds: s.seconds || null,
+          text_overlay: s.text_overlay || null,
+          voiceover: line || null,
+          image_url: imageUrl,
+          audio_url: audio?.url || null,
+        });
+      }
+
+      const fullNarration = String(vid.narration || scenes.map((s: any) => s.voiceover).filter(Boolean).join(" ")).trim();
+      const full = fullNarration ? await generateSpeech(LOVABLE_API_KEY, fullNarration, voice, supabase) : null;
+
+      const { data: upd, error: updErr } = await supabase
+        .from("partner_recruitment_videos")
+        .update({
+          scene_images: out,
+          narration_audio_url: full?.url || null,
+          status: "assets_ready",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", videoId).select().single();
+      if (updErr) return json({ error: updErr.message }, 500, req);
+      return json({ ok: true, video: upd }, 200, req);
+    }
+
     // ============ MULTI-LANGUAGE TRANSLATE ============
     if (action === "translate_post") {
       const { post_id, langs } = body;
