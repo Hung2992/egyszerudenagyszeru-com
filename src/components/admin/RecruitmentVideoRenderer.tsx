@@ -459,11 +459,11 @@ const RecruitmentVideoRenderer = ({ video, onUpdated }: Props) => {
                         />
                         Benne a videóban
                       </label>
-                      <span className="text-muted-foreground">Hossz (mp):</span>
+                      <span className="text-muted-foreground">Hossz (mp, min. 60):</span>
                       <Input
-                        type="number" min={0} max={20} step={0.5}
+                        type="number" min={MIN_SCENE_SEC} max={600} step={5}
                         value={st.dur ?? ""}
-                        placeholder="auto"
+                        placeholder="60+"
                         onChange={(e) =>
                           patchSetting(s.scene, { dur: e.target.value === "" ? null : Number(e.target.value) })}
                         className="h-7 w-20 text-xs"
