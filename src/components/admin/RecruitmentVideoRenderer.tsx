@@ -283,7 +283,8 @@ const RecruitmentVideoRenderer = ({ video, onUpdated }: Props) => {
         const s = prepared[i];
         const override = setting(s.scene).dur;
         const auto = s.buffer ? Math.max(1.6, s.buffer.duration + 0.35) : 3;
-        const dur = (override && override > 0 ? override : auto) + Math.max(0, gap);
+        const base = override && override > 0 ? override : auto;
+        const dur = Math.max(MIN_SCENE_SEC, base) + Math.max(0, gap);
         if (s.buffer) {
           const src = audioCtx.createBufferSource();
           src.buffer = s.buffer;
