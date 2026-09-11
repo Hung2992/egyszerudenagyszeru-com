@@ -122,7 +122,12 @@ const Checkout = () => {
   useEffect(() => {
     const loadCheckoutData = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        navigate("/auth?redirect=/checkout", { replace: true });
+        return;
+      }
       setUser(session?.user ?? null);
+
 
       const giftWrapResponse = await (supabase.from("gift_wrap_options" as any) as any)
         .select("id, name, price, description")
