@@ -239,14 +239,14 @@ const Index = () => {
         <section id="biztonsag" className="mx-auto max-w-7xl px-5 py-20 md:py-28 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Irányítás és biztonság</p>
-              <h2 className="mt-4 text-4xl font-bold md:text-6xl">Az AI javasol.<br />Te döntesz.</h2>
-              <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground">Az AI weboldalt és webshopot épít, terméket készít, kampányt tervez, adatot elemez és segíti a napi munkát. Az érzékeny üzleti, pénzügyi és jogi műveletek csak emberi jóváhagyással történnek. Minden intézkedés követhető és visszaállítható.</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Biztonság és adattulajdonlás</p>
+              <h2 className="mt-4 text-4xl font-bold md:text-6xl">A te adatod.<br />A te jogosultságod.</h2>
+              <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground">Minden partner saját bérlőben fut: row-level security, szerepkör-alapú hozzáférés, audit napló és változáskövetés. Az AI javasol, de a pénzügyi, jogi és adatkezelési műveletek csak emberi jóváhagyással élesednek. Bármely változtatás visszaállítható.</p>
             </div>
             <div className="grid gap-px border border-border bg-border sm:grid-cols-2">
               {[
-                [ShieldCheck, "Szerepkörös hozzáférés"], [PackageCheck, "Visszaállítható módosítások"],
-                [Zap, "Automatizált munkafolyamatok"], [Sparkles, "Ellenőrzött AI döntések"],
+                [ShieldCheck, "RLS & tenant isolation"], [Lock, "Szerepkörös jogosultságok"],
+                [PackageCheck, "Verziókezelés & rollback"], [FileText, "Audit napló & követhetőség"],
               ].map(([Icon, text]) => {
                 const FeatureIcon = Icon as typeof ShieldCheck;
                 return <div key={text as string} className="flex min-h-36 flex-col justify-between bg-card p-6"><FeatureIcon className="h-6 w-6 text-accent" /><p className="text-sm font-bold">{text as string}</p></div>;
