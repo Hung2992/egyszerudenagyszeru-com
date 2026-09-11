@@ -1,0 +1,2 @@
+ALTER TABLE public.partners DROP CONSTRAINT partners_status_check;
+ALTER TABLE public.partners ADD CONSTRAINT partners_status_check CHECK (status = ANY (ARRAY['invited'::text,'pending'::text,'active'::text,'paused'::text,'revoked'::text,'rejected'::text]));
