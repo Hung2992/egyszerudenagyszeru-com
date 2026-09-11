@@ -59,13 +59,16 @@ const PartnerContract = () => {
   if (!contract) {
     return (
       <div className="min-h-screen bg-background py-16 px-4">
-        <div className="max-w-2xl mx-auto border p-8 text-center space-y-4">
+        <div className="max-w-2xl mx-auto space-y-4">
+        <PartnerCooperationProgress />
+        <div className="border p-8 text-center space-y-4">
           <ShieldCheck className="w-12 h-12 mx-auto text-muted-foreground" />
           <h1 className="text-2xl font-bold">Nincs aktív szerződés</h1>
           <p className="text-sm text-muted-foreground">
             A szerződés automatikusan generálódik, amint a KYC adatkezelést az üzemeltető jóváhagyta.
           </p>
           <Button onClick={() => navigate("/partner-onboarding")}>KYC státusz</Button>
+        </div>
         </div>
       </div>
     );

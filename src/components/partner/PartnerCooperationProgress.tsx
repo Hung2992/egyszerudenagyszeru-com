@@ -64,7 +64,7 @@ const PartnerCooperationProgress = ({ compact = false }: { compact?: boolean }) 
     return [
       { label: "Regisztrált", done: progress.hasAccount },
       { label: "KYC beküldve", done: active || hasKyc },
-      { label: "KYC ellenőrizve", done: active || kycApproved },
+      { label: "KYC ellenőrzés alatt", done: active || kycApproved },
       { label: "Szerződés", done: active || (contractReady && progress.partnerSigned) },
       { label: "Aktiválható", done: active || activationReady },
       { label: "Aktív", done: active },
