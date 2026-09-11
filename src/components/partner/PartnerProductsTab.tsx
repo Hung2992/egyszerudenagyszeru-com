@@ -17,6 +17,7 @@ import VariantMatrix, { Variant } from "./VariantMatrix";
 import DigitalServiceFields from "./DigitalServiceFields";
 import ProductCapabilityMatrix from "./ProductCapabilityMatrix";
 import AiProductBuilderDialog from "./AiProductBuilderDialog";
+import PartnerProductPublicPreview from "./PartnerProductPublicPreview";
 import {
   FULFILLMENTS, fulfillmentLabel, fulfillmentIcon, fulfillmentHint, fulfillmentOfType,
   capabilitiesOf, defaultTypeOf, stockLabel, checkoutModeOf, checkoutModeLabel, orderFlow, summaryOf,
@@ -301,6 +302,8 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
             </div>
 
             <ProductCapabilityMatrix active={ff} />
+
+            {editing?.id && <PartnerProductPublicPreview partnerId={partnerId} product={editing} />}
 
 
             {/* Termék típus */}
