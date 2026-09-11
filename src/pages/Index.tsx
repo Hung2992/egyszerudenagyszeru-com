@@ -213,17 +213,19 @@ const Index = () => {
         <section id="mukodes" className="border-y border-border bg-card">
           <div className="mx-auto grid max-w-7xl lg:grid-cols-[0.8fr_1.2fr]">
             <div className="border-b border-border px-5 py-16 lg:border-b-0 lg:border-r lg:px-8 lg:py-24">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Egyszerű indulás</p>
-              <h2 className="mt-4 text-4xl font-bold md:text-5xl">A vállalkozásodhoz igazodik.</h2>
-              <p className="mt-5 text-sm leading-relaxed text-muted-foreground">Nem egy merev sablont kapsz. A szükséges eszközöket választod, a rendszer pedig együtt fejlődik a cégeddel.</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Hogyan épül fel</p>
+              <h2 className="mt-4 text-4xl font-bold md:text-5xl">A nullától az élő üzletig.</h2>
+              <p className="mt-5 text-sm leading-relaxed text-muted-foreground">Nincs szükség külön dizájnerre, fejlesztőre, webshopmotorra vagy CRM-re. A rendszer végigvezet a teljes digitális működés kialakításán.</p>
               <Button variant="outline" className="mt-8 h-12 rounded-none border-accent text-accent hover:bg-accent hover:text-accent-foreground" onClick={goToRegistration}>Kezdés most <ArrowRight /></Button>
             </div>
             <div className="px-5 py-12 lg:px-14 lg:py-20">
               {[
-                ["01", "Regisztrálsz", "Létrehozod a vállalkozásod partnerfiókját."],
-                ["02", "Elmondod, mire van szükséged", "Weboldal, webshop, szolgáltatás, kurzus, foglalás vagy teljes üzleti rendszer."],
-                ["03", "Az AI fejlesztő felépíti", "Megtervezi a felületet, elkészíti a tartalmat és összeállítja a működést."],
-                ["04", "Elindulsz", "Egy központból vezeted az ügyfeleket, bevételt és napi munkát."],
+                ["01", "Regisztrálsz partnerként", "Saját fiók, saját domain, saját márka. Azonnal elérhető admin felület."],
+                ["02", "AI felméri a vállalkozásod", "Kiválasztja a szükséges modulokat, dizájnt és tartalmi struktúrát."],
+                ["03", "AI fejlesztő megépíti", "Weboldal, webshop, termékkategóriák, szolgáltatás- és foglalási oldalak."],
+                ["04", "Feltöltöd a portfóliót", "Termékek, variánsok, készlet, digitális licenc, kurzus, árak, időpontok."],
+                ["05", "Elindítod a forgalmat", "SEO, hírlevél, SMS, QR, UTM, közösségi kampányok és automatizált tölcsérek."],
+                ["06", "Kezeled az üzletet", "Rendelések, foglalások, ügyfelek, szállítás, kifizetések, riportok — egy képernyőn."],
               ].map(([number, title, description]) => (
                 <div key={number} className="grid grid-cols-[48px_1fr] gap-4 border-b border-border py-6 first:pt-0 last:border-0 last:pb-0">
                   <span className="font-mono text-sm text-accent">{number}</span>
