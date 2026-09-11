@@ -76,9 +76,9 @@ const Index = () => {
     <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <header className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/90 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 lg:px-8">
-          <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="flex items-center gap-3" aria-label="APEX főoldal">
-            <span className="flex h-8 w-8 items-center justify-center border border-accent text-xs font-bold text-accent">A</span>
-            <span className="font-heading text-sm font-bold uppercase tracking-[0.18em]">APEX <span className="text-accent">Platform</span></span>
+          <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="flex items-center gap-3" aria-label="Egyszerű de Nagyszerű főoldal">
+            <span className="flex h-8 w-8 items-center justify-center border border-accent text-xs font-bold text-accent">EN</span>
+            <span className="font-heading text-sm font-bold uppercase tracking-[0.12em]">Egyszerű <span className="text-accent">de</span> Nagyszerű</span>
           </button>
 
           <nav className="hidden items-center gap-8 md:flex" aria-label="Fő navigáció">
@@ -117,17 +117,20 @@ const Index = () => {
             <div className="max-w-3xl">
               <div className="mb-7 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.2em] text-accent">
                 <span className="h-px w-8 bg-accent" />
-                Egy rendszer. A teljes vállalkozásod.
+                Weboldal · Webshop · Üzleti rendszer · AI
               </div>
-              <h1 className="max-w-3xl text-5xl font-bold leading-[0.98] md:text-7xl lg:text-8xl">
-                A szoftver, ami <span className="text-accent">veled dolgozik.</span>
+              <h1 className="max-w-4xl text-5xl font-bold leading-[0.98] md:text-7xl lg:text-8xl">
+                Egyszerű <span className="text-accent">de</span><br />Nagyszerű.
               </h1>
-              <p className="mt-7 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">
-                Béreld ki a saját üzleti rendszeredet weboldallal, ügyfélkezeléssel, értékesítéssel, naptárral és AI munkatársakkal.
+              <p className="mt-7 max-w-2xl text-lg font-medium leading-relaxed text-foreground md:text-xl">
+                A komplett szoftver, amely felépíti és működteti a vállalkozásod digitális rendszerét.
+              </p>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
+                Professzionális weboldal és webshop, termék- és szolgáltatásértékesítés, ügyfélkezelés, időpontfoglalás, marketing, kommunikáció, pénzügyi áttekintés és AI munkatársak — egyetlen bérelhető rendszerben.
               </p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                 <Button size="lg" className="h-14 rounded-none bg-accent px-8 text-xs font-bold uppercase tracking-[0.14em] text-accent-foreground hover:bg-accent/90" onClick={goToRegistration}>
-                  Partnerfiók létrehozása <ArrowRight />
+                  Saját rendszer indítása <ArrowRight />
                 </Button>
                 <Button size="lg" variant="outline" className="h-14 rounded-none border-foreground/30 bg-background/30 px-8 text-xs uppercase tracking-[0.14em] backdrop-blur-sm hover:bg-secondary" onClick={scrollToModules}>
                   Megnézem a rendszert
@@ -157,8 +160,9 @@ const Index = () => {
 
         <section id="modulok" className="mx-auto max-w-7xl px-5 py-20 md:py-28 lg:px-8">
           <div className="mb-12 max-w-2xl">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Az APEX rendszer</p>
-            <h2 className="mt-4 text-4xl font-bold leading-tight md:text-6xl">Nem öt külön program.<br /><span className="text-muted-foreground">Egy összekapcsolt működés.</span></h2>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Egyszerű de Nagyszerű szoftver</p>
+            <h2 className="mt-4 text-4xl font-bold leading-tight md:text-6xl">Nem csak weboldal.<br /><span className="text-muted-foreground">A teljes vállalkozásod rendszere.</span></h2>
+            <p className="mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground">A rendszer nem áll meg a honlap elkészítésénél. Összeköti az online értékesítést, az ügyfeleket, a napi feladatokat, a marketinget és az AI automatizálást.</p>
           </div>
 
           <div className="grid gap-px overflow-hidden border border-border bg-border md:grid-cols-3">
@@ -187,8 +191,8 @@ const Index = () => {
             <div className="px-5 py-12 lg:px-14 lg:py-20">
               {[
                 ["01", "Regisztrálsz", "Létrehozod a vállalkozásod partnerfiókját."],
-                ["02", "Kiválasztod a működésed", "Weboldal, értékesítés, szolgáltatás, naptár vagy teljes rendszer."],
-                ["03", "Az AI felépíti", "Elkészíti az alapokat, te pedig ellenőrzöd és jóváhagyod."],
+                ["02", "Elmondod, mire van szükséged", "Weboldal, webshop, szolgáltatás, kurzus, foglalás vagy teljes üzleti rendszer."],
+                ["03", "Az AI fejlesztő felépíti", "Megtervezi a felületet, elkészíti a tartalmat és összeállítja a működést."],
                 ["04", "Elindulsz", "Egy központból vezeted az ügyfeleket, bevételt és napi munkát."],
               ].map(([number, title, description]) => (
                 <div key={number} className="grid grid-cols-[48px_1fr] gap-4 border-b border-border py-6 first:pt-0 last:border-0 last:pb-0">
@@ -205,7 +209,7 @@ const Index = () => {
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Irányítás és biztonság</p>
               <h2 className="mt-4 text-4xl font-bold md:text-6xl">Az AI javasol.<br />Te döntesz.</h2>
-              <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground">Az érzékeny üzleti, pénzügyi és jogi műveletek emberi jóváhagyással történnek. Minden intézkedés követhető és visszaállítható.</p>
+              <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground">Az AI weboldalt és webshopot épít, terméket készít, kampányt tervez, adatot elemez és segíti a napi munkát. Az érzékeny üzleti, pénzügyi és jogi műveletek csak emberi jóváhagyással történnek. Minden intézkedés követhető és visszaállítható.</p>
             </div>
             <div className="grid gap-px border border-border bg-border sm:grid-cols-2">
               {[
@@ -221,7 +225,7 @@ const Index = () => {
 
         <section className="border-y border-accent bg-accent text-accent-foreground">
           <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 px-5 py-14 md:flex-row md:items-center lg:px-8">
-            <div><p className="text-xs font-bold uppercase tracking-[0.2em] opacity-70">Készen állsz?</p><h2 className="mt-2 text-3xl font-bold md:text-5xl">Építsd fel a saját rendszered.</h2></div>
+            <div><p className="text-xs font-bold uppercase tracking-[0.2em] opacity-70">Készen állsz?</p><h2 className="mt-2 text-3xl font-bold md:text-5xl">Indítsd el a saját weboldalad és üzleti rendszered.</h2></div>
             <Button size="lg" className="h-14 rounded-none border border-accent-foreground bg-accent-foreground px-8 text-xs font-bold uppercase tracking-[0.14em] text-accent hover:bg-accent-foreground/90" onClick={goToRegistration}>Regisztráció <ArrowRight /></Button>
           </div>
         </section>
@@ -229,11 +233,11 @@ const Index = () => {
 
       <footer className="bg-background">
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-14 md:grid-cols-3 lg:px-8">
-          <div><p className="font-heading text-sm font-bold uppercase tracking-[0.18em]">APEX <span className="text-accent">Platform</span></p><p className="mt-3 max-w-xs text-xs leading-relaxed text-muted-foreground">Egy bérelhető üzleti rendszer weboldalhoz, értékesítéshez, ügyfelekhez és automatizált működéshez.</p></div>
+          <div><p className="font-heading text-sm font-bold uppercase tracking-[0.12em]">Egyszerű <span className="text-accent">de</span> Nagyszerű</p><p className="mt-3 max-w-xs text-xs leading-relaxed text-muted-foreground">Bérelhető weboldal-, webshop- és vállalkozáskezelő szoftver AI munkatársakkal.</p></div>
           <nav className="flex flex-col gap-3 text-xs text-muted-foreground"><button onClick={scrollToModules} className="text-left hover:text-foreground">Képességek</button><button onClick={() => navigate("/partner-regisztracio")} className="text-left hover:text-foreground">Partner regisztráció</button><button onClick={() => navigate("/auth")} className="text-left hover:text-foreground">Belépés</button></nav>
           <nav className="flex flex-col gap-3 text-xs text-muted-foreground"><button onClick={() => navigate("/legal/adatvedelem")} className="text-left hover:text-foreground">Adatvédelem</button><button onClick={() => navigate("/legal/aszf")} className="text-left hover:text-foreground">Általános feltételek</button><button onClick={() => navigate("/contact")} className="text-left hover:text-foreground">Kapcsolat</button></nav>
         </div>
-        <div className="border-t border-border px-5 py-5 text-center text-[10px] uppercase tracking-[0.16em] text-muted-foreground">© 2026 APEX Platform · Egyszerű de Nagyszerű</div>
+        <div className="border-t border-border px-5 py-5 text-center text-[10px] uppercase tracking-[0.16em] text-muted-foreground">© 2026 Egyszerű de Nagyszerű · Minden jog fenntartva</div>
       </footer>
     </div>
   );
