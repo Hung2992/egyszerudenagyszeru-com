@@ -21,6 +21,17 @@ type Account = {
   credentials_set: boolean;
 };
 
+type OutboxRow = {
+  id: string;
+  channel: string;
+  to_address: string;
+  status: string;
+  provider: string | null;
+  error: string | null;
+  sent_at: string | null;
+  created_at: string;
+};
+
 type Sender = {
   id: string;
   channel: string;
@@ -40,6 +51,7 @@ const CHANNEL_LABEL: Record<string, string> = { sms: "SMS", whatsapp: "WhatsApp"
 export default function PartnerGatewayPanel({ partnerId }: { partnerId: string }) {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [senders, setSenders] = useState<Sender[]>([]);
+  const [outbox, setOutbox] = useState<OutboxRow[]>([]);
   const [busy, setBusy] = useState(false);
 
   const [label, setLabel] = useState("");
@@ -77,6 +89,14 @@ export default function PartnerGatewayPanel({ partnerId }: { partnerId: string }
       .eq("partner_id", partnerId)
       .order("created_at", { ascending: false });
     setSenders((data as Sender[]) || []);
+    const { data: msgs } = await supabase
+      .from("messaging_outbox")
+      .select("id, channel, to_address, status, provider, error, sent_at, created_at")
+      .eq("partner_id", partnerId)
+      .in("channel", ["sms", "whatsapp", "voice"])
+      .order("created_at", { ascending: false })
+      .limit(25);
+    setOutbox((msgs as OutboxRow[]) || []);
   }, [call, partnerId]);
 
   useEffect(() => { void load(); }, [load]);
@@ -277,6 +297,30 @@ export default function PartnerGatewayPanel({ partnerId }: { partnerId: string }
           </div>
           <Textarea className="rounded-none" rows={3} value={testBody} onChange={(e) => setTestBody(e.target.value)} />
           <Button className="rounded-none" disabled={busy} onClick={sendTest}>Küldés</Button>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-none">
+        <CardHeader><CardTitle className="text-base">Elküldött üzenetek állapota</CardTitle></CardHeader>
+        <CardContent className="space-y-2">
+          {outbox.map((m) => (
+            <div key={m.id} className="flex flex-wrap items-center justify-between gap-2 border-b py-2 text-sm">
+              <div className="min-w-0">
+                <p className="font-medium">{CHANNEL_LABEL[m.channel] ?? m.channel} · {m.to_address}</p>
+                <p className="text-xs text-muted-foreground">
+                  {new Date(m.sent_at ?? m.created_at).toLocaleString("hu-HU", {
+                    month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit",
+                  })}
+                  {m.provider ? ` · ${m.provider}` : ""}
+                </p>
+                {m.error && <p className="text-xs text-destructive break-all">{m.error}</p>}
+              </div>
+              <Badge className="rounded-none" variant={m.status === "sent" ? "default" : m.status === "failed" ? "destructive" : "secondary"}>
+                {m.status === "sent" ? "kiment" : m.status === "failed" ? "hiba" : m.status === "no_provider" ? "nincs szolgáltató" : "várakozik"}
+              </Badge>
+            </div>
+          ))}
+          {outbox.length === 0 && <p className="text-sm text-muted-foreground">Még nem küldtél üzenetet.</p>}
         </CardContent>
       </Card>
     </div>

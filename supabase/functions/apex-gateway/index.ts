@@ -155,7 +155,34 @@ Deno.serve(async (req) => {
         const body = String(payload.body || "").trim();
         if (!body || body.length > 1600) return json({ error: "invalid_body" }, 400);
 
+        const { data: logRow } = await db
+          .from("messaging_outbox")
+          .insert({
+            channel,
+            to_address: to,
+            body,
+            partner_id: p,
+            related_type: action === "test" ? "gateway_test" : "partner_manual",
+            status: "queued",
+          })
+          .select("id")
+          .maybeSingle();
+
         const result = await gatewaySend(db, { channel, to, body, partnerId: p });
+
+        if (logRow?.id) {
+          await db
+            .from("messaging_outbox")
+            .update({
+              status: result.status,
+              provider: result.provider,
+              provider_message_id: result.providerId ?? null,
+              error: result.error ?? null,
+              attempts: 1,
+              sent_at: result.status === "sent" ? new Date().toISOString() : null,
+            })
+            .eq("id", logRow.id);
+        }
         await logEvent(db, {
           partnerId: p,
           event: action === "test" ? "gateway.test" : "gateway.send",
