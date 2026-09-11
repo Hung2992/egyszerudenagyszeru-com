@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
   const guard = await requireInternalOrAdmin(req);
   if (!guard.ok) return guard.response;
 
-  const limited = await rateLimitDb(req, { limit: 120, windowMs: 60_000, key: "messaging-send" });
+  const limited = await rateLimitDb(req, { limit: 120, windowSeconds: 60, key: "messaging-send" });
   if (limited) return limited;
 
   let payload: Record<string, unknown>;
