@@ -10,6 +10,8 @@ type ProgressData = {
   kycStatus: string | null;
   contractStatus: string | null;
   partnerSigned: boolean;
+  contractBody: string | null;
+  contractNumber: string | null;
 };
 
 const initialProgress: ProgressData = {
@@ -18,6 +20,8 @@ const initialProgress: ProgressData = {
   kycStatus: null,
   contractStatus: null,
   partnerSigned: false,
+  contractBody: null,
+  contractNumber: null,
 };
 
 const PartnerCooperationProgress = ({ compact = false }: { compact?: boolean }) => {
@@ -37,7 +41,7 @@ const PartnerCooperationProgress = ({ compact = false }: { compact?: boolean }) 
       const [partnerRes, kycRes, contractRes] = await Promise.all([
         supabase.from("partners").select("status").eq("user_id", session.user.id).maybeSingle(),
         supabase.from("tenant_kyc_submissions").select("status").eq("user_id", session.user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
-        supabase.from("partner_contracts").select("status,partner_signed_at").eq("user_id", session.user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+        supabase.from("partner_contracts").select("status,partner_signed_at,contract_body,contract_number").eq("user_id", session.user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       ]);
 
       if (!cancelled) {
@@ -47,6 +51,8 @@ const PartnerCooperationProgress = ({ compact = false }: { compact?: boolean }) 
           kycStatus: kycRes.data?.status ?? null,
           contractStatus: contractRes.data?.status ?? null,
           partnerSigned: Boolean(contractRes.data?.partner_signed_at),
+          contractBody: contractRes.data?.contract_body ?? null,
+          contractNumber: contractRes.data?.contract_number ?? null,
         });
         setLoading(false);
       }
