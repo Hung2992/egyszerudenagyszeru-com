@@ -187,12 +187,15 @@ const BrandProductDetail = () => {
               : <div>Készlet: {product.stock_qty > 0 ? `${product.stock_qty} db` : "Elfogyott"}</div>}
           </div>
           <button
-            onClick={() => toast({ title: "Hamarosan", description: "A checkout funkció a következő frissítésben érkezik." })}
-            disabled={product.stock_qty <= 0}
+            onClick={() => {
+              if (isBookable && a.booking_url) { window.open(String(a.booking_url), "_blank", "noopener"); return; }
+              toast({ title: "Hamarosan", description: isBookable ? "Az online időpontfoglalás a következő frissítésben érkezik." : "A checkout funkció a következő frissítésben érkezik." });
+            }}
+            disabled={!isBookable && !isDigital && !isCourse && product.stock_qty <= 0}
             className="w-full py-4 uppercase tracking-widest font-bold border-2 disabled:opacity-30"
             style={{ borderColor: sf.accent_color, color: sf.accent_color }}
           >
-            {product.stock_qty > 0 ? "Kosárba" : "Elfogyott"}
+            {isBookable ? "Időpont foglalása" : (isDigital || isCourse) ? "Megvásárlom" : product.stock_qty > 0 ? "Kosárba" : "Elfogyott"}
           </button>
         </div>
       </div>
