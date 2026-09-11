@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Target, Film, Languages, LineChart, Sparkles, Trash2 } from "lucide-react";
+import RecruitmentVideoRenderer from "./RecruitmentVideoRenderer";
 
 type SubTab = "campaign" | "video" | "translate" | "predict";
 
@@ -234,6 +235,7 @@ function VideoStudio() {
               <pre className="whitespace-pre-wrap mt-2 p-2 bg-muted">{v.captions}</pre>
             </details>
           )}
+          <RecruitmentVideoRenderer video={v} onUpdated={load} />
           {v.narration && (
             <details className="text-xs"><summary className="cursor-pointer font-bold">🎙️ Teljes narráció</summary>
               <p className="mt-2 p-2 bg-muted">{v.narration}</p>

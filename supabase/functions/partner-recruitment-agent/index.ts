@@ -91,6 +91,38 @@ async function generateImage(key: string, prompt: string, platform: string, supa
   } catch { return null; }
 }
 
+// Narráció hang (TTS) generálás -> mp3 feltöltés
+async function generateSpeech(
+  key: string,
+  text: string,
+  voice: string,
+  supabase: any,
+): Promise<{ url: string } | null> {
+  try {
+    const input = text.slice(0, 1500);
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/audio/speech", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "openai/gpt-4o-mini-tts", input, voice, response_format: "mp3" }),
+    });
+    if (!res.ok) {
+      console.error("tts failed", res.status);
+      return null;
+    }
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    const path = `recruitment/audio/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.mp3`;
+    const { error } = await supabase.storage.from("product-images").upload(path, bytes, {
+      contentType: "audio/mpeg", upsert: false,
+    });
+    if (error) return null;
+    const { data: pub } = supabase.storage.from("product-images").getPublicUrl(path);
+    return { url: pub.publicUrl };
+  } catch (e) {
+    console.error("tts error", (e as Error).message);
+    return null;
+  }
+}
+
 async function scorePost(key: string, post: any) {
   const sys = `Te egy virális social media stratéga vagy. Elemezd EZT a poszttervet. Válasz CSAK JSON: {"viral_score":0-100,"hook_strength":0-100,"cta_strength":0-100,"clarity":0-100,"emotional_pull":0-100,"weaknesses":["..."],"improvements":["..."],"predicted_reach":"low|mid|high|viral"}`;
   const usr = `Platform: ${post.platform}\nHook: ${post.hook}\nBody: ${post.body}\nHashtags: ${(post.hashtags || []).join(" ")}\nCTA: ${post.cta || "—"}`;
@@ -367,6 +399,55 @@ Adj minden napra minden platformra egy posztot. Ez ${days * platforms.length} po
       }).select().single();
       if (error) return json({ error: error.message }, 500, req);
       return json({ ok: true, video: ins }, 200, req);
+    }
+
+    // ============ VIDEO ASSETS (valódi kép + hang jelenetenként) ============
+    if (action === "video_assets") {
+      const videoId = String(body?.video_id || "");
+      if (!/^[0-9a-f-]{36}$/i.test(videoId)) return json({ error: "video_id required" }, 400, req);
+      const voice = ["alloy", "verse", "sage", "ballad", "coral"].includes(String(body?.voice))
+        ? String(body.voice) : "alloy";
+
+      const { data: vid } = await supabase
+        .from("partner_recruitment_videos").select("*").eq("id", videoId).maybeSingle();
+      if (!vid) return json({ error: "not_found" }, 404, req);
+
+      const scenes: any[] = Array.isArray(vid.script) ? vid.script.slice(0, 8) : [];
+      if (!scenes.length) return json({ error: "no_script" }, 400, req);
+
+      const out: any[] = [];
+      for (let i = 0; i < scenes.length; i++) {
+        const s = scenes[i] || {};
+        const visual = String(s.visual || vid.thumbnail_prompt || "modern business scene");
+        const line = String(s.voiceover || "").trim();
+        const [imageUrl, audio] = await Promise.all([
+          generateImage(LOVABLE_API_KEY, visual, vid.platform, supabase),
+          line ? generateSpeech(LOVABLE_API_KEY, line, voice, supabase) : Promise.resolve(null),
+        ]);
+        out.push({
+          scene: i + 1,
+          seconds: s.seconds || null,
+          text_overlay: s.text_overlay || null,
+          voiceover: line || null,
+          image_url: imageUrl,
+          audio_url: audio?.url || null,
+        });
+      }
+
+      const fullNarration = String(vid.narration || scenes.map((s: any) => s.voiceover).filter(Boolean).join(" ")).trim();
+      const full = fullNarration ? await generateSpeech(LOVABLE_API_KEY, fullNarration, voice, supabase) : null;
+
+      const { data: upd, error: updErr } = await supabase
+        .from("partner_recruitment_videos")
+        .update({
+          scene_images: out,
+          narration_audio_url: full?.url || null,
+          status: "assets_ready",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", videoId).select().single();
+      if (updErr) return json({ error: updErr.message }, 500, req);
+      return json({ ok: true, video: upd }, 200, req);
     }
 
     // ============ MULTI-LANGUAGE TRANSLATE ============
