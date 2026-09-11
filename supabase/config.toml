@@ -85,3 +85,12 @@ project_id = "meyxhsgnryuupwpddxav"
 
   [functions.partner-fulfillment-center]
     verify_jwt = true
+
+  [functions.apex-comm-api]
+    verify_jwt = false
+
+  [functions.comm-status-callback]
+    verify_jwt = false
+
+  [functions.comm-webhook-dispatch]
+    verify_jwt = false
