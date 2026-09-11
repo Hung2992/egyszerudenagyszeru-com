@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { FileSignature, CheckCircle2, Clock, Loader2, ShieldCheck, Download, XCircle, AlertTriangle } from "lucide-react";
+import PartnerCooperationProgress from "@/components/partner/PartnerCooperationProgress";
 
 const PartnerContract = () => {
   const navigate = useNavigate();
@@ -81,6 +82,7 @@ const PartnerContract = () => {
   return (
     <div className="min-h-screen bg-background py-10 px-4">
       <div className="max-w-3xl mx-auto space-y-6">
+        <PartnerCooperationProgress />
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <FileSignature className="w-6 h-6 text-accent" />

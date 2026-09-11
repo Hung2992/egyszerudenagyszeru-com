@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "react-router-dom";
 import { ShieldCheck, Upload, Loader2, CheckCircle2, XCircle, Clock, ExternalLink } from "lucide-react";
+import PartnerCooperationProgress from "@/components/partner/PartnerCooperationProgress";
 
 interface Form {
   full_name: string;
@@ -134,6 +135,7 @@ const PartnerOnboarding = () => {
   return (
     <div className="min-h-screen bg-background py-10 px-4">
       <div className="max-w-3xl mx-auto space-y-6">
+        <PartnerCooperationProgress />
         <div className="border p-6 space-y-3">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-6 h-6 text-accent" />

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
+import PartnerCooperationProgress from "@/components/partner/PartnerCooperationProgress";
 
 const PartnerRegister = () => {
   const navigate = useNavigate();
@@ -94,7 +95,8 @@ const PartnerRegister = () => {
       return;
     }
     setAlreadyPartner(true);
-    toast({ title: "Jelentkezés elküldve", description: "Jóváhagyás után eléred a Partner Központot." });
+    toast({ title: "Jelentkezés elküldve", description: "Folytasd a kötelező KYC ellenőrzéssel." });
+    navigate("/partner-onboarding");
   };
 
   return (
@@ -128,10 +130,10 @@ const PartnerRegister = () => {
             </div>
           </Card>
         ) : alreadyPartner ? (
-          <Card className="rounded-none p-4 space-y-3">
-            <p className="text-sm">A jelentkezésed rögzítve van. Jóváhagyás után itt lépsz be:</p>
-            <Button className="rounded-none" onClick={() => navigate("/partner")}>Partner Központ</Button>
-          </Card>
+          <div className="space-y-3">
+            <PartnerCooperationProgress />
+            <Button variant="outline" className="w-full rounded-none" onClick={() => navigate("/partner-onboarding")}>Együttműködés folytatása</Button>
+          </div>
         ) : (
           <Card className="rounded-none p-4 space-y-3">
             <div className="space-y-1">
