@@ -179,6 +179,27 @@ const BrandProductDetail = () => {
             </div>
           )}
 
+          {!isBookable && !isDigital && !isCourse && (
+            <div className="border p-4 space-y-2" style={{ borderColor: `${sf.text_color}20` }}>
+              <div className="flex items-center gap-2 text-xs uppercase tracking-widest opacity-70">
+                <Truck className="h-4 w-4" /> Szállítás
+              </div>
+              <div className="text-lg font-bold" style={{ color: sf.accent_color }}>
+                {shipping.feeLabel}
+              </div>
+              <div className="text-xs opacity-70 space-y-1">
+                <div>Várható kiszállítás: {shipping.time}</div>
+                {a.processing_time && <div>Feldolgozás: {a.processing_time}</div>}
+                {a.free_shipping_over_huf && <div>Ingyenes szállítás {Number(a.free_shipping_over_huf).toLocaleString("hu-HU")} Ft felett</div>}
+                {a.shipping_carrier && <div>Futár: {a.shipping_carrier}</div>}
+                {a.shipping_methods && <div>Átvétel: {a.shipping_methods}</div>}
+                {a.cod_available && <div>Utánvét lehetséges</div>}
+                {product.weight_g && <div>Súly: {product.weight_g} g</div>}
+                {a.shipping_note && <div>{a.shipping_note}</div>}
+              </div>
+            </div>
+          )}
+
           <div className="text-xs opacity-60 space-y-1">
             {product.material && <div>Anyag: {product.material}</div>}
             {product.origin_country && <div>Származás: {product.origin_country}</div>}
