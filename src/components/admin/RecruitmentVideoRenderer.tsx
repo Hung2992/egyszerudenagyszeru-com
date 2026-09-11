@@ -121,7 +121,7 @@ const RecruitmentVideoRenderer = ({ video, onUpdated }: Props) => {
       rec.start(200);
       await audioCtx.resume();
 
-      const drawScene = (s: any, t: number, dur: number) => {
+      const drawScene = (s: any, idx: number, t: number, dur: number) => {
         const p = Math.min(1, t / dur);
         ctx.fillStyle = "#0a0a0a";
         ctx.fillRect(0, 0, W, H);
@@ -154,7 +154,7 @@ const RecruitmentVideoRenderer = ({ video, onUpdated }: Props) => {
           }
         }
         ctx.fillStyle = "#d4af37";
-        ctx.fillRect(0, H - 8, W * ((scenes.indexOf(s as Scene) + p) / prepared.length || p), 8);
+        ctx.fillRect(0, H - 8, W * ((idx + p) / prepared.length), 8);
       };
 
       for (let i = 0; i < prepared.length; i++) {
@@ -170,7 +170,7 @@ const RecruitmentVideoRenderer = ({ video, onUpdated }: Props) => {
         await new Promise<void>((resolve) => {
           const tick = () => {
             const t = (performance.now() - start) / 1000;
-            drawScene({ ...s, indexOf: i }, t, dur);
+            drawScene(s, i, t, dur);
             setProgress(Math.round(((i + Math.min(1, t / dur)) / prepared.length) * 100));
             if (t >= dur) return resolve();
             requestAnimationFrame(tick);
