@@ -218,18 +218,34 @@ Deno.serve(async (req) => {
     .single();
   if (error) return json({ error: "Nem sikerült rögzíteni az üzenetet" }, 500);
 
-  const r = await deliver(channel, to, body, typeof payload.partnerId === "string" ? payload.partnerId : null);
+  const r = await deliver(channel, to, body, typeof payload.partnerId === "string" ? payload.partnerId : null) as {
+    status: string; provider: string | null; providerId?: string | null; error?: string | null;
+    accountId?: string | null; routeId?: string | null; country?: string | null;
+  };
+  const permanent = (r.error || "").startsWith("opted_out") || (r.error || "").startsWith("blocked:");
+  const canRetry = r.status !== "sent" && !permanent;
   await db
     .from("messaging_outbox")
     .update({
-      status: r.status,
+      status: canRetry ? "queued" : r.status,
       provider: r.provider,
-      provider_message_id: (r as { providerId?: string }).providerId ?? null,
+      provider_account_id: r.accountId ?? null,
+      route_id: r.routeId ?? null,
+      country_code: r.country ?? null,
+      provider_message_id: r.providerId ?? null,
       error: r.error ?? null,
       attempts: 1,
+      next_retry_at: canRetry ? new Date(Date.now() + 2 * 60_000).toISOString() : null,
       sent_at: r.status === "sent" ? new Date().toISOString() : null,
     })
     .eq("id", inserted.id);
 
-  return json({ ok: r.status === "sent", id: inserted.id, status: r.status, error: r.error ?? null });
+  return json({
+    ok: r.status === "sent",
+    id: inserted.id,
+    status: r.status,
+    country: r.country ?? null,
+    retry_scheduled: canRetry,
+    error: r.error ?? null,
+  });
 });
