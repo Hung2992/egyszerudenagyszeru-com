@@ -265,7 +265,7 @@ const Index = () => {
 
       <footer className="bg-background">
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-14 md:grid-cols-3 lg:px-8">
-          <div><p className="font-heading text-sm font-bold uppercase tracking-[0.12em]">Egyszerű <span className="text-accent">de</span> Nagyszerű</p><p className="mt-3 max-w-xs text-xs leading-relaxed text-muted-foreground">Bérelhető weboldal-, webshop- és vállalkozáskezelő szoftver AI munkatársakkal.</p></div>
+          <div><p className="font-heading text-sm font-bold uppercase tracking-[0.12em]">Egyszerű <span className="text-accent">de</span> Nagyszerű</p><p className="mt-3 max-w-xs text-xs leading-relaxed text-muted-foreground">Bérelhető weboldal-, webshop-, CRM-, naptár-, marketing-, kommunikációs és AI rendszer vállalkozásoknak. Egy platform, egy adatmodell, egy igazság.</p></div>
           <nav className="flex flex-col gap-3 text-xs text-muted-foreground"><button onClick={scrollToModules} className="text-left hover:text-foreground">Képességek</button><button onClick={() => navigate("/partner-regisztracio")} className="text-left hover:text-foreground">Partner regisztráció</button><button onClick={() => navigate("/auth")} className="text-left hover:text-foreground">Belépés</button></nav>
           <nav className="flex flex-col gap-3 text-xs text-muted-foreground"><button onClick={() => navigate("/legal/adatvedelem")} className="text-left hover:text-foreground">Adatvédelem</button><button onClick={() => navigate("/legal/aszf")} className="text-left hover:text-foreground">Általános feltételek</button><button onClick={() => navigate("/contact")} className="text-left hover:text-foreground">Kapcsolat</button></nav>
         </div>
