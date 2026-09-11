@@ -37,13 +37,14 @@ const ALLOWED = [
   "hero_title", "hero_subtitle", "hero_cta_text", "hero_layout",
   "hero_badge_enabled", "hero_badge_text", "hero_overlay_opacity",
   "topbar_enabled", "topbar_text",
-  "section1_enabled", "section1_title", "section1_text",
-  "section2_enabled", "section2_title", "section2_text",
+  "topbar_icon",
+  "section1_enabled", "section1_title", "section1_subtitle", "section1_cta_text", "section1_cta_url",
+  "section2_enabled", "section2_title", "section2_subtitle", "section2_cta_text", "section2_cta_url",
   "featured_products_enabled", "featured_products_title",
   "testimonials_enabled", "testimonials_title", "testimonials",
   "newsletter_enabled", "newsletter_title", "newsletter_subtitle",
   "footer_text", "footer_links",
-  "meta_title", "meta_description",
+  "meta_title", "meta_description", "seo_keywords",
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -370,7 +371,7 @@ function runQualityAssurance(
     note: missingReq.length ? `hiányzik: ${missingReq.slice(0, 5).join(", ")}` : "minden megvan",
   });
 
-  const textFields = ["display_name", "tagline", "hero_title", "hero_subtitle", "section1_title", "section1_text", "section2_title", "section2_text", "footer_text", "meta_description"];
+  const textFields = ["display_name", "tagline", "hero_title", "hero_subtitle", "section1_title", "section1_subtitle", "section2_title", "section2_subtitle", "footer_text", "meta_description"];
   const foundPlaceholder = textFields.find((f) => PLACEHOLDER_PATTERNS.test(s(f)));
   checks.push({
     name: "Nincs placeholder/teszt szöveg", squad: "content",
@@ -735,7 +736,16 @@ A partner kérése: """${message.slice(0, 4000)}"""`;
 
     const rawPatch = built?.patch && typeof built.patch === "object" ? built.patch : {};
     const patch: Record<string, unknown> = {};
-    for (const k of ALLOWED) if (rawPatch[k] !== undefined && rawPatch[k] !== null) patch[k] = rawPatch[k];
+    const ARRAY_FIELDS = new Set(["seo_keywords"]);
+    for (const k of ALLOWED) {
+      if (rawPatch[k] === undefined || rawPatch[k] === null) continue;
+      let v = rawPatch[k];
+      // Tömb típusú oszlopokba az AI néha vesszős szöveget ad — átalakítjuk.
+      if (ARRAY_FIELDS.has(k) && typeof v === "string") {
+        v = v.split(",").map((s: string) => s.trim()).filter(Boolean);
+      }
+      patch[k] = v;
+    }
 
     // ── 3) RÉTEG 2: Érdemes QA validáció az alkalmazás ELŐTT
     // A QA a teljes végeredményt vizsgálja (jelenlegi + patch együtt).
@@ -793,14 +803,37 @@ Add vissza a JAVÍTOTT teljes JSON-t ugyanazzal a szerkezettel.`,
       }).select("id").maybeSingle();
       snapshotId = snap?.id ?? null;
 
-      if (sf?.id) {
-        const { error } = await supabase.from("partner_storefronts").update(patch).eq("id", sf.id);
-        applied = !error;
-        if (error) console.warn("[web-agent] update failed:", error.message);
-      } else {
-        const { error } = await supabase.from("partner_storefronts").insert({ partner_id: partnerId, ...patch });
-        applied = !error;
-        if (error) console.warn("[web-agent] insert failed:", error.message);
+      // Ha egy mező nem létezik a sémában, ne bukjon el a teljes építés:
+      // kiszedjük az ismeretlen oszlopot és újrapróbáljuk (max 8 kör).
+      const writePatch: Record<string, unknown> = { ...patch };
+      // Új webshop létrehozásakor kötelező egyedi slug
+      const slugBase = String(writePatch.display_name || "webshop")
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "webshop";
+      const newSlug = `${slugBase}-${partnerId.slice(0, 6)}`;
+      for (let attempt = 0; attempt < 8; attempt++) {
+        if (Object.keys(writePatch).length === 0) break;
+        const { error } = sf?.id
+          ? await supabase.from("partner_storefronts").update(writePatch).eq("id", sf.id)
+          : await supabase.from("partner_storefronts").insert({ partner_id: partnerId, slug: newSlug, ...writePatch });
+        if (!error) { applied = true; break; }
+        console.warn("[web-agent] write failed:", error.message);
+        const bad = /Could not find the '([^']+)' column/.exec(error.message)?.[1];
+        if (bad && bad in writePatch) {
+          delete writePatch[bad];
+          delete (patch as Record<string, unknown>)[bad];
+          continue;
+        }
+        // Típushiba (pl. tömb oszlop) — az érintett mezőket kihagyjuk, a többi elkészül.
+        if (/malformed array literal|invalid input syntax/i.test(error.message)) {
+          let dropped = false;
+          for (const k of ARRAY_FIELDS) {
+            if (k in writePatch) { delete writePatch[k]; delete (patch as Record<string, unknown>)[k]; dropped = true; }
+          }
+          if (dropped) continue;
+        }
+        break;
       }
     }
 
