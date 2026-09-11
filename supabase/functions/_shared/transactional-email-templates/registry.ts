@@ -36,8 +36,10 @@ import { template as appointmentConfirmation } from './appointment-confirmation.
 import { template as partnerFeatureAnnouncement } from './partner-feature-announcement.tsx'
 import { template as purchaseFollowup } from './purchase-followup.tsx'
 import { template as abandonedCart } from './abandoned-cart.tsx'
+import { template as newsletter } from './newsletter.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
+  'newsletter': newsletter,
   'purchase-followup': purchaseFollowup,
   'abandoned-cart': abandonedCart,
   'contact-confirmation': contactConfirmation,

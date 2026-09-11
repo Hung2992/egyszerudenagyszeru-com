@@ -68,6 +68,7 @@ const KycAdatkezeles = lazy(lazyRetry(() => import("./pages/legal/KycAdatkezeles
 const BrandStorefront = lazy(lazyRetry(() => import("./pages/BrandStorefront.tsx")));
 const BrandProductDetail = lazy(lazyRetry(() => import("./pages/BrandProductDetail.tsx")));
 const BrandPage = lazy(lazyRetry(() => import("./pages/BrandPage.tsx")));
+const BrandNews = lazy(lazyRetry(() => import("./pages/BrandNews.tsx")));
 const PartnerApprovals = lazy(lazyRetry(() => import("./pages/PartnerApprovals.tsx")));
 const PartnerLanding = lazy(lazyRetry(() => import("./pages/PartnerLanding.tsx")));
 const PartnerShareRedirect = lazy(lazyRetry(() => import("./pages/PartnerShareRedirect.tsx")));
@@ -164,6 +165,8 @@ const App = () => (
             <Route path="/b/:slug" element={<BrandStorefront />} />
             <Route path="/b/:slug/termek/:productSlug" element={<BrandProductDetail />} />
             <Route path="/b/:slug/oldal/:pageSlug" element={<BrandPage />} />
+            <Route path="/b/:slug/hirek" element={<BrandNews />} />
+            <Route path="/b/:slug/hirek/:postSlug" element={<BrandNews />} />
             <Route path="/s/:code" element={<PartnerShareRedirect />} />
             <Route path="/p/:partnerSlug/:landingSlug" element={<PartnerLanding />} />
             <Route path="/csomagkovetes" element={<TrackShipment />} />

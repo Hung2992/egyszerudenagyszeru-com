@@ -4661,6 +4661,108 @@ export type Database = {
         }
         Relationships: []
       }
+      messaging_outbox: {
+        Row: {
+          attempts: number
+          body: string
+          channel: string
+          created_at: string
+          error: string | null
+          id: string
+          metadata: Json
+          partner_id: string | null
+          provider: string | null
+          provider_message_id: string | null
+          related_id: string | null
+          related_type: string | null
+          send_at: string
+          sent_at: string | null
+          status: string
+          subject: string | null
+          template_key: string | null
+          to_address: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          body: string
+          channel: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          metadata?: Json
+          partner_id?: string | null
+          provider?: string | null
+          provider_message_id?: string | null
+          related_id?: string | null
+          related_type?: string | null
+          send_at?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          template_key?: string | null
+          to_address: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          body?: string
+          channel?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          metadata?: Json
+          partner_id?: string | null
+          provider?: string | null
+          provider_message_id?: string | null
+          related_id?: string | null
+          related_type?: string | null
+          send_at?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          template_key?: string | null
+          to_address?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      messaging_templates: {
+        Row: {
+          active: boolean
+          body: string
+          channel: string
+          created_at: string
+          id: string
+          key: string
+          name: string
+          updated_at: string
+          variables: Json
+        }
+        Insert: {
+          active?: boolean
+          body: string
+          channel?: string
+          created_at?: string
+          id?: string
+          key: string
+          name: string
+          updated_at?: string
+          variables?: Json
+        }
+        Update: {
+          active?: boolean
+          body?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          key?: string
+          name?: string
+          updated_at?: string
+          variables?: Json
+        }
+        Relationships: []
+      }
       order_events: {
         Row: {
           created_at: string
@@ -6005,39 +6107,54 @@ export type Database = {
         Row: {
           body_html: string
           click_count: number
+          cover_image_url: string | null
           created_at: string
+          excerpt: string | null
           id: string
           open_count: number
           partner_id: string
+          published_at: string | null
+          published_on_site: boolean
           recipient_count: number
           sent_at: string | null
           sent_count: number
+          slug: string | null
           status: string
           subject: string
         }
         Insert: {
           body_html: string
           click_count?: number
+          cover_image_url?: string | null
           created_at?: string
+          excerpt?: string | null
           id?: string
           open_count?: number
           partner_id: string
+          published_at?: string | null
+          published_on_site?: boolean
           recipient_count?: number
           sent_at?: string | null
           sent_count?: number
+          slug?: string | null
           status?: string
           subject: string
         }
         Update: {
           body_html?: string
           click_count?: number
+          cover_image_url?: string | null
           created_at?: string
+          excerpt?: string | null
           id?: string
           open_count?: number
           partner_id?: string
+          published_at?: string | null
+          published_on_site?: boolean
           recipient_count?: number
           sent_at?: string | null
           sent_count?: number
+          slug?: string | null
           status?: string
           subject?: string
         }
