@@ -43,6 +43,9 @@ const STYLES = [
 
 type SceneSetting = { enabled: boolean; dur: number | null };
 
+// Minden jelenet (kép) legalább ennyi ideig látszik
+const MIN_SCENE_SEC = 60;
+
 const loadImage = (url: string) =>
   new Promise<HTMLImageElement | null>((resolve) => {
     const img = new Image();
