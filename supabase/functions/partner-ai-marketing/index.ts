@@ -45,8 +45,14 @@ Deno.serve(async (req) => {
     const { action, partner_id, product_id, platform, tone, language, custom_brief } = body;
 
     // Verify partner ownership
-    const { data: partner } = await supabase.from("partners").select("id, company_name, coupon_code").eq("id", partner_id).eq("user_id", user.id).maybeSingle();
+    const { data: partner } = await supabase.from("partners").select("id, company_name, coupon_id").eq("id", partner_id).eq("user_id", user.id).maybeSingle();
     if (!partner) return json({ error: "not_partner" }, 403);
+
+    let couponCode: string | null = null;
+    if (partner.coupon_id) {
+      const { data: coupon } = await supabase.from("coupons").select("code").eq("id", partner.coupon_id).maybeSingle();
+      couponCode = coupon?.code || null;
+    }
 
     let product: any = null;
     if (product_id) {
@@ -58,7 +64,7 @@ Deno.serve(async (req) => {
 
     if (action === "generate_post") {
       const sys = `Te egy világszínvonalú közösségi média marketing copywriter vagy. Magyarul írsz, fiatalos hangvétellel. Generálj viral posztokat ${platform} platformra. Válasz CSAK JSON-ban: {"title": "...", "body": "...", "hashtags": ["#tag1"], "cta_text": "..."}.`;
-      const usr = `Partner: ${partner.company_name}. Kupon: ${partner.coupon_code || "—"}.
+      const usr = `Partner: ${partner.company_name}. Kupon: ${couponCode || "—"}.
 Termék: ${product ? `${product.title} — ${product.description?.slice(0, 300) || ""}. Ár: ${product.price_huf} Ft. Márka: ${product.brand || "—"}.` : "Általános brand poszt."}
 Tónus: ${tone || "energikus, fiatalos"}. Platform: ${platform}.
 ${custom_brief ? `Extra kérés: ${custom_brief}` : ""}
