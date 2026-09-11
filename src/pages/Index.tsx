@@ -7,11 +7,16 @@ import {
   CalendarDays,
   Check,
   ChevronRight,
+  FileText,
   Globe2,
+  Lock,
+  Mail,
   Menu,
   MessageSquareText,
   PackageCheck,
   ShieldCheck,
+  ShoppingCart,
+  Smartphone,
   Sparkles,
   Users,
   X,
@@ -22,45 +27,66 @@ import heroImage from "@/assets/apex-business-platform-hero.jpg";
 
 const modules = [
   {
-    icon: Bot,
-    label: "AI munkatársak",
-    title: "A rendszer dolgozik veled.",
-    description: "Tartalmat készít, elemzi a működést, feladatot javasol és jóváhagyás után végrehajtja.",
-    className: "md:col-span-2",
-  },
-  {
     icon: Globe2,
-    label: "Weboldal és értékesítés",
-    title: "Saját digitális jelenlét",
-    description: "Weboldal, webshop, szolgáltatás, kurzus és egyedi márkaoldal egyetlen helyről.",
+    label: "Weboldal & márkaoldal motor",
+    title: "Saját domain, saját dizájn.",
+    description: "Weboldal, landing oldalak, blog, SEO metaadatok, mobilos megjelenés, verziókezelés és egykattintásos visszaállítás.",
     className: "md:col-span-1",
   },
   {
+    icon: ShoppingCart,
+    label: "Webshop & termékkezelés",
+    title: "Fizikai, digitális, kurzus, szolgáltatás.",
+    description: "Variánsok, méretek, színek, készlet, licenc-kulcsok, letöltések, árazási szabályok és kosárelhagyás kezelés.",
+    className: "md:col-span-2",
+  },
+  {
     icon: Users,
-    label: "Ügyfélkezelés",
-    title: "Minden kapcsolat egy helyen",
-    description: "Érdeklődők, vásárlók, foglalások és napi teendők átlátható ügyféltörténettel.",
+    label: "CRM & ügyfélkapcsolatok",
+    title: "Minden érintkezés egy helyen.",
+    description: "Érdeklődők, vásárlók, foglalások, előzmények, címkék, csoportok és napi teendők közvetlenül az ügyfél mellől.",
+    className: "md:col-span-1",
+  },
+  {
+    icon: CalendarDays,
+    label: "Naptár & online foglalás",
+    title: "Foglalás alvás közben is.",
+    description: "Szolgáltatásidőpontok, szabad idősávok, automatikus visszaigazolás, emlékeztetők és napi ügyféllista.",
+    className: "md:col-span-1",
+  },
+  {
+    icon: Mail,
+    label: "Marketing & kampányközpont",
+    title: "Hírlevél, SMS, QR, UTM, A/B.",
+    description: "Segmentált kampányok, automatikus tölcsérek, közösségi poszt-javaslatok és teljes analitikai visszakövetés.",
+    className: "md:col-span-2",
+  },
+  {
+    icon: Bot,
+    label: "AI munkatársak",
+    title: "Szöveg, kép, videó, kód.",
+    description: "AI fejlesztő építi az oldalaidat, ír termékleírásokat, SEO-t, hirdetéseket és generál médiafájlokat saját AI szerveren is.",
+    className: "md:col-span-1",
+  },
+  {
+    icon: Smartphone,
+    label: "APEX kommunikációs platform",
+    title: "Email, SMS, WhatsApp, hang.",
+    description: "Saját CPaaS motor DLR-ekkel, opt-outtal, routinggal, retry-jel és szállítási központtal. Nem kell külön Twilio.",
     className: "md:col-span-1",
   },
   {
     icon: BarChart3,
-    label: "Vezetői központ",
-    title: "Lásd, mi hoz eredményt.",
-    description: "Forgalom, bevétel, kampányok és működési mutatók valós idejű áttekintése.",
-    className: "md:col-span-2",
-  },
-  {
-    icon: CalendarDays,
-    label: "Naptár és foglalás",
-    title: "A teljes napod rendezve",
-    description: "Online időpontfoglalás, automatikus visszaigazolás és napi ügyféllista.",
+    label: "Vezetői & pénzügyi központ",
+    title: "Rendelés, bevétel, jutalék, KPI.",
+    description: "Élő dashboard, audit napló, partner kifizetések, visszatérítések és döntéstámogató mutatók.",
     className: "md:col-span-1",
   },
   {
-    icon: MessageSquareText,
-    label: "Kommunikáció",
-    title: "Kampányok külön rendszerek nélkül",
-    description: "Hírlevelek, értesítések és ügyfélüzenetek központi szerkesztése és követése.",
+    icon: ShieldCheck,
+    label: "Biztonság & tenant isolation",
+    title: "Adatod, jogosultságod, auditod.",
+    description: "Row-level security, szerepkörök, több-bérlős architektúra, változás-nyomon követés és egykattintásos rollback.",
     className: "md:col-span-1",
   },
 ];
@@ -117,16 +143,16 @@ const Index = () => {
             <div className="max-w-3xl">
               <div className="mb-7 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.2em] text-accent">
                 <span className="h-px w-8 bg-accent" />
-                Weboldal · Webshop · Üzleti rendszer · AI
+                Bérelhető üzleti szoftver · Végpontig
               </div>
-              <h1 className="max-w-4xl text-5xl font-bold leading-[0.98] md:text-7xl lg:text-8xl">
-                Egyszerű <span className="text-accent">de</span><br />Nagyszerű.
+              <h1 className="max-w-4xl text-4xl font-bold leading-[0.98] md:text-6xl lg:text-7xl">
+                Weboldal. Webshop.<br /><span className="text-accent">Ügyvitel. AI.</span><br />Egy rendszerben.
               </h1>
               <p className="mt-7 max-w-2xl text-lg font-medium leading-relaxed text-foreground md:text-xl">
-                A komplett szoftver, amely felépíti és működteti a vállalkozásod digitális rendszerét.
+                Az Egyszerű de Nagyszerű nem weboldalkészítő. Komplett, bérelhető vállalkozásirányítási platform.
               </p>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
-                Professzionális weboldal és webshop, termék- és szolgáltatásértékesítés, ügyfélkezelés, időpontfoglalás, marketing, kommunikáció, pénzügyi áttekintés és AI munkatársak — egyetlen bérelhető rendszerben.
+                Építs saját weboldalt és webshopot, árulj terméket, szolgáltatást, kurzust és digitális tartalmat, kezeld ügyfeleidet, naptáradat, kampányaidat, SMS/email kommunikációdat, szállításodat és pénzügyeidet — mindezt egy központból, saját márkáddal.
               </p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                 <Button size="lg" className="h-14 rounded-none bg-accent px-8 text-xs font-bold uppercase tracking-[0.14em] text-accent-foreground hover:bg-accent/90" onClick={goToRegistration}>
@@ -137,7 +163,7 @@ const Index = () => {
                 </Button>
               </div>
               <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-xs text-muted-foreground">
-                {["Saját márkanév", "Bővíthető modulok", "Központi kezelés"].map((item) => (
+                {["Saját domain", "Saját adatok", "Bérelhető rendszer", "Végpontig"].map((item) => (
                   <span key={item} className="flex items-center gap-2"><Check className="h-4 w-4 text-accent" />{item}</span>
                 ))}
               </div>
@@ -148,7 +174,7 @@ const Index = () => {
         <section className="border-y border-border bg-card">
           <div className="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-border px-5 md:grid-cols-4 lg:px-8">
             {[
-              ["01", "Egy központ"], ["24/7", "AI támogatás"], ["100%", "Saját márka"], ["∞", "Bővíthetőség"],
+              ["1", "Egy rendszer"], ["0", "Külső eszköz"], ["Saját", "Domain & márka"], ["∞", "Modul & ügyfél"],
             ].map(([value, label]) => (
               <div key={label} className="px-4 py-7 text-center md:py-9">
                 <p className="text-2xl font-bold text-accent md:text-3xl">{value}</p>
@@ -160,9 +186,9 @@ const Index = () => {
 
         <section id="modulok" className="mx-auto max-w-7xl px-5 py-20 md:py-28 lg:px-8">
           <div className="mb-12 max-w-2xl">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Egyszerű de Nagyszerű szoftver</p>
-            <h2 className="mt-4 text-4xl font-bold leading-tight md:text-6xl">Nem csak weboldal.<br /><span className="text-muted-foreground">A teljes vállalkozásod rendszere.</span></h2>
-            <p className="mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground">A rendszer nem áll meg a honlap elkészítésénél. Összeköti az online értékesítést, az ügyfeleket, a napi feladatokat, a marketinget és az AI automatizálást.</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Modulok végpontig</p>
+            <h2 className="mt-4 text-4xl font-bold leading-tight md:text-6xl">Nem weboldalkészítő.<br /><span className="text-muted-foreground">Komplett üzleti szoftver.</span></h2>
+            <p className="mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground">Minden modul ugyanabban a rendszerben fut: egyetlen admin, egyetlen ügyfélbázis, egyetlen bevételi- és marketingadat. Nincs szükség külön Shopify-ra, Webflow-ra, Calendly-re, Mailchimpre vagy CRM-re.</p>
           </div>
 
           <div className="grid gap-px overflow-hidden border border-border bg-border md:grid-cols-3">
@@ -183,17 +209,19 @@ const Index = () => {
         <section id="mukodes" className="border-y border-border bg-card">
           <div className="mx-auto grid max-w-7xl lg:grid-cols-[0.8fr_1.2fr]">
             <div className="border-b border-border px-5 py-16 lg:border-b-0 lg:border-r lg:px-8 lg:py-24">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Egyszerű indulás</p>
-              <h2 className="mt-4 text-4xl font-bold md:text-5xl">A vállalkozásodhoz igazodik.</h2>
-              <p className="mt-5 text-sm leading-relaxed text-muted-foreground">Nem egy merev sablont kapsz. A szükséges eszközöket választod, a rendszer pedig együtt fejlődik a cégeddel.</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Hogyan épül fel</p>
+              <h2 className="mt-4 text-4xl font-bold md:text-5xl">A nullától az élő üzletig.</h2>
+              <p className="mt-5 text-sm leading-relaxed text-muted-foreground">Nincs szükség külön dizájnerre, fejlesztőre, webshopmotorra vagy CRM-re. A rendszer végigvezet a teljes digitális működés kialakításán.</p>
               <Button variant="outline" className="mt-8 h-12 rounded-none border-accent text-accent hover:bg-accent hover:text-accent-foreground" onClick={goToRegistration}>Kezdés most <ArrowRight /></Button>
             </div>
             <div className="px-5 py-12 lg:px-14 lg:py-20">
               {[
-                ["01", "Regisztrálsz", "Létrehozod a vállalkozásod partnerfiókját."],
-                ["02", "Elmondod, mire van szükséged", "Weboldal, webshop, szolgáltatás, kurzus, foglalás vagy teljes üzleti rendszer."],
-                ["03", "Az AI fejlesztő felépíti", "Megtervezi a felületet, elkészíti a tartalmat és összeállítja a működést."],
-                ["04", "Elindulsz", "Egy központból vezeted az ügyfeleket, bevételt és napi munkát."],
+                ["01", "Regisztrálsz partnerként", "Saját fiók, saját domain, saját márka. Azonnal elérhető admin felület."],
+                ["02", "AI felméri a vállalkozásod", "Kiválasztja a szükséges modulokat, dizájnt és tartalmi struktúrát."],
+                ["03", "AI fejlesztő megépíti", "Weboldal, webshop, termékkategóriák, szolgáltatás- és foglalási oldalak."],
+                ["04", "Feltöltöd a portfóliót", "Termékek, variánsok, készlet, digitális licenc, kurzus, árak, időpontok."],
+                ["05", "Elindítod a forgalmat", "SEO, hírlevél, SMS, QR, UTM, közösségi kampányok és automatizált tölcsérek."],
+                ["06", "Kezeled az üzletet", "Rendelések, foglalások, ügyfelek, szállítás, kifizetések, riportok — egy képernyőn."],
               ].map(([number, title, description]) => (
                 <div key={number} className="grid grid-cols-[48px_1fr] gap-4 border-b border-border py-6 first:pt-0 last:border-0 last:pb-0">
                   <span className="font-mono text-sm text-accent">{number}</span>
@@ -207,14 +235,14 @@ const Index = () => {
         <section id="biztonsag" className="mx-auto max-w-7xl px-5 py-20 md:py-28 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Irányítás és biztonság</p>
-              <h2 className="mt-4 text-4xl font-bold md:text-6xl">Az AI javasol.<br />Te döntesz.</h2>
-              <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground">Az AI weboldalt és webshopot épít, terméket készít, kampányt tervez, adatot elemez és segíti a napi munkát. Az érzékeny üzleti, pénzügyi és jogi műveletek csak emberi jóváhagyással történnek. Minden intézkedés követhető és visszaállítható.</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Biztonság és adattulajdonlás</p>
+              <h2 className="mt-4 text-4xl font-bold md:text-6xl">A te adatod.<br />A te jogosultságod.</h2>
+              <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground">Minden partner saját bérlőben fut: row-level security, szerepkör-alapú hozzáférés, audit napló és változáskövetés. Az AI javasol, de a pénzügyi, jogi és adatkezelési műveletek csak emberi jóváhagyással élesednek. Bármely változtatás visszaállítható.</p>
             </div>
             <div className="grid gap-px border border-border bg-border sm:grid-cols-2">
               {[
-                [ShieldCheck, "Szerepkörös hozzáférés"], [PackageCheck, "Visszaállítható módosítások"],
-                [Zap, "Automatizált munkafolyamatok"], [Sparkles, "Ellenőrzött AI döntések"],
+                [ShieldCheck, "RLS & tenant isolation"], [Lock, "Szerepkörös jogosultságok"],
+                [PackageCheck, "Verziókezelés & rollback"], [FileText, "Audit napló & követhetőség"],
               ].map(([Icon, text]) => {
                 const FeatureIcon = Icon as typeof ShieldCheck;
                 return <div key={text as string} className="flex min-h-36 flex-col justify-between bg-card p-6"><FeatureIcon className="h-6 w-6 text-accent" /><p className="text-sm font-bold">{text as string}</p></div>;
@@ -225,15 +253,15 @@ const Index = () => {
 
         <section className="border-y border-accent bg-accent text-accent-foreground">
           <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 px-5 py-14 md:flex-row md:items-center lg:px-8">
-            <div><p className="text-xs font-bold uppercase tracking-[0.2em] opacity-70">Készen állsz?</p><h2 className="mt-2 text-3xl font-bold md:text-5xl">Indítsd el a saját weboldalad és üzleti rendszered.</h2></div>
-            <Button size="lg" className="h-14 rounded-none border border-accent-foreground bg-accent-foreground px-8 text-xs font-bold uppercase tracking-[0.14em] text-accent hover:bg-accent-foreground/90" onClick={goToRegistration}>Regisztráció <ArrowRight /></Button>
+            <div><p className="text-xs font-bold uppercase tracking-[0.2em] opacity-70">Készen állsz?</p><h2 className="mt-2 text-3xl font-bold md:text-5xl">Béreld a teljes digitális rendszered egy helyről.</h2></div>
+            <Button size="lg" className="h-14 rounded-none border border-accent-foreground bg-accent-foreground px-8 text-xs font-bold uppercase tracking-[0.14em] text-accent hover:bg-accent-foreground/90" onClick={goToRegistration}>Saját rendszer indítása <ArrowRight /></Button>
           </div>
         </section>
       </main>
 
       <footer className="bg-background">
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-14 md:grid-cols-3 lg:px-8">
-          <div><p className="font-heading text-sm font-bold uppercase tracking-[0.12em]">Egyszerű <span className="text-accent">de</span> Nagyszerű</p><p className="mt-3 max-w-xs text-xs leading-relaxed text-muted-foreground">Bérelhető weboldal-, webshop- és vállalkozáskezelő szoftver AI munkatársakkal.</p></div>
+          <div><p className="font-heading text-sm font-bold uppercase tracking-[0.12em]">Egyszerű <span className="text-accent">de</span> Nagyszerű</p><p className="mt-3 max-w-xs text-xs leading-relaxed text-muted-foreground">Bérelhető weboldal-, webshop-, CRM-, naptár-, marketing-, kommunikációs és AI rendszer vállalkozásoknak. Egy platform, egy adatmodell, egy igazság.</p></div>
           <nav className="flex flex-col gap-3 text-xs text-muted-foreground"><button onClick={scrollToModules} className="text-left hover:text-foreground">Képességek</button><button onClick={() => navigate("/partner-regisztracio")} className="text-left hover:text-foreground">Partner regisztráció</button><button onClick={() => navigate("/auth")} className="text-left hover:text-foreground">Belépés</button></nav>
           <nav className="flex flex-col gap-3 text-xs text-muted-foreground"><button onClick={() => navigate("/legal/adatvedelem")} className="text-left hover:text-foreground">Adatvédelem</button><button onClick={() => navigate("/legal/aszf")} className="text-left hover:text-foreground">Általános feltételek</button><button onClick={() => navigate("/contact")} className="text-left hover:text-foreground">Kapcsolat</button></nav>
         </div>
