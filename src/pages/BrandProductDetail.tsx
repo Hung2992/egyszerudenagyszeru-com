@@ -259,6 +259,36 @@ const BrandProductDetail = () => {
           >
             {isBookable ? "Időpont foglalása" : (isDigital || isCourse) ? "Megvásárlom" : product.stock_qty > 0 ? "Kosárba" : "Elfogyott"}
           </button>
+
+          {bookingOpen && (
+            <div className="border p-4 space-y-3" style={{ borderColor: sf.accent_color }}>
+              {bookingDone ? (
+                <div className="space-y-1">
+                  <div className="text-lg font-bold" style={{ color: sf.accent_color }}>Foglalás rögzítve</div>
+                  <p className="text-sm opacity-80">A visszaigazolást elküldtük a megadott e-mail címre.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="text-xs uppercase tracking-widest opacity-70">Időpontfoglalás</div>
+                  <input className="w-full bg-transparent border p-3 text-sm" style={{ borderColor: `${sf.text_color}30` }}
+                    placeholder="Neved" value={form.customer_name} onChange={e => setForm({ ...form, customer_name: e.target.value })} />
+                  <input type="email" className="w-full bg-transparent border p-3 text-sm" style={{ borderColor: `${sf.text_color}30` }}
+                    placeholder="E-mail cím" value={form.customer_email} onChange={e => setForm({ ...form, customer_email: e.target.value })} />
+                  <input className="w-full bg-transparent border p-3 text-sm" style={{ borderColor: `${sf.text_color}30` }}
+                    placeholder="Telefonszám (nem kötelező)" value={form.customer_phone} onChange={e => setForm({ ...form, customer_phone: e.target.value })} />
+                  <input type="datetime-local" className="w-full bg-transparent border p-3 text-sm" style={{ borderColor: `${sf.text_color}30` }}
+                    value={form.starts_at} onChange={e => setForm({ ...form, starts_at: e.target.value })} />
+                  <textarea className="w-full bg-transparent border p-3 text-sm" style={{ borderColor: `${sf.text_color}30` }} rows={2}
+                    placeholder="Megjegyzés (nem kötelező)" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
+                  <button disabled={bookingSaving} onClick={() => void submitBooking()}
+                    className="w-full py-3 uppercase tracking-widest font-bold border-2 disabled:opacity-40"
+                    style={{ borderColor: sf.accent_color, color: sf.accent_color }}>
+                    {bookingSaving ? "Küldés…" : "Foglalás elküldése"}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
