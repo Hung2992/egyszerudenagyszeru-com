@@ -100,7 +100,8 @@ const BrandStorefront = () => {
       : stripped.slice(0, 157) + (stripped.length > 157 ? "…" : "");
     const description = sf.meta_description || autoDesc;
     const url = `${storeBaseUrl(sf)}/`;
-    return { title: title.slice(0, 60), description: description.slice(0, 160), url, keywords: kws };
+    const image = publicStorageUrl("partner-storefront-media", sf.og_image_url || sf.hero_image_url || sf.logo_url);
+    return { title: title.slice(0, 60), description: description.slice(0, 160), url, keywords: kws, image };
   }, [sf]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-black text-white">Betöltés…</div>;
