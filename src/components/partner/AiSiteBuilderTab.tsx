@@ -23,6 +23,8 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [applying, setApplying] = useState(false);
+  const [refinePrompt, setRefinePrompt] = useState("");
+  const [refining, setRefining] = useState(false);
 
   const generate = async () => {
     if (prompt.trim().length < 5) {
@@ -33,7 +35,7 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
     setResult(null);
     try {
       const { data, error } = await supabase.functions.invoke("partner-site-builder", {
-        body: { prompt, partner_id: partnerId },
+        body: { prompt, partner_id: partnerId, mode: "build", target_score: 92, max_rounds: 1 },
       });
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
@@ -43,6 +45,36 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
       toast({ title: "Hiba", description: e?.message || "Nem sikerült generálni.", variant: "destructive" });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const refine = async () => {
+    if (!result?.patch) return;
+    if (refinePrompt.trim().length < 3) {
+      toast({ title: "Írd le a módosítást", description: "Pl.: legyen világosabb és barátságosabb.", variant: "destructive" });
+      return;
+    }
+    setRefining(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("partner-site-builder", {
+        body: {
+          prompt: refinePrompt,
+          partner_id: partnerId,
+          mode: "refine",
+          base_patch: result.patch,
+          target_score: 92,
+          max_rounds: 1,
+        },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      setResult(data);
+      setRefinePrompt("");
+      toast({ title: "Frissítve", description: data?.explanation?.slice(0, 120) });
+    } catch (e: any) {
+      toast({ title: "Hiba", description: e?.message || "Nem sikerült finomítani.", variant: "destructive" });
+    } finally {
+      setRefining(false);
     }
   };
 
