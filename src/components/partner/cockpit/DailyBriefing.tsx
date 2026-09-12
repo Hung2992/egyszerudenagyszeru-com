@@ -51,7 +51,7 @@ const DailyBriefing = ({ briefing, loading }: { briefing: Briefing | null; loadi
           {open && (
             <div className="grid gap-2 sm:grid-cols-2">
               {CARDS.map(({ key, label, Icon, tone }) => {
-                const text = (briefing as Record<string, string | undefined | boolean>)[key];
+                const text = (briefing as unknown as Record<string, unknown>)[key];
                 if (!text || typeof text !== "string") return null;
                 return (
                   <div key={key} className="border border-foreground/10 p-3 space-y-1">
