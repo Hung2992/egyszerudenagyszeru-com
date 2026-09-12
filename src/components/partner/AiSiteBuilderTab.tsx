@@ -56,7 +56,21 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
         const { error } = await supabase.from("partner_storefronts").update(result.patch).eq("id", existing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("partner_storefronts").insert({ partner_id: partnerId, ...result.patch });
+        const name = String(result.patch.display_name || "webshop");
+        const slug =
+          name
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-|-$/g, "")
+            .slice(0, 40) || "webshop";
+        const { error } = await supabase.from("partner_storefronts").insert({
+          partner_id: partnerId,
+          slug: `${slug}-${Math.random().toString(36).slice(2, 6)}`,
+          display_name: name,
+          ...result.patch,
+        });
         if (error) throw error;
       }
       onApplied(result.patch);
@@ -67,6 +81,7 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
       setApplying(false);
     }
   };
+
 
   return (
     <div className="space-y-6">
