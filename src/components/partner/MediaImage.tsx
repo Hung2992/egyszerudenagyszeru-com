@@ -7,9 +7,10 @@ interface Props {
   alt?: string;
   className?: string;
   fallback?: React.ReactNode;
+  loading?: "eager" | "lazy";
 }
 
-export const MediaImage = ({ bucket, path, alt = "", className, fallback }: Props) => {
+export const MediaImage = ({ bucket, path, alt = "", className, fallback, loading = "lazy" }: Props) => {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     let alive = true;
@@ -18,7 +19,7 @@ export const MediaImage = ({ bucket, path, alt = "", className, fallback }: Prop
     return () => { alive = false; };
   }, [bucket, path]);
   if (!url) return <>{fallback ?? null}</>;
-  return <img src={url} alt={alt} className={className} loading="lazy" />;
+  return <img src={url} alt={alt} className={className} loading={loading} fetchPriority={loading === "eager" ? "high" : undefined} />;
 };
 
 export default MediaImage;

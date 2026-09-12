@@ -190,12 +190,12 @@ const BrandStorefront = () => {
 
       {/* NAVBAR */}
       <header className="border-b" style={{ borderColor: borderCol }}>
-        <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3">
+        <div className="mx-auto max-w-6xl px-4 py-4 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <Link to="/" className="flex min-w-0 items-center gap-3">
             {sf.logo_url && <MediaImage bucket="partner-storefront-media" path={sf.logo_url} className="h-10 w-10 object-contain" />}
-            <span className="font-bold uppercase tracking-widest text-lg" style={headingStyle}>{sf.display_name}</span>
+            <span className="font-bold uppercase tracking-widest text-base sm:text-lg break-words" style={headingStyle}>{sf.display_name}</span>
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex w-full sm:w-auto items-center gap-3">
             {sf.instagram_url && <a href={sf.instagram_url} target="_blank" rel="noreferrer"><Instagram className="h-5 w-5" /></a>}
             {sf.tiktok_url && <a href={sf.tiktok_url} target="_blank" rel="noreferrer"><Music2 className="h-5 w-5" /></a>}
             {sf.facebook_url && <a href={sf.facebook_url} target="_blank" rel="noreferrer"><Facebook className="h-5 w-5" /></a>}
@@ -231,7 +231,7 @@ const BrandStorefront = () => {
       <section className={`relative ${sf.hero_layout === "fullscreen" ? "min-h-[calc(100svh-7rem)] max-h-[56rem]" : "min-h-[60vh]"} flex items-end md:items-center overflow-hidden`}>
         {sf.hero_image_url && (
           <div className="absolute inset-0">
-            <MediaImage bucket="partner-storefront-media" path={sf.hero_image_url} alt={`${sf.display_name} nyitókép`} className="hero-storefront-image w-full h-full object-cover object-center md:object-center" />
+            <MediaImage bucket="partner-storefront-media" path={sf.hero_image_url} alt={`${sf.display_name} nyitókép`} loading="eager" className="hero-storefront-image w-full h-full object-cover object-[62%_center] md:object-center" />
             <div className="absolute inset-0" style={{ background: sf.bg_color, opacity: Number(sf.hero_overlay_opacity ?? 0.5) }} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/25 to-black/10 md:bg-gradient-to-r md:from-black/90 md:via-black/35 md:to-transparent" />
           </div>
