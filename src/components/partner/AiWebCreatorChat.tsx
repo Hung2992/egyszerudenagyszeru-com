@@ -485,18 +485,50 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
         <Button onClick={() => newSession()} variant="outline" className="rounded-none w-full">
           <Plus className="h-4 w-4 mr-2" /> Új beszélgetés
         </Button>
+
+        {/* 🔎 KERESŐ — cím és üzenetek tartalma */}
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Keresés a beszélgetésekben…"
+            aria-label="Keresés a beszélgetésekben"
+            className="w-full h-9 border border-border bg-background text-xs pl-7 pr-7"
+          />
+          {!!query && (
+            <button
+              type="button" onClick={() => setQuery("")} aria-label="Keresés törlése"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+        {q.length >= 2 && (
+          <div className="text-[10px] text-muted-foreground">
+            {searching ? "Keresés…" : `${visibleSessions.length} beszélgetés · ${messageHits} találat itt`}
+          </div>
+        )}
+
         <div className="space-y-1 max-h-[280px] overflow-auto">
-          {sessions.map((s) => (
+          {visibleSessions.map((s) => (
             <button
               key={s.id}
               onClick={() => setSessionId(s.id)}
-              className={`w-full text-left text-xs px-3 py-2 border transition-colors ${
+              className={`w-full text-left text-xs px-3 py-2 border transition-colors flex items-center gap-2 ${
                 s.id === sessionId ? "border-primary text-foreground" : "border-border text-muted-foreground hover:text-foreground"
               }`}
             >
-              {s.title}
+              <span className="min-w-0 flex-1 truncate" title={s.title}>{s.title}</span>
+              {q.length >= 2 && !!hitSessions[s.id] && (
+                <span className="shrink-0 text-[9px] border border-primary/50 text-primary px-1">{hitSessions[s.id]}</span>
+              )}
             </button>
           ))}
+          {q.length >= 2 && !searching && visibleSessions.length === 0 && (
+            <p className="text-[11px] text-muted-foreground px-1 py-2">Nincs találat erre: „{query}”.</p>
+          )}
         </div>
         {memory && (
           <Card className="rounded-none border-border p-3 space-y-1">
