@@ -31,7 +31,7 @@ const ALLOWED = [
   "newsletter_enabled", "newsletter_title", "newsletter_subtitle",
   "footer_text", "footer_links",
   "meta_title", "meta_description", "seo_keywords",
-  "hero_image_url", "section1_image_url", "section2_image_url",
+  "hero_image_url", "section1_image_url", "section2_image_url", "logo_url",
 ];
 
 const HERO_LAYOUTS = ["fullscreen", "center", "split"];
@@ -62,7 +62,8 @@ const SCHEMA = `{
   "image_prompts": {
     "hero": string (ANGOL képgenerálási prompt a hero háttérhez, márkához illő, fotórealisztikus, szöveg és logó NÉLKÜL),
     "section1": string (ANGOL prompt a section1 illusztrációhoz),
-    "section2": string (ANGOL prompt a section2 illusztrációhoz)
+    "section2": string (ANGOL prompt a section2 illusztrációhoz),
+    "logo": string (ANGOL prompt egy egyszerű, absztrakt márkajelhez: lapos vektoros ikon, egyszínű háttér, szöveg nélkül)
   },
   "explanation": "2-4 mondat magyarul, mit csináltál és miért"
 }`;
@@ -163,6 +164,9 @@ async function generateImage(apiKey: string, prompt: string): Promise<Uint8Array
 const IMAGE_STYLE =
   "Professional commercial photography for an e-commerce hero section, cinematic natural lighting, high dynamic range, 85mm lens, shallow depth of field, color graded, ultra detailed. Absolutely NO text, NO letters, NO logos, NO watermarks in the image. Leave calm negative space for overlay text.";
 
+const LOGO_STYLE =
+  "Minimal flat vector brand mark, single abstract geometric symbol, centered, clean solid background, crisp edges, high contrast, app-icon style. Absolutely NO text, NO letters, NO numbers, NO watermark.";
+
 async function generateAndStore(
   apiKey: string,
   admin: any,
@@ -173,6 +177,7 @@ async function generateAndStore(
     hero: "hero_image_url",
     section1: "section1_image_url",
     section2: "section2_image_url",
+    logo: "logo_url",
   };
   const paths: Record<string, string> = {};
   const failed: string[] = [];
@@ -180,7 +185,8 @@ async function generateAndStore(
   const jobs = Object.entries(map).map(async ([key, column]) => {
     const p = String(prompts?.[key] || "").trim();
     if (!p) return;
-    const bytes = await generateImage(apiKey, `${p}\n\n${IMAGE_STYLE}`);
+    const style = key === "logo" ? LOGO_STYLE : IMAGE_STYLE;
+    const bytes = await generateImage(apiKey, `${p}\n\n${style}`);
     if (!bytes) { failed.push(key); return; }
     const path = `${partnerId}/ai/${Date.now()}-${key}-${Math.random().toString(36).slice(2, 8)}.png`;
     const up = await admin.storage.from("partner-storefront-media").upload(path, bytes, {
@@ -305,12 +311,12 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const prompt = String(body?.prompt || "").trim();
     const partnerId = String(body?.partner_id || "").trim();
-    const mode = body?.mode === "refine" ? "refine" : "build";
+    const mode = body?.mode === "refine" ? "refine" : body?.mode === "images" ? "images" : "build";
     const basePatch = body?.base_patch && typeof body.base_patch === "object" ? body.base_patch : null;
     const target = Math.max(60, Math.min(100, Number(body?.target_score) || 90));
     const maxRounds = Math.max(0, Math.min(3, Number(body?.max_rounds) ?? 2));
     const wantImages = body?.generate_images !== false && mode === "build";
-    if (!prompt || prompt.length < 3) return json({ error: "Adj meg leírást a webshopodról" }, 400);
+    if (mode !== "images" && (!prompt || prompt.length < 3)) return json({ error: "Adj meg leírást a webshopodról" }, 400);
     if (!partnerId) return json({ error: "partner_id kötelező" }, 400);
 
     // Jogosultság: a partner a bejelentkezett felhasználóé (RLS is véd)
@@ -334,6 +340,39 @@ Jelenlegi beállítások: ${JSON.stringify({
       accent_color: current?.accent_color, bg_color: current?.bg_color,
     })}
 Meglévő termékek (${(prods || []).length} db): ${JSON.stringify((prods || []).slice(0, 10))}`;
+
+    // --- CSAK KÉPEK újragenerálása a meglévő/kiválasztott konfigurációhoz ---
+    if (mode === "images") {
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+      if (!serviceKey) return json({ error: "A képgenerálás most nem elérhető." }, 503);
+      const src = basePatch || current || {};
+      const ip = await callAI(
+        apiKey,
+        MODEL_FAST,
+        `Te art director vagy. A megadott magyar webshop konfigurációból készíts ANGOL képgenerálási promptokat.
+Csak JSON: {"hero": string, "section1": string, "section2": string, "logo": string}
+A promptokban NE legyen szöveg, betű, logó vagy vízjel a képen.`,
+        `${brandContext}\n\nKonfiguráció:\n${JSON.stringify(src).slice(0, 6000)}\n\nExtra kérés: ${prompt.slice(0, 800) || "(nincs)"}`,
+      ).catch(() => ({}));
+      const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", serviceKey);
+      const res = await generateAndStore(apiKey, admin, partnerId, {
+        hero: String(ip?.hero || ""),
+        section1: String(ip?.section1 || ""),
+        section2: String(ip?.section2 || ""),
+        logo: String(ip?.logo || ""),
+      });
+      if (!Object.keys(res.paths).length) return json({ error: "Egyik kép sem készült el, próbáld újra." }, 502);
+      return json({
+        ok: true,
+        mode,
+        patch: { ...(basePatch || {}), ...res.paths },
+        images: res.paths,
+        warnings: res.failed.length ? ["Néhány kép nem készült el."] : [],
+        explanation: "Új képek készültek a webshopodhoz.",
+      });
+    }
+
+
 
     const userMsg = mode === "refine" && basePatch
       ? `${brandContext}
@@ -417,6 +456,7 @@ ${JSON.stringify(patch).slice(0, 9000)}`,
           hero: String(prompts.hero || `Hero background for a webshop. ${brandHint}`),
           section1: String(prompts.section1 || ""),
           section2: String(prompts.section2 || ""),
+          logo: String(prompts.logo || `Abstract brand mark for ${patch.display_name || partner.company_name || "a webshop"}.`),
         };
         try {
           const res = await generateAndStore(apiKey, admin, partnerId, finalPrompts);

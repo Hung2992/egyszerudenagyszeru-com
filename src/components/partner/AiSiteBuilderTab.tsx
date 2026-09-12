@@ -5,7 +5,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Sparkles, Wand2, Check, Loader2 } from "lucide-react";
+import MediaImage from "@/components/partner/MediaImage";
+import { Sparkles, Wand2, Check, Loader2, ImagePlus } from "lucide-react";
 
 interface Props {
   partnerId: string;
@@ -26,6 +27,7 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
   const [refinePrompt, setRefinePrompt] = useState("");
   const [refining, setRefining] = useState(false);
   const [withImages, setWithImages] = useState(true);
+  const [imaging, setImaging] = useState(false);
 
   const generate = async () => {
     if (prompt.trim().length < 5) {
@@ -86,7 +88,26 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
     }
   };
 
+  const regenerateImages = async () => {
+    if (!result?.patch) return;
+    setImaging(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("partner-site-builder", {
+        body: { partner_id: partnerId, mode: "images", base_patch: result.patch, prompt: refinePrompt },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      setResult({ ...result, patch: data.patch, images: data.images });
+      toast({ title: "Új képek készültek" });
+    } catch (e: any) {
+      toast({ title: "Hiba", description: e?.message || "Nem sikerült képet készíteni.", variant: "destructive" });
+    } finally {
+      setImaging(false);
+    }
+  };
+
   const apply = async () => {
+
     if (!result?.patch) return;
     setApplying(true);
     try {
@@ -226,11 +247,39 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
               value={refinePrompt}
               onChange={(e) => setRefinePrompt(e.target.value)}
             />
-            <Button variant="outline" onClick={refine} disabled={refining} className="rounded-none">
-              {refining ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Wand2 className="h-4 w-4 mr-2" />}
-              {refining ? "Finomítás…" : "Módosítás kérése"}
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={refine} disabled={refining} className="rounded-none">
+                {refining ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Wand2 className="h-4 w-4 mr-2" />}
+                {refining ? "Finomítás…" : "Módosítás kérése"}
+              </Button>
+              <Button variant="outline" onClick={regenerateImages} disabled={imaging} className="rounded-none">
+                {imaging ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ImagePlus className="h-4 w-4 mr-2" />}
+                {imaging ? "Képek készülnek…" : "Új képek kérése"}
+              </Button>
+            </div>
           </div>
+
+          {["logo_url", "hero_image_url", "section1_image_url", "section2_image_url"].some((k) => result.patch[k]) && (
+            <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+              {["logo_url", "hero_image_url", "section1_image_url", "section2_image_url"].map((k) =>
+                result.patch[k] ? (
+                  <div key={k} className="border border-border p-2 space-y-1">
+                    <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                      {k.replace("_url", "").replace("_image", "")}
+                    </div>
+                    <MediaImage
+                      bucket="partner-storefront-media"
+                      path={String(result.patch[k])}
+                      alt="AI kép"
+                      className="w-full h-24 object-cover"
+                    />
+                  </div>
+                ) : null,
+              )}
+            </div>
+          )}
+
+
 
 
           <div className="flex flex-wrap gap-2">
