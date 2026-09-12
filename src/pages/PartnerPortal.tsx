@@ -55,7 +55,24 @@ const fmt = (n: number) => `${(n || 0).toLocaleString("hu-HU")} Ft`;
 const PartnerPortal = () => {
   const navigate = useNavigate();
   const { partner, isAdmin, loading, claim } = usePartnerCheck();
-  const [tab, setTab] = useState("dashboard");
+  // Deep-link kompatibilis lapkezelés: ?tab=... megmarad, ismeretlen tab a vezérlőközpontra esik vissza.
+  const initialTab = (() => {
+    const t = new URLSearchParams(window.location.search).get("tab");
+    return t && isKnownTab(t) ? t : "cockpit";
+  })();
+  const [tab, setTabState] = useState(initialTab);
+  const [recentTabs, setRecentTabs] = useState<string[]>([]);
+
+  const setTab = (next: string) => {
+    setTabState((prev) => {
+      if (prev !== next) setRecentTabs((r) => [prev, ...r.filter((x) => x !== prev && x !== next)].slice(0, 3));
+      return next;
+    });
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", next);
+    window.history.replaceState({}, "", url.toString());
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   const [storefrontId, setStorefrontId] = useState<string | null>(null);
 
   useEffect(() => {
