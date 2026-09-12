@@ -37,6 +37,11 @@ import PartnerAiTeamTab from "@/components/partner/PartnerAiTeamTab";
 import PartnerActionPlansTab from "@/components/partner/PartnerActionPlansTab";
 import PartnerCalendarTab from "@/components/partner/PartnerCalendarTab";
 import PartnerCooperationProgress from "@/components/partner/PartnerCooperationProgress";
+import ExecutiveCockpit from "@/components/partner/cockpit/ExecutiveCockpit";
+import PartnerNavigation from "@/components/partner/PartnerNavigation";
+import MobilePartnerNavigation from "@/components/partner/MobilePartnerNavigation";
+import CommandCenter from "@/components/partner/CommandCenter";
+import { isKnownTab } from "@/components/partner/partner-navigation";
 
 
 
