@@ -20,6 +20,7 @@ const BrandStorefront = () => {
   );
   const [sf, setSf] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
+  const [pages, setPages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [email, setEmail] = useState("");
@@ -66,6 +67,14 @@ const BrandStorefront = () => {
       const { data: prods } = await supabase.from("partner_products").select("*").eq("partner_id", store.partner_id).eq("status", "active").order("created_at", { ascending: false });
       if (!alive) return;
       setProducts(prods || []);
+      const { data: pgs } = await supabase
+        .from("partner_pages")
+        .select("slug, title, sort_order")
+        .eq("partner_id", store.partner_id)
+        .eq("is_published", true)
+        .order("sort_order", { ascending: true });
+      if (!alive) return;
+      setPages(pgs || []);
       setLoading(false);
     })();
     return () => { alive = false; };
@@ -206,7 +215,16 @@ const BrandStorefront = () => {
             </Link>
           </div>
         </div>
+        {pages.length > 0 && (
+          <nav className="mx-auto max-w-6xl px-4 pb-3 flex flex-wrap gap-4 text-[11px] font-bold uppercase tracking-widest opacity-80">
+            {pages.map((pg) => (
+              <Link key={pg.slug} to={`/b/${resolvedSlug}/oldal/${pg.slug}`} className="hover:underline">{pg.title}</Link>
+            ))}
+          </nav>
+        )}
       </header>
+
+
 
       {/* HERO */}
       <section className={`relative ${sf.hero_layout === "fullscreen" ? "min-h-[90vh]" : "min-h-[60vh]"} flex items-center overflow-hidden`}>
@@ -369,6 +387,9 @@ const BrandStorefront = () => {
         <div className="mx-auto max-w-6xl px-4 py-8 flex flex-wrap items-center justify-between gap-3 text-xs opacity-70">
           <div>© {new Date().getFullYear()} {sf.display_name}{sf.footer_text ? ` · ${sf.footer_text}` : ""}</div>
           <div className="flex gap-4">
+            {pages.map((pg) => (
+              <Link key={pg.slug} to={`/b/${resolvedSlug}/oldal/${pg.slug}`} className="underline">{pg.title}</Link>
+            ))}
             {footerLinks.map((l, i) => (
               <a key={i} href={l.url} target={l.url?.startsWith("http") ? "_blank" : undefined} rel="noreferrer" className="underline">{l.label}</a>
             ))}
