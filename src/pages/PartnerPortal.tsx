@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import StorefrontEditorTab from "@/components/partner/StorefrontEditorTab";
 import PartnerProductsTab from "@/components/partner/PartnerProductsTab";
 import PartnerShippingTab from "@/components/partner/PartnerShippingTab";
+import PartnerSalesSheetTab from "@/components/partner/PartnerSalesSheetTab";
 import { Truck as TruckIcon } from "lucide-react";
 import PartnerDigitalDeliveryTab from "@/components/partner/PartnerDigitalDeliveryTab";
 import PartnerMarketingHub from "@/components/partner/PartnerMarketingHub";
@@ -312,7 +313,8 @@ const PartnerPortal = () => {
               ["dashboard", "Irányítópult"], ["orders", "Rendelések & ügyfelek"], ["calendar", "Naptár"],
               ["inventory", "Készlet & árazás"], ["finance", "Pénzügy"], ["ai_team", "AI Csapatom"],
               ["action_plans", "AI intézkedések"], ["advisor", "AI asszisztens"], ["overview", "Jutalék"],
-              ["storefront", "Saját webshop"], ["products", "Termékek"], ["digital", "Digitális kiszolgálás"],
+              ["storefront", "Saját webshop"], ["products", "Termékek"], ["shipping", "Szállítás"],
+              ["sales_sheet", "Értékesítési oldal"], ["digital", "Digitális kiszolgálás"],
               ["referrals", "Ajánlások"], ["payouts", "Kifizetések"], ["marketing", "Marketing"], ["campaigns", "Hírlevelek"],
               ["communication", "Kommunikációs API"],
               ["workflows", "Automatizálás"], ["abtests", "A/B teszt"], ["plugins", "Pluginok"],
@@ -335,6 +337,7 @@ const PartnerPortal = () => {
             <TabsTrigger value="storefront" className="rounded-none"><Store className="h-4 w-4 mr-2" />Saját webshop</TabsTrigger>
             <TabsTrigger value="products" className="rounded-none"><Package className="h-4 w-4 mr-2" />Termékek</TabsTrigger>
             <TabsTrigger value="shipping" className="rounded-none"><TruckIcon className="h-4 w-4 mr-2" />Szállítás</TabsTrigger>
+            <TabsTrigger value="sales_sheet" className="rounded-none"><Package className="h-4 w-4 mr-2" />Értékesítési oldal</TabsTrigger>
             <TabsTrigger value="digital" className="rounded-none"><KeyRound className="h-4 w-4 mr-2" />Digitális kiszolgálás</TabsTrigger>
             <TabsTrigger value="referrals" className="rounded-none"><ListChecks className="h-4 w-4 mr-2" />Ajánlások</TabsTrigger>
             <TabsTrigger value="payouts" className="rounded-none"><Banknote className="h-4 w-4 mr-2" />Kifizetések</TabsTrigger>
@@ -393,6 +396,10 @@ const PartnerPortal = () => {
 
           <TabsContent value="shipping" className="mt-6">
             <PartnerShippingTab partnerId={partner.id} />
+          </TabsContent>
+
+          <TabsContent value="sales_sheet" className="mt-6">
+            <PartnerSalesSheetTab partnerId={partner.id} />
           </TabsContent>
 
           <TabsContent value="digital" className="mt-6">
