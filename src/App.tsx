@@ -83,6 +83,7 @@ const JogiNyilatkozat = lazy(lazyRetry(() => import("./pages/legal/JogiNyilatkoz
 const PartnerSzabalyzat = lazy(lazyRetry(() => import("./pages/legal/PartnerSzabalyzat.tsx")));
 const KycAdatkezeles = lazy(lazyRetry(() => import("./pages/legal/KycAdatkezeles.tsx")));
 const BrandStorefront = lazy(lazyRetry(() => import("./pages/BrandStorefront.tsx")));
+const PartnerAiStudio = lazy(lazyRetry(() => import("./pages/PartnerAiStudio.tsx")));
 const BrandProductDetail = lazy(lazyRetry(() => import("./pages/BrandProductDetail.tsx")));
 const BrandPage = lazy(lazyRetry(() => import("./pages/BrandPage.tsx")));
 const BrandInfoPage = lazy(lazyRetry(() => import("./pages/BrandInfoPage.tsx")));
