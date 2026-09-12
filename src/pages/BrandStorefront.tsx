@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import { normalizeSectionOrder } from "@/lib/storefront-studio";
+import { normalizeBrandDna, brandDnaCssVars } from "@/lib/brand-dna";
 import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import { storeBaseUrl, publicStorageUrl } from "@/lib/storefrontSeo";
 
