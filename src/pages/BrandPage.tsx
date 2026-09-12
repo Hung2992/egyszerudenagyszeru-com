@@ -73,6 +73,9 @@ const BrandPage = () => {
   const text = sf.text_color || "#ffffff";
   const accent = sf.accent_color || "#D4AF37";
   const backUrl = params.slug ? `/b/${params.slug}` : "/";
+  const pageBody = String(page.content_html || page.body_html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const pageDescription = (page.meta_description
+    || (pageBody ? pageBody.slice(0, 157) + (pageBody.length > 157 ? "…" : "") : `${page.title} – ${sf.display_name}`)).slice(0, 160);
 
   return (
     <div className="min-h-screen" style={{ background: bg, color: text, fontFamily: sf.font_body || "Inter, sans-serif" }}>
