@@ -31,6 +31,7 @@ const ALLOWED = [
   "newsletter_enabled", "newsletter_title", "newsletter_subtitle",
   "footer_text", "footer_links",
   "meta_title", "meta_description", "seo_keywords",
+  "hero_image_url", "section1_image_url", "section2_image_url",
 ];
 
 const HERO_LAYOUTS = ["fullscreen", "center", "split"];
