@@ -58,6 +58,11 @@ const SCHEMA = `{
     "meta_title": string, "meta_description": string, "seo_keywords": [string]
   },
   "product_ideas": [{"title": string, "description": string, "suggested_price_huf": number}],
+  "image_prompts": {
+    "hero": string (ANGOL képgenerálási prompt a hero háttérhez, márkához illő, fotórealisztikus, szöveg és logó NÉLKÜL),
+    "section1": string (ANGOL prompt a section1 illusztrációhoz),
+    "section2": string (ANGOL prompt a section2 illusztrációhoz)
+  },
   "explanation": "2-4 mondat magyarul, mit csináltál és miért"
 }`;
 
