@@ -178,6 +178,52 @@ Deno.serve(async (req) => {
       .eq("id", p.id);
   }
 
+  // Értesítő e-mailek (nem blokkolják a rendelést)
+  try {
+    const svcKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const fnUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-transactional-email`;
+    const huf = (n: number) => n.toLocaleString("hu-HU");
+    const payMap: Record<string, string> = { cod: "Utánvét", transfer: "Banki átutalás", card: "Bankkártya" };
+    const itemsText = items.map((i) => `${i.qty} × ${i.title}`).join(", ");
+    const addressText = needsAddress
+      ? `${shipping.zip || ""} ${shipping.city || ""}, ${shipping.street || ""}`.trim()
+      : "";
+
+    const send = (templateName: string, to: string, data: Record<string, unknown>) =>
+      fetch(fnUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${svcKey}` },
+        body: JSON.stringify({ templateName, recipientEmail: to, templateData: data }),
+      }).catch(() => null);
+
+    const { data: partner } = await svc.from("partners").select("email").eq("id", store.partner_id).maybeSingle();
+
+    const tasks: Promise<unknown>[] = [];
+    if (partner?.email) {
+      tasks.push(send("partner-new-order", partner.email, {
+        storeName: store.display_name,
+        orderNumber,
+        customerName: name,
+        customerEmail: email,
+        customerPhone: phone || "",
+        itemsText,
+        subtotal: huf(subtotal),
+        shipping: huf(shippingFee),
+        total: huf(total),
+        shippingMethod: shippingMethod ? String(shippingMethod.name) : "",
+        address: addressText,
+        paymentMethod: payMap[paymentMethod] || paymentMethod,
+      }) as Promise<unknown>);
+    }
+    tasks.push(send("order-confirmation", email, {
+      name,
+      totalAmount: huf(total),
+      itemCount: items.reduce((s, i) => s + Number(i.qty), 0),
+      orderId: orderNumber,
+    }) as Promise<unknown>);
+    await Promise.allSettled(tasks);
+  } catch (_e) { /* az értesítés hibája nem befolyásolja a rendelést */ }
+
   return json({
     success: true,
     order_id: order.id,
