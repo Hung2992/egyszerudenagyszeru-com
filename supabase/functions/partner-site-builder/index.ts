@@ -31,7 +31,7 @@ const ALLOWED = [
   "newsletter_enabled", "newsletter_title", "newsletter_subtitle",
   "footer_text", "footer_links",
   "meta_title", "meta_description", "seo_keywords",
-  "hero_image_url", "section1_image_url", "section2_image_url",
+  "hero_image_url", "section1_image_url", "section2_image_url", "logo_url",
 ];
 
 const HERO_LAYOUTS = ["fullscreen", "center", "split"];
@@ -62,7 +62,8 @@ const SCHEMA = `{
   "image_prompts": {
     "hero": string (ANGOL képgenerálási prompt a hero háttérhez, márkához illő, fotórealisztikus, szöveg és logó NÉLKÜL),
     "section1": string (ANGOL prompt a section1 illusztrációhoz),
-    "section2": string (ANGOL prompt a section2 illusztrációhoz)
+    "section2": string (ANGOL prompt a section2 illusztrációhoz),
+    "logo": string (ANGOL prompt egy egyszerű, absztrakt márkajelhez: lapos vektoros ikon, egyszínű háttér, szöveg nélkül)
   },
   "explanation": "2-4 mondat magyarul, mit csináltál és miért"
 }`;
