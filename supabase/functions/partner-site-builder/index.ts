@@ -92,7 +92,7 @@ Minőségi elvárások (prémium szint):
 - Ne találj ki céges jogi adatot, adószámot, telefonszámot, címet, konkrét árat vagy díjat.
 - Ha vannak meglévő termékek, a szövegek RÁJUK utaljanak konkrétan.
 - Aloldalak: nem vázlat, hanem KÉSZ, publikálható tartalom. A Kapcsolat oldalon csak űrlapra/e-mailre utalj általánosan, konkrét elérhetőséget NE találj ki. A jogi jellegű oldalakon (szállítás, elállás) az általános magyar fogyasztóvédelmi kereteket írd le, konkrét díj és határidő kitalálása nélkül, jelezve hogy a partner pontosítja.
-- Termékötletek: 6 db, a márkához illő, eltérő árszinttel és valódi terméknévvel.
+- Termékötletek: 8 db, a márkához illő, eltérő árszinttel és valódi terméknévvel.
 
 Kizárólag érvényes JSON-t adj vissza, semmi mást.
 
