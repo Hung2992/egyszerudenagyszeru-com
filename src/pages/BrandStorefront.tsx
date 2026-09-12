@@ -228,15 +228,16 @@ const BrandStorefront = () => {
 
 
       {/* HERO */}
-      <section className={`relative ${sf.hero_layout === "fullscreen" ? "min-h-[90vh]" : "min-h-[60vh]"} flex items-center overflow-hidden`}>
+      <section className={`relative ${sf.hero_layout === "fullscreen" ? "min-h-[calc(100svh-7rem)] max-h-[56rem]" : "min-h-[60vh]"} flex items-end md:items-center overflow-hidden`}>
         {sf.hero_image_url && (
           <div className="absolute inset-0">
-            <MediaImage bucket="partner-storefront-media" path={sf.hero_image_url} className="w-full h-full object-cover" />
+            <MediaImage bucket="partner-storefront-media" path={sf.hero_image_url} alt={`${sf.display_name} nyitókép`} className="hero-storefront-image w-full h-full object-cover object-center md:object-center" />
             <div className="absolute inset-0" style={{ background: sf.bg_color, opacity: Number(sf.hero_overlay_opacity ?? 0.5) }} />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/25 to-black/10 md:bg-gradient-to-r md:from-black/90 md:via-black/35 md:to-transparent" />
           </div>
         )}
-        <div className={`relative mx-auto w-full max-w-6xl px-5 py-20 ${sf.hero_layout === "center" ? "text-center" : ""}`}>
-          <div className={sf.hero_layout === "center" ? "max-w-2xl mx-auto" : "max-w-lg"}>
+        <div className={`hero-storefront-content relative mx-auto w-full max-w-6xl px-6 pb-12 pt-28 sm:px-8 md:px-5 md:py-20 ${sf.hero_layout === "center" ? "text-center" : ""}`}>
+          <div className={sf.hero_layout === "center" ? "max-w-2xl mx-auto" : "max-w-xl"}>
             {sf.hero_badge_enabled && sf.hero_badge_text && (
               <div className="inline-flex items-center gap-2 border px-4 py-1.5 mb-6" style={{ borderColor: sf.accent_color, background: `${sf.accent_color}20` }}>
                 <Flame className="h-3.5 w-3.5" style={{ color: sf.accent_color }} />
@@ -245,15 +246,15 @@ const BrandStorefront = () => {
                 </span>
               </div>
             )}
-            <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] md:leading-[0.9] break-words hyphens-auto" style={headingStyle}>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.02] break-words hyphens-auto text-white [text-shadow:0_2px_28px_rgba(0,0,0,0.5)]" style={headingStyle}>
               {sf.hero_title || sf.display_name}
             </h1>
             {(sf.hero_subtitle || sf.tagline) && (
-              <p className="mt-4 md:mt-5 text-[15px] md:text-base opacity-80 leading-relaxed max-w-md break-words">
+              <p className="mt-4 md:mt-5 text-sm md:text-base text-white/80 leading-relaxed max-w-md break-words">
                 {sf.hero_subtitle || sf.tagline}
               </p>
             )}
-            <a href="#termekek" className="inline-flex max-w-full items-center justify-center gap-2 mt-7 md:mt-8 px-5 sm:px-8 py-3 uppercase tracking-[0.12em] sm:tracking-widest text-[13px] sm:text-sm font-bold text-center break-words" style={{ background: sf.accent_color, color: sf.bg_color }}>
+            <a href="#termekek" className="inline-flex w-full sm:w-auto max-w-full items-center justify-center gap-2 mt-7 md:mt-8 px-6 sm:px-8 py-4 uppercase tracking-[0.12em] sm:tracking-widest text-xs sm:text-sm font-bold text-center break-words shadow-lg" style={{ background: sf.accent_color, color: sf.bg_color }}>
               {sf.hero_cta_text || "Vásárolj most"} <ArrowRight className="h-4 w-4" />
             </a>
           </div>
