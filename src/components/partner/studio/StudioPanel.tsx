@@ -29,7 +29,7 @@ interface Props {
 const scoreTone = (n: number) =>
   n >= 90 ? "text-emerald-500" : n >= 70 ? "text-amber-500" : "text-red-500";
 
-const StudioPanel = ({ partnerId, sf, onChange, onJumpToTab }: Props) => {
+const StudioPanel = ({ partnerId, sf, onChange, onJumpToTab, onReport }: Props) => {
   const [products, setProducts] = useState<any[]>([]);
   const [shippingCount, setShippingCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -58,6 +58,8 @@ const StudioPanel = ({ partnerId, sf, onChange, onJumpToTab }: Props) => {
     () => runShopQa({ storefront: sf, products: products as any, shippingMethodCount: shippingCount }),
     [sf, products, shippingCount],
   );
+
+  useEffect(() => { onReport?.(report); }, [report, onReport]);
 
   const state = studioStateOf(sf, report);
   const order = useMemo(() => normalizeSectionOrder(sf.section_order), [sf.section_order]);
