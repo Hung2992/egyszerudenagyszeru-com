@@ -28,6 +28,8 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
   const [refining, setRefining] = useState(false);
   const [withImages, setWithImages] = useState(true);
   const [imaging, setImaging] = useState(false);
+  const [withPages, setWithPages] = useState(true);
+  const [withProducts, setWithProducts] = useState(true);
 
   const generate = async () => {
     if (prompt.trim().length < 5) {
@@ -104,6 +106,50 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
     } finally {
       setImaging(false);
     }
+  };
+
+  const applyPagesAndProducts = async () => {
+    let pageCount = 0;
+    let productCount = 0;
+
+    if (withPages && Array.isArray(result?.pages) && result.pages.length) {
+      const rows = result.pages.map((p: any, i: number) => ({
+        partner_id: partnerId,
+        slug: String(p.slug),
+        title: String(p.title),
+        content_html: String(p.content_html || ""),
+        meta_title: p.meta_title ? String(p.meta_title) : null,
+        meta_description: p.meta_description ? String(p.meta_description) : null,
+        is_published: true,
+        sort_order: i,
+      }));
+      const { error } = await supabase
+        .from("partner_pages")
+        .upsert(rows, { onConflict: "partner_id,slug" });
+      if (error) throw new Error(`Aloldalak: ${error.message}`);
+      pageCount = rows.length;
+    }
+
+    if (withProducts && Array.isArray(result?.product_ideas) && result.product_ideas.length) {
+      const suffix = Math.random().toString(36).slice(2, 6);
+      const rows = result.product_ideas.map((p: any) => ({
+        partner_id: partnerId,
+        slug: `${String(p.slug || "termek")}-${suffix}`,
+        title: String(p.title),
+        description: String(p.description || ""),
+        price_huf: Math.max(0, Math.round(Number(p.suggested_price_huf) || 0)),
+        category: p.category || null,
+        product_type: String(p.product_type || "clothing"),
+        fulfillment_type: String(p.fulfillment_type || "physical"),
+        stock_qty: 0,
+        status: "draft",
+      }));
+      const { error } = await supabase.from("partner_products").insert(rows);
+      if (error) throw new Error(`Termékek: ${error.message}`);
+      productCount = rows.length;
+    }
+
+    return { pageCount, productCount };
   };
 
   const apply = async () => {
