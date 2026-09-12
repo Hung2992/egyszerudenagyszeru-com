@@ -80,7 +80,8 @@ const BrandProductDetail = () => {
       inStock: (product.stock_qty ?? 0) > 0,
     });
     const url = storeProductUrl(sf, product.slug);
-    const image = publicStorageUrl("partner-product-images", product.images?.[0]);
+    const image = publicStorageUrl("partner-product-images", product.images?.[0])
+      || publicStorageUrl("partner-storefront-media", sf.og_image_url || sf.hero_image_url || sf.logo_url);
     return { title: title.slice(0, 60), description, url, image };
   }, [sf, product]);
 
