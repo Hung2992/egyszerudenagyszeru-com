@@ -44,6 +44,8 @@
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 0 0% 16%;
     --sidebar-ring: 0 0% 100%;
+    --storefront-on-image: 0 0% 100%;
+    --storefront-shadow: 0 0% 0%;
   }
 
   .dark {
@@ -74,6 +76,8 @@
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 0 0% 16%;
     --sidebar-ring: 0 0% 100%;
+    --storefront-on-image: 0 0% 100%;
+    --storefront-shadow: 0 0% 0%;
   }
 }
 

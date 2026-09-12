@@ -7,6 +7,7 @@ import MediaImage from "@/components/partner/MediaImage";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { getPartnerSlugFromHostname, resolveCustomDomainSlug } from "@/lib/partner-subdomain";
 import { useBrandCart, setBrandCartQty, clearBrandCart } from "@/lib/brand-cart";
+import { Button } from "@/components/ui/button";
 
 const ERRORS: Record<string, string> = {
   invalid_name: "Add meg a neved.",
@@ -142,7 +143,7 @@ const BrandCheckout = () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-black text-white">Betöltés…</div>;
   if (!sf) return <div className="min-h-screen flex items-center justify-center bg-black text-white">Ez a webshop nem érhető el.</div>;
 
-  const inputCls = "w-full h-11 px-3 bg-transparent border text-sm outline-none";
+  const inputCls = "w-full h-12 px-4 bg-transparent border text-sm outline-none focus:ring-2";
 
   return (
     <div style={style}>
@@ -153,14 +154,15 @@ const BrandCheckout = () => {
       </Helmet>
 
       <header className="border-b" style={{ borderColor: border }}>
-        <div className="mx-auto max-w-5xl px-4 py-4 flex items-center justify-between">
-          <Link to={shopHome} className="font-bold uppercase tracking-widest text-lg" style={{ fontFamily: sf.font_heading }}>{sf.display_name}</Link>
-          <Link to={shopHome} className="text-xs uppercase tracking-widest opacity-70 hover:opacity-100">← Vissza a boltba</Link>
+        <div className="mx-auto max-w-6xl px-4 py-5 flex items-center justify-between">
+          <Link to={shopHome} className="font-bold uppercase text-base md:text-lg" style={{ fontFamily: sf.font_heading }}>{sf.display_name}</Link>
+          <Link to={shopHome} className="text-xs font-semibold opacity-70 hover:opacity-100">← Vissza a boltba</Link>
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-10">
-        <h1 className="text-2xl font-bold uppercase tracking-widest mb-6" style={{ fontFamily: sf.font_heading }}>Kosár és pénztár</h1>
+      <main className="mx-auto max-w-6xl px-4 py-10 md:py-14">
+        <p className="text-xs font-semibold uppercase" style={{ color: accent }}>Biztonságos rendelés</p>
+        <h1 className="mt-2 text-3xl font-bold mb-8 md:text-5xl" style={{ fontFamily: sf.font_heading }}>Kosár és pénztár</h1>
 
         {done ? (
           <div className="border p-6 space-y-3" style={{ borderColor: accent }}>
@@ -183,8 +185,8 @@ const BrandCheckout = () => {
           <div className="grid md:grid-cols-[1fr_340px] gap-8">
             <div className="space-y-3">
               {items.map((i) => (
-                <div key={i.product_id} className="border p-3 flex gap-3 items-center" style={{ borderColor: border }}>
-                  <div className="w-16 h-16 shrink-0 bg-black/20">
+                 <div key={i.product_id} className="border-b py-4 flex gap-3 items-center" style={{ borderColor: border }}>
+                   <div className="w-20 h-20 shrink-0 bg-muted/30">
                     {i.image ? <MediaImage bucket="partner-product-images" path={i.image} className="w-full h-full object-cover" />
                       : <div className="w-full h-full flex items-center justify-center opacity-30"><ShoppingBag className="h-6 w-6" /></div>}
                   </div>
@@ -193,10 +195,10 @@ const BrandCheckout = () => {
                     <div className="text-xs opacity-70">{i.price_huf.toLocaleString("hu-HU")} Ft / db</div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button aria-label="Kevesebb" onClick={() => slug && setBrandCartQty(slug, i.product_id, i.qty - 1)} className="border p-1" style={{ borderColor: border }}><Minus className="h-3 w-3" /></button>
+                     <Button variant="outline" size="icon" aria-label="Kevesebb" onClick={() => slug && setBrandCartQty(slug, i.product_id, i.qty - 1)} className="h-8 w-8 rounded-none" style={{ borderColor: border }}><Minus className="h-3 w-3" /></Button>
                     <span className="text-sm w-6 text-center">{i.qty}</span>
-                    <button aria-label="Több" onClick={() => slug && setBrandCartQty(slug, i.product_id, i.qty + 1)} className="border p-1" style={{ borderColor: border }}><Plus className="h-3 w-3" /></button>
-                    <button aria-label="Törlés" onClick={() => slug && setBrandCartQty(slug, i.product_id, 0)} className="border p-1 ml-1" style={{ borderColor: border }}><Trash2 className="h-3 w-3" /></button>
+                     <Button variant="outline" size="icon" aria-label="Több" onClick={() => slug && setBrandCartQty(slug, i.product_id, i.qty + 1)} className="h-8 w-8 rounded-none" style={{ borderColor: border }}><Plus className="h-3 w-3" /></Button>
+                     <Button variant="ghost" size="icon" aria-label="Törlés" onClick={() => slug && setBrandCartQty(slug, i.product_id, 0)} className="ml-1 h-8 w-8 rounded-none"><Trash2 className="h-3 w-3" /></Button>
                   </div>
                 </div>
               ))}
@@ -211,11 +213,12 @@ const BrandCheckout = () => {
                     <div className="text-xs uppercase tracking-widest opacity-70 pt-2">Szállítási mód</div>
                     <div className="space-y-2">
                       {methods.map((m) => (
-                        <button
+                         <Button
                           key={m.id}
                           type="button"
                           onClick={() => setMethodId(m.id)}
-                          className="w-full border p-3 text-left flex justify-between gap-3 items-center"
+                           variant="outline"
+                           className="h-auto w-full rounded-none p-4 text-left flex justify-between gap-3 items-center"
                           style={{ borderColor: methodId === m.id ? accent : border }}
                         >
                           <span>
@@ -230,7 +233,7 @@ const BrandCheckout = () => {
                           <span className="text-sm whitespace-nowrap" style={{ color: accent }}>
                             {Number(m.fee_huf) > 0 ? `${Number(m.fee_huf).toLocaleString("hu-HU")} Ft` : "Ingyenes"}
                           </span>
-                        </button>
+                         </Button>
                       ))}
                     </div>
                   </>
@@ -248,18 +251,18 @@ const BrandCheckout = () => {
                 <div className="text-xs uppercase tracking-widest opacity-70 pt-2">Fizetési mód</div>
                 <div className="grid grid-cols-2 gap-3">
                   {[{ v: "cod", l: "Utánvét" }, { v: "transfer", l: "Banki átutalás" }].map((o) => (
-                    <button key={o.v} onClick={() => setForm({ ...form, payment_method: o.v })}
-                      className="border py-3 text-xs uppercase tracking-widest"
+                     <Button key={o.v} variant="outline" onClick={() => setForm({ ...form, payment_method: o.v })}
+                       className="rounded-none border py-3 text-xs uppercase"
                       style={{ borderColor: form.payment_method === o.v ? accent : border, color: form.payment_method === o.v ? accent : undefined }}>
                       {o.l}
-                    </button>
+                     </Button>
                   ))}
                 </div>
                 <textarea rows={2} className="w-full p-3 bg-transparent border text-sm outline-none" style={{ borderColor: border }} placeholder="Megjegyzés (nem kötelező)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
               </div>
             </div>
 
-            <aside className="border p-5 h-fit space-y-3" style={{ borderColor: border }}>
+             <aside className="border p-5 h-fit space-y-4 md:sticky md:top-6" style={{ borderColor: border }}>
               <div className="text-xs uppercase tracking-widest opacity-70">Összegzés</div>
               <div className="flex justify-between text-sm"><span>Tételek ({count} db)</span><span>{subtotal.toLocaleString("hu-HU")} Ft</span></div>
               {hasPhysical && (
@@ -271,9 +274,9 @@ const BrandCheckout = () => {
               <div className="flex justify-between text-lg font-bold pt-2 border-t" style={{ borderColor: border }}>
                 <span>Végösszeg</span><span style={{ color: accent }}>{grandTotal.toLocaleString("hu-HU")} Ft</span>
               </div>
-              <button disabled={busy} onClick={() => void submit()} className="w-full py-4 uppercase tracking-widest font-bold border-2 disabled:opacity-40" style={{ borderColor: accent, color: accent }}>
+               <Button disabled={busy} onClick={() => void submit()} className="h-14 w-full rounded-none uppercase font-bold disabled:opacity-40" style={{ background: accent, color: sf.bg_color }}>
                 {busy ? "Küldés…" : "Rendelés leadása"}
-              </button>
+               </Button>
               {!session && (
                 <p className="text-xs opacity-60">
                   Vendégként is rendelhetsz. <Link className="underline" to={params.slug ? `/b/${params.slug}/fiok` : "/fiok"}>Belépés</Link> után a rendeléseidet is látod.
