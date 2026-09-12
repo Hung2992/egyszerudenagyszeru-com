@@ -19,6 +19,7 @@ import AiWebCreatorChat from "./AiWebCreatorChat";
 import AiMediaStudio from "@/components/ai/AiMediaStudio";
 import PartnerPagesTab from "./PartnerPagesTab";
 import StudioPanel from "./studio/StudioPanel";
+import BrandDnaPanel from "./studio/BrandDnaPanel";
 import type { QaReport } from "@/lib/storefront-studio";
 
 
