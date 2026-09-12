@@ -69,6 +69,36 @@ const PartnerOrdersTab = ({ partnerId }: Props) => {
 
   useEffect(() => { if (partnerId) void load(); /* eslint-disable-next-line */ }, [partnerId]);
 
+  // Valós idejű értesítés új rendelésről
+  useEffect(() => {
+    if (!partnerId) return;
+    const channel = supabase
+      .channel(`partner-orders-${partnerId}`)
+      .on("postgres_changes",
+        { event: "INSERT", schema: "public", table: "partner_orders", filter: `partner_id=eq.${partnerId}` },
+        (payload) => {
+          const o = payload.new as POrder;
+          setOrders((prev) => (prev.some((x) => x.id === o.id) ? prev : [o, ...prev]));
+          toast({ title: "Új rendelés érkezett", description: `${o.order_number} – ${Number((o as any).total_huf || 0).toLocaleString("hu-HU")} Ft` });
+        })
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [partnerId]);
+
+  const unseen = useMemo(
+    () => orders.filter((o) => !(o as any).seen_by_partner_at && String(o.status) === "pending"),
+    [orders],
+  );
+
+  const markAllSeen = async () => {
+    const ids = unseen.map((o) => o.id);
+    if (!ids.length) return;
+    const now = new Date().toISOString();
+    const { error } = await supabase.from("partner_orders").update({ seen_by_partner_at: now }).in("id", ids);
+    if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
+    setOrders((prev) => prev.map((o) => (ids.includes(o.id) ? { ...o, seen_by_partner_at: now } as POrder : o)));
+  };
+
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return orders.filter((o) => {
