@@ -58,7 +58,16 @@ const SCHEMA = `{
     "footer_text": string, "footer_links": [{"label": string, "url": string}],
     "meta_title": string, "meta_description": string, "seo_keywords": [string]
   },
-  "product_ideas": [{"title": string, "description": string, "suggested_price_huf": number}],
+  "pages": [
+    {
+      "slug": string (ékezet nélküli, kisbetűs url-rész, pl. "rolunk", "kapcsolat", "gyik", "szallitas-fizetes", "aszf"),
+      "title": string (magyar oldalcím),
+      "content_html": string (KOMPLETT, kész magyar oldal HTML-je: 500-1200 szó, <h2>, <h3>, <p>, <ul><li> tagekkel, konkrét tartalommal — semmilyen helyőrző, kitalált cégadat, adószám vagy telefonszám nélkül),
+      "meta_title": string (<60 karakter),
+      "meta_description": string (<155 karakter)
+    }
+  ] (PONTOSAN 5 aloldal: Rólunk, Kapcsolat, GYIK, Szállítás és fizetés, Elállás/garancia — a márkára szabva),
+  "product_ideas": [{"title": string, "description": string (2-3 mondat, előny-fókuszú), "suggested_price_huf": number, "category": string, "product_type": "clothing"|"accessory"|"digital"|"service"|"course", "fulfillment_type": "physical"|"digital"|"service"}],
   "image_prompts": {
     "hero": string (ANGOL képgenerálási prompt a hero háttérhez, márkához illő, fotórealisztikus, szöveg és logó NÉLKÜL),
     "section1": string (ANGOL prompt a section1 illusztrációhoz),
@@ -82,6 +91,8 @@ Minőségi elvárások (prémium szint):
 - SEO: meta_title < 60 karakter kulcsszóval, meta_description < 155 karakter, 5-8 releváns magyar kulcsszó.
 - Ne találj ki céges jogi adatot, adószámot, telefonszámot, címet, konkrét árat vagy díjat.
 - Ha vannak meglévő termékek, a szövegek RÁJUK utaljanak konkrétan.
+- Aloldalak: nem vázlat, hanem KÉSZ, publikálható tartalom. A Kapcsolat oldalon csak űrlapra/e-mailre utalj általánosan, konkrét elérhetőséget NE találj ki. A jogi jellegű oldalakon (szállítás, elállás) az általános magyar fogyasztóvédelmi kereteket írd le, konkrét díj és határidő kitalálása nélkül, jelezve hogy a partner pontosítja.
+- Termékötletek: 6 db, a márkához illő, eltérő árszinttel és valódi terméknévvel.
 
 Kizárólag érvényes JSON-t adj vissza, semmi mást.
 
