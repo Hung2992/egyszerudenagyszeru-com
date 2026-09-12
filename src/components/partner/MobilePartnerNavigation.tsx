@@ -1,6 +1,6 @@
 // Partner OS – mobil alsó parancssáv + "Több" panel.
 import { useState } from "react";
-import { NAV_GROUPS, MOBILE_PRIMARY, QUICK_ACTIONS, groupForTab } from "./partner-navigation";
+import { NAV_GROUPS, MOBILE_PRIMARY, QUICK_ACTIONS } from "./partner-navigation";
 import { Home, ShoppingCart, Sparkles, Globe, Menu, X, Plus } from "lucide-react";
 
 const ICONS: Record<string, typeof Home> = { cockpit: Home, orders: ShoppingCart, advisor: Sparkles, storefront: Globe };
@@ -92,7 +92,6 @@ const MobilePartnerNavigation = ({ tab, onNavigate }: { tab: string; onNavigate:
       >
         <Plus className="h-5 w-5" />
       </button>
-      <span className="sr-only">{groupForTab(tab)}</span>
     </>
   );
 };
