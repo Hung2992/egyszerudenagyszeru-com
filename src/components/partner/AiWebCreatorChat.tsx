@@ -479,9 +479,9 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[240px_1fr]">
+    <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
       {/* Beszélgetések */}
-      <div className="space-y-2">
+      <div className="space-y-2 min-w-0">
         <Button onClick={() => newSession()} variant="outline" className="rounded-none w-full">
           <Plus className="h-4 w-4 mr-2" /> Új beszélgetés
         </Button>
