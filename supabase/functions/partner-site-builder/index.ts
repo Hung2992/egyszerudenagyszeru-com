@@ -456,6 +456,7 @@ ${JSON.stringify(patch).slice(0, 9000)}`,
           hero: String(prompts.hero || `Hero background for a webshop. ${brandHint}`),
           section1: String(prompts.section1 || ""),
           section2: String(prompts.section2 || ""),
+          logo: String(prompts.logo || `Abstract brand mark for ${patch.display_name || partner.company_name || "a webshop"}.`),
         };
         try {
           const res = await generateAndStore(apiKey, admin, partnerId, finalPrompts);
