@@ -279,6 +279,7 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
     if (!msg || !sessionId || sending) return;
     setInput("");
     setMessages((m) => [...m, { role: "user", content: msg }]);
+    void autoTitle(sessionId, msg);
     setSending(true);
     setLiveSteps([]);
     setPmIntro("");
