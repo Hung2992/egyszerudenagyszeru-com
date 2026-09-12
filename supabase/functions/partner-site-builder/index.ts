@@ -547,6 +547,23 @@ ${JSON.stringify(patch).slice(0, 9000)}`,
       }
     }
 
+    // 4) Aloldalak: ha a fő hívás nem adott vissza kész oldalakat, külön körben megírjuk
+    let pages = normalizePages(parsed?.pages);
+    if (mode === "build" && pages.length < 3) {
+      const extra = await callAI(
+        apiKey,
+        MODEL_BUILD,
+        `Te magyar webshop-tartalomíró vagy. Írd meg a webshop 5 kötelező aloldalát KÉSZ, publikálható minőségben.
+Csak JSON: {"pages":[{"slug":string,"title":string,"content_html":string,"meta_title":string,"meta_description":string}]}
+Oldalak: Rólunk, Kapcsolat, GYIK, Szállítás és fizetés, Elállás és garancia.
+Minden oldal 500-1200 szó, <h2>/<h3>/<p>/<ul><li> tagekkel, a márkára szabva.
+TILOS kitalálni cégnevet, adószámot, címet, telefonszámot, konkrét díjat vagy határidőt.`,
+        `${brandContext}\n\nMárka konfiguráció:\n${JSON.stringify(patch).slice(0, 6000)}`,
+      ).catch(() => null);
+      const more = normalizePages(extra?.pages);
+      if (more.length) pages = more;
+    }
+
     return json({
       ok: true,
       mode,
@@ -556,8 +573,9 @@ ${JSON.stringify(patch).slice(0, 9000)}`,
       target,
       strategy,
       images,
+      pages,
       warnings: [...new Set(warnings)],
-      product_ideas: Array.isArray(parsed.product_ideas) ? parsed.product_ideas.slice(0, 8) : [],
+      product_ideas: normalizeProducts(parsed.product_ideas),
       explanation: String(parsed.explanation || "Elkészült a webshop terve."),
     });
   } catch (e) {
