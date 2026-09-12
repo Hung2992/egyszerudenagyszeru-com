@@ -20,6 +20,7 @@ const BrandStorefront = () => {
   );
   const [sf, setSf] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
+  const [pages, setPages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [email, setEmail] = useState("");
