@@ -24,7 +24,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useState } from "react";
-import heroImage from "@/assets/apex-business-platform-hero.jpg";
+import heroImage from "@/assets/apex-cinematic-business-hero.jpg";
 import { PARTNER_CONTRACT_TEMPLATE } from "@/content/partnerContractTemplate";
 
 const modules = [
@@ -137,16 +137,16 @@ const Index = () => {
       </header>
 
       <main>
-        <section className="relative flex min-h-[720px] items-end overflow-hidden pt-16 md:min-h-[760px]">
-          <img src={heroImage} alt="Az APEX üzleti platform kezelőfelülete munka közben" width={1920} height={1080} className="absolute inset-0 h-full w-full object-cover object-[68%_center] md:object-center" {...({ fetchpriority: "high" } as Record<string, string>)} />
-          <div className="absolute inset-0 bg-background/25" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/85 to-background/10" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/20" />
+        <section className="relative flex min-h-[720px] items-end overflow-hidden border-b border-accent/40 pt-16 md:min-h-[760px]">
+          <img src={heroImage} alt="Vállalkozó az APEX üzleti platform többképernyős kezelőfelületén dolgozik" width={1920} height={1080} className="hero-cinematic-image absolute inset-0 h-full w-full object-cover object-[64%_center] sm:object-[58%_center] lg:object-center" {...({ fetchpriority: "high" } as Record<string, string>)} />
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/75 to-background/5" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/10 to-background/20" />
+          <div className="absolute inset-y-0 left-0 w-px bg-accent/60" />
 
           <div className="relative mx-auto w-full max-w-7xl px-5 pb-16 pt-32 lg:px-8 lg:pb-24">
             <div className="max-w-3xl">
-              <div className="mb-7 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.2em] text-accent">
-                <span className="h-px w-8 bg-accent" />
+              <div className="hero-cinematic-content mb-7 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.2em] text-accent">
+                <span className="h-1 w-14 bg-accent" />
                 Bérelhető üzleti szoftver · Végpontig
               </div>
               <h1 className="max-w-4xl text-4xl font-bold leading-[0.98] md:text-6xl lg:text-7xl">
