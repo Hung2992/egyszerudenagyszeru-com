@@ -163,6 +163,44 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
           </div>
           <p className="text-sm text-muted-foreground">{result.explanation}</p>
 
+          {result.qa && (
+            <div className="border border-border p-3 space-y-2">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <span className="text-sm font-medium">Minőségi pontszám</span>
+                <Badge variant="outline" className="rounded-none">{Number(result.qa.total ?? 0)}/100</Badge>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(result.qa.scores || {}).map(([k, v]) => (
+                  <span key={k} className="text-[11px] border border-border px-2 py-1 text-muted-foreground">
+                    {k}: {Number(v)}
+                  </span>
+                ))}
+              </div>
+              {result.qa.verdict && <p className="text-xs text-muted-foreground">{result.qa.verdict}</p>}
+              {!!result.warnings?.length && (
+                <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
+                  {result.warnings.map((w: string, i: number) => <li key={i}>{w}</li>)}
+                </ul>
+              )}
+            </div>
+          )}
+
+          <div className="border border-border p-3 space-y-2">
+            <div className="text-sm font-medium">Finomítás</div>
+            <Textarea
+              rows={2}
+              className="rounded-none"
+              placeholder="Pl.: legyen világosabb háttér, a hero cím legyen rövidebb, hangsúlyozzuk az ingyenes szállítást…"
+              value={refinePrompt}
+              onChange={(e) => setRefinePrompt(e.target.value)}
+            />
+            <Button variant="outline" onClick={refine} disabled={refining} className="rounded-none">
+              {refining ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Wand2 className="h-4 w-4 mr-2" />}
+              {refining ? "Finomítás…" : "Módosítás kérése"}
+            </Button>
+          </div>
+
+
           <div className="flex flex-wrap gap-2">
             {["bg_color", "primary_color", "accent_color", "text_color"].map((k) =>
               result.patch[k] ? (
