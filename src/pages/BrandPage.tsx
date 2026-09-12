@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { storePageUrl } from "@/lib/storefrontSeo";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { ArrowLeft } from "lucide-react";
 import { getPartnerSlugFromHostname, resolveCustomDomainSlug } from "@/lib/partner-subdomain";
