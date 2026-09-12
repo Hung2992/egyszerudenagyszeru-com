@@ -164,6 +164,9 @@ async function generateImage(apiKey: string, prompt: string): Promise<Uint8Array
 const IMAGE_STYLE =
   "Professional commercial photography for an e-commerce hero section, cinematic natural lighting, high dynamic range, 85mm lens, shallow depth of field, color graded, ultra detailed. Absolutely NO text, NO letters, NO logos, NO watermarks in the image. Leave calm negative space for overlay text.";
 
+const LOGO_STYLE =
+  "Minimal flat vector brand mark, single abstract geometric symbol, centered, clean solid background, crisp edges, high contrast, app-icon style. Absolutely NO text, NO letters, NO numbers, NO watermark.";
+
 async function generateAndStore(
   apiKey: string,
   admin: any,
@@ -174,6 +177,7 @@ async function generateAndStore(
     hero: "hero_image_url",
     section1: "section1_image_url",
     section2: "section2_image_url",
+    logo: "logo_url",
   };
   const paths: Record<string, string> = {};
   const failed: string[] = [];
@@ -181,7 +185,8 @@ async function generateAndStore(
   const jobs = Object.entries(map).map(async ([key, column]) => {
     const p = String(prompts?.[key] || "").trim();
     if (!p) return;
-    const bytes = await generateImage(apiKey, `${p}\n\n${IMAGE_STYLE}`);
+    const style = key === "logo" ? LOGO_STYLE : IMAGE_STYLE;
+    const bytes = await generateImage(apiKey, `${p}\n\n${style}`);
     if (!bytes) { failed.push(key); return; }
     const path = `${partnerId}/ai/${Date.now()}-${key}-${Math.random().toString(36).slice(2, 8)}.png`;
     const up = await admin.storage.from("partner-storefront-media").upload(path, bytes, {
