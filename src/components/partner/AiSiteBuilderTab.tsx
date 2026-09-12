@@ -35,7 +35,14 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
     setResult(null);
     try {
       const { data, error } = await supabase.functions.invoke("partner-site-builder", {
-        body: { prompt, partner_id: partnerId, mode: "build", target_score: 92, max_rounds: 1 },
+        body: {
+          prompt,
+          partner_id: partnerId,
+          mode: "build",
+          target_score: 95,
+          max_rounds: 2,
+          generate_images: withImages,
+        },
       });
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
