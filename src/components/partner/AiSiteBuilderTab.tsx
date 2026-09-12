@@ -25,6 +25,7 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
   const [applying, setApplying] = useState(false);
   const [refinePrompt, setRefinePrompt] = useState("");
   const [refining, setRefining] = useState(false);
+  const [withImages, setWithImages] = useState(true);
 
   const generate = async () => {
     if (prompt.trim().length < 5) {
