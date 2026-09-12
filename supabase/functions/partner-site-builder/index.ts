@@ -510,6 +510,9 @@ ${JSON.stringify(patch).slice(0, 9000)}`,
       if (Array.isArray(improved?.product_ideas) && improved.product_ideas.length) {
         parsed.product_ideas = improved.product_ideas;
       }
+      if (Array.isArray(improved?.pages) && improved.pages.length) {
+        parsed.pages = improved.pages;
+      }
     }
 
     const textKeys = Object.keys(patch).filter((k) => typeof patch[k] === "string" && String(patch[k]).trim());
