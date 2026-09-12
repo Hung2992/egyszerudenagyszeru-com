@@ -123,6 +123,7 @@ const BrandCheckout = () => {
         customer_phone: form.customer_phone,
         notes: form.notes,
         payment_method: form.payment_method,
+        shipping_method_id: methodId || undefined,
         shipping_address: { street: form.street, city: form.city, zip: form.zip, country: "Magyarország" },
         items: items.map((i) => ({ product_id: i.product_id, qty: i.qty })),
       },
