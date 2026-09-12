@@ -377,6 +377,26 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
               ))}
           </div>
 
+          {!!result.pages?.length && (
+            <div className="space-y-2">
+              <h5 className="text-sm font-medium">Elkészült aloldalak ({result.pages.length})</h5>
+              <div className="grid gap-2 md:grid-cols-2">
+                {result.pages.map((p: any, i: number) => (
+                  <div key={i} className="border border-border p-3">
+                    <div className="text-sm font-medium">{p.title}</div>
+                    <div className="text-[11px] text-muted-foreground">/{p.slug}</div>
+                    <div className="text-xs text-muted-foreground mt-1 line-clamp-3">
+                      {String(p.content_html || "").replace(/<[^>]+>/g, " ").slice(0, 220)}…
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Alkalmazáskor ezek publikált aloldalakként jönnek létre.
+              </p>
+            </div>
+          )}
+
           {!!result.product_ideas?.length && (
             <div className="space-y-2">
               <h5 className="text-sm font-medium">Termékötletek</h5>
