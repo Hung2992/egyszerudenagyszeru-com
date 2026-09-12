@@ -74,6 +74,7 @@ const AiCommandBar = ({ partnerId, storefrontId, sf, onChange }: Props) => {
     }
 
     const result = validateProposal(raw, current);
+    const failureCode = "error" in result ? result.error : null;
     if (!result.ok) {
       const fallback = interpretCommandLocally(text, current);
       const second = fallback ? validateProposal(fallback, current) : null;
@@ -83,7 +84,7 @@ const AiCommandBar = ({ partnerId, storefrontId, sf, onChange }: Props) => {
         return;
       }
       setError(
-        !result.ok && result.error === "no_effective_change"
+        failureCode === "no_effective_change"
           ? "A kért beállítás már érvényben van, nincs mit változtatni."
           : "Ezt a módosítást nem tudtam biztonságosan létrehozni. A webshop változatlan maradt.",
       );
