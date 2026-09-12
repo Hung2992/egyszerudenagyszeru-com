@@ -639,7 +639,12 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
           )}
 
           {messages.map((m, i) => (
-            <div key={m.id || i} className={`flex gap-3 ${m.role === "user" ? "justify-end" : ""}`}>
+            <div
+              key={m.id || i}
+              className={`flex gap-3 ${m.role === "user" ? "justify-end" : ""} ${
+                q.length >= 2 && (m.content || "").toLowerCase().includes(q) ? "bg-primary/5 border-l-2 border-primary pl-2" : ""
+              }`}
+            >
               {m.role !== "user" && <Bot className="h-4 w-4 mt-1 text-primary shrink-0" />}
               <div className={`max-w-[80%] space-y-2 ${m.role === "user" ? "text-right" : ""}`}>
                 <div className={m.role === "user"
