@@ -78,10 +78,15 @@ const BrandPage = () => {
   const pageDescription = (page.meta_description
     || (pageBody ? pageBody.slice(0, 157) + (pageBody.length > 157 ? "…" : "") : `${page.title} – ${sf.display_name}`)).slice(0, 160);
 
+  const rawTitle = String(page.meta_title || page.title || "");
+  const pageTitle = (rawTitle.toLowerCase().includes(String(sf.display_name || "").toLowerCase())
+    ? rawTitle
+    : `${rawTitle} | ${sf.display_name}`).slice(0, 60);
+
   return (
     <div className="min-h-screen" style={{ background: bg, color: text, fontFamily: sf.font_body || "Inter, sans-serif" }}>
       <Helmet>
-        <title>{page.meta_title || page.title} | {sf.display_name}</title>
+        <title>{pageTitle}</title>
         <meta name="description" content={pageDescription} />
         <link rel="canonical" href={storePageUrl(sf, page.slug)} />
         <meta property="og:type" content="article" />
