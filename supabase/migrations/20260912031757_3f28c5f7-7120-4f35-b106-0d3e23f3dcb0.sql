@@ -1,0 +1,1 @@
+ALTER TABLE public.partner_orders ADD COLUMN IF NOT EXISTS seen_by_partner_at timestamptz;

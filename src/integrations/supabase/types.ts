@@ -7524,6 +7524,7 @@ export type Database = {
           payment_status: string | null
           platform_fee_huf: number
           platform_fee_pct: number
+          seen_by_partner_at: string | null
           shipped_at: string | null
           shipping_address: Json
           shipping_huf: number
@@ -7553,6 +7554,7 @@ export type Database = {
           payment_status?: string | null
           platform_fee_huf?: number
           platform_fee_pct?: number
+          seen_by_partner_at?: string | null
           shipped_at?: string | null
           shipping_address?: Json
           shipping_huf?: number
@@ -7582,6 +7584,7 @@ export type Database = {
           payment_status?: string | null
           platform_fee_huf?: number
           platform_fee_pct?: number
+          seen_by_partner_at?: string | null
           shipped_at?: string | null
           shipping_address?: Json
           shipping_huf?: number
