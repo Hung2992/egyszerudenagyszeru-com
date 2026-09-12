@@ -281,126 +281,127 @@ const BrandStorefront = () => {
         </div>
       </section>
 
-      {categories.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 py-14 md:px-8 md:py-20">
-          <div className="mb-8 flex items-end justify-between gap-4"><div><p className="text-xs font-semibold uppercase" style={{ color: sf.accent_color }}>Fedezd fel</p><h2 className="mt-2 text-3xl font-bold md:text-5xl" style={headingStyle}>Kategóriáink</h2></div><a href="#termekek" className="hidden items-center gap-2 text-sm font-semibold sm:flex">Minden termék <ArrowRight className="h-4 w-4" /></a></div>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            {categories.slice(0, 4).map((category) => {
-              const image = products.find((product) => product.category === category)?.images?.[0];
-              return <a id={category.toLocaleLowerCase("hu-HU").replace(/\s+/g, "-")} key={category} href="#termekek" className="group relative aspect-[4/5] overflow-hidden bg-muted/40">
-                {image && <MediaImage bucket="partner-product-images" path={image} alt={category} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />}
-                <span className="storefront-card-shade absolute inset-0" />
-                <span className="storefront-hero-copy absolute inset-x-4 bottom-4 text-lg font-bold md:text-xl" style={headingStyle}>{category}</span>
-              </a>;
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* SECTION 1 */}
-      {sf.section1_enabled && (
-        <section className="mx-auto max-w-6xl px-4 py-16 grid md:grid-cols-2 gap-8 items-center">
-          {sf.section1_image_url && (
-            <MediaImage bucket="partner-storefront-media" path={sf.section1_image_url} className="w-full aspect-[4/3] object-cover" />
-          )}
-          <div>
-            {sf.section1_title && <h2 className="text-3xl md:text-4xl font-bold uppercase tracking-widest mb-4" style={headingStyle}>{sf.section1_title}</h2>}
-            {sf.section1_subtitle && <p className="opacity-80 mb-6">{sf.section1_subtitle}</p>}
-            {sf.section1_cta_text && (
-              <a href={sf.section1_cta_url || "#termekek"} className="inline-block px-6 py-3 font-bold uppercase tracking-widest border-2" style={{ borderColor: sf.accent_color, color: sf.accent_color }}>
-                {sf.section1_cta_text}
-              </a>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* SECTION 2 */}
-      {sf.section2_enabled && (
-        <section className="mx-auto max-w-6xl px-4 py-16 grid md:grid-cols-2 gap-8 items-center">
-          <div className="md:order-2">
-            {sf.section2_image_url && (
-              <MediaImage bucket="partner-storefront-media" path={sf.section2_image_url} className="w-full aspect-[4/3] object-cover" />
-            )}
-          </div>
-          <div className="md:order-1">
-            {sf.section2_title && <h2 className="text-3xl md:text-4xl font-bold uppercase tracking-widest mb-4" style={headingStyle}>{sf.section2_title}</h2>}
-            {sf.section2_subtitle && <p className="opacity-80 mb-6">{sf.section2_subtitle}</p>}
-            {sf.section2_cta_text && (
-              <a href={sf.section2_cta_url || "#termekek"} className="inline-block px-6 py-3 font-bold uppercase tracking-widest border-2" style={{ borderColor: sf.accent_color, color: sf.accent_color }}>
-                {sf.section2_cta_text}
-              </a>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* FEATURED */}
-      {sf.featured_products_enabled && featured.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 py-14 md:px-8 md:py-20 border-t" style={{ borderColor: borderCol }}>
-          <h2 className="mb-8 text-3xl font-bold md:text-5xl" style={headingStyle}>{sf.featured_products_title || "Kiemelt termékeink"}</h2>
-          <div className="grid grid-cols-2 gap-x-3 gap-y-10 md:grid-cols-4 md:gap-6">
-            {featured.map((product) => <StorefrontProductCard key={product.id} product={product} store={sf} compact />)}
-          </div>
-        </section>
-      )}
-
-      {/* ALL PRODUCTS */}
-      <section id="termekek" className="mx-auto max-w-7xl px-4 py-14 md:px-8 md:py-20 border-t" style={{ borderColor: borderCol }}>
-        <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-          <div><p className="text-xs font-semibold uppercase" style={{ color: sf.accent_color }}>Webshop</p><h2 className="mt-2 text-3xl font-bold md:text-5xl" style={headingStyle}>Termékek</h2></div>
-          <label className="relative block w-full sm:max-w-sm"><span className="sr-only">Termék keresése</span><Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 opacity-50" /><input id="store-search" type="search" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Mit keresel?" className="h-12 w-full border bg-transparent pl-11 pr-4 text-sm outline-none focus:ring-2" style={{ borderColor: borderCol }} /></label>
-        </div>
-        {products.length === 0 ? (
-          <p className="text-center opacity-60">Hamarosan érkeznek a termékek.</p>
-        ) : visibleProducts.length === 0 ? (
-          <div className="border py-16 text-center" style={{ borderColor: borderCol }}><Search className="mx-auto mb-3 h-7 w-7 opacity-35" /><p className="font-semibold">Nincs találat erre a keresésre.</p><button onClick={() => setSearchTerm("")} className="mt-3 text-sm underline">Keresés törlése</button></div>
-        ) : (
-          <div className="grid grid-cols-2 gap-x-3 gap-y-10 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
-            {visibleProducts.map((product) => <StorefrontProductCard key={product.id} product={product} store={sf} />)}
-          </div>
-        )}
-      </section>
-
-      {/* TESTIMONIALS */}
-      {sf.testimonials_enabled && testimonials.length > 0 && (
-        <section className="mx-auto max-w-5xl px-4 py-16 border-t" style={{ borderColor: borderCol }}>
-          <h2 className="text-3xl font-bold uppercase tracking-widest mb-8 text-center" style={headingStyle}>{sf.testimonials_title}</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {testimonials.map((t, i) => (
-              <div key={i} className="border p-6" style={{ borderColor: borderCol }}>
-                <div className="flex gap-1 mb-3" style={{ color: sf.accent_color }}>
-                  {Array.from({ length: Number(t.rating) || 5 }).map((_, k) => <Star key={k} className="h-4 w-4 fill-current" />)}
-                </div>
-                <p className="text-sm opacity-80 italic mb-4">"{t.text}"</p>
-                <div className="text-xs font-bold uppercase tracking-widest">— {t.name}</div>
+      {(() => {
+        const nodes: Record<string, ReactNode> = {
+          categories: categories.length > 0 ? (
+            <section className="mx-auto max-w-7xl px-4 py-14 md:px-8 md:py-20">
+              <div className="mb-8 flex items-end justify-between gap-4"><div><p className="text-xs font-semibold uppercase" style={{ color: sf.accent_color }}>Fedezd fel</p><h2 className="mt-2 text-3xl font-bold md:text-5xl" style={headingStyle}>Kategóriáink</h2></div><a href="#termekek" className="hidden items-center gap-2 text-sm font-semibold sm:flex">Minden termék <ArrowRight className="h-4 w-4" /></a></div>
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                {categories.slice(0, 4).map((category) => {
+                  const image = products.find((product) => product.category === category)?.images?.[0];
+                  return <a id={category.toLocaleLowerCase("hu-HU").replace(/\s+/g, "-")} key={category} href="#termekek" className="group relative aspect-[4/5] overflow-hidden bg-muted/40">
+                    {image && <MediaImage bucket="partner-product-images" path={image} alt={category} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />}
+                    <span className="storefront-card-shade absolute inset-0" />
+                    <span className="storefront-hero-copy absolute inset-x-4 bottom-4 text-lg font-bold md:text-xl" style={headingStyle}>{category}</span>
+                  </a>;
+                })}
               </div>
-            ))}
-          </div>
-        </section>
-      )}
+            </section>
+          ) : null,
 
-      {/* ABOUT */}
-      {sf.about_html && (
-        <section className="mx-auto max-w-3xl px-4 py-16 border-t" style={{ borderColor: borderCol }}>
-          <h2 className="text-2xl font-bold uppercase tracking-widest mb-6 text-center" style={headingStyle}>Rólunk</h2>
-          <div className="prose prose-invert mx-auto" dangerouslySetInnerHTML={{ __html: sf.about_html }} />
-        </section>
-      )}
+          section1: sf.section1_enabled ? (
+            <section className="mx-auto max-w-6xl px-4 py-16 grid md:grid-cols-2 gap-8 items-center">
+              {sf.section1_image_url && (
+                <MediaImage bucket="partner-storefront-media" path={sf.section1_image_url} className="w-full aspect-[4/3] object-cover" />
+              )}
+              <div>
+                {sf.section1_title && <h2 className="text-3xl md:text-4xl font-bold uppercase tracking-widest mb-4" style={headingStyle}>{sf.section1_title}</h2>}
+                {sf.section1_subtitle && <p className="opacity-80 mb-6">{sf.section1_subtitle}</p>}
+                {sf.section1_cta_text && (
+                  <a href={sf.section1_cta_url || "#termekek"} className="inline-block px-6 py-3 font-bold uppercase tracking-widest border-2" style={{ borderColor: sf.accent_color, color: sf.accent_color }}>
+                    {sf.section1_cta_text}
+                  </a>
+                )}
+              </div>
+            </section>
+          ) : null,
 
-      {/* NEWSLETTER */}
-      {sf.newsletter_enabled && (
-        <section className="border-t" style={{ borderColor: borderCol, background: `${sf.accent_color}10` }}>
-          <div className="mx-auto max-w-3xl px-4 py-16 text-center">
-            <h2 className="text-2xl md:text-3xl font-bold uppercase tracking-widest mb-3" style={headingStyle}>{sf.newsletter_title}</h2>
-            {sf.newsletter_subtitle && <p className="opacity-80 mb-6">{sf.newsletter_subtitle}</p>}
-            <form className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto" onSubmit={e => { e.preventDefault(); setEmail(""); alert("Köszönjük a feliratkozást!"); }}>
-              <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="email@cim.hu" className="flex-1 px-4 py-3 bg-transparent border" style={{ borderColor: borderCol, color: sf.text_color }} />
-              <button type="submit" className="px-6 py-3 font-bold uppercase tracking-widest" style={{ background: sf.accent_color, color: sf.bg_color }}>Feliratkozás</button>
-            </form>
-          </div>
-        </section>
-      )}
+          section2: sf.section2_enabled ? (
+            <section className="mx-auto max-w-6xl px-4 py-16 grid md:grid-cols-2 gap-8 items-center">
+              <div className="md:order-2">
+                {sf.section2_image_url && (
+                  <MediaImage bucket="partner-storefront-media" path={sf.section2_image_url} className="w-full aspect-[4/3] object-cover" />
+                )}
+              </div>
+              <div className="md:order-1">
+                {sf.section2_title && <h2 className="text-3xl md:text-4xl font-bold uppercase tracking-widest mb-4" style={headingStyle}>{sf.section2_title}</h2>}
+                {sf.section2_subtitle && <p className="opacity-80 mb-6">{sf.section2_subtitle}</p>}
+                {sf.section2_cta_text && (
+                  <a href={sf.section2_cta_url || "#termekek"} className="inline-block px-6 py-3 font-bold uppercase tracking-widest border-2" style={{ borderColor: sf.accent_color, color: sf.accent_color }}>
+                    {sf.section2_cta_text}
+                  </a>
+                )}
+              </div>
+            </section>
+          ) : null,
+
+          featured: sf.featured_products_enabled && featured.length > 0 ? (
+            <section className="mx-auto max-w-7xl px-4 py-14 md:px-8 md:py-20 border-t" style={{ borderColor: borderCol }}>
+              <h2 className="mb-8 text-3xl font-bold md:text-5xl" style={headingStyle}>{sf.featured_products_title || "Kiemelt termékeink"}</h2>
+              <div className="grid grid-cols-2 gap-x-3 gap-y-10 md:grid-cols-4 md:gap-6">
+                {featured.map((product) => <StorefrontProductCard key={product.id} product={product} store={sf} compact />)}
+              </div>
+            </section>
+          ) : null,
+
+          products: (
+            <section id="termekek" className="mx-auto max-w-7xl px-4 py-14 md:px-8 md:py-20 border-t" style={{ borderColor: borderCol }}>
+              <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+                <div><p className="text-xs font-semibold uppercase" style={{ color: sf.accent_color }}>Webshop</p><h2 className="mt-2 text-3xl font-bold md:text-5xl" style={headingStyle}>Termékek</h2></div>
+                <label className="relative block w-full sm:max-w-sm"><span className="sr-only">Termék keresése</span><Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 opacity-50" /><input id="store-search" type="search" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Mit keresel?" className="h-12 w-full border bg-transparent pl-11 pr-4 text-sm outline-none focus:ring-2" style={{ borderColor: borderCol }} /></label>
+              </div>
+              {products.length === 0 ? (
+                <p className="text-center opacity-60">Hamarosan érkeznek a termékek.</p>
+              ) : visibleProducts.length === 0 ? (
+                <div className="border py-16 text-center" style={{ borderColor: borderCol }}><Search className="mx-auto mb-3 h-7 w-7 opacity-35" /><p className="font-semibold">Nincs találat erre a keresésre.</p><button onClick={() => setSearchTerm("")} className="mt-3 text-sm underline">Keresés törlése</button></div>
+              ) : (
+                <div className="grid grid-cols-2 gap-x-3 gap-y-10 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
+                  {visibleProducts.map((product) => <StorefrontProductCard key={product.id} product={product} store={sf} />)}
+                </div>
+              )}
+            </section>
+          ),
+
+          testimonials: sf.testimonials_enabled && testimonials.length > 0 ? (
+            <section className="mx-auto max-w-5xl px-4 py-16 border-t" style={{ borderColor: borderCol }}>
+              <h2 className="text-3xl font-bold uppercase tracking-widest mb-8 text-center" style={headingStyle}>{sf.testimonials_title}</h2>
+              <div className="grid md:grid-cols-3 gap-6">
+                {testimonials.map((t, i) => (
+                  <div key={i} className="border p-6" style={{ borderColor: borderCol }}>
+                    <div className="flex gap-1 mb-3" style={{ color: sf.accent_color }}>
+                      {Array.from({ length: Number(t.rating) || 5 }).map((_, k) => <Star key={k} className="h-4 w-4 fill-current" />)}
+                    </div>
+                    <p className="text-sm opacity-80 italic mb-4">"{t.text}"</p>
+                    <div className="text-xs font-bold uppercase tracking-widest">— {t.name}</div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null,
+
+          about: sf.about_html ? (
+            <section className="mx-auto max-w-3xl px-4 py-16 border-t" style={{ borderColor: borderCol }}>
+              <h2 className="text-2xl font-bold uppercase tracking-widest mb-6 text-center" style={headingStyle}>Rólunk</h2>
+              <div className="prose prose-invert mx-auto" dangerouslySetInnerHTML={{ __html: sf.about_html }} />
+            </section>
+          ) : null,
+
+          newsletter: sf.newsletter_enabled ? (
+            <section className="border-t" style={{ borderColor: borderCol, background: `${sf.accent_color}10` }}>
+              <div className="mx-auto max-w-3xl px-4 py-16 text-center">
+                <h2 className="text-2xl md:text-3xl font-bold uppercase tracking-widest mb-3" style={headingStyle}>{sf.newsletter_title}</h2>
+                {sf.newsletter_subtitle && <p className="opacity-80 mb-6">{sf.newsletter_subtitle}</p>}
+                <form className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto" onSubmit={e => { e.preventDefault(); setEmail(""); alert("Köszönjük a feliratkozást!"); }}>
+                  <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="email@cim.hu" className="flex-1 px-4 py-3 bg-transparent border" style={{ borderColor: borderCol, color: sf.text_color }} />
+                  <button type="submit" className="px-6 py-3 font-bold uppercase tracking-widest" style={{ background: sf.accent_color, color: sf.bg_color }}>Feliratkozás</button>
+                </form>
+              </div>
+            </section>
+          ) : null,
+        };
+        return normalizeSectionOrder(sf.section_order).map((id) => <Fragment key={id}>{nodes[id]}</Fragment>);
+      })()}
+
 
       {/* FOOTER */}
       <footer className="border-t mt-0" style={{ borderColor: borderCol }}>
