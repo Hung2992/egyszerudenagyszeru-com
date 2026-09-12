@@ -17,6 +17,7 @@ const ERRORS: Record<string, string> = {
   out_of_stock: "Egy termékből nincs elegendő készlet.",
   product_unavailable: "Egy termék már nem elérhető.",
   store_not_found: "Ez a webshop nem érhető el.",
+  invalid_shipping_method: "Válassz szállítási módot.",
 };
 
 const BrandCheckout = () => {
