@@ -66,6 +66,14 @@ const BrandStorefront = () => {
       const { data: prods } = await supabase.from("partner_products").select("*").eq("partner_id", store.partner_id).eq("status", "active").order("created_at", { ascending: false });
       if (!alive) return;
       setProducts(prods || []);
+      const { data: pgs } = await supabase
+        .from("partner_pages")
+        .select("slug, title, sort_order")
+        .eq("partner_id", store.partner_id)
+        .eq("is_published", true)
+        .order("sort_order", { ascending: true });
+      if (!alive) return;
+      setPages(pgs || []);
       setLoading(false);
     })();
     return () => { alive = false; };
