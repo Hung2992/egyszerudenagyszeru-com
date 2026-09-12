@@ -3,10 +3,11 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { storeProductUrl, publicStorageUrl, buildProductDescription } from "@/lib/storefrontSeo";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/untyped-client";
-import { ArrowLeft, ShoppingBag, CalendarClock, Truck } from "lucide-react";
+import { ArrowLeft, ShoppingBag, CalendarClock, Truck, Heart, ShieldCheck, RotateCcw, Minus, Plus } from "lucide-react";
 import MediaImage from "@/components/partner/MediaImage";
 import { toast } from "@/hooks/use-toast";
 import { addToBrandCart } from "@/lib/brand-cart";
+import { Button } from "@/components/ui/button";
 
 const BrandProductDetail = () => {
   const { slug, productSlug } = useParams<{ slug: string; productSlug: string }>();
@@ -15,6 +16,8 @@ const BrandProductDetail = () => {
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeImg, setActiveImg] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+  const [saved, setSaved] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingSaving, setBookingSaving] = useState(false);
   const [bookingDone, setBookingDone] = useState(false);
@@ -162,39 +165,41 @@ const BrandProductDetail = () => {
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
       </Helmet>
 
-      <header className="border-b" style={{ borderColor: `${sf.text_color}20` }}>
-        <div className="mx-auto max-w-6xl px-4 py-4 flex items-center justify-between">
-          <Link to={`/b/${sf.slug}`} className="flex items-center gap-2 text-sm uppercase tracking-widest">
+      <header className="sticky top-0 z-30 border-b bg-inherit/95 backdrop-blur-xl" style={{ borderColor: `${sf.text_color}20` }}>
+        <div className="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between">
+          <Link to={`/b/${sf.slug}`} className="flex items-center gap-2 text-sm font-semibold">
             <ArrowLeft className="h-4 w-4" /> {sf.display_name}
           </Link>
+          <Link to={`/b/${sf.slug}/kosar`} className="flex items-center gap-2 text-sm font-semibold"><ShoppingBag className="h-4 w-4" /> Kosár</Link>
         </div>
       </header>
 
-      <div className="mx-auto max-w-6xl px-4 py-8 grid md:grid-cols-2 gap-8">
-        <div>
-          <div className="aspect-square bg-black/20 border" style={{ borderColor: `${sf.text_color}20` }}>
+      <main className="mx-auto max-w-7xl px-4 py-8 md:py-14 grid md:grid-cols-2 gap-10 lg:gap-16">
+        <div className="min-w-0 md:sticky md:top-28 md:self-start">
+          <div className="aspect-[4/5] bg-muted/30 overflow-hidden">
             {product.images?.[activeImg] ? (
-              <MediaImage bucket="partner-product-images" path={product.images[activeImg]} className="w-full h-full object-cover" />
+              <MediaImage bucket="partner-product-images" path={product.images[activeImg]} alt={product.title} className="w-full h-full object-cover" />
             ) : <div className="flex items-center justify-center h-full opacity-30"><ShoppingBag className="h-16 w-16" /></div>}
           </div>
           {product.images?.length > 1 && (
-            <div className="grid grid-cols-5 gap-2 mt-2">
+            <div className="grid grid-cols-5 gap-2 mt-3">
               {product.images.map((p: string, i: number) => (
-                <button key={i} onClick={() => setActiveImg(i)} className={`aspect-square border ${activeImg === i ? "border-2" : ""}`} style={{ borderColor: activeImg === i ? sf.accent_color : `${sf.text_color}20` }}>
-                  <MediaImage bucket="partner-product-images" path={p} className="w-full h-full object-cover" />
-                </button>
+                <Button key={i} variant="ghost" onClick={() => setActiveImg(i)} className={`h-auto aspect-square rounded-none border p-0 ${activeImg === i ? "border-2" : ""}`} style={{ borderColor: activeImg === i ? sf.accent_color : `${sf.text_color}20` }} aria-label={`${i + 1}. kép`}>
+                  <MediaImage bucket="partner-product-images" path={p} alt="" className="w-full h-full object-cover" />
+                </Button>
               ))}
             </div>
           )}
         </div>
 
-        <div className="space-y-4">
-          <h1 className="text-3xl md:text-4xl font-bold uppercase tracking-widest" style={{ fontFamily: sf.font_heading }}>{product.title}</h1>
+        <div className="space-y-5">
+          {product.category && <p className="text-xs font-semibold uppercase opacity-60">{product.category}</p>}
+          <h1 className="text-3xl md:text-5xl font-bold leading-tight" style={{ fontFamily: sf.font_heading }}>{product.title}</h1>
           <div className="flex items-baseline gap-3">
             <span className="text-3xl font-bold" style={{ color: sf.accent_color }}>{product.price_huf.toLocaleString("hu-HU")} Ft</span>
             {product.compare_price_huf && <span className="line-through opacity-50">{product.compare_price_huf.toLocaleString("hu-HU")} Ft</span>}
           </div>
-          {product.description && <p className="opacity-80 whitespace-pre-wrap">{product.description}</p>}
+          {product.description && <p className="opacity-75 whitespace-pre-wrap leading-relaxed">{product.description}</p>}
 
           {dayStatus && (
             <div className="border p-4 space-y-2" style={{ borderColor: `${sf.text_color}20` }}>
@@ -267,7 +272,8 @@ const BrandProductDetail = () => {
               ? <div>Foglalható szolgáltatás</div>
               : <div>Készlet: {product.stock_qty > 0 ? `${product.stock_qty} db` : "Elfogyott"}</div>}
           </div>
-          <button
+          {!isBookable && <div className="flex items-center gap-3"><div className="flex h-12 items-center border" style={{ borderColor: `${sf.text_color}25` }}><Button variant="ghost" size="icon" className="rounded-none" onClick={() => setQuantity((value) => Math.max(1, value - 1))} aria-label="Mennyiség csökkentése"><Minus /></Button><span className="w-9 text-center text-sm font-semibold">{quantity}</span><Button variant="ghost" size="icon" className="rounded-none" onClick={() => setQuantity((value) => Math.min(20, value + 1))} aria-label="Mennyiség növelése"><Plus /></Button></div><Button variant="outline" size="icon" className="h-12 w-12 rounded-none" onClick={() => setSaved((value) => !value)} aria-label="Mentés a kedvencekhez"><Heart className={saved ? "fill-current" : ""} style={saved ? { color: sf.accent_color } : undefined} /></Button></div>}
+          <Button
             onClick={() => {
               if (isBookable && a.booking_url) { window.open(String(a.booking_url), "_blank", "noopener"); return; }
               if (isBookable) { setBookingOpen(true); return; }
@@ -276,7 +282,7 @@ const BrandProductDetail = () => {
                 product_id: product.id,
                 title: product.title,
                 price_huf: Number(product.price_huf) || 0,
-                qty: 1,
+                qty: quantity,
                 image: product.images?.[0] || null,
                 physical: !isDigital && !isCourse && !isService,
               });
@@ -284,11 +290,17 @@ const BrandProductDetail = () => {
               navigate(slug ? `/b/${slug}/kosar` : "/kosar");
             }}
             disabled={!isBookable && !isDigital && !isCourse && product.stock_qty <= 0}
-            className="w-full py-4 uppercase tracking-widest font-bold border-2 disabled:opacity-30"
-            style={{ borderColor: sf.accent_color, color: sf.accent_color }}
+            className="h-14 w-full rounded-none text-sm font-bold uppercase disabled:opacity-30"
+            style={{ background: sf.accent_color, color: sf.bg_color }}
           >
-            {isBookable ? "Időpont foglalása" : (isDigital || isCourse) ? "Megvásárlom" : product.stock_qty > 0 ? "Kosárba" : "Elfogyott"}
-          </button>
+            <ShoppingBag className="h-4 w-4" /> {isBookable ? "Időpont foglalása" : (isDigital || isCourse) ? "Megvásárlom" : product.stock_qty > 0 ? "Kosárba teszem" : "Elfogyott"}
+          </Button>
+
+          <div className="grid grid-cols-3 border-y py-5 text-center" style={{ borderColor: `${sf.text_color}20` }}>
+            <div className="px-2"><ShieldCheck className="mx-auto mb-2 h-5 w-5" style={{ color: sf.accent_color }} /><p className="text-[10px] font-semibold">Biztonságos vásárlás</p></div>
+            <div className="border-x px-2" style={{ borderColor: `${sf.text_color}20` }}><Truck className="mx-auto mb-2 h-5 w-5" style={{ color: sf.accent_color }} /><p className="text-[10px] font-semibold">Gyors szállítás</p></div>
+            <div className="px-2"><RotateCcw className="mx-auto mb-2 h-5 w-5" style={{ color: sf.accent_color }} /><p className="text-[10px] font-semibold">14 napos elállás</p></div>
+          </div>
 
           {bookingOpen && (
             <div className="border p-4 space-y-3" style={{ borderColor: sf.accent_color }}>
@@ -320,7 +332,7 @@ const BrandProductDetail = () => {
             </div>
           )}
         </div>
-      </div>
+      </main>
     </div>
   );
 };
