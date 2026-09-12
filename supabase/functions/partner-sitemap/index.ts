@@ -12,21 +12,28 @@ const supabase = createClient(
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 async function generateXml(sf: any) {
-  const { data: prods } = await supabase
-    .from("partner_products")
-    .select("slug, updated_at")
-    .eq("partner_id", sf.partner_id)
-    .eq("status", "active");
+  const [{ data: prods }, { data: pages }] = await Promise.all([
+    supabase.from("partner_products").select("slug, updated_at")
+      .eq("partner_id", sf.partner_id).eq("status", "active"),
+    supabase.from("partner_pages").select("slug, updated_at")
+      .eq("storefront_id", sf.id).eq("is_published", true),
+  ]);
 
+  // Saját domain esetén a bolt a gyökéren él, egyébként a /b/<slug> útvonalon.
   const base = sf.custom_domain
     ? `https://${sf.custom_domain}`
-    : `https://${sf.slug}.egyszerudenagyszeru.com`;
+    : `https://egyszerudenagyszeru.com/b/${sf.slug}`;
 
   const lastmod = (d?: string) => d ? `    <lastmod>${d.split("T")[0]}</lastmod>\n` : "";
   const urls: string[] = [];
   urls.push(`  <url>\n    <loc>${base}/</loc>\n${lastmod(sf.updated_at)}    <changefreq>weekly</changefreq>\n    <priority>1.0</priority>\n  </url>`);
   for (const p of prods || []) {
+    if (!p.slug) continue;
     urls.push(`  <url>\n    <loc>${base}/termek/${p.slug}</loc>\n${lastmod(p.updated_at)}    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>`);
+  }
+  for (const pg of pages || []) {
+    if (!pg.slug) continue;
+    urls.push(`  <url>\n    <loc>${base}/oldal/${pg.slug}</loc>\n${lastmod(pg.updated_at)}    <changefreq>monthly</changefreq>\n    <priority>0.5</priority>\n  </url>`);
   }
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
 }
