@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { storeProductUrl, publicStorageUrl, buildProductDescription } from "@/lib/storefrontSeo";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { ArrowLeft, ShoppingBag, CalendarClock, Truck } from "lucide-react";
