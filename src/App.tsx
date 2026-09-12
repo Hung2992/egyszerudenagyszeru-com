@@ -83,6 +83,7 @@ const JogiNyilatkozat = lazy(lazyRetry(() => import("./pages/legal/JogiNyilatkoz
 const PartnerSzabalyzat = lazy(lazyRetry(() => import("./pages/legal/PartnerSzabalyzat.tsx")));
 const KycAdatkezeles = lazy(lazyRetry(() => import("./pages/legal/KycAdatkezeles.tsx")));
 const BrandStorefront = lazy(lazyRetry(() => import("./pages/BrandStorefront.tsx")));
+const PartnerAiStudio = lazy(lazyRetry(() => import("./pages/PartnerAiStudio.tsx")));
 const BrandProductDetail = lazy(lazyRetry(() => import("./pages/BrandProductDetail.tsx")));
 const BrandPage = lazy(lazyRetry(() => import("./pages/BrandPage.tsx")));
 const BrandInfoPage = lazy(lazyRetry(() => import("./pages/BrandInfoPage.tsx")));
@@ -138,6 +139,7 @@ const App = () => (
             <Route path="/admin/partner-approvals" element={<PartnerApprovals />} />
             <Route path="/konyvelo" element={<AccountantPortal />} />
             <Route path="/partner" element={<PartnerPortal />} />
+            <Route path="/partner/ai-studio" element={<PartnerAiStudio />} />
             <Route path="/shop" element={<Shop />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/checkout" element={<Checkout />} />
