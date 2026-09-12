@@ -5,7 +5,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Sparkles, Wand2, Check, Loader2 } from "lucide-react";
+import MediaImage from "@/components/partner/MediaImage";
+import { Sparkles, Wand2, Check, Loader2, ImagePlus } from "lucide-react";
 
 interface Props {
   partnerId: string;
