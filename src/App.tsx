@@ -87,6 +87,7 @@ const BrandProductDetail = lazy(lazyRetry(() => import("./pages/BrandProductDeta
 const BrandPage = lazy(lazyRetry(() => import("./pages/BrandPage.tsx")));
 const BrandNews = lazy(lazyRetry(() => import("./pages/BrandNews.tsx")));
 const BrandCustomerAccount = lazy(lazyRetry(() => import("./pages/BrandCustomerAccount.tsx")));
+const BrandCheckout = lazy(lazyRetry(() => import("./pages/BrandCheckout.tsx")));
 const PartnerApprovals = lazy(lazyRetry(() => import("./pages/PartnerApprovals.tsx")));
 const PartnerLanding = lazy(lazyRetry(() => import("./pages/PartnerLanding.tsx")));
 const PartnerShareRedirect = lazy(lazyRetry(() => import("./pages/PartnerShareRedirect.tsx")));
@@ -177,6 +178,8 @@ const App = () => (
             <Route path="/b/:slug/kozpont" element={<BrandHub />} />
             <Route path="/b/:slug/fiok" element={<BrandCustomerAccount />} />
             <Route path="/fiok" element={<BrandCustomerAccount />} />
+            <Route path="/b/:slug/kosar" element={<BrandCheckout />} />
+            <Route path="/kosar" element={<BrandCheckout />} />
             <Route path="/kozpont" element={<BrandHub />} />
             <Route path="/partner-regisztracio" element={<PartnerRegister />} />
             <Route path="/b/:slug/hirek" element={<BrandNews />} />
