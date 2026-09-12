@@ -37,6 +37,7 @@ import { template as partnerFeatureAnnouncement } from './partner-feature-announ
 import { template as purchaseFollowup } from './purchase-followup.tsx'
 import { template as abandonedCart } from './abandoned-cart.tsx'
 import { template as newsletter } from './newsletter.tsx'
+import { template as partnerNewOrder } from './partner-new-order.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'newsletter': newsletter,
