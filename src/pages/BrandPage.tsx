@@ -78,10 +78,12 @@ const BrandPage = () => {
     <div className="min-h-screen" style={{ background: bg, color: text, fontFamily: sf.font_body || "Inter, sans-serif" }}>
       <Helmet>
         <title>{page.meta_title || page.title} | {sf.display_name}</title>
-        {page.meta_description && <meta name="description" content={page.meta_description} />}
-        <link rel="canonical" href={`${window.location.origin}/b/${params.slug}/oldal/${page.slug}`} />
+        <meta name="description" content={pageDescription} />
+        <link rel="canonical" href={storePageUrl(sf, page.slug)} />
+        <meta property="og:type" content="article" />
         <meta property="og:title" content={page.meta_title || page.title} />
-        {page.meta_description && <meta property="og:description" content={page.meta_description} />}
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:url" content={storePageUrl(sf, page.slug)} />
       </Helmet>
 
       <header className="border-b" style={{ borderColor: `${text}22` }}>
