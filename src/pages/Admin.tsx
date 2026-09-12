@@ -40,6 +40,7 @@ const AdminPlatformKpiTab = lazy(lazyRetry(() => import("@/components/admin/Admi
 const AdminPilotPartnersTab = lazy(lazyRetry(() => import("@/components/admin/AdminPilotPartnersTab")));
 const AdminPartnerCenterTab = lazy(lazyRetry(() => import("@/components/admin/AdminPartnerCenterTab")));
 const AdminPartnerManagerTab = lazy(lazyRetry(() => import("@/components/admin/AdminPartnerManagerTab")));
+const AdminPartnerConnectionsTab = lazy(lazyRetry(() => import("@/components/admin/AdminPartnerConnectionsTab")));
 const AdminMarketingHubTab = lazy(lazyRetry(() => import("@/components/admin/AdminMarketingHubTab")));
 const AdminAiMarketingCeo = lazy(lazyRetry(() => import("@/components/admin/AdminAiMarketingCeo")));
 import { Facebook as FacebookIcon, Instagram as InstagramIcon, Youtube as YoutubeIcon, Music2, Linkedin as LinkedinIcon, Twitter as TwitterIcon } from "lucide-react";
@@ -1466,6 +1467,7 @@ const Admin = () => {
     { key: "coupons_manager", label: "Kuponok (mód & partner)", icon: Ticket },
     { key: "partner_center", label: "🤝 Partner Központ", icon: Users },
     { key: "partner_manager", label: "🗂️ Partner Kezelő", icon: Users },
+    { key: "partner_connections", label: "🔗 Partnerkapcsolatok", icon: Users },
     { key: "marketing_hub", label: "🚀 Marketing Hub", icon: Users },
     { key: "partners", label: "Partnerek (profil)", icon: Users },
     { key: "tenants", label: "Bérlők (revenue share)", icon: Building2 },
@@ -3084,6 +3086,7 @@ const Admin = () => {
         {tab === "tenant_kyc" && <AdminKycTab />}
         {tab === "partner_center" && <AdminPartnerCenterTab />}
         {tab === "partner_manager" && <AdminPartnerManagerTab />}
+        {tab === "partner_connections" && <AdminPartnerConnectionsTab />}
         {tab === "marketing_hub" && <AdminMarketingHubTab />}
         {tab === "partner_contracts" && <AdminContractsTab />}
         {tab === "stock_alert_auto" && <AdminStockAlertAutoTab />}
