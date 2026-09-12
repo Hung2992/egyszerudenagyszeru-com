@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
+import { normalizeSectionOrder } from "@/lib/storefront-studio";
 import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import { storeBaseUrl, publicStorageUrl } from "@/lib/storefrontSeo";
 
