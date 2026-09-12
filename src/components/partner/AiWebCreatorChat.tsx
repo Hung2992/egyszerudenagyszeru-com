@@ -146,8 +146,13 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [restoringId, setRestoringId] = useState<string | null>(null);
   const [pmIntro, setPmIntro] = useState("");
+  const [query, setQuery] = useState("");
+  const [hitSessions, setHitSessions] = useState<Record<string, number>>({});
+  const [searching, setSearching] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
 
 
   const loadSessions = async () => {
