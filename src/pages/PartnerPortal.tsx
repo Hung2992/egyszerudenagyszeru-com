@@ -391,6 +391,10 @@ const PartnerPortal = () => {
             <PartnerProductsTab partnerId={partner.id} />
           </TabsContent>
 
+          <TabsContent value="shipping" className="mt-6">
+            <PartnerShippingTab partnerId={partner.id} />
+          </TabsContent>
+
           <TabsContent value="digital" className="mt-6">
             <PartnerDigitalDeliveryTab partnerId={partner.id} />
           </TabsContent>
