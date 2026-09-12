@@ -165,6 +165,15 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
       eventType: publishRequest ? "publish_request_click" : "save_click",
     });
     if (publishRequest) {
+      if (qaReport && !qaReport.publishable) {
+        setTab("studio");
+        toast({
+          title: "A webshop még nem publikálható",
+          description: `${qaReport.issues.filter(i => i.severity === "error").length} kritikus hibát kell javítani a Studio fülön.`,
+          variant: "destructive",
+        });
+        return;
+      }
       const block = evaluateDomainReadiness(sf);
       // Only block if partner explicitly opted in to a custom domain that isn't ready.
       if (block === "dns_unverified" || block === "dns_expired") {
