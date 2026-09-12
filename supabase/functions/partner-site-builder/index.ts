@@ -86,6 +86,23 @@ Kizárólag érvényes JSON-t adj vissza, semmi mást.
 Séma:
 ${SCHEMA}`;
 
+const STRATEGY_SYSTEM = `Te egy magyar márkastratéga és e-commerce konzulens vagy.
+A partner leírásából készíts tömör, döntésre kész márkastratégiát, amire egy art director és copywriter építeni tud.
+Csak JSON:
+{
+  "positioning": string (1 mondat, mi a márka és kinek),
+  "audience": string (konkrét célközönség: kor, élethelyzet, motiváció),
+  "pain_points": [string] (3 db valós vásárlói fájdalom),
+  "value_props": [string] (3 db konkrét, mérhető előny),
+  "tone": string (hangvétel 3-5 szóban),
+  "visual_direction": string (vizuális irány: hangulat, anyagok, fényezés, tiltott klisék),
+  "color_rationale": string (milyen paletta illik és miért),
+  "font_suggestion": {"heading": string, "body": string},
+  "objections": [string] (3 db vásárlási kifogás, amit a szövegnek le kell szerelnie),
+  "conversion_hooks": [string] (3 db konverziós horog: garancia, szállítás, közösségi bizonyíték)
+}
+Ne találj ki jogi/céges adatot, árat vagy dátumot.`;
+
 const QA_SYSTEM = `Te egy szigorú magyar e-commerce QA lektor vagy. Kapsz egy storefront konfigurációt.
 Pontozd őszintén, és sorold fel a konkrét hibákat. Csak JSON:
 {
