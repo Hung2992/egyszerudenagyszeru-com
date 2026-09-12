@@ -396,7 +396,13 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
 
 
         {/* AI CHAT AGENT */}
-        <TabsContent value="chat">
+        <TabsContent value="chat" className="space-y-3">
+          <div className="flex items-center justify-between gap-2 border border-border p-3">
+            <p className="text-xs text-muted-foreground">Teljes képernyős munkaterület: chat + élő előnézet egymás mellett.</p>
+            <Button asChild size="sm" variant="outline" className="rounded-none text-xs shrink-0">
+              <a href="/partner/ai-studio"><ExternalLink className="h-3 w-3 mr-1" /> AI Studio megnyitása</a>
+            </Button>
+          </div>
           <AiWebCreatorChat
             partnerId={partnerId}
             onApplied={(patch) => { setSf((cur: any) => ({ ...cur, ...patch })); setPreviewRefreshKey((k) => k + 1); void load(); }}
