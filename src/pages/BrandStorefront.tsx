@@ -378,6 +378,9 @@ const BrandStorefront = () => {
         <div className="mx-auto max-w-6xl px-4 py-8 flex flex-wrap items-center justify-between gap-3 text-xs opacity-70">
           <div>© {new Date().getFullYear()} {sf.display_name}{sf.footer_text ? ` · ${sf.footer_text}` : ""}</div>
           <div className="flex gap-4">
+            {pages.map((pg) => (
+              <Link key={pg.slug} to={`/b/${resolvedSlug}/oldal/${pg.slug}`} className="underline">{pg.title}</Link>
+            ))}
             {footerLinks.map((l, i) => (
               <a key={i} href={l.url} target={l.url?.startsWith("http") ? "_blank" : undefined} rel="noreferrer" className="underline">{l.label}</a>
             ))}
