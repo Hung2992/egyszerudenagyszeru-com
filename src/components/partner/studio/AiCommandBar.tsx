@@ -83,7 +83,7 @@ const AiCommandBar = ({ partnerId, storefrontId, sf, onChange }: Props) => {
         return;
       }
       setError(
-        result.error === "no_effective_change"
+        !result.ok && result.error === "no_effective_change"
           ? "A kért beállítás már érvényben van, nincs mit változtatni."
           : "Ezt a módosítást nem tudtam biztonságosan létrehozni. A webshop változatlan maradt.",
       );
