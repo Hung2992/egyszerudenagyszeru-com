@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { ArrowLeft, ShoppingBag, CalendarClock, Truck } from "lucide-react";
 import MediaImage from "@/components/partner/MediaImage";
 import { toast } from "@/hooks/use-toast";
+import { addToBrandCart } from "@/lib/brand-cart";
 
 const BrandProductDetail = () => {
   const { slug, productSlug } = useParams<{ slug: string; productSlug: string }>();
+  const navigate = useNavigate();
   const [sf, setSf] = useState<any>(null);
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -261,7 +263,17 @@ const BrandProductDetail = () => {
             onClick={() => {
               if (isBookable && a.booking_url) { window.open(String(a.booking_url), "_blank", "noopener"); return; }
               if (isBookable) { setBookingOpen(true); return; }
-              toast({ title: "Hamarosan", description: "A checkout funkció a következő frissítésben érkezik." });
+              const cartSlug = slug || sf.slug;
+              addToBrandCart(cartSlug, {
+                product_id: product.id,
+                title: product.title,
+                price_huf: Number(product.price_huf) || 0,
+                qty: 1,
+                image: product.images?.[0] || null,
+                physical: !isDigital && !isCourse && !isService,
+              });
+              toast({ title: "Kosárba tettük", description: product.title });
+              navigate(slug ? `/b/${slug}/kosar` : "/kosar");
             }}
             disabled={!isBookable && !isDigital && !isCourse && product.stock_qty <= 0}
             className="w-full py-4 uppercase tracking-widest font-bold border-2 disabled:opacity-30"

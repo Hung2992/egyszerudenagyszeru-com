@@ -7,6 +7,23 @@ import { getPartnerSlugFromHostname, resolveCustomDomainSlug } from "@/lib/partn
 
 type Mode = "login" | "register" | "forgot";
 
+const STATUS_LABELS: Record<string, string> = {
+  pending: "Feldolgozás alatt",
+  confirmed: "Visszaigazolva",
+  processing: "Készítés alatt",
+  shipped: "Kiszállítás alatt",
+  delivered: "Kézbesítve",
+  cancelled: "Törölve",
+  refunded: "Visszatérítve",
+};
+
+const PAYMENT_LABELS: Record<string, string> = {
+  pending: "függőben",
+  paid: "kifizetve",
+  failed: "sikertelen",
+  refunded: "visszatérítve",
+};
+
 const translateAuthError = (msg: string): string => {
   const map: Record<string, string> = {
     "Invalid login credentials": "Hibás email cím vagy jelszó.",
@@ -36,6 +53,7 @@ const BrandCustomerAccount = () => {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [busy, setBusy] = useState(false);
+  const [orders, setOrders] = useState<any[]>([]);
 
   useEffect(() => {
     if (slug) return;
@@ -86,6 +104,23 @@ const BrandCustomerAccount = () => {
         setProfile(created || null);
         setFullName(created?.full_name || "");
       }
+    })();
+    return () => { alive = false; };
+  }, [session, sf]);
+
+  // saját rendelések ennél a webshopnál
+  useEffect(() => {
+    if (!session?.user || !sf?.partner_id) { setOrders([]); return; }
+    let alive = true;
+    (async () => {
+      const { data } = await supabase
+        .from("partner_orders")
+        .select("id, order_number, status, payment_status, total_huf, items, created_at, tracking_number, carrier")
+        .eq("customer_user_id", session.user.id)
+        .eq("partner_id", sf.partner_id)
+        .order("created_at", { ascending: false })
+        .limit(30);
+      if (alive) setOrders(data || []);
     })();
     return () => { alive = false; };
   }, [session, sf]);
@@ -189,6 +224,30 @@ const BrandCustomerAccount = () => {
             <button onClick={() => supabase.auth.signOut()} className="w-full h-11 border uppercase tracking-widest text-xs" style={{ borderColor: border }}>
               Kijelentkezés
             </button>
+
+            <div className="pt-4 border-t space-y-3" style={{ borderColor: border }}>
+              <div className="text-xs uppercase tracking-widest opacity-70">Rendeléseim</div>
+              {orders.length === 0 ? (
+                <p className="text-sm opacity-60">Még nincs rendelésed ebben a webshopban.</p>
+              ) : orders.map((o) => (
+                <div key={o.id} className="border p-3 space-y-1" style={{ borderColor: border }}>
+                  <div className="flex justify-between text-sm font-bold">
+                    <span>{o.order_number}</span>
+                    <span style={{ color: accent }}>{Number(o.total_huf).toLocaleString("hu-HU")} Ft</span>
+                  </div>
+                  <div className="text-xs opacity-70">
+                    {new Date(o.created_at).toLocaleDateString("hu-HU")} · {STATUS_LABELS[o.status] || o.status}
+                    {o.payment_status ? ` · fizetés: ${PAYMENT_LABELS[o.payment_status] || o.payment_status}` : ""}
+                  </div>
+                  <div className="text-xs opacity-70">
+                    {(Array.isArray(o.items) ? o.items : []).map((i: any) => `${i.title} × ${i.qty}`).join(", ")}
+                  </div>
+                  {o.tracking_number && (
+                    <div className="text-xs opacity-70">Csomagkövetés: {o.carrier ? `${o.carrier} · ` : ""}{o.tracking_number}</div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <form onSubmit={submit} className="space-y-4 border p-5" style={{ borderColor: border }}>
