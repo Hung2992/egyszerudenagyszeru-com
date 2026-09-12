@@ -4,7 +4,7 @@ import { storeBaseUrl, publicStorageUrl } from "@/lib/storefrontSeo";
 
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/untyped-client";
-import { Instagram, Music2, Facebook, Youtube, ShoppingBag, Flame, Star, ArrowRight, Eye, User, Search, Menu, X, Heart, ShieldCheck, Truck, RotateCcw, Headphones } from "lucide-react";
+import { Instagram, Music2, Facebook, Youtube, ShoppingBag, Flame, Star, ArrowRight, Eye, User, Search, Menu, X, ShieldCheck, Truck, RotateCcw, Headphones } from "lucide-react";
 import { useBrandCart } from "@/lib/brand-cart";
 import MediaImage from "@/components/partner/MediaImage";
 import StorefrontProductCard from "@/components/partner/StorefrontProductCard";
