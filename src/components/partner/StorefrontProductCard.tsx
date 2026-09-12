@@ -57,7 +57,7 @@ export const StorefrontProductCard = ({ product, store, compact = false }: Store
 
   return (
     <article className="group relative min-w-0">
-      <div className="relative aspect-[4/5] overflow-hidden bg-muted/40">
+      <div className="sf-img relative aspect-[4/5] overflow-hidden bg-muted/40">
         <Link to={`/b/${store.slug}/termek/${product.slug}`} aria-label={`${product.title} megnyitása`}>
           {images[0] ? (
             <>
@@ -76,7 +76,7 @@ export const StorefrontProductCard = ({ product, store, compact = false }: Store
           <Heart className={`h-4 w-4 ${saved ? "fill-current" : ""}`} style={saved ? { color: store.accent_color } : undefined} />
         </Button>
         {stock > 0 && (
-          <Button type="button" onClick={addToCart} className="absolute inset-x-3 bottom-3 h-11 translate-y-2 rounded-none opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100 focus-visible:translate-y-0 focus-visible:opacity-100" style={{ background: store.accent_color, color: store.bg_color }}>
+          <Button type="button" onClick={addToCart} className="sf-btn absolute inset-x-3 bottom-3 h-11 translate-y-2 rounded-none opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100 focus-visible:translate-y-0 focus-visible:opacity-100" style={{ background: store.accent_color, color: store.bg_color }}>
             <ShoppingBag className="h-4 w-4" /> Kosárba teszem
           </Button>
         )}
@@ -89,7 +89,7 @@ export const StorefrontProductCard = ({ product, store, compact = false }: Store
           <span className="font-bold" style={{ color: store.accent_color }}>{price.toLocaleString("hu-HU")} Ft</span>
           {comparePrice > price && <span className="text-xs line-through opacity-45">{comparePrice.toLocaleString("hu-HU")} Ft</span>}
         </div>
-        <Button type="button" onClick={addToCart} disabled={stock <= 0} variant="outline" className="mt-3 h-10 w-full rounded-none text-xs sm:hidden" style={{ borderColor: store.accent_color, color: store.accent_color }}>
+        <Button type="button" onClick={addToCart} disabled={stock <= 0} variant="outline" className="sf-btn mt-3 h-10 w-full rounded-none text-xs sm:hidden" style={{ borderColor: store.accent_color, color: store.accent_color }}>
           {stock > 0 ? "Kosárba teszem" : "Elfogyott"}
         </Button>
       </div>
