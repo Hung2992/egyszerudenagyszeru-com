@@ -133,9 +133,19 @@
   animation: cinematic-content-rise 0.8s 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.hero-storefront-image {
+  animation: cinematic-reveal 1.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.hero-storefront-content {
+  animation: cinematic-content-rise 0.8s 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-cinematic-image,
-  .hero-cinematic-content {
+  .hero-cinematic-content,
+  .hero-storefront-image,
+  .hero-storefront-content {
     animation: none;
   }
 }
