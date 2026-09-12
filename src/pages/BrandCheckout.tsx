@@ -21,6 +21,8 @@ const ERRORS: Record<string, string> = {
 
 const BrandCheckout = () => {
   const params = useParams<{ slug: string }>();
+  const previewToken = new URLSearchParams(window.location.search).get("preview");
+  const isPreview = previewToken === "editor" || previewToken === "admin";
   const [slug, setSlug] = useState<string | null>(params.slug || getPartnerSlugFromHostname());
   const [sf, setSf] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -49,7 +51,9 @@ const BrandCheckout = () => {
     if (!slug) return;
     let alive = true;
     (async () => {
-      const { data } = await supabase.from("partner_storefronts").select("*").eq("slug", slug).eq("is_published", true).maybeSingle();
+      let q = supabase.from("partner_storefronts").select("*").eq("slug", slug);
+      if (!isPreview) q = q.eq("is_published", true);
+      const { data } = await q.maybeSingle();
       if (!alive) return;
       setSf(data);
       setLoading(false);
