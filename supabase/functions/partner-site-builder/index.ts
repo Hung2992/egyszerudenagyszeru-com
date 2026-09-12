@@ -11,6 +11,7 @@ const corsHeaders = {
 const AI_CHAT = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MODEL_BUILD = "google/gemini-3.1-pro-preview";
 const MODEL_FAST = "google/gemini-3.8-flash";
+const MODEL_IMAGE = "google/gemini-3-pro-image-preview";
 
 const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
