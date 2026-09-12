@@ -70,10 +70,16 @@ const BrandProductDetail = () => {
   const seo = useMemo(() => {
     if (!sf || !product) return null;
     const title = `${product.title} – ${sf.display_name}`;
-    const description = (product.description || sf.tagline || "").slice(0, 160);
-    const base = sf.custom_domain ? `https://${sf.custom_domain}` : `https://${sf.slug}.egyszerudenagyszeru.com`;
-    const url = `${base}/termek/${product.slug}`;
-    const image = product.images?.[0] ? `${base}/storage/partner-product-images/${product.images[0]}` : undefined;
+    const description = buildProductDescription({
+      title: product.title,
+      description: product.description || sf.tagline,
+      priceHuf: product.price_huf,
+      storeName: sf.display_name,
+      category: product.category,
+      inStock: (product.stock_qty ?? 0) > 0,
+    });
+    const url = storeProductUrl(sf, product.slug);
+    const image = publicStorageUrl("partner-product-images", product.images?.[0]);
     return { title: title.slice(0, 60), description, url, image };
   }, [sf, product]);
 

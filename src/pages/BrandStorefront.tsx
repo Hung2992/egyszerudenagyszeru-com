@@ -98,9 +98,7 @@ const BrandStorefront = () => {
       ? `${sf.tagline}${kws ? " · " + kws : ""}`
       : stripped.slice(0, 157) + (stripped.length > 157 ? "…" : "");
     const description = sf.meta_description || autoDesc;
-    const url = sf.custom_domain
-      ? `https://${sf.custom_domain}/`
-      : `https://${sf.slug}.egyszerudenagyszeru.com/`;
+    const url = `${storeBaseUrl(sf)}/`;
     return { title: title.slice(0, 60), description: description.slice(0, 160), url, keywords: kws };
   }, [sf]);
 
