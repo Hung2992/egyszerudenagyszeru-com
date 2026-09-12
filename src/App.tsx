@@ -139,6 +139,7 @@ const App = () => (
             <Route path="/admin/partner-approvals" element={<PartnerApprovals />} />
             <Route path="/konyvelo" element={<AccountantPortal />} />
             <Route path="/partner" element={<PartnerPortal />} />
+            <Route path="/partner/ai-studio" element={<PartnerAiStudio />} />
             <Route path="/shop" element={<Shop />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/checkout" element={<Checkout />} />
