@@ -16,6 +16,8 @@ import { copyToClipboard } from "@/lib/clipboard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import StorefrontEditorTab from "@/components/partner/StorefrontEditorTab";
 import PartnerProductsTab from "@/components/partner/PartnerProductsTab";
+import PartnerShippingTab from "@/components/partner/PartnerShippingTab";
+import { Truck as TruckIcon } from "lucide-react";
 import PartnerDigitalDeliveryTab from "@/components/partner/PartnerDigitalDeliveryTab";
 import PartnerMarketingHub from "@/components/partner/PartnerMarketingHub";
 import PartnerWorkflowsTab from "@/components/partner/PartnerWorkflowsTab";
