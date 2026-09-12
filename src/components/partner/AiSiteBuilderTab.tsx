@@ -238,9 +238,27 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
           />
           Készüljenek AI képek is a főoldalra (kicsit tovább tart)
         </label>
+        <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+          <input
+            type="checkbox"
+            checked={withPages}
+            onChange={(e) => setWithPages(e.target.checked)}
+            className="h-4 w-4 accent-current"
+          />
+          Készüljenek aloldalak is (Rólunk, Kapcsolat, GYIK, Szállítás, Elállás)
+        </label>
+        <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+          <input
+            type="checkbox"
+            checked={withProducts}
+            onChange={(e) => setWithProducts(e.target.checked)}
+            className="h-4 w-4 accent-current"
+          />
+          Készüljenek termék-piszkozatok is a javasolt kínálatból
+        </label>
         <Button onClick={generate} disabled={loading} className="rounded-none">
           {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Wand2 className="h-4 w-4 mr-2" />}
-          {loading ? "Építés…" : "Webshop generálása"}
+          {loading ? "Építés…" : "Teljes webshop + weboldal generálása"}
         </Button>
       </Card>
 
