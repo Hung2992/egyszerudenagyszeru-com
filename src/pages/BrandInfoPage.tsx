@@ -4,15 +4,11 @@ import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { storeBaseUrl } from "@/lib/storefrontSeo";
 import { getPartnerSlugFromHostname, resolveCustomDomainSlug } from "@/lib/partner-subdomain";
+import { INFO_PAGES } from "@/lib/storefrontInfoPages";
 import { ArrowLeft } from "lucide-react";
 
 // Kötelező bolti információs oldalak: /b/:slug/info/:infoSlug
-export const INFO_PAGES = [
-  { slug: "merettablazat", title: "Mérettáblázat" },
-  { slug: "szallitas-visszakuldes", title: "Szállítás & Visszaküldés" },
-  { slug: "kapcsolat", title: "Kapcsolat" },
-  { slug: "aszf", title: "ÁSZF" },
-] as const;
+export { INFO_PAGES };
 
 type Method = {
   id: string; name: string; description: string | null; method_type: string;
