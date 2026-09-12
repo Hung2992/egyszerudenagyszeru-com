@@ -341,6 +341,39 @@ Jelenlegi beállítások: ${JSON.stringify({
     })}
 Meglévő termékek (${(prods || []).length} db): ${JSON.stringify((prods || []).slice(0, 10))}`;
 
+    // --- CSAK KÉPEK újragenerálása a meglévő/kiválasztott konfigurációhoz ---
+    if (mode === "images") {
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+      if (!serviceKey) return json({ error: "A képgenerálás most nem elérhető." }, 503);
+      const src = basePatch || current || {};
+      const ip = await callAI(
+        apiKey,
+        MODEL_FAST,
+        `Te art director vagy. A megadott magyar webshop konfigurációból készíts ANGOL képgenerálási promptokat.
+Csak JSON: {"hero": string, "section1": string, "section2": string, "logo": string}
+A promptokban NE legyen szöveg, betű, logó vagy vízjel a képen.`,
+        `${brandContext}\n\nKonfiguráció:\n${JSON.stringify(src).slice(0, 6000)}\n\nExtra kérés: ${prompt.slice(0, 800) || "(nincs)"}`,
+      ).catch(() => ({}));
+      const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", serviceKey);
+      const res = await generateAndStore(apiKey, admin, partnerId, {
+        hero: String(ip?.hero || ""),
+        section1: String(ip?.section1 || ""),
+        section2: String(ip?.section2 || ""),
+        logo: String(ip?.logo || ""),
+      });
+      if (!Object.keys(res.paths).length) return json({ error: "Egyik kép sem készült el, próbáld újra." }, 502);
+      return json({
+        ok: true,
+        mode,
+        patch: { ...(basePatch || {}), ...res.paths },
+        images: res.paths,
+        warnings: res.failed.length ? ["Néhány kép nem készült el."] : [],
+        explanation: "Új képek készültek a webshopodhoz.",
+      });
+    }
+
+
+
     const userMsg = mode === "refine" && basePatch
       ? `${brandContext}
 
