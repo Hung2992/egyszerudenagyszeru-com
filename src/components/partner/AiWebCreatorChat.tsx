@@ -235,6 +235,45 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
   useEffect(() => { if (sessionId) void loadMessages(sessionId); }, [sessionId]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending]);
 
+  // 🔎 KERESÉS — beszélgetéscím + üzenetek tartalma (valós adat, partnerre szűrve)
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) { setHitSessions({}); setSearching(false); return; }
+    setSearching(true);
+    const t = setTimeout(async () => {
+      const ids = sessions.map((s) => s.id);
+      if (!ids.length) { setHitSessions({}); setSearching(false); return; }
+      const { data } = await supabase
+        .from("partner_ai_builder_messages")
+        .select("session_id")
+        .in("session_id", ids)
+        .ilike("content", `%${q}%`)
+        .limit(500);
+      const counts: Record<string, number> = {};
+      for (const r of (data as any[]) || []) counts[r.session_id] = (counts[r.session_id] || 0) + 1;
+      setHitSessions(counts);
+      setSearching(false);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [query, sessions]);
+
+  const q = query.trim().toLowerCase();
+  const visibleSessions = q.length < 2
+    ? sessions
+    : sessions.filter((s) => (s.title || "").toLowerCase().includes(q) || hitSessions[s.id]);
+  const messageHits = q.length < 2 ? 0 : messages.filter((m) => (m.content || "").toLowerCase().includes(q)).length;
+
+  // 🏷️ Okos cím — az első kérésből, hogy később kereshető legyen
+  const autoTitle = async (sid: string, msg: string) => {
+    const current = sessions.find((s) => s.id === sid);
+    if (current && current.title && current.title !== "Új beszélgetés") return;
+    const title = msg.replace(/\s+/g, " ").trim().slice(0, 70);
+    if (!title) return;
+    await supabase.from("partner_ai_builder_sessions").update({ title }).eq("id", sid);
+    setSessions((s) => s.map((x) => (x.id === sid ? { ...x, title } : x)));
+  };
+
+
   const send = async (text?: string) => {
     const msg = (text ?? input).trim();
     if (!msg || !sessionId || sending) return;
