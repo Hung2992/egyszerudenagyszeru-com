@@ -1,7 +1,7 @@
 // Cached, dynamic sitemap per partner storefront.
 // GET /functions/v1/partner-sitemap?slug=<slug>  OR  ?domain=<custom_domain>
 // Optional: &warm=1 to force regenerate (used by cron).
-import { createClient } from "npm:@supabase/supabase-js@2.45.0";
+import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 const supabase = createClient(
