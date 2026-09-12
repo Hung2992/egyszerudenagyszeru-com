@@ -193,7 +193,7 @@ Deno.serve(async (req) => {
       fetch(fnUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${svcKey}` },
-        body: JSON.stringify({ templateName, to, data }),
+        body: JSON.stringify({ templateName, recipientEmail: to, templateData: data }),
       }).catch(() => null);
 
     const { data: partner } = await svc.from("partners").select("email").eq("id", store.partner_id).maybeSingle();
