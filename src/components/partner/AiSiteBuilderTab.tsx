@@ -180,8 +180,16 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
         });
         if (error) throw error;
       }
+      const { pageCount, productCount } = await applyPagesAndProducts();
       onApplied(result.patch);
-      toast({ title: "Alkalmazva", description: "A webshop beállításai frissültek. Nézd meg az Élő előnézetet!" });
+      const extras = [
+        pageCount ? `${pageCount} aloldal publikálva` : "",
+        productCount ? `${productCount} termék piszkozatként létrehozva` : "",
+      ].filter(Boolean).join(", ");
+      toast({
+        title: "Alkalmazva",
+        description: `A webshop beállításai frissültek${extras ? ` — ${extras}` : ""}. Nézd meg az Élő előnézetet!`,
+      });
     } catch (e: any) {
       toast({ title: "Mentés sikertelen", description: e?.message, variant: "destructive" });
     } finally {
