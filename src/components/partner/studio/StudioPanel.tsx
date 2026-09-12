@@ -23,6 +23,7 @@ interface Props {
   sf: Record<string, any>;
   onChange: (key: string, value: unknown) => void;
   onJumpToTab: (tab: string) => void;
+  onReport?: (report: QaReport) => void;
 }
 
 const scoreTone = (n: number) =>
