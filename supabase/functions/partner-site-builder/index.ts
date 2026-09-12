@@ -351,8 +351,23 @@ A partner kérése:
 
 Készítsd el a TELJES konfigurációt: minden szekció legyen bekapcsolva és kitöltve, publikálásra kész minőségben.`;
 
+    // 0) Márkastratégia — ez adja a build fázisnak az irányt
+    let strategy: any = null;
+    if (mode === "build") {
+      strategy = await callAI(
+        apiKey,
+        MODEL_FAST,
+        STRATEGY_SYSTEM,
+        `${brandContext}\n\nA partner kérése:\n"""${prompt.slice(0, 4000)}"""`,
+      ).catch(() => null);
+    }
+
+    const strategyBlock = strategy
+      ? `\n\nMárkastratégia, amire építened KELL:\n${JSON.stringify(strategy).slice(0, 4000)}`
+      : "";
+
     // 1) Építés
-    let parsed: any = await callAI(apiKey, MODEL_BUILD, SYSTEM, userMsg);
+    let parsed: any = await callAI(apiKey, MODEL_BUILD, SYSTEM, userMsg + strategyBlock);
     let { patch, warnings } = normalize(parsed?.patch || {});
 
     // 2) QA + célzott javítás (max 1-2 kör)
