@@ -79,6 +79,7 @@ const BrandPage = () => {
       <Helmet>
         <title>{page.meta_title || page.title} | {sf.display_name}</title>
         {page.meta_description && <meta name="description" content={page.meta_description} />}
+        <link rel="canonical" href={`${window.location.origin}/b/${params.slug}/oldal/${page.slug}`} />
         <meta property="og:title" content={page.meta_title || page.title} />
         {page.meta_description && <meta property="og:description" content={page.meta_description} />}
       </Helmet>
