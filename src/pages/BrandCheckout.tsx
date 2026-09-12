@@ -79,6 +79,29 @@ const BrandCheckout = () => {
 
   const hasPhysical = items.some((i) => i.physical);
 
+  // Partner szállítási módjai
+  const [methods, setMethods] = useState<any[]>([]);
+  const [methodId, setMethodId] = useState<string>("");
+  useEffect(() => {
+    if (!sf?.partner_id) return;
+    (async () => {
+      const { data } = await supabase.from("partner_shipping_methods")
+        .select("id, name, description, method_type, fee_huf, free_over_huf, requires_address")
+        .eq("partner_id", sf.partner_id).eq("is_active", true).order("sort_order");
+      setMethods(data || []);
+      if (data?.length) setMethodId((m) => m || data[0].id);
+    })();
+  }, [sf?.partner_id]);
+
+  const selectedMethod = methods.find((m) => m.id === methodId) || null;
+  const shippingFee = !hasPhysical || !selectedMethod
+    ? 0
+    : (selectedMethod.free_over_huf && subtotal >= Number(selectedMethod.free_over_huf))
+      ? 0
+      : Math.max(0, Number(selectedMethod.fee_huf) || 0);
+  const needsAddress = hasPhysical && (!selectedMethod || selectedMethod.requires_address !== false);
+  const grandTotal = subtotal + shippingFee;
+
   const style = useMemo(() => ({
     background: sf?.bg_color || "#000",
     color: sf?.text_color || "#fff",
