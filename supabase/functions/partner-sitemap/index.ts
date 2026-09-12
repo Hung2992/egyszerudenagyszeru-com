@@ -50,6 +50,30 @@ Deno.serve(async (req) => {
   const slug = url.searchParams.get("slug")?.toLowerCase();
   const domain = url.searchParams.get("domain")?.toLowerCase();
   const warm = url.searchParams.get("warm") === "1";
+  const index = url.searchParams.get("index") === "1";
+
+  // Sitemap index: minden publikált partner bolt sitemapja egy helyen (Google/Bing felfedezéshez).
+  if (index) {
+    const { data: all } = await supabase
+      .from("partner_storefronts")
+      .select("slug, custom_domain, updated_at")
+      .eq("is_published", true);
+    const base = "https://meyxhsgnryuupwpddxav.supabase.co/functions/v1/partner-sitemap";
+    const entries = (all || [])
+      .filter((s: { slug: string | null }) => !!s.slug)
+      .map((s: { slug: string; custom_domain: string | null; updated_at: string | null }) => {
+        const loc = s.custom_domain
+          ? `${base}?domain=${encodeURIComponent(s.custom_domain)}`
+          : `${base}?slug=${encodeURIComponent(s.slug)}`;
+        const lm = s.updated_at ? `\n    <lastmod>${new Date(s.updated_at).toISOString().slice(0, 10)}</lastmod>` : "";
+        return `  <sitemap>\n    <loc>${loc.replace(/&/g, "&amp;")}</loc>${lm}\n  </sitemap>`;
+      })
+      .join("\n");
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</sitemapindex>`;
+    return new Response(xml, {
+      headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=1800" },
+    });
+  }
 
   if (!slug && !domain && !warm) {
     return new Response("missing slug or domain", { status: 400, headers: corsHeaders });
