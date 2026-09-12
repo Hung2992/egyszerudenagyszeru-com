@@ -138,6 +138,62 @@ async function callAI(apiKey: string, model: string, system: string, user: strin
   }
 }
 
+// --- AI képgenerálás + feltöltés a partner média tárolóba ---
+async function generateImage(apiKey: string, prompt: string): Promise<Uint8Array | null> {
+  const r = await fetch(AI_CHAT, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: MODEL_IMAGE,
+      messages: [{ role: "user", content: prompt }],
+      modalities: ["image", "text"],
+    }),
+  });
+  if (!r.ok) return null;
+  const d = await r.json().catch(() => null);
+  const url = d?.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+  if (typeof url !== "string" || !url.startsWith("data:image/")) return null;
+  try {
+    const base64 = url.split(",")[1];
+    return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  } catch { return null; }
+}
+
+const IMAGE_STYLE =
+  "Professional commercial photography for an e-commerce hero section, cinematic natural lighting, high dynamic range, 85mm lens, shallow depth of field, color graded, ultra detailed. Absolutely NO text, NO letters, NO logos, NO watermarks in the image. Leave calm negative space for overlay text.";
+
+async function generateAndStore(
+  apiKey: string,
+  admin: any,
+  partnerId: string,
+  prompts: Record<string, string>,
+): Promise<{ paths: Record<string, string>; failed: string[] }> {
+  const map: Record<string, string> = {
+    hero: "hero_image_url",
+    section1: "section1_image_url",
+    section2: "section2_image_url",
+  };
+  const paths: Record<string, string> = {};
+  const failed: string[] = [];
+
+  const jobs = Object.entries(map).map(async ([key, column]) => {
+    const p = String(prompts?.[key] || "").trim();
+    if (!p) return;
+    const bytes = await generateImage(apiKey, `${p}\n\n${IMAGE_STYLE}`);
+    if (!bytes) { failed.push(key); return; }
+    const path = `${partnerId}/ai/${Date.now()}-${key}-${Math.random().toString(36).slice(2, 8)}.png`;
+    const up = await admin.storage.from("partner-storefront-media").upload(path, bytes, {
+      contentType: "image/png",
+      upsert: false,
+    });
+    if (up.error) { failed.push(key); return; }
+    paths[column] = path;
+  });
+
+  await Promise.all(jobs);
+  return { paths, failed };
+}
+
 // --- kontraszt ellenőrzés (WCAG) ---
 const hexToRgb = (hex: string) => {
   const h = String(hex || "").replace("#", "").trim();
