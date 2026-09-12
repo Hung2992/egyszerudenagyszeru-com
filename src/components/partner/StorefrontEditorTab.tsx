@@ -189,6 +189,10 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
     setSaving(true);
     const payload: any = { ...sf };
     if (publishRequest) payload.publish_requested_at = new Date().toISOString();
+    if (qaReport) {
+      payload.last_quality_report = qaReport;
+      payload.studio_state = publishRequest ? "ready" : (qaReport.publishable ? "ready" : "draft");
+    }
     delete payload.id; delete payload.created_at; delete payload.updated_at; delete payload.is_published; delete payload.published_at;
     const op = sf.id
       ? supabase.from("partner_storefronts").update(payload).eq("id", sf.id).select().maybeSingle()
