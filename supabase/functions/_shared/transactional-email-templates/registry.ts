@@ -68,5 +68,6 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'partner-storefront-version-submitted': partnerStorefrontVersionSubmitted,
   'appointment-confirmation': appointmentConfirmation,
   'partner-feature-announcement': partnerFeatureAnnouncement,
+  'partner-new-order': partnerNewOrder,
 }
 
