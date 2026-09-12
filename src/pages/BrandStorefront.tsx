@@ -394,9 +394,14 @@ const BrandStorefront = () => {
             {INFO_PAGES.map((p) => (
               <Link key={p.slug} to={`/b/${resolvedSlug}/info/${p.slug}`} className="underline">{p.title}</Link>
             ))}
-            {footerLinks.map((l, i) => (
-              <a key={i} href={l.url} target={l.url?.startsWith("http") ? "_blank" : undefined} rel="noreferrer" className="underline">{l.label}</a>
-            ))}
+            {footerLinks
+              .filter((l) => {
+                const t = String(l?.label || "").toLowerCase();
+                return !["kapcsolat", "ászf", "aszf", "visszaküld", "visszakuld", "mérettábl", "merettabl", "szállítás", "szallitas"].some(k => t.includes(k));
+              })
+              .map((l, i) => (
+                <a key={i} href={l.url} target={l.url?.startsWith("http") ? "_blank" : undefined} rel="noreferrer" className="underline">{l.label}</a>
+              ))}
             <Link to="/" className="underline opacity-50">Powered by EDN</Link>
           </div>
         </div>
