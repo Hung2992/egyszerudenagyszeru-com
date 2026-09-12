@@ -579,34 +579,43 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
 
       {/* Chat */}
       <Card className="rounded-none border-border flex flex-col h-[620px]">
-        <div className="border-b border-border p-3 flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
-            <Bot className="h-4 w-4 text-primary" />
+        <div className="border-b border-border p-3 space-y-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Bot className="h-4 w-4 text-primary shrink-0" />
             <span className="font-heading text-sm">AI fejlesztőcsapat — beszélj, és megépíti</span>
-          </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <select
-              value={projectType}
-              onChange={(e) => setProjectType(e.target.value)}
-              className="h-8 border border-border bg-background text-xs px-2"
-              aria-label="Projekt típusa"
-            >
-              {PROJECT_TYPES.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
-            </select>
-            <div className="flex items-center gap-2">
-              <Switch id="autoapply" checked={autoApply} onCheckedChange={setAutoApply} />
-              <Label htmlFor="autoapply" className="text-xs text-muted-foreground">Automatikus alkalmazás</Label>
-            </div>
             <Button
-              type="button" size="sm" variant="outline"
-              className="rounded-none h-8 text-xs ml-auto"
-              onClick={optimize} disabled={optimizing || sending}
+              type="button" size="sm" variant="ghost"
+              className="rounded-none h-7 text-[11px] ml-auto text-muted-foreground"
+              onClick={() => setShowAdvanced((v) => !v)}
+              aria-expanded={showAdvanced}
             >
-              {optimizing ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Rocket className="h-3 w-3 mr-1" />}
-              AI Optimalizáló
+              <SlidersHorizontal className="h-3 w-3 mr-1" /> Beállítások
             </Button>
-
           </div>
+          {showAdvanced && (
+            <div className="flex items-center gap-3 flex-wrap pt-1">
+              <select
+                value={projectType}
+                onChange={(e) => setProjectType(e.target.value)}
+                className="h-8 border border-border bg-background text-xs px-2"
+                aria-label="Projekt típusa"
+              >
+                {PROJECT_TYPES.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+              </select>
+              <div className="flex items-center gap-2">
+                <Switch id="autoapply" checked={autoApply} onCheckedChange={setAutoApply} />
+                <Label htmlFor="autoapply" className="text-xs text-muted-foreground">Automatikus alkalmazás</Label>
+              </div>
+              <Button
+                type="button" size="sm" variant="outline"
+                className="rounded-none h-8 text-xs ml-auto"
+                onClick={optimize} disabled={optimizing || sending}
+              >
+                {optimizing ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Rocket className="h-3 w-3 mr-1" />}
+                AI Optimalizáló
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="flex-1 overflow-auto p-4 space-y-4">
