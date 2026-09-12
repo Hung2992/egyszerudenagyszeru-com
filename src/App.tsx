@@ -175,6 +175,8 @@ const App = () => (
             <Route path="/b/:slug" element={<BrandStorefront />} />
             <Route path="/b/:slug/termek/:productSlug" element={<BrandProductDetail />} />
             <Route path="/b/:slug/oldal/:pageSlug" element={<BrandPage />} />
+            <Route path="/b/:slug/info/:infoSlug" element={<BrandInfoPage />} />
+            <Route path="/info/:infoSlug" element={<BrandInfoPage />} />
             <Route path="/b/:slug/kozpont" element={<BrandHub />} />
             <Route path="/b/:slug/fiok" element={<BrandCustomerAccount />} />
             <Route path="/fiok" element={<BrandCustomerAccount />} />
