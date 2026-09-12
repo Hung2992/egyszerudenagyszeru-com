@@ -85,6 +85,7 @@ const KycAdatkezeles = lazy(lazyRetry(() => import("./pages/legal/KycAdatkezeles
 const BrandStorefront = lazy(lazyRetry(() => import("./pages/BrandStorefront.tsx")));
 const BrandProductDetail = lazy(lazyRetry(() => import("./pages/BrandProductDetail.tsx")));
 const BrandPage = lazy(lazyRetry(() => import("./pages/BrandPage.tsx")));
+const BrandInfoPage = lazy(lazyRetry(() => import("./pages/BrandInfoPage.tsx")));
 const BrandNews = lazy(lazyRetry(() => import("./pages/BrandNews.tsx")));
 const BrandCustomerAccount = lazy(lazyRetry(() => import("./pages/BrandCustomerAccount.tsx")));
 const BrandCheckout = lazy(lazyRetry(() => import("./pages/BrandCheckout.tsx")));
@@ -175,6 +176,8 @@ const App = () => (
             <Route path="/b/:slug" element={<BrandStorefront />} />
             <Route path="/b/:slug/termek/:productSlug" element={<BrandProductDetail />} />
             <Route path="/b/:slug/oldal/:pageSlug" element={<BrandPage />} />
+            <Route path="/b/:slug/info/:infoSlug" element={<BrandInfoPage />} />
+            <Route path="/info/:infoSlug" element={<BrandInfoPage />} />
             <Route path="/b/:slug/kozpont" element={<BrandHub />} />
             <Route path="/b/:slug/fiok" element={<BrandCustomerAccount />} />
             <Route path="/fiok" element={<BrandCustomerAccount />} />

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import { storeBaseUrl, publicStorageUrl } from "@/lib/storefrontSeo";
+import { INFO_PAGES } from "@/lib/storefrontInfoPages";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { Instagram, Music2, Facebook, Youtube, ShoppingBag, Flame, Star, ArrowRight, Eye, User } from "lucide-react";
@@ -386,13 +387,21 @@ const BrandStorefront = () => {
       <footer className="border-t mt-0" style={{ borderColor: borderCol }}>
         <div className="mx-auto max-w-6xl px-4 py-8 flex flex-wrap items-center justify-between gap-3 text-xs opacity-70">
           <div>© {new Date().getFullYear()} {sf.display_name}{sf.footer_text ? ` · ${sf.footer_text}` : ""}</div>
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-4">
             {pages.map((pg) => (
               <Link key={pg.slug} to={`/b/${resolvedSlug}/oldal/${pg.slug}`} className="underline">{pg.title}</Link>
             ))}
-            {footerLinks.map((l, i) => (
-              <a key={i} href={l.url} target={l.url?.startsWith("http") ? "_blank" : undefined} rel="noreferrer" className="underline">{l.label}</a>
+            {INFO_PAGES.map((p) => (
+              <Link key={p.slug} to={`/b/${resolvedSlug}/info/${p.slug}`} className="underline">{p.title}</Link>
             ))}
+            {footerLinks
+              .filter((l) => {
+                const t = String(l?.label || "").toLowerCase();
+                return !["kapcsolat", "ászf", "aszf", "visszaküld", "visszakuld", "mérettábl", "merettabl", "szállítás", "szallitas"].some(k => t.includes(k));
+              })
+              .map((l, i) => (
+                <a key={i} href={l.url} target={l.url?.startsWith("http") ? "_blank" : undefined} rel="noreferrer" className="underline">{l.label}</a>
+              ))}
             <Link to="/" className="underline opacity-50">Powered by EDN</Link>
           </div>
         </div>
