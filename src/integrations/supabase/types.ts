@@ -9013,6 +9013,7 @@ export type Database = {
           accent_color: string | null
           banner_url: string | null
           bg_color: string | null
+          brand_dna: Json | null
           business_hours: Json | null
           company_address: string | null
           company_email: string | null
@@ -9046,6 +9047,7 @@ export type Database = {
           instagram_url: string | null
           is_published: boolean
           last_approved_version_id: string | null
+          last_quality_report: Json | null
           logo_url: string | null
           meta_description: string | null
           meta_title: string | null
@@ -9058,6 +9060,7 @@ export type Database = {
           publish_requested_at: string | null
           published_at: string | null
           rejection_reason: string | null
+          section_order: Json | null
           section1_cta_text: string | null
           section1_cta_url: string | null
           section1_enabled: boolean
@@ -9073,6 +9076,7 @@ export type Database = {
           seo_keywords: string[] | null
           slug: string
           social_profiles: Json | null
+          studio_state: string | null
           tagline: string | null
           testimonials: Json
           testimonials_enabled: boolean
@@ -9091,6 +9095,7 @@ export type Database = {
           accent_color?: string | null
           banner_url?: string | null
           bg_color?: string | null
+          brand_dna?: Json | null
           business_hours?: Json | null
           company_address?: string | null
           company_email?: string | null
@@ -9124,6 +9129,7 @@ export type Database = {
           instagram_url?: string | null
           is_published?: boolean
           last_approved_version_id?: string | null
+          last_quality_report?: Json | null
           logo_url?: string | null
           meta_description?: string | null
           meta_title?: string | null
@@ -9136,6 +9142,7 @@ export type Database = {
           publish_requested_at?: string | null
           published_at?: string | null
           rejection_reason?: string | null
+          section_order?: Json | null
           section1_cta_text?: string | null
           section1_cta_url?: string | null
           section1_enabled?: boolean
@@ -9151,6 +9158,7 @@ export type Database = {
           seo_keywords?: string[] | null
           slug: string
           social_profiles?: Json | null
+          studio_state?: string | null
           tagline?: string | null
           testimonials?: Json
           testimonials_enabled?: boolean
@@ -9169,6 +9177,7 @@ export type Database = {
           accent_color?: string | null
           banner_url?: string | null
           bg_color?: string | null
+          brand_dna?: Json | null
           business_hours?: Json | null
           company_address?: string | null
           company_email?: string | null
@@ -9202,6 +9211,7 @@ export type Database = {
           instagram_url?: string | null
           is_published?: boolean
           last_approved_version_id?: string | null
+          last_quality_report?: Json | null
           logo_url?: string | null
           meta_description?: string | null
           meta_title?: string | null
@@ -9214,6 +9224,7 @@ export type Database = {
           publish_requested_at?: string | null
           published_at?: string | null
           rejection_reason?: string | null
+          section_order?: Json | null
           section1_cta_text?: string | null
           section1_cta_url?: string | null
           section1_enabled?: boolean
@@ -9229,6 +9240,7 @@ export type Database = {
           seo_keywords?: string[] | null
           slug?: string
           social_profiles?: Json | null
+          studio_state?: string | null
           tagline?: string | null
           testimonials?: Json
           testimonials_enabled?: boolean
