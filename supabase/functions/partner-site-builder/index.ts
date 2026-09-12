@@ -307,7 +307,8 @@ Deno.serve(async (req) => {
     const mode = body?.mode === "refine" ? "refine" : "build";
     const basePatch = body?.base_patch && typeof body.base_patch === "object" ? body.base_patch : null;
     const target = Math.max(60, Math.min(100, Number(body?.target_score) || 90));
-    const maxRounds = Math.max(0, Math.min(2, Number(body?.max_rounds) ?? 1));
+    const maxRounds = Math.max(0, Math.min(3, Number(body?.max_rounds) ?? 2));
+    const wantImages = body?.generate_images !== false && mode === "build";
     if (!prompt || prompt.length < 3) return json({ error: "Adj meg leírást a webshopodról" }, 400);
     if (!partnerId) return json({ error: "partner_id kötelező" }, 400);
 
