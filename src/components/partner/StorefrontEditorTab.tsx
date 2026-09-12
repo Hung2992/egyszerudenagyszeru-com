@@ -20,6 +20,7 @@ import AiMediaStudio from "@/components/ai/AiMediaStudio";
 import PartnerPagesTab from "./PartnerPagesTab";
 import StudioPanel from "./studio/StudioPanel";
 import BrandDnaPanel from "./studio/BrandDnaPanel";
+import AiCommandBar from "./studio/AiCommandBar";
 import type { QaReport } from "@/lib/storefront-studio";
 
 
