@@ -14,3 +14,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://egyszerudenagyszeru.com/sitemap.xml
+Sitemap: https://meyxhsgnryuupwpddxav.supabase.co/functions/v1/partner-sitemap?index=1
