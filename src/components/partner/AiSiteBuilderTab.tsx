@@ -87,7 +87,26 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
     }
   };
 
+  const regenerateImages = async () => {
+    if (!result?.patch) return;
+    setImaging(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("partner-site-builder", {
+        body: { partner_id: partnerId, mode: "images", base_patch: result.patch, prompt: refinePrompt },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      setResult({ ...result, patch: data.patch, images: data.images });
+      toast({ title: "Új képek készültek" });
+    } catch (e: any) {
+      toast({ title: "Hiba", description: e?.message || "Nem sikerült képet készíteni.", variant: "destructive" });
+    } finally {
+      setImaging(false);
+    }
+  };
+
   const apply = async () => {
+
     if (!result?.patch) return;
     setApplying(true);
     try {
