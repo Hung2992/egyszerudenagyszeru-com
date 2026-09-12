@@ -336,6 +336,7 @@ const PartnerPortal = () => {
             <TabsTrigger value="storefront" className="rounded-none"><Store className="h-4 w-4 mr-2" />Saját webshop</TabsTrigger>
             <TabsTrigger value="products" className="rounded-none"><Package className="h-4 w-4 mr-2" />Termékek</TabsTrigger>
             <TabsTrigger value="shipping" className="rounded-none"><TruckIcon className="h-4 w-4 mr-2" />Szállítás</TabsTrigger>
+            <TabsTrigger value="sales_sheet" className="rounded-none"><Package className="h-4 w-4 mr-2" />Értékesítési oldal</TabsTrigger>
             <TabsTrigger value="digital" className="rounded-none"><KeyRound className="h-4 w-4 mr-2" />Digitális kiszolgálás</TabsTrigger>
             <TabsTrigger value="referrals" className="rounded-none"><ListChecks className="h-4 w-4 mr-2" />Ajánlások</TabsTrigger>
             <TabsTrigger value="payouts" className="rounded-none"><Banknote className="h-4 w-4 mr-2" />Kifizetések</TabsTrigger>
@@ -394,6 +395,10 @@ const PartnerPortal = () => {
 
           <TabsContent value="shipping" className="mt-6">
             <PartnerShippingTab partnerId={partner.id} />
+          </TabsContent>
+
+          <TabsContent value="sales_sheet" className="mt-6">
+            <PartnerSalesSheetTab partnerId={partner.id} />
           </TabsContent>
 
           <TabsContent value="digital" className="mt-6">
