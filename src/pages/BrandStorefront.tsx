@@ -189,14 +189,14 @@ const BrandStorefront = () => {
             {sf.facebook_url && <a href={sf.facebook_url} target="_blank" rel="noreferrer"><Facebook className="h-5 w-5" /></a>}
             {sf.youtube_url && <a href={sf.youtube_url} target="_blank" rel="noreferrer"><Youtube className="h-5 w-5" /></a>}
             <Link
-              to={params.slug ? `/b/${params.slug}/kosar` : "/kosar"}
+              to={`${params.slug ? `/b/${params.slug}/kosar` : "/kosar"}${previewToken ? `?preview=${previewToken}` : ""}`}
               className="flex items-center gap-1.5 border px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest"
               style={{ borderColor: sf.accent_color, color: sf.accent_color }}
             >
               <ShoppingBag className="h-3.5 w-3.5" /> Kosár{cartCount > 0 ? ` (${cartCount})` : ""}
             </Link>
             <Link
-              to={params.slug ? `/b/${params.slug}/fiok` : "/fiok"}
+              to={`${params.slug ? `/b/${params.slug}/fiok` : "/fiok"}${previewToken ? `?preview=${previewToken}` : ""}`}
               className="flex items-center gap-1.5 border px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest"
               style={{ borderColor: sf.accent_color, color: sf.accent_color }}
             >
