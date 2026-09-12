@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import { storeBaseUrl, publicStorageUrl } from "@/lib/storefrontSeo";
-import { INFO_PAGES } from "@/lib/storefrontInfoPages";
+
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { Instagram, Music2, Facebook, Youtube, ShoppingBag, Flame, Star, ArrowRight, Eye, User } from "lucide-react";
@@ -385,49 +385,67 @@ const BrandStorefront = () => {
 
       {/* FOOTER */}
       <footer className="border-t mt-0" style={{ borderColor: borderCol }}>
-        <div className="mx-auto max-w-6xl px-4 pt-8 pb-28 md:pb-10 text-xs">
-          <nav className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-6 gap-y-3">
-            {INFO_PAGES.map((p) => (
-              <Link
-                key={p.slug}
-                to={`/b/${resolvedSlug}/info/${p.slug}`}
-                className="py-1 uppercase tracking-widest opacity-80 hover:opacity-100 transition-opacity"
-              >
-                {p.title}
-              </Link>
-            ))}
-            {pages.map((pg) => (
-              <Link
-                key={pg.slug}
-                to={`/b/${resolvedSlug}/oldal/${pg.slug}`}
-                className="py-1 uppercase tracking-widest opacity-80 hover:opacity-100 transition-opacity"
-              >
-                {pg.title}
-              </Link>
-            ))}
-            {footerLinks
-              .filter((l) => {
-                const t = String(l?.label || "").toLowerCase();
-                return !["kapcsolat", "ászf", "aszf", "visszaküld", "visszakuld", "mérettábl", "merettabl", "szállítás", "szallitas"].some(k => t.includes(k));
-              })
-              .map((l, i) => (
-                <a
-                  key={i}
-                  href={l.url}
-                  target={l.url?.startsWith("http") ? "_blank" : undefined}
-                  rel="noreferrer"
-                  className="py-1 uppercase tracking-widest opacity-80 hover:opacity-100 transition-opacity"
-                >
-                  {l.label}
-                </a>
-              ))}
-          </nav>
-          <div
-            className="mt-6 pt-4 border-t flex flex-col md:flex-row md:items-center md:justify-between gap-2 opacity-60"
-            style={{ borderColor: borderCol }}
-          >
-            <div>© {new Date().getFullYear()} {sf.display_name}{sf.footer_text ? ` · ${sf.footer_text}` : ""}</div>
-            <Link to="/" className="underline">Powered by EDN</Link>
+        <div className="mx-auto max-w-6xl px-4 pt-10 pb-28 md:pb-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+            <div className="col-span-2 md:col-span-1">
+              <span className="text-sm font-bold uppercase tracking-wider" style={headingStyle}>{sf.display_name}</span>
+              {(sf.tagline || sf.footer_text) && (
+                <p className="text-xs opacity-60 mt-2 leading-relaxed max-w-xs">{sf.tagline || sf.footer_text}</p>
+              )}
+            </div>
+
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest opacity-50 mb-3">Vásárlás</p>
+              <nav className="flex flex-col gap-2">
+                <Link to={`/b/${resolvedSlug}#termekek`} className="text-xs opacity-70 hover:opacity-100 transition-opacity">Termékek</Link>
+                <Link to={`/b/${resolvedSlug}/info/szallitas-visszakuldes`} className="text-xs opacity-70 hover:opacity-100 transition-opacity">Szállítás & visszaküldés</Link>
+                <Link to={`/b/${resolvedSlug}/info/merettablazat`} className="text-xs opacity-70 hover:opacity-100 transition-opacity">Mérettáblázat</Link>
+                <Link to={`/b/${resolvedSlug}/kosar`} className="text-xs opacity-70 hover:opacity-100 transition-opacity">Kosár</Link>
+              </nav>
+            </div>
+
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest opacity-50 mb-3">Ügyfélszolgálat</p>
+              <nav className="flex flex-col gap-2">
+                <Link to={`/b/${resolvedSlug}/info/kapcsolat`} className="text-xs opacity-70 hover:opacity-100 transition-opacity">Kapcsolat</Link>
+                <Link to={`/b/${resolvedSlug}/fiok`} className="text-xs opacity-70 hover:opacity-100 transition-opacity">Fiókom</Link>
+                <Link to={`/b/${resolvedSlug}/info/aszf`} className="text-xs opacity-70 hover:opacity-100 transition-opacity">ÁSZF</Link>
+              </nav>
+            </div>
+
+            {(pages.length > 0 || footerLinks.length > 0) && (
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest opacity-50 mb-3">Információ</p>
+                <nav className="flex flex-col gap-2">
+                  {pages.map((pg) => (
+                    <Link key={pg.slug} to={`/b/${resolvedSlug}/oldal/${pg.slug}`} className="text-xs opacity-70 hover:opacity-100 transition-opacity">{pg.title}</Link>
+                  ))}
+                  {footerLinks
+                    .filter((l) => {
+                      const t = String(l?.label || "").toLowerCase();
+                      return !["kapcsolat", "ászf", "aszf", "visszaküld", "visszakuld", "mérettábl", "merettabl", "szállítás", "szallitas"].some(k => t.includes(k));
+                    })
+                    .map((l, i) => (
+                      <a
+                        key={i}
+                        href={l.url}
+                        target={l.url?.startsWith("http") ? "_blank" : undefined}
+                        rel="noreferrer"
+                        className="text-xs opacity-70 hover:opacity-100 transition-opacity"
+                      >
+                        {l.label}
+                      </a>
+                    ))}
+                </nav>
+              </div>
+            )}
+          </div>
+
+          <div className="border-t pt-6 flex flex-col items-center gap-2 md:flex-row md:justify-between" style={{ borderColor: borderCol }}>
+            <p className="text-[10px] uppercase tracking-widest opacity-50 text-center md:text-left">
+              © {new Date().getFullYear()} {sf.company_legal_name || sf.display_name} — Minden jog fenntartva
+            </p>
+            <Link to="/" className="text-[10px] uppercase tracking-widest opacity-40 hover:opacity-70 transition-opacity">Powered by EDN</Link>
           </div>
         </div>
       </footer>
