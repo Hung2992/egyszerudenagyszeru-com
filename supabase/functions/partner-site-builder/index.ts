@@ -311,12 +311,12 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const prompt = String(body?.prompt || "").trim();
     const partnerId = String(body?.partner_id || "").trim();
-    const mode = body?.mode === "refine" ? "refine" : "build";
+    const mode = body?.mode === "refine" ? "refine" : body?.mode === "images" ? "images" : "build";
     const basePatch = body?.base_patch && typeof body.base_patch === "object" ? body.base_patch : null;
     const target = Math.max(60, Math.min(100, Number(body?.target_score) || 90));
     const maxRounds = Math.max(0, Math.min(3, Number(body?.max_rounds) ?? 2));
     const wantImages = body?.generate_images !== false && mode === "build";
-    if (!prompt || prompt.length < 3) return json({ error: "Adj meg leírást a webshopodról" }, 400);
+    if (mode !== "images" && (!prompt || prompt.length < 3)) return json({ error: "Adj meg leírást a webshopodról" }, 400);
     if (!partnerId) return json({ error: "partner_id kötelező" }, 400);
 
     // Jogosultság: a partner a bejelentkezett felhasználóé (RLS is véd)
