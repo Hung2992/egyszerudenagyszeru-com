@@ -215,7 +215,16 @@ const BrandStorefront = () => {
             </Link>
           </div>
         </div>
+        {pages.length > 0 && (
+          <nav className="mx-auto max-w-6xl px-4 pb-3 flex flex-wrap gap-4 text-[11px] font-bold uppercase tracking-widest opacity-80">
+            {pages.map((pg) => (
+              <Link key={pg.slug} to={`/b/${resolvedSlug}/oldal/${pg.slug}`} className="hover:underline">{pg.title}</Link>
+            ))}
+          </nav>
+        )}
       </header>
+
+
 
       {/* HERO */}
       <section className={`relative ${sf.hero_layout === "fullscreen" ? "min-h-[90vh]" : "min-h-[60vh]"} flex items-center overflow-hidden`}>
