@@ -180,6 +180,20 @@ const PartnerOrdersTab = ({ partnerId }: Props) => {
       </TabsList>
 
       <TabsContent value="orders" className="space-y-4">
+        {unseen.length > 0 && (
+          <div className="border-2 border-primary p-4 flex flex-wrap items-center gap-3">
+            <span className="text-sm font-bold text-primary">
+              {unseen.length} új rendelés vár feldolgozásra
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {unseen.slice(0, 3).map((o) => `${o.order_number} (${Number((o as any).total_huf || 0).toLocaleString("hu-HU")} Ft)`).join(" · ")}
+              {unseen.length > 3 ? " …" : ""}
+            </span>
+            <Button size="sm" variant="outline" className="rounded-none ml-auto" onClick={() => void markAllSeen()}>
+              Megjelöltem olvasottként
+            </Button>
+          </div>
+        )}
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex-1 min-w-[200px]">
             <Label className="text-xs">Keresés</Label>
