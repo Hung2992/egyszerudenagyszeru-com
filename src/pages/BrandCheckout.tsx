@@ -205,7 +205,36 @@ const BrandCheckout = () => {
                 <input className={inputCls} style={{ borderColor: border }} placeholder="Teljes név" value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} />
                 <input type="email" className={inputCls} style={{ borderColor: border }} placeholder="E-mail cím" value={form.customer_email} onChange={(e) => setForm({ ...form, customer_email: e.target.value })} />
                 <input className={inputCls} style={{ borderColor: border }} placeholder="Telefonszám (nem kötelező)" value={form.customer_phone} onChange={(e) => setForm({ ...form, customer_phone: e.target.value })} />
-                {hasPhysical && (
+                {hasPhysical && methods.length > 0 && (
+                  <>
+                    <div className="text-xs uppercase tracking-widest opacity-70 pt-2">Szállítási mód</div>
+                    <div className="space-y-2">
+                      {methods.map((m) => (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => setMethodId(m.id)}
+                          className="w-full border p-3 text-left flex justify-between gap-3 items-center"
+                          style={{ borderColor: methodId === m.id ? accent : border }}
+                        >
+                          <span>
+                            <span className="text-sm font-bold block">{m.name}</span>
+                            {m.description && <span className="text-xs opacity-70">{m.description}</span>}
+                            {m.free_over_huf ? (
+                              <span className="text-xs opacity-70 block">
+                                Ingyenes {Number(m.free_over_huf).toLocaleString("hu-HU")} Ft felett
+                              </span>
+                            ) : null}
+                          </span>
+                          <span className="text-sm whitespace-nowrap" style={{ color: accent }}>
+                            {Number(m.fee_huf) > 0 ? `${Number(m.fee_huf).toLocaleString("hu-HU")} Ft` : "Ingyenes"}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {needsAddress && (
                   <>
                     <div className="text-xs uppercase tracking-widest opacity-70 pt-2">Szállítási cím</div>
                     <input className={inputCls} style={{ borderColor: border }} placeholder="Utca, házszám" value={form.street} onChange={(e) => setForm({ ...form, street: e.target.value })} />
