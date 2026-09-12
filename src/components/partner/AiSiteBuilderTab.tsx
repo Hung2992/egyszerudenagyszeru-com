@@ -44,8 +44,8 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
           prompt,
           partner_id: partnerId,
           mode: "build",
-          target_score: 95,
-          max_rounds: 2,
+          target_score: 96,
+          max_rounds: 3,
           generate_images: withImages,
         },
       });
