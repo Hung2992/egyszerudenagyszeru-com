@@ -141,6 +141,19 @@
   animation: cinematic-content-rise 0.8s 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.storefront-hero-copy {
+  color: hsl(var(--storefront-on-image));
+  text-shadow: 0 2px 28px hsl(var(--storefront-shadow) / 0.55);
+}
+
+.storefront-hero-shade {
+  background: linear-gradient(to top, hsl(var(--storefront-shadow) / 0.92), hsl(var(--storefront-shadow) / 0.12) 70%);
+}
+
+.storefront-card-shade {
+  background: linear-gradient(to top, hsl(var(--storefront-shadow) / 0.82), transparent 65%);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-cinematic-image,
   .hero-cinematic-content,

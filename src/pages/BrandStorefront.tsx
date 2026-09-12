@@ -4,9 +4,11 @@ import { storeBaseUrl, publicStorageUrl } from "@/lib/storefrontSeo";
 
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/untyped-client";
-import { Instagram, Music2, Facebook, Youtube, ShoppingBag, Flame, Star, ArrowRight, Eye, User } from "lucide-react";
+import { Instagram, Music2, Facebook, Youtube, ShoppingBag, Flame, Star, ArrowRight, Eye, User, Search, Menu, X, Heart, ShieldCheck, Truck, RotateCcw, Headphones } from "lucide-react";
 import { useBrandCart } from "@/lib/brand-cart";
 import MediaImage from "@/components/partner/MediaImage";
+import StorefrontProductCard from "@/components/partner/StorefrontProductCard";
+import { Button } from "@/components/ui/button";
 import { getPartnerSlugFromHostname, resolveCustomDomainSlug } from "@/lib/partner-subdomain";
 
 const BrandStorefront = () => {
@@ -25,6 +27,8 @@ const BrandStorefront = () => {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [email, setEmail] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
   const [tokenValid, setTokenValid] = useState<boolean | null>(null);
   const { count: cartCount } = useBrandCart(resolvedSlug);
 
@@ -98,6 +102,13 @@ const BrandStorefront = () => {
     const ids: string[] = sf.featured_product_ids;
     return products.filter(p => ids.includes(p.id)).slice(0, 8);
   }, [sf, products]);
+
+  const categories = useMemo(() => Array.from(new Set(products.map((product) => String(product.category || "").trim()).filter(Boolean))), [products]);
+  const visibleProducts = useMemo(() => {
+    const needle = searchTerm.trim().toLocaleLowerCase("hu-HU");
+    if (!needle) return products;
+    return products.filter((product) => `${product.title} ${product.description || ""} ${product.category || ""}`.toLocaleLowerCase("hu-HU").includes(needle));
+  }, [products, searchTerm]);
 
   // SEO computed values
   const seo = useMemo(() => {
@@ -189,38 +200,38 @@ const BrandStorefront = () => {
       )}
 
       {/* NAVBAR */}
-      <header className="border-b" style={{ borderColor: borderCol }}>
-        <div className="mx-auto max-w-6xl px-4 py-4 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <Link to="/" className="flex min-w-0 items-center gap-3">
+      <header className="sticky top-0 z-40 border-b bg-inherit/95 backdrop-blur-xl" style={{ borderColor: borderCol }}>
+        <div className="mx-auto grid min-h-20 max-w-7xl grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3 px-4 lg:grid-cols-[minmax(220px,1fr)_auto_minmax(280px,1fr)] lg:px-8">
+          <Button variant="ghost" size="icon" className="rounded-none lg:hidden" onClick={() => setMenuOpen((open) => !open)} aria-label={menuOpen ? "Menü bezárása" : "Menü megnyitása"}>
+            {menuOpen ? <X /> : <Menu />}
+          </Button>
+          <Link to={`/b/${resolvedSlug}`} className="flex min-w-0 items-center justify-center gap-3 lg:justify-start">
             {sf.logo_url && <MediaImage bucket="partner-storefront-media" path={sf.logo_url} className="h-10 w-10 object-contain" />}
-            <span className="font-bold uppercase tracking-widest text-base sm:text-lg break-words" style={headingStyle}>{sf.display_name}</span>
+            <span className="truncate text-center text-base font-bold uppercase lg:text-left lg:text-lg" style={headingStyle}>{sf.display_name}</span>
           </Link>
-          <div className="flex w-full sm:w-auto items-center gap-3">
-            {sf.instagram_url && <a href={sf.instagram_url} target="_blank" rel="noreferrer"><Instagram className="h-5 w-5" /></a>}
-            {sf.tiktok_url && <a href={sf.tiktok_url} target="_blank" rel="noreferrer"><Music2 className="h-5 w-5" /></a>}
-            {sf.facebook_url && <a href={sf.facebook_url} target="_blank" rel="noreferrer"><Facebook className="h-5 w-5" /></a>}
-            {sf.youtube_url && <a href={sf.youtube_url} target="_blank" rel="noreferrer"><Youtube className="h-5 w-5" /></a>}
+          <nav className="hidden items-center justify-center gap-7 text-xs font-semibold uppercase lg:flex" aria-label="Webshop navigáció">
+            <a href="#termekek">Termékek</a>
+            {categories.slice(0, 4).map((category) => <a key={category} href={`#${category.toLocaleLowerCase("hu-HU").replace(/\s+/g, "-")}`}>{category}</a>)}
+            <Link to={`/b/${resolvedSlug}/info/kapcsolat`}>Kapcsolat</Link>
+          </nav>
+          <div className="flex items-center justify-end gap-1 sm:gap-2">
+            <Button variant="ghost" size="icon" className="hidden rounded-none sm:inline-flex" onClick={() => document.getElementById("store-search")?.focus()} aria-label="Keresés"><Search /></Button>
+            <Link to={`/b/${resolvedSlug}/fiok`} className="hidden h-10 items-center gap-2 px-2 text-xs font-semibold uppercase sm:flex"><User className="h-4 w-4" /> <span className="hidden xl:inline">Fiók</span></Link>
             <Link
               to={`${params.slug ? `/b/${params.slug}/kosar` : "/kosar"}${previewToken ? `?preview=${previewToken}` : ""}`}
-              className="flex items-center gap-1.5 border px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest"
+              className="relative flex h-10 items-center gap-2 border px-3 text-xs font-bold uppercase"
               style={{ borderColor: sf.accent_color, color: sf.accent_color }}
             >
-              <ShoppingBag className="h-3.5 w-3.5" /> Kosár{cartCount > 0 ? ` (${cartCount})` : ""}
-            </Link>
-            <Link
-              to={`${params.slug ? `/b/${params.slug}/fiok` : "/fiok"}${previewToken ? `?preview=${previewToken}` : ""}`}
-              className="flex items-center gap-1.5 border px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest"
-              style={{ borderColor: sf.accent_color, color: sf.accent_color }}
-            >
-              <User className="h-3.5 w-3.5" /> Fiók
+              <ShoppingBag className="h-4 w-4" /> <span className="hidden sm:inline">Kosár</span>{cartCount > 0 && <span>({cartCount})</span>}
             </Link>
           </div>
         </div>
-        {pages.length > 0 && (
-          <nav className="mx-auto max-w-6xl px-4 pb-3 flex flex-wrap gap-4 text-[11px] font-bold uppercase tracking-widest opacity-80">
-            {pages.map((pg) => (
-              <Link key={pg.slug} to={`/b/${resolvedSlug}/oldal/${pg.slug}`} className="hover:underline">{pg.title}</Link>
-            ))}
+        {menuOpen && (
+          <nav className="border-t px-4 py-4 lg:hidden" style={{ borderColor: borderCol }}>
+            <a href="#termekek" onClick={() => setMenuOpen(false)} className="block border-b py-3 text-sm font-semibold" style={{ borderColor: borderCol }}>Termékek</a>
+            {categories.map((category) => <a key={category} href={`#${category.toLocaleLowerCase("hu-HU").replace(/\s+/g, "-")}`} onClick={() => setMenuOpen(false)} className="block border-b py-3 text-sm" style={{ borderColor: borderCol }}>{category}</a>)}
+            <Link to={`/b/${resolvedSlug}/fiok`} className="block border-b py-3 text-sm" style={{ borderColor: borderCol }}>Fiókom</Link>
+            <Link to={`/b/${resolvedSlug}/info/kapcsolat`} className="block py-3 text-sm">Kapcsolat</Link>
           </nav>
         )}
       </header>
@@ -228,15 +239,15 @@ const BrandStorefront = () => {
 
 
       {/* HERO */}
-      <section className={`relative ${sf.hero_layout === "fullscreen" ? "min-h-[calc(100svh-7rem)] max-h-[56rem]" : "min-h-[60vh]"} flex items-end md:items-center overflow-hidden`}>
+      <section className={`storefront-hero relative ${sf.hero_layout === "fullscreen" ? "min-h-[min(48rem,calc(100svh-5rem))]" : "min-h-[60vh]"} flex items-end overflow-hidden`}>
         {sf.hero_image_url && (
           <div className="absolute inset-0">
             <MediaImage bucket="partner-storefront-media" path={sf.hero_image_url} alt={`${sf.display_name} nyitókép`} loading="eager" className="hero-storefront-image w-full h-full object-cover object-[62%_center] md:object-center" />
             <div className="absolute inset-0" style={{ background: sf.bg_color, opacity: Number(sf.hero_overlay_opacity ?? 0.5) }} />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/25 to-black/10 md:bg-gradient-to-r md:from-black/90 md:via-black/35 md:to-transparent" />
+            <div className="storefront-hero-shade absolute inset-0" />
           </div>
         )}
-        <div className={`hero-storefront-content relative mx-auto w-full max-w-6xl px-6 pb-12 pt-28 sm:px-8 md:px-5 md:py-20 ${sf.hero_layout === "center" ? "text-center" : ""}`}>
+        <div className={`hero-storefront-content relative mx-auto w-full max-w-7xl px-5 pb-12 pt-32 md:px-8 md:pb-20 ${sf.hero_layout === "center" ? "text-center" : ""}`}>
           <div className={sf.hero_layout === "center" ? "max-w-2xl mx-auto" : "max-w-xl"}>
             {sf.hero_badge_enabled && sf.hero_badge_text && (
               <div className="inline-flex items-center gap-2 border px-4 py-1.5 mb-6" style={{ borderColor: sf.accent_color, background: `${sf.accent_color}20` }}>
@@ -246,20 +257,45 @@ const BrandStorefront = () => {
                 </span>
               </div>
             )}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.02] break-words hyphens-auto text-white [text-shadow:0_2px_28px_rgba(0,0,0,0.5)]" style={headingStyle}>
+            <h1 className="storefront-hero-copy text-4xl font-bold leading-[1.04] sm:text-5xl md:text-6xl lg:text-7xl break-words hyphens-auto" style={headingStyle}>
               {sf.hero_title || sf.display_name}
             </h1>
             {(sf.hero_subtitle || sf.tagline) && (
-              <p className="mt-4 md:mt-5 text-sm md:text-base text-white/80 leading-relaxed max-w-md break-words">
+              <p className="storefront-hero-copy mt-5 max-w-lg text-sm leading-relaxed opacity-85 md:text-lg break-words">
                 {sf.hero_subtitle || sf.tagline}
               </p>
             )}
-            <a href="#termekek" className="inline-flex w-full sm:w-auto max-w-full items-center justify-center gap-2 mt-7 md:mt-8 px-6 sm:px-8 py-4 uppercase tracking-[0.12em] sm:tracking-widest text-xs sm:text-sm font-bold text-center break-words shadow-lg" style={{ background: sf.accent_color, color: sf.bg_color }}>
+            <a href="#termekek" className="mt-8 inline-flex h-14 w-full max-w-full items-center justify-center gap-2 px-7 text-center text-xs font-bold uppercase shadow-lg sm:w-auto" style={{ background: sf.accent_color, color: sf.bg_color }}>
               {sf.hero_cta_text || "Vásárolj most"} <ArrowRight className="h-4 w-4" />
             </a>
           </div>
         </div>
       </section>
+
+      <section className="border-b" style={{ borderColor: borderCol }}>
+        <div className="mx-auto grid max-w-7xl grid-cols-2 divide-x md:grid-cols-4" style={{ borderColor: borderCol }}>
+          {[[Truck, "Gyors szállítás"], [ShieldCheck, "Biztonságos vásárlás"], [RotateCcw, "Egyszerű visszaküldés"], [Headphones, "Segítőkész ügyfélszolgálat"]].map(([Icon, label]) => {
+            const TrustIcon = Icon as typeof Truck;
+            return <div key={label as string} className="flex min-h-24 items-center gap-3 px-4 py-5"><TrustIcon className="h-5 w-5 shrink-0" style={{ color: sf.accent_color }} /><span className="text-xs font-semibold">{label as string}</span></div>;
+          })}
+        </div>
+      </section>
+
+      {categories.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 py-14 md:px-8 md:py-20">
+          <div className="mb-8 flex items-end justify-between gap-4"><div><p className="text-xs font-semibold uppercase" style={{ color: sf.accent_color }}>Fedezd fel</p><h2 className="mt-2 text-3xl font-bold md:text-5xl" style={headingStyle}>Kategóriáink</h2></div><a href="#termekek" className="hidden items-center gap-2 text-sm font-semibold sm:flex">Minden termék <ArrowRight className="h-4 w-4" /></a></div>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {categories.slice(0, 4).map((category) => {
+              const image = products.find((product) => product.category === category)?.images?.[0];
+              return <a id={category.toLocaleLowerCase("hu-HU").replace(/\s+/g, "-")} key={category} href="#termekek" className="group relative aspect-[4/5] overflow-hidden bg-muted/40">
+                {image && <MediaImage bucket="partner-product-images" path={image} alt={category} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />}
+                <span className="storefront-card-shade absolute inset-0" />
+                <span className="storefront-hero-copy absolute inset-x-4 bottom-4 text-lg font-bold md:text-xl" style={headingStyle}>{category}</span>
+              </a>;
+            })}
+          </div>
+        </section>
+      )}
 
       {/* SECTION 1 */}
       {sf.section1_enabled && (
@@ -301,45 +337,27 @@ const BrandStorefront = () => {
 
       {/* FEATURED */}
       {sf.featured_products_enabled && featured.length > 0 && (
-        <section className="mx-auto max-w-6xl px-4 py-16 border-t" style={{ borderColor: borderCol }}>
-          <h2 className="text-3xl font-bold uppercase tracking-widest mb-8 text-center" style={headingStyle}>{sf.featured_products_title}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {featured.map(p => (
-              <Link key={p.id} to={`/b/${sf.slug}/termek/${p.slug}`} className="group block border" style={{ borderColor: borderCol }}>
-                <div className="aspect-square overflow-hidden bg-black/20">
-                  {p.images?.[0] ? <MediaImage bucket="partner-product-images" path={p.images[0]} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> : <div className="flex items-center justify-center h-full opacity-30"><ShoppingBag className="h-12 w-12" /></div>}
-                </div>
-                <div className="p-3">
-                  <div className="font-bold text-sm uppercase tracking-wider line-clamp-1" style={headingStyle}>{p.title}</div>
-                  <div className="font-bold mt-1" style={{ color: sf.accent_color }}>{p.price_huf.toLocaleString("hu-HU")} Ft</div>
-                </div>
-              </Link>
-            ))}
+        <section className="mx-auto max-w-7xl px-4 py-14 md:px-8 md:py-20 border-t" style={{ borderColor: borderCol }}>
+          <h2 className="mb-8 text-3xl font-bold md:text-5xl" style={headingStyle}>{sf.featured_products_title || "Kiemelt termékeink"}</h2>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-10 md:grid-cols-4 md:gap-6">
+            {featured.map((product) => <StorefrontProductCard key={product.id} product={product} store={sf} compact />)}
           </div>
         </section>
       )}
 
       {/* ALL PRODUCTS */}
-      <section id="termekek" className="mx-auto max-w-6xl px-4 py-16 border-t" style={{ borderColor: borderCol }}>
-        <h2 className="text-3xl font-bold uppercase tracking-widest mb-8 text-center" style={headingStyle}>Termékek</h2>
+      <section id="termekek" className="mx-auto max-w-7xl px-4 py-14 md:px-8 md:py-20 border-t" style={{ borderColor: borderCol }}>
+        <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div><p className="text-xs font-semibold uppercase" style={{ color: sf.accent_color }}>Webshop</p><h2 className="mt-2 text-3xl font-bold md:text-5xl" style={headingStyle}>Termékek</h2></div>
+          <label className="relative block w-full sm:max-w-sm"><span className="sr-only">Termék keresése</span><Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 opacity-50" /><input id="store-search" type="search" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Mit keresel?" className="h-12 w-full border bg-transparent pl-11 pr-4 text-sm outline-none focus:ring-2" style={{ borderColor: borderCol }} /></label>
+        </div>
         {products.length === 0 ? (
           <p className="text-center opacity-60">Hamarosan érkeznek a termékek.</p>
+        ) : visibleProducts.length === 0 ? (
+          <div className="border py-16 text-center" style={{ borderColor: borderCol }}><Search className="mx-auto mb-3 h-7 w-7 opacity-35" /><p className="font-semibold">Nincs találat erre a keresésre.</p><button onClick={() => setSearchTerm("")} className="mt-3 text-sm underline">Keresés törlése</button></div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {products.map(p => (
-              <Link key={p.id} to={`/b/${sf.slug}/termek/${p.slug}`} className="group block border" style={{ borderColor: borderCol }}>
-                <div className="aspect-square overflow-hidden bg-black/20">
-                  {p.images?.[0] ? <MediaImage bucket="partner-product-images" path={p.images[0]} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> : <div className="flex items-center justify-center h-full opacity-30"><ShoppingBag className="h-12 w-12" /></div>}
-                </div>
-                <div className="p-3">
-                  <div className="font-bold text-sm uppercase tracking-wider line-clamp-1" style={headingStyle}>{p.title}</div>
-                  <div className="flex items-baseline gap-2 mt-1">
-                    <span className="font-bold" style={{ color: sf.accent_color }}>{p.price_huf.toLocaleString("hu-HU")} Ft</span>
-                    {p.compare_price_huf && <span className="text-xs line-through opacity-50">{p.compare_price_huf.toLocaleString("hu-HU")} Ft</span>}
-                  </div>
-                </div>
-              </Link>
-            ))}
+          <div className="grid grid-cols-2 gap-x-3 gap-y-10 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
+            {visibleProducts.map((product) => <StorefrontProductCard key={product.id} product={product} store={sf} />)}
           </div>
         )}
       </section>
