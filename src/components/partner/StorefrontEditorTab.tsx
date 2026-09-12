@@ -348,6 +348,7 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="rounded-none flex flex-wrap h-auto">
           <TabsTrigger value="studio" className="rounded-none">🏗️ Studio</TabsTrigger>
+          <TabsTrigger value="branddna" className="rounded-none">🧬 Brand DNA</TabsTrigger>
           <TabsTrigger value="chat" className="rounded-none">🤖 AI fejlesztő</TabsTrigger>
           <TabsTrigger value="media" className="rounded-none">🎨 AI kép & videó</TabsTrigger>
           
