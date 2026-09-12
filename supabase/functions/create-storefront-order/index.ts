@@ -160,7 +160,10 @@ Deno.serve(async (req) => {
     status: "pending",
     payment_method: paymentMethod,
     payment_status: "pending",
-    notes: notes || null,
+    notes: [
+      notes || null,
+      shippingMethod ? `Szállítási mód: ${shippingMethod.name}` : null,
+    ].filter(Boolean).join("\n") || null,
   }).select("id, order_number, total_huf").single();
 
   if (insErr) return json({ error: "order_failed" }, 502);
