@@ -385,14 +385,25 @@ const BrandStorefront = () => {
 
       {/* FOOTER */}
       <footer className="border-t mt-0" style={{ borderColor: borderCol }}>
-        <div className="mx-auto max-w-6xl px-4 py-8 flex flex-wrap items-center justify-between gap-3 text-xs opacity-70">
-          <div>© {new Date().getFullYear()} {sf.display_name}{sf.footer_text ? ` · ${sf.footer_text}` : ""}</div>
-          <div className="flex flex-wrap gap-4">
-            {pages.map((pg) => (
-              <Link key={pg.slug} to={`/b/${resolvedSlug}/oldal/${pg.slug}`} className="underline">{pg.title}</Link>
-            ))}
+        <div className="mx-auto max-w-6xl px-4 pt-8 pb-28 md:pb-10 text-xs">
+          <nav className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-6 gap-y-3">
             {INFO_PAGES.map((p) => (
-              <Link key={p.slug} to={`/b/${resolvedSlug}/info/${p.slug}`} className="underline">{p.title}</Link>
+              <Link
+                key={p.slug}
+                to={`/b/${resolvedSlug}/info/${p.slug}`}
+                className="py-1 uppercase tracking-widest opacity-80 hover:opacity-100 transition-opacity"
+              >
+                {p.title}
+              </Link>
+            ))}
+            {pages.map((pg) => (
+              <Link
+                key={pg.slug}
+                to={`/b/${resolvedSlug}/oldal/${pg.slug}`}
+                className="py-1 uppercase tracking-widest opacity-80 hover:opacity-100 transition-opacity"
+              >
+                {pg.title}
+              </Link>
             ))}
             {footerLinks
               .filter((l) => {
@@ -400,9 +411,23 @@ const BrandStorefront = () => {
                 return !["kapcsolat", "ászf", "aszf", "visszaküld", "visszakuld", "mérettábl", "merettabl", "szállítás", "szallitas"].some(k => t.includes(k));
               })
               .map((l, i) => (
-                <a key={i} href={l.url} target={l.url?.startsWith("http") ? "_blank" : undefined} rel="noreferrer" className="underline">{l.label}</a>
+                <a
+                  key={i}
+                  href={l.url}
+                  target={l.url?.startsWith("http") ? "_blank" : undefined}
+                  rel="noreferrer"
+                  className="py-1 uppercase tracking-widest opacity-80 hover:opacity-100 transition-opacity"
+                >
+                  {l.label}
+                </a>
               ))}
-            <Link to="/" className="underline opacity-50">Powered by EDN</Link>
+          </nav>
+          <div
+            className="mt-6 pt-4 border-t flex flex-col md:flex-row md:items-center md:justify-between gap-2 opacity-60"
+            style={{ borderColor: borderCol }}
+          >
+            <div>© {new Date().getFullYear()} {sf.display_name}{sf.footer_text ? ` · ${sf.footer_text}` : ""}</div>
+            <Link to="/" className="underline">Powered by EDN</Link>
           </div>
         </div>
       </footer>
