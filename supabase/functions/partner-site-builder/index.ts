@@ -233,6 +233,70 @@ function contrast(a: string, b: string): number | null {
   return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
 }
 
+const slugify = (s: string) =>
+  String(s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 60);
+
+const PRODUCT_TYPES = ["clothing", "accessory", "digital", "service", "course"];
+const FULFILLMENTS = ["physical", "digital", "service"];
+
+function normalizePages(raw: unknown) {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  const out: Record<string, string>[] = [];
+  for (const p of raw as any[]) {
+    const title = String(p?.title || "").trim().slice(0, 120);
+    const html = String(p?.content_html || "").trim();
+    if (!title || html.length < 120) continue;
+    const slug = slugify(p?.slug || title) || `oldal-${out.length + 1}`;
+    if (seen.has(slug)) continue;
+    seen.add(slug);
+    out.push({
+      slug,
+      title,
+      content_html: html.slice(0, 20000),
+      meta_title: String(p?.meta_title || title).slice(0, 60),
+      meta_description: String(p?.meta_description || "").slice(0, 155),
+    });
+    if (out.length >= 8) break;
+  }
+  return out;
+}
+
+function normalizeProducts(raw: unknown) {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  const out: Record<string, unknown>[] = [];
+  for (const p of raw as any[]) {
+    const title = String(p?.title || "").trim().slice(0, 140);
+    if (!title) continue;
+    const slug = slugify(title);
+    if (!slug || seen.has(slug)) continue;
+    seen.add(slug);
+    const price = Math.max(0, Math.round(Number(p?.suggested_price_huf) || 0));
+    const type = PRODUCT_TYPES.includes(String(p?.product_type)) ? String(p.product_type) : "clothing";
+    const ff = FULFILLMENTS.includes(String(p?.fulfillment_type))
+      ? String(p.fulfillment_type)
+      : type === "digital" || type === "course" ? "digital" : type === "service" ? "service" : "physical";
+    out.push({
+      title,
+      slug,
+      description: String(p?.description || "").slice(0, 1200),
+      suggested_price_huf: price,
+      category: String(p?.category || "").slice(0, 60) || null,
+      product_type: type,
+      fulfillment_type: ff,
+    });
+    if (out.length >= 8) break;
+  }
+  return out;
+}
+
 function normalize(rawPatch: Record<string, any>) {
   const patch: Record<string, unknown> = {};
   for (const k of ALLOWED) if (rawPatch?.[k] !== undefined && rawPatch?.[k] !== null) patch[k] = rawPatch[k];
