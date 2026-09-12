@@ -130,12 +130,18 @@ const BrandStorefront = () => {
   if (notFound) return <Navigate to="/" replace />;
   if (!sf || !seo) return null;
 
+  const dna = normalizeBrandDna(sf.brand_dna);
   const cssVars = {
     background: sf.bg_color,
     color: sf.text_color,
     fontFamily: sf.font_body,
+    ...brandDnaCssVars(dna, sf.text_color),
   } as React.CSSProperties;
-  const headingStyle = { fontFamily: sf.font_heading };
+  const headingStyle = {
+    fontFamily: sf.font_heading,
+    fontWeight: dna.headingWeight,
+    letterSpacing: `var(--sf-heading-tracking)`,
+  } as React.CSSProperties;
   const borderCol = `${sf.text_color}20`;
 
   const testimonials: any[] = Array.isArray(sf.testimonials) ? sf.testimonials : [];
