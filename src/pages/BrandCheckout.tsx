@@ -261,9 +261,14 @@ const BrandCheckout = () => {
             <aside className="border p-5 h-fit space-y-3" style={{ borderColor: border }}>
               <div className="text-xs uppercase tracking-widest opacity-70">Összegzés</div>
               <div className="flex justify-between text-sm"><span>Tételek ({count} db)</span><span>{subtotal.toLocaleString("hu-HU")} Ft</span></div>
-              {hasPhysical && <div className="flex justify-between text-sm opacity-70"><span>Szállítás</span><span>a visszaigazolás szerint</span></div>}
+              {hasPhysical && (
+                <div className="flex justify-between text-sm opacity-70">
+                  <span>Szállítás{selectedMethod ? ` – ${selectedMethod.name}` : ""}</span>
+                  <span>{methods.length ? (shippingFee > 0 ? `${shippingFee.toLocaleString("hu-HU")} Ft` : "Ingyenes") : "a visszaigazolás szerint"}</span>
+                </div>
+              )}
               <div className="flex justify-between text-lg font-bold pt-2 border-t" style={{ borderColor: border }}>
-                <span>Végösszeg</span><span style={{ color: accent }}>{subtotal.toLocaleString("hu-HU")} Ft</span>
+                <span>Végösszeg</span><span style={{ color: accent }}>{grandTotal.toLocaleString("hu-HU")} Ft</span>
               </div>
               <button disabled={busy} onClick={() => void submit()} className="w-full py-4 uppercase tracking-widest font-bold border-2 disabled:opacity-40" style={{ borderColor: accent, color: accent }}>
                 {busy ? "Küldés…" : "Rendelés leadása"}
