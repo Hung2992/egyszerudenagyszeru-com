@@ -11,6 +11,7 @@ const corsHeaders = {
 const AI_CHAT = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MODEL_BUILD = "google/gemini-3.1-pro-preview";
 const MODEL_FAST = "google/gemini-3.8-flash";
+const MODEL_IMAGE = "google/gemini-3-pro-image-preview";
 
 const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -30,6 +31,7 @@ const ALLOWED = [
   "newsletter_enabled", "newsletter_title", "newsletter_subtitle",
   "footer_text", "footer_links",
   "meta_title", "meta_description", "seo_keywords",
+  "hero_image_url", "section1_image_url", "section2_image_url",
 ];
 
 const HERO_LAYOUTS = ["fullscreen", "center", "split"];
@@ -57,6 +59,11 @@ const SCHEMA = `{
     "meta_title": string, "meta_description": string, "seo_keywords": [string]
   },
   "product_ideas": [{"title": string, "description": string, "suggested_price_huf": number}],
+  "image_prompts": {
+    "hero": string (ANGOL képgenerálási prompt a hero háttérhez, márkához illő, fotórealisztikus, szöveg és logó NÉLKÜL),
+    "section1": string (ANGOL prompt a section1 illusztrációhoz),
+    "section2": string (ANGOL prompt a section2 illusztrációhoz)
+  },
   "explanation": "2-4 mondat magyarul, mit csináltál és miért"
 }`;
 
@@ -79,6 +86,23 @@ Kizárólag érvényes JSON-t adj vissza, semmi mást.
 
 Séma:
 ${SCHEMA}`;
+
+const STRATEGY_SYSTEM = `Te egy magyar márkastratéga és e-commerce konzulens vagy.
+A partner leírásából készíts tömör, döntésre kész márkastratégiát, amire egy art director és copywriter építeni tud.
+Csak JSON:
+{
+  "positioning": string (1 mondat, mi a márka és kinek),
+  "audience": string (konkrét célközönség: kor, élethelyzet, motiváció),
+  "pain_points": [string] (3 db valós vásárlói fájdalom),
+  "value_props": [string] (3 db konkrét, mérhető előny),
+  "tone": string (hangvétel 3-5 szóban),
+  "visual_direction": string (vizuális irány: hangulat, anyagok, fényezés, tiltott klisék),
+  "color_rationale": string (milyen paletta illik és miért),
+  "font_suggestion": {"heading": string, "body": string},
+  "objections": [string] (3 db vásárlási kifogás, amit a szövegnek le kell szerelnie),
+  "conversion_hooks": [string] (3 db konverziós horog: garancia, szállítás, közösségi bizonyíték)
+}
+Ne találj ki jogi/céges adatot, árat vagy dátumot.`;
 
 const QA_SYSTEM = `Te egy szigorú magyar e-commerce QA lektor vagy. Kapsz egy storefront konfigurációt.
 Pontozd őszintén, és sorold fel a konkrét hibákat. Csak JSON:
@@ -113,6 +137,62 @@ async function callAI(apiKey: string, model: string, system: string, user: strin
     const m = String(content).match(/\{[\s\S]*\}/);
     return m ? JSON.parse(m[0]) : {};
   }
+}
+
+// --- AI képgenerálás + feltöltés a partner média tárolóba ---
+async function generateImage(apiKey: string, prompt: string): Promise<Uint8Array | null> {
+  const r = await fetch(AI_CHAT, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: MODEL_IMAGE,
+      messages: [{ role: "user", content: prompt }],
+      modalities: ["image", "text"],
+    }),
+  });
+  if (!r.ok) return null;
+  const d = await r.json().catch(() => null);
+  const url = d?.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+  if (typeof url !== "string" || !url.startsWith("data:image/")) return null;
+  try {
+    const base64 = url.split(",")[1];
+    return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  } catch { return null; }
+}
+
+const IMAGE_STYLE =
+  "Professional commercial photography for an e-commerce hero section, cinematic natural lighting, high dynamic range, 85mm lens, shallow depth of field, color graded, ultra detailed. Absolutely NO text, NO letters, NO logos, NO watermarks in the image. Leave calm negative space for overlay text.";
+
+async function generateAndStore(
+  apiKey: string,
+  admin: any,
+  partnerId: string,
+  prompts: Record<string, string>,
+): Promise<{ paths: Record<string, string>; failed: string[] }> {
+  const map: Record<string, string> = {
+    hero: "hero_image_url",
+    section1: "section1_image_url",
+    section2: "section2_image_url",
+  };
+  const paths: Record<string, string> = {};
+  const failed: string[] = [];
+
+  const jobs = Object.entries(map).map(async ([key, column]) => {
+    const p = String(prompts?.[key] || "").trim();
+    if (!p) return;
+    const bytes = await generateImage(apiKey, `${p}\n\n${IMAGE_STYLE}`);
+    if (!bytes) { failed.push(key); return; }
+    const path = `${partnerId}/ai/${Date.now()}-${key}-${Math.random().toString(36).slice(2, 8)}.png`;
+    const up = await admin.storage.from("partner-storefront-media").upload(path, bytes, {
+      contentType: "image/png",
+      upsert: false,
+    });
+    if (up.error) { failed.push(key); return; }
+    paths[column] = path;
+  });
+
+  await Promise.all(jobs);
+  return { paths, failed };
 }
 
 // --- kontraszt ellenőrzés (WCAG) ---
@@ -228,7 +308,8 @@ Deno.serve(async (req) => {
     const mode = body?.mode === "refine" ? "refine" : "build";
     const basePatch = body?.base_patch && typeof body.base_patch === "object" ? body.base_patch : null;
     const target = Math.max(60, Math.min(100, Number(body?.target_score) || 90));
-    const maxRounds = Math.max(0, Math.min(2, Number(body?.max_rounds) ?? 1));
+    const maxRounds = Math.max(0, Math.min(3, Number(body?.max_rounds) ?? 2));
+    const wantImages = body?.generate_images !== false && mode === "build";
     if (!prompt || prompt.length < 3) return json({ error: "Adj meg leírást a webshopodról" }, 400);
     if (!partnerId) return json({ error: "partner_id kötelező" }, 400);
 
@@ -271,8 +352,23 @@ A partner kérése:
 
 Készítsd el a TELJES konfigurációt: minden szekció legyen bekapcsolva és kitöltve, publikálásra kész minőségben.`;
 
+    // 0) Márkastratégia — ez adja a build fázisnak az irányt
+    let strategy: any = null;
+    if (mode === "build") {
+      strategy = await callAI(
+        apiKey,
+        MODEL_FAST,
+        STRATEGY_SYSTEM,
+        `${brandContext}\n\nA partner kérése:\n"""${prompt.slice(0, 4000)}"""`,
+      ).catch(() => null);
+    }
+
+    const strategyBlock = strategy
+      ? `\n\nMárkastratégia, amire építened KELL:\n${JSON.stringify(strategy).slice(0, 4000)}`
+      : "";
+
     // 1) Építés
-    let parsed: any = await callAI(apiKey, MODEL_BUILD, SYSTEM, userMsg);
+    let parsed: any = await callAI(apiKey, MODEL_BUILD, SYSTEM, userMsg + strategyBlock);
     let { patch, warnings } = normalize(parsed?.patch || {});
 
     // 2) QA + célzott javítás (max 1-2 kör)
@@ -307,6 +403,32 @@ ${JSON.stringify(patch).slice(0, 9000)}`,
       return json({ error: "Az AI nem adott vissza használható konfigurációt. Próbáld részletesebb leírással." }, 502);
     }
 
+    // 3) Valódi képek generálása a hero és a két szekció számára
+    const images: Record<string, string> = {};
+    if (wantImages) {
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+      if (serviceKey) {
+        const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", serviceKey);
+        const prompts = (parsed?.image_prompts && typeof parsed.image_prompts === "object")
+          ? parsed.image_prompts
+          : {};
+        const brandHint = `Brand: ${patch.display_name || partner.company_name || ""}. Mood: ${patch.tagline || ""}.`;
+        const finalPrompts: Record<string, string> = {
+          hero: String(prompts.hero || `Hero background for a webshop. ${brandHint}`),
+          section1: String(prompts.section1 || ""),
+          section2: String(prompts.section2 || ""),
+        };
+        try {
+          const res = await generateAndStore(apiKey, admin, partnerId, finalPrompts);
+          Object.assign(images, res.paths);
+          Object.assign(patch, res.paths);
+          if (res.failed.length) warnings.push("Néhány kép generálása nem sikerült — később újrapróbálhatod.");
+        } catch {
+          warnings.push("A képgenerálás most nem futott le, a szövegek elkészültek.");
+        }
+      }
+    }
+
     return json({
       ok: true,
       mode,
@@ -314,6 +436,8 @@ ${JSON.stringify(patch).slice(0, 9000)}`,
       qa,
       rounds,
       target,
+      strategy,
+      images,
       warnings: [...new Set(warnings)],
       product_ideas: Array.isArray(parsed.product_ideas) ? parsed.product_ideas.slice(0, 8) : [],
       explanation: String(parsed.explanation || "Elkészült a webshop terve."),

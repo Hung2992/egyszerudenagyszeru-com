@@ -25,6 +25,7 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
   const [applying, setApplying] = useState(false);
   const [refinePrompt, setRefinePrompt] = useState("");
   const [refining, setRefining] = useState(false);
+  const [withImages, setWithImages] = useState(true);
 
   const generate = async () => {
     if (prompt.trim().length < 5) {
@@ -35,7 +36,14 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
     setResult(null);
     try {
       const { data, error } = await supabase.functions.invoke("partner-site-builder", {
-        body: { prompt, partner_id: partnerId, mode: "build", target_score: 92, max_rounds: 1 },
+        body: {
+          prompt,
+          partner_id: partnerId,
+          mode: "build",
+          target_score: 95,
+          max_rounds: 2,
+          generate_images: withImages,
+        },
       });
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
@@ -146,11 +154,35 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
             </button>
           ))}
         </div>
+        <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+          <input
+            type="checkbox"
+            checked={withImages}
+            onChange={(e) => setWithImages(e.target.checked)}
+            className="h-4 w-4 accent-current"
+          />
+          Készüljenek AI képek is a főoldalra (kicsit tovább tart)
+        </label>
         <Button onClick={generate} disabled={loading} className="rounded-none">
           {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Wand2 className="h-4 w-4 mr-2" />}
           {loading ? "Építés…" : "Webshop generálása"}
         </Button>
       </Card>
+
+      {result?.strategy && (
+        <Card className="rounded-none border-border p-5 space-y-2">
+          <h4 className="font-heading">Márkastratégia</h4>
+          {result.strategy.positioning && <p className="text-sm">{result.strategy.positioning}</p>}
+          {result.strategy.audience && (
+            <p className="text-sm text-muted-foreground">Célközönség: {result.strategy.audience}</p>
+          )}
+          {Array.isArray(result.strategy.value_props) && (
+            <ul className="text-sm text-muted-foreground list-disc pl-4 space-y-1">
+              {result.strategy.value_props.slice(0, 3).map((v: string, i: number) => <li key={i}>{v}</li>)}
+            </ul>
+          )}
+        </Card>
+      )}
 
       {result?.patch && (
         <Card className="rounded-none border-border p-5 space-y-4">
