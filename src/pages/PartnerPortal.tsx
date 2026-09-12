@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import StorefrontEditorTab from "@/components/partner/StorefrontEditorTab";
 import PartnerProductsTab from "@/components/partner/PartnerProductsTab";
 import PartnerShippingTab from "@/components/partner/PartnerShippingTab";
+import PartnerSalesSheetTab from "@/components/partner/PartnerSalesSheetTab";
 import { Truck as TruckIcon } from "lucide-react";
 import PartnerDigitalDeliveryTab from "@/components/partner/PartnerDigitalDeliveryTab";
 import PartnerMarketingHub from "@/components/partner/PartnerMarketingHub";
