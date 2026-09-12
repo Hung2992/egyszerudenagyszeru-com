@@ -381,6 +381,15 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
           </div>
         </TabsContent>
 
+        {/* BRAND DNA — design token rendszer + élő előnézet */}
+        <TabsContent value="branddna">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+            <BrandDnaPanel sf={sf || {}} onChange={set} />
+            <StorefrontLivePreview storefrontId={sf?.id ?? null} slug={sf?.slug || ""} draft={sf} refreshKey={previewRefreshKey} />
+          </div>
+        </TabsContent>
+
+
         {/* AI CHAT AGENT */}
         <TabsContent value="chat">
           <AiWebCreatorChat
