@@ -534,7 +534,7 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
           <Card className="rounded-none border-border p-3 space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium"><Brain className="h-3.5 w-3.5" /> Márka-memória</div>
             {Object.entries(memory).slice(0, 6).map(([k, v]) => (
-              <div key={k} className="text-[11px] text-muted-foreground truncate">
+              <div key={k} className="text-[11px] text-muted-foreground break-words">
                 <span className="uppercase">{k}</span>: {Array.isArray(v) ? v.join(", ") : String(v)}
               </div>
             ))}
