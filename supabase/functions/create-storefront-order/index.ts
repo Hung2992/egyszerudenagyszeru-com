@@ -100,11 +100,32 @@ Deno.serve(async (req) => {
     items.push({ product_id: p.id, title: p.title, qty, unit_price_huf: price, line_total_huf: price * qty, physical });
   }
 
+  // Partner saját szállítási módjai (ha vannak, ezek felülírják a termékszintű díjat)
+  let shippingMethod: Record<string, unknown> | null = null;
+  if (needsAddress) {
+    const { data: methods } = await svc.from("partner_shipping_methods")
+      .select("id, name, method_type, fee_huf, free_over_huf, requires_address")
+      .eq("partner_id", store.partner_id).eq("is_active", true).order("sort_order");
+
+    if (methods && methods.length) {
+      const chosen = methods.find((m) => m.id === shippingMethodId);
+      if (!chosen) return json({ error: "invalid_shipping_method" }, 400);
+      shippingMethod = chosen;
+      shippingFee = Math.max(0, Math.round(Number(chosen.fee_huf) || 0));
+      const fo = Number(chosen.free_over_huf);
+      freeOver = Number.isFinite(fo) && fo > 0 ? fo : null;
+      if (chosen.requires_address === false) {
+        // személyes átvétel: nem kell cím
+        needsAddress = false;
+      }
+    }
+  }
+
   if (needsAddress && (!shipping.street || !shipping.city || !shipping.zip)) {
     return json({ error: "invalid_address" }, 400);
   }
   if (freeOver !== null && subtotal >= freeOver) shippingFee = 0;
-  if (!needsAddress) shippingFee = 0;
+  if (!needsAddress && !shippingMethod) shippingFee = 0;
 
   const total = subtotal + shippingFee;
   const platformFee = Math.round(total * (PLATFORM_FEE_PCT / 100));
