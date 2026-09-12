@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { storePageUrl } from "@/lib/storefrontSeo";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { ArrowLeft } from "lucide-react";
 import { getPartnerSlugFromHostname, resolveCustomDomainSlug } from "@/lib/partner-subdomain";
@@ -73,15 +74,20 @@ const BrandPage = () => {
   const text = sf.text_color || "#ffffff";
   const accent = sf.accent_color || "#D4AF37";
   const backUrl = params.slug ? `/b/${params.slug}` : "/";
+  const pageBody = String(page.content_html || page.body_html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const pageDescription = (page.meta_description
+    || (pageBody ? pageBody.slice(0, 157) + (pageBody.length > 157 ? "…" : "") : `${page.title} – ${sf.display_name}`)).slice(0, 160);
 
   return (
     <div className="min-h-screen" style={{ background: bg, color: text, fontFamily: sf.font_body || "Inter, sans-serif" }}>
       <Helmet>
         <title>{page.meta_title || page.title} | {sf.display_name}</title>
-        {page.meta_description && <meta name="description" content={page.meta_description} />}
-        <link rel="canonical" href={`${window.location.origin}/b/${params.slug}/oldal/${page.slug}`} />
+        <meta name="description" content={pageDescription} />
+        <link rel="canonical" href={storePageUrl(sf, page.slug)} />
+        <meta property="og:type" content="article" />
         <meta property="og:title" content={page.meta_title || page.title} />
-        {page.meta_description && <meta property="og:description" content={page.meta_description} />}
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:url" content={storePageUrl(sf, page.slug)} />
       </Helmet>
 
       <header className="border-b" style={{ borderColor: `${text}22` }}>

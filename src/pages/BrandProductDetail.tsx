@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { storeProductUrl, publicStorageUrl, buildProductDescription } from "@/lib/storefrontSeo";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { ArrowLeft, ShoppingBag, CalendarClock, Truck } from "lucide-react";
@@ -70,10 +71,17 @@ const BrandProductDetail = () => {
   const seo = useMemo(() => {
     if (!sf || !product) return null;
     const title = `${product.title} – ${sf.display_name}`;
-    const description = (product.description || sf.tagline || "").slice(0, 160);
-    const base = sf.custom_domain ? `https://${sf.custom_domain}` : `https://${sf.slug}.egyszerudenagyszeru.com`;
-    const url = `${base}/termek/${product.slug}`;
-    const image = product.images?.[0] ? `${base}/storage/partner-product-images/${product.images[0]}` : undefined;
+    const description = buildProductDescription({
+      title: product.title,
+      description: product.description || sf.tagline,
+      priceHuf: product.price_huf,
+      storeName: sf.display_name,
+      category: product.category,
+      inStock: (product.stock_qty ?? 0) > 0,
+    });
+    const url = storeProductUrl(sf, product.slug);
+    const image = publicStorageUrl("partner-product-images", product.images?.[0])
+      || publicStorageUrl("partner-storefront-media", sf.og_image_url || sf.hero_image_url || sf.logo_url);
     return { title: title.slice(0, 60), description, url, image };
   }, [sf, product]);
 

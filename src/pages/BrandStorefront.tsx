@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
+import { storeBaseUrl, publicStorageUrl } from "@/lib/storefrontSeo";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { Instagram, Music2, Facebook, Youtube, ShoppingBag, Flame, Star, ArrowRight, Eye, User } from "lucide-react";
@@ -98,10 +99,9 @@ const BrandStorefront = () => {
       ? `${sf.tagline}${kws ? " · " + kws : ""}`
       : stripped.slice(0, 157) + (stripped.length > 157 ? "…" : "");
     const description = sf.meta_description || autoDesc;
-    const url = sf.custom_domain
-      ? `https://${sf.custom_domain}/`
-      : `https://${sf.slug}.egyszerudenagyszeru.com/`;
-    return { title: title.slice(0, 60), description: description.slice(0, 160), url, keywords: kws };
+    const url = `${storeBaseUrl(sf)}/`;
+    const image = publicStorageUrl("partner-storefront-media", sf.og_image_url || sf.hero_image_url || sf.logo_url);
+    return { title: title.slice(0, 60), description: description.slice(0, 160), url, keywords: kws, image };
   }, [sf]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-black text-white">Betöltés…</div>;
@@ -152,6 +152,8 @@ const BrandStorefront = () => {
         <meta property="og:title" content={seo.title} />
         <meta property="og:description" content={seo.description} />
         <meta property="og:url" content={seo.url} />
+        {seo.image && <meta property="og:image" content={seo.image} />}
+        {seo.image && <meta name="twitter:image" content={seo.image} />}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={seo.title} />
         <meta name="twitter:description" content={seo.description} />
