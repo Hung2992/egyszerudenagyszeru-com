@@ -30,6 +30,10 @@ TARGET (opcionális): "buttons" | "cards" | "hero" | "search" | "forms" | "typog
 
 SZABÁLYOK:
 - Csak azokat a tokeneket sorold fel, amelyek TÉNYLEGESEN változnak a jelenlegi értékhez képest.
+- IRÁNY: "kevésbé lekerekített"/"szögletesebb" → a radius CSÖKKEN; "kerekebb"/"lágyabb" → a radius NŐ;
+  "több térköz" → spacing nagyobb; "kompaktabb" → spacing kisebb. Soha ne fordítsd meg az irányt.
+- Ha a kért irányban a token már a szélső értéken van (pl. radius már 0 és még kevésbé kerekítenél),
+  akkor csak a többi, még mozgatható tokent javasold; ha egy sem mozdítható, adj "clarify" választ.
 - Max 6 változtatás. Az explanation magyar, max 2 rövid mondat, felsorolás nélkül.
 - Ha a kérés több értelmezést enged (pl. "legyen nagyobb"), NE találj ki változtatást:
   válaszolj {"intent":"clarify","question":"..."} formában egy rövid, konkrét kérdéssel.
