@@ -46,7 +46,8 @@ Deno.serve(async (req) => {
   if (name.length < 2) return json({ error: "invalid_name" }, 400);
   if (!EMAIL_RE.test(email)) return json({ error: "invalid_email" }, 400);
   if (!rawItems.length || rawItems.length > 30) return json({ error: "invalid_items" }, 400);
-  if (!["cod", "transfer"].includes(paymentMethod)) return json({ error: "invalid_payment_method" }, 400);
+  if (!["cod", "transfer", "card"].includes(paymentMethod)) return json({ error: "invalid_payment_method" }, 400);
+  const shippingMethodId = String(body.shipping_method_id ?? "").trim();
 
   const wanted = new Map<string, number>();
   for (const it of rawItems) {
