@@ -166,3 +166,29 @@
     animation: none;
   }
 }
+
+/* ---- Brand DNA design token utilities (partner storefront) ---- */
+.sf-btn {
+  border-radius: var(--sf-radius-btn, 0px);
+  box-shadow: var(--sf-shadow, none);
+}
+.sf-card {
+  border-radius: var(--sf-radius, 0px);
+  box-shadow: var(--sf-card-shadow, none);
+  border-width: var(--sf-card-border-w, 1px);
+}
+.sf-field {
+  border-radius: var(--sf-radius, 0px);
+  border-width: var(--sf-border-w, 1px);
+}
+.sf-img {
+  border-radius: var(--sf-radius-img, 0px);
+  overflow: hidden;
+}
+.sf-section {
+  padding-block: var(--sf-section-y, 3.5rem);
+}
+.sf-heading {
+  font-weight: var(--sf-heading-weight, 700);
+  letter-spacing: var(--sf-heading-tracking, 0em);
+}

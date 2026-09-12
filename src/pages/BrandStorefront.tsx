@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import { normalizeSectionOrder } from "@/lib/storefront-studio";
+import { normalizeBrandDna, brandDnaCssVars } from "@/lib/brand-dna";
 import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import { storeBaseUrl, publicStorageUrl } from "@/lib/storefrontSeo";
 
@@ -130,12 +131,18 @@ const BrandStorefront = () => {
   if (notFound) return <Navigate to="/" replace />;
   if (!sf || !seo) return null;
 
+  const dna = normalizeBrandDna(sf.brand_dna);
   const cssVars = {
     background: sf.bg_color,
     color: sf.text_color,
     fontFamily: sf.font_body,
+    ...brandDnaCssVars(dna, sf.text_color),
   } as React.CSSProperties;
-  const headingStyle = { fontFamily: sf.font_heading };
+  const headingStyle = {
+    fontFamily: sf.font_heading,
+    fontWeight: dna.headingWeight,
+    letterSpacing: `var(--sf-heading-tracking)`,
+  } as React.CSSProperties;
   const borderCol = `${sf.text_color}20`;
 
   const testimonials: any[] = Array.isArray(sf.testimonials) ? sf.testimonials : [];
@@ -266,7 +273,7 @@ const BrandStorefront = () => {
                 {sf.hero_subtitle || sf.tagline}
               </p>
             )}
-            <a href="#termekek" className="mt-8 inline-flex h-14 w-full max-w-full items-center justify-center gap-2 px-7 text-center text-xs font-bold uppercase shadow-lg sm:w-auto" style={{ background: sf.accent_color, color: sf.bg_color }}>
+            <a href="#termekek" className="sf-btn mt-8 inline-flex h-14 w-full max-w-full items-center justify-center gap-2 px-7 text-center text-xs font-bold uppercase sm:w-auto" style={{ background: sf.accent_color, color: sf.bg_color }}>
               {sf.hero_cta_text || "Vásárolj most"} <ArrowRight className="h-4 w-4" />
             </a>
           </div>
@@ -349,7 +356,7 @@ const BrandStorefront = () => {
             <section id="termekek" className="mx-auto max-w-7xl px-4 py-14 md:px-8 md:py-20 border-t" style={{ borderColor: borderCol }}>
               <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                 <div><p className="text-xs font-semibold uppercase" style={{ color: sf.accent_color }}>Webshop</p><h2 className="mt-2 text-3xl font-bold md:text-5xl" style={headingStyle}>Termékek</h2></div>
-                <label className="relative block w-full sm:max-w-sm"><span className="sr-only">Termék keresése</span><Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 opacity-50" /><input id="store-search" type="search" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Mit keresel?" className="h-12 w-full border bg-transparent pl-11 pr-4 text-sm outline-none focus:ring-2" style={{ borderColor: borderCol }} /></label>
+                <label className="relative block w-full sm:max-w-sm"><span className="sr-only">Termék keresése</span><Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 opacity-50" /><input id="store-search" type="search" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Mit keresel?" className="sf-field h-12 w-full border bg-transparent pl-11 pr-4 text-sm outline-none focus:ring-2" style={{ borderColor: borderCol }} /></label>
               </div>
               {products.length === 0 ? (
                 <p className="text-center opacity-60">Hamarosan érkeznek a termékek.</p>
@@ -368,7 +375,7 @@ const BrandStorefront = () => {
               <h2 className="text-3xl font-bold uppercase tracking-widest mb-8 text-center" style={headingStyle}>{sf.testimonials_title}</h2>
               <div className="grid md:grid-cols-3 gap-6">
                 {testimonials.map((t, i) => (
-                  <div key={i} className="border p-6" style={{ borderColor: borderCol }}>
+                  <div key={i} className="sf-card border p-6" style={{ borderColor: borderCol }}>
                     <div className="flex gap-1 mb-3" style={{ color: sf.accent_color }}>
                       {Array.from({ length: Number(t.rating) || 5 }).map((_, k) => <Star key={k} className="h-4 w-4 fill-current" />)}
                     </div>
@@ -393,8 +400,8 @@ const BrandStorefront = () => {
                 <h2 className="text-2xl md:text-3xl font-bold uppercase tracking-widest mb-3" style={headingStyle}>{sf.newsletter_title}</h2>
                 {sf.newsletter_subtitle && <p className="opacity-80 mb-6">{sf.newsletter_subtitle}</p>}
                 <form className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto" onSubmit={e => { e.preventDefault(); setEmail(""); alert("Köszönjük a feliratkozást!"); }}>
-                  <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="email@cim.hu" className="flex-1 px-4 py-3 bg-transparent border" style={{ borderColor: borderCol, color: sf.text_color }} />
-                  <button type="submit" className="px-6 py-3 font-bold uppercase tracking-widest" style={{ background: sf.accent_color, color: sf.bg_color }}>Feliratkozás</button>
+                  <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="email@cim.hu" className="sf-field flex-1 px-4 py-3 bg-transparent border" style={{ borderColor: borderCol, color: sf.text_color }} />
+                  <button type="submit" className="sf-btn px-6 py-3 font-bold uppercase tracking-widest" style={{ background: sf.accent_color, color: sf.bg_color }}>Feliratkozás</button>
                 </form>
               </div>
             </section>
