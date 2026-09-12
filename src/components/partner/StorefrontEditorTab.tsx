@@ -20,6 +20,7 @@ import AiMediaStudio from "@/components/ai/AiMediaStudio";
 import PartnerPagesTab from "./PartnerPagesTab";
 import StudioPanel from "./studio/StudioPanel";
 import BrandDnaPanel from "./studio/BrandDnaPanel";
+import AiCommandBar from "./studio/AiCommandBar";
 import type { QaReport } from "@/lib/storefront-studio";
 
 
@@ -382,11 +383,14 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
           </div>
         </TabsContent>
 
-        {/* BRAND DNA — design token rendszer + élő előnézet */}
+        {/* BRAND DNA — AI parancssáv + design token rendszer + élő előnézet */}
         <TabsContent value="branddna">
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-            <BrandDnaPanel sf={sf || {}} onChange={set} />
-            <StorefrontLivePreview storefrontId={sf?.id ?? null} slug={sf?.slug || ""} draft={sf} refreshKey={previewRefreshKey} />
+          <div className="space-y-4">
+            <AiCommandBar partnerId={partnerId} storefrontId={sf?.id ?? null} sf={sf || {}} onChange={set} />
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+              <BrandDnaPanel sf={sf || {}} onChange={set} />
+              <StorefrontLivePreview storefrontId={sf?.id ?? null} slug={sf?.slug || ""} draft={sf} refreshKey={previewRefreshKey} />
+            </div>
           </div>
         </TabsContent>
 
