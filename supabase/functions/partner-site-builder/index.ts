@@ -547,21 +547,49 @@ ${JSON.stringify(patch).slice(0, 9000)}`,
       }
     }
 
-    // 4) Aloldalak: ha a fő hívás nem adott vissza kész oldalakat, külön körben megírjuk
+    // 4) Tartalom-ügynök: a teljes weboldal aloldalai (nem csak vészhelyzeti fallback)
     let pages = normalizePages(parsed?.pages);
-    if (mode === "build" && pages.length < 3) {
-      const extra = await callAI(
-        apiKey,
-        MODEL_BUILD,
-        `Te magyar webshop-tartalomíró vagy. Írd meg a webshop 5 kötelező aloldalát KÉSZ, publikálható minőségben.
-Csak JSON: {"pages":[{"slug":string,"title":string,"content_html":string,"meta_title":string,"meta_description":string}]}
-Oldalak: Rólunk, Kapcsolat, GYIK, Szállítás és fizetés, Elállás és garancia.
-Minden oldal 500-1200 szó, <h2>/<h3>/<p>/<ul><li> tagekkel, a márkára szabva.
-TILOS kitalálni cégnevet, adószámot, címet, telefonszámot, konkrét díjat vagy határidőt.`,
-        `${brandContext}\n\nMárka konfiguráció:\n${JSON.stringify(patch).slice(0, 6000)}`,
-      ).catch(() => null);
-      const more = normalizePages(extra?.pages);
-      if (more.length) pages = more;
+    if (mode === "build") {
+      const brandBlock = `${brandContext}\n\nMárka konfiguráció:\n${JSON.stringify(patch).slice(0, 6000)}${strategyBlock}`;
+
+      // Két párhuzamos kör: kötelező oldalak + tartalom/SEO oldalak
+      const [core, extraSet] = await Promise.all([
+        callAI(apiKey, MODEL_BUILD, PAGES_SYSTEM_CORE, brandBlock).catch(() => null),
+        callAI(apiKey, MODEL_BUILD, PAGES_SYSTEM_EXTRA, brandBlock).catch(() => null),
+      ]);
+
+      const merged = normalizePages([
+        ...(Array.isArray(core?.pages) ? core.pages : []),
+        ...(Array.isArray(extraSet?.pages) ? extraSet.pages : []),
+        ...(Array.isArray(parsed?.pages) ? parsed.pages : []),
+      ]);
+      if (merged.length >= pages.length) pages = merged;
+
+      // Tartalom QA + egy célzott javító kör
+      if (pages.length) {
+        const pageQa = await callAI(
+          apiKey,
+          MODEL_FAST,
+          PAGE_QA_SYSTEM,
+          `Oldalak:\n${JSON.stringify(pages.map((p) => ({ slug: p.slug, title: p.title, words: p.content_html.replace(/<[^>]+>/g, " ").split(/\s+/).length, html: p.content_html.slice(0, 2500) }))).slice(0, 20000)}`,
+        ).catch(() => null);
+        const weak = Array.isArray(pageQa?.weak_slugs) ? pageQa.weak_slugs.map(String) : [];
+        if (weak.length) {
+          const rewritten = await callAI(
+            apiKey,
+            MODEL_BUILD,
+            PAGES_SYSTEM_CORE,
+            `${brandBlock}\n\nEZEKET AZ OLDALAKAT ÍRD ÚJRA, magasabb minőségben (a többit hagyd ki a válaszból): ${weak.join(", ")}\nQA kifogások: ${JSON.stringify(pageQa?.issues ?? []).slice(0, 3000)}`,
+          ).catch(() => null);
+          const fixed = normalizePages(rewritten?.pages);
+          if (fixed.length) {
+            const bySlug = new Map(pages.map((p) => [p.slug, p]));
+            for (const p of fixed) bySlug.set(p.slug, p);
+            pages = [...bySlug.values()];
+          }
+        }
+        if (pageQa?.total != null) warnings.push(`Tartalom minőség: ${Number(pageQa.total)}/100`);
+      }
     }
 
     return json({
