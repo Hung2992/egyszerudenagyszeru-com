@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Send, Loader2, Plus, Bot, User as UserIcon, Brain, Check, AlertTriangle, Wand2, Rocket, History, Undo2, BookOpen } from "lucide-react";
+import { Send, Loader2, Plus, Bot, User as UserIcon, Brain, Check, AlertTriangle, Wand2, Rocket, History, Undo2, BookOpen, Search, X, SlidersHorizontal } from "lucide-react";
 
 interface Props {
   partnerId: string;
@@ -146,8 +146,13 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [restoringId, setRestoringId] = useState<string | null>(null);
   const [pmIntro, setPmIntro] = useState("");
+  const [query, setQuery] = useState("");
+  const [hitSessions, setHitSessions] = useState<Record<string, number>>({});
+  const [searching, setSearching] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
 
 
   const loadSessions = async () => {
@@ -230,11 +235,51 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
   useEffect(() => { if (sessionId) void loadMessages(sessionId); }, [sessionId]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending]);
 
+  // 🔎 KERESÉS — beszélgetéscím + üzenetek tartalma (valós adat, partnerre szűrve)
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) { setHitSessions({}); setSearching(false); return; }
+    setSearching(true);
+    const t = setTimeout(async () => {
+      const ids = sessions.map((s) => s.id);
+      if (!ids.length) { setHitSessions({}); setSearching(false); return; }
+      const { data } = await supabase
+        .from("partner_ai_builder_messages")
+        .select("session_id")
+        .in("session_id", ids)
+        .ilike("content", `%${q}%`)
+        .limit(500);
+      const counts: Record<string, number> = {};
+      for (const r of (data as any[]) || []) counts[r.session_id] = (counts[r.session_id] || 0) + 1;
+      setHitSessions(counts);
+      setSearching(false);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [query, sessions]);
+
+  const q = query.trim().toLowerCase();
+  const visibleSessions = q.length < 2
+    ? sessions
+    : sessions.filter((s) => (s.title || "").toLowerCase().includes(q) || hitSessions[s.id]);
+  const messageHits = q.length < 2 ? 0 : messages.filter((m) => (m.content || "").toLowerCase().includes(q)).length;
+
+  // 🏷️ Okos cím — az első kérésből, hogy később kereshető legyen
+  const autoTitle = async (sid: string, msg: string) => {
+    const current = sessions.find((s) => s.id === sid);
+    if (current && current.title && current.title !== "Új beszélgetés") return;
+    const title = msg.replace(/\s+/g, " ").trim().slice(0, 70);
+    if (!title) return;
+    await supabase.from("partner_ai_builder_sessions").update({ title }).eq("id", sid);
+    setSessions((s) => s.map((x) => (x.id === sid ? { ...x, title } : x)));
+  };
+
+
   const send = async (text?: string) => {
     const msg = (text ?? input).trim();
     if (!msg || !sessionId || sending) return;
     setInput("");
     setMessages((m) => [...m, { role: "user", content: msg }]);
+    void autoTitle(sessionId, msg);
     setSending(true);
     setLiveSteps([]);
     setPmIntro("");
@@ -434,30 +479,62 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[240px_1fr]">
+    <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
       {/* Beszélgetések */}
-      <div className="space-y-2">
+      <div className="space-y-2 min-w-0">
         <Button onClick={() => newSession()} variant="outline" className="rounded-none w-full">
           <Plus className="h-4 w-4 mr-2" /> Új beszélgetés
         </Button>
+
+        {/* 🔎 KERESŐ — cím és üzenetek tartalma */}
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Keresés a beszélgetésekben…"
+            aria-label="Keresés a beszélgetésekben"
+            className="w-full h-9 border border-border bg-background text-xs pl-7 pr-7"
+          />
+          {!!query && (
+            <button
+              type="button" onClick={() => setQuery("")} aria-label="Keresés törlése"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+        {q.length >= 2 && (
+          <div className="text-[10px] text-muted-foreground">
+            {searching ? "Keresés…" : `${visibleSessions.length} beszélgetés · ${messageHits} találat itt`}
+          </div>
+        )}
+
         <div className="space-y-1 max-h-[280px] overflow-auto">
-          {sessions.map((s) => (
+          {visibleSessions.map((s) => (
             <button
               key={s.id}
               onClick={() => setSessionId(s.id)}
-              className={`w-full text-left text-xs px-3 py-2 border transition-colors ${
+              className={`w-full text-left text-xs px-3 py-2 border transition-colors flex items-center gap-2 ${
                 s.id === sessionId ? "border-primary text-foreground" : "border-border text-muted-foreground hover:text-foreground"
               }`}
             >
-              {s.title}
+              <span className="min-w-0 flex-1 truncate" title={s.title}>{s.title}</span>
+              {q.length >= 2 && !!hitSessions[s.id] && (
+                <span className="shrink-0 text-[9px] border border-primary/50 text-primary px-1">{hitSessions[s.id]}</span>
+              )}
             </button>
           ))}
+          {q.length >= 2 && !searching && visibleSessions.length === 0 && (
+            <p className="text-[11px] text-muted-foreground px-1 py-2">Nincs találat erre: „{query}”.</p>
+          )}
         </div>
         {memory && (
           <Card className="rounded-none border-border p-3 space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium"><Brain className="h-3.5 w-3.5" /> Márka-memória</div>
             {Object.entries(memory).slice(0, 6).map(([k, v]) => (
-              <div key={k} className="text-[11px] text-muted-foreground truncate">
+              <div key={k} className="text-[11px] text-muted-foreground break-words">
                 <span className="uppercase">{k}</span>: {Array.isArray(v) ? v.join(", ") : String(v)}
               </div>
             ))}
@@ -502,34 +579,43 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
 
       {/* Chat */}
       <Card className="rounded-none border-border flex flex-col h-[620px]">
-        <div className="border-b border-border p-3 flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
-            <Bot className="h-4 w-4 text-primary" />
+        <div className="border-b border-border p-3 space-y-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Bot className="h-4 w-4 text-primary shrink-0" />
             <span className="font-heading text-sm">AI fejlesztőcsapat — beszélj, és megépíti</span>
-          </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <select
-              value={projectType}
-              onChange={(e) => setProjectType(e.target.value)}
-              className="h-8 border border-border bg-background text-xs px-2"
-              aria-label="Projekt típusa"
-            >
-              {PROJECT_TYPES.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
-            </select>
-            <div className="flex items-center gap-2">
-              <Switch id="autoapply" checked={autoApply} onCheckedChange={setAutoApply} />
-              <Label htmlFor="autoapply" className="text-xs text-muted-foreground">Automatikus alkalmazás</Label>
-            </div>
             <Button
-              type="button" size="sm" variant="outline"
-              className="rounded-none h-8 text-xs ml-auto"
-              onClick={optimize} disabled={optimizing || sending}
+              type="button" size="sm" variant="ghost"
+              className="rounded-none h-7 text-[11px] ml-auto text-muted-foreground"
+              onClick={() => setShowAdvanced((v) => !v)}
+              aria-expanded={showAdvanced}
             >
-              {optimizing ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Rocket className="h-3 w-3 mr-1" />}
-              AI Optimalizáló
+              <SlidersHorizontal className="h-3 w-3 mr-1" /> Beállítások
             </Button>
-
           </div>
+          {showAdvanced && (
+            <div className="flex items-center gap-3 flex-wrap pt-1">
+              <select
+                value={projectType}
+                onChange={(e) => setProjectType(e.target.value)}
+                className="h-8 border border-border bg-background text-xs px-2"
+                aria-label="Projekt típusa"
+              >
+                {PROJECT_TYPES.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+              </select>
+              <div className="flex items-center gap-2">
+                <Switch id="autoapply" checked={autoApply} onCheckedChange={setAutoApply} />
+                <Label htmlFor="autoapply" className="text-xs text-muted-foreground">Automatikus alkalmazás</Label>
+              </div>
+              <Button
+                type="button" size="sm" variant="outline"
+                className="rounded-none h-8 text-xs ml-auto"
+                onClick={optimize} disabled={optimizing || sending}
+              >
+                {optimizing ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Rocket className="h-3 w-3 mr-1" />}
+                AI Optimalizáló
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="flex-1 overflow-auto p-4 space-y-4">
@@ -553,7 +639,12 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
           )}
 
           {messages.map((m, i) => (
-            <div key={m.id || i} className={`flex gap-3 ${m.role === "user" ? "justify-end" : ""}`}>
+            <div
+              key={m.id || i}
+              className={`flex gap-3 ${m.role === "user" ? "justify-end" : ""} ${
+                q.length >= 2 && (m.content || "").toLowerCase().includes(q) ? "bg-primary/5 border-l-2 border-primary pl-2" : ""
+              }`}
+            >
               {m.role !== "user" && <Bot className="h-4 w-4 mt-1 text-primary shrink-0" />}
               <div className={`max-w-[80%] space-y-2 ${m.role === "user" ? "text-right" : ""}`}>
                 <div className={m.role === "user"
