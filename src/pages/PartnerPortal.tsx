@@ -37,6 +37,11 @@ import PartnerAiTeamTab from "@/components/partner/PartnerAiTeamTab";
 import PartnerActionPlansTab from "@/components/partner/PartnerActionPlansTab";
 import PartnerCalendarTab from "@/components/partner/PartnerCalendarTab";
 import PartnerCooperationProgress from "@/components/partner/PartnerCooperationProgress";
+import ExecutiveCockpit from "@/components/partner/cockpit/ExecutiveCockpit";
+import PartnerNavigation from "@/components/partner/PartnerNavigation";
+import MobilePartnerNavigation from "@/components/partner/MobilePartnerNavigation";
+import CommandCenter from "@/components/partner/CommandCenter";
+import { isKnownTab } from "@/components/partner/partner-navigation";
 
 
 
@@ -50,7 +55,24 @@ const fmt = (n: number) => `${(n || 0).toLocaleString("hu-HU")} Ft`;
 const PartnerPortal = () => {
   const navigate = useNavigate();
   const { partner, isAdmin, loading, claim } = usePartnerCheck();
-  const [tab, setTab] = useState("dashboard");
+  // Deep-link kompatibilis lapkezelés: ?tab=... megmarad, ismeretlen tab a vezérlőközpontra esik vissza.
+  const initialTab = (() => {
+    const t = new URLSearchParams(window.location.search).get("tab");
+    return t && isKnownTab(t) ? t : "cockpit";
+  })();
+  const [tab, setTabState] = useState(initialTab);
+  const [recentTabs, setRecentTabs] = useState<string[]>([]);
+
+  const setTab = (next: string) => {
+    setTabState((prev) => {
+      if (prev !== next) setRecentTabs((r) => [prev, ...r.filter((x) => x !== prev && x !== next)].slice(0, 3));
+      return next;
+    });
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", next);
+    window.history.replaceState({}, "", url.toString());
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   const [storefrontId, setStorefrontId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -298,63 +320,26 @@ const PartnerPortal = () => {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-6 space-y-6">
+      <main className="mx-auto max-w-6xl px-4 py-6 space-y-6 pb-28 md:pb-6">
+        <CommandCenter onNavigate={setTab} />
         <PartnerCommandBar partnerId={partner.id} onNavigate={setTab} />
 
         <Tabs value={tab} onValueChange={setTab}>
-          {/* Mobilon egyszerű választólista, hogy minden szekció olvashatóan elérhető legyen */}
-          <select
-            value={tab}
-            onChange={(e) => setTab(e.target.value)}
-            aria-label="Partner Központ szekció"
-            className="md:hidden w-full rounded-none border border-border bg-background px-3 py-3 text-sm font-medium"
-          >
-            {[
-              ["dashboard", "Irányítópult"], ["orders", "Rendelések & ügyfelek"], ["calendar", "Naptár"],
-              ["inventory", "Készlet & árazás"], ["finance", "Pénzügy"], ["ai_team", "AI Csapatom"],
-              ["action_plans", "AI intézkedések"], ["advisor", "AI asszisztens"], ["overview", "Jutalék"],
-              ["storefront", "Saját webshop"], ["products", "Termékek"], ["shipping", "Szállítás"],
-              ["sales_sheet", "Értékesítési oldal"], ["digital", "Digitális kiszolgálás"],
-              ["referrals", "Ajánlások"], ["payouts", "Kifizetések"], ["marketing", "Marketing"], ["campaigns", "Hírlevelek"],
-              ["communication", "Kommunikációs API"],
-              ["workflows", "Automatizálás"], ["abtests", "A/B teszt"], ["plugins", "Pluginok"],
-              ["ai_marketplace", "AI Marketplace"], ["profile", "Profil"],
-              ["cooperation", "Együttműködés"],
-            ].map(([v, label]) => <option key={v} value={v}>{label}</option>)}
-          </select>
-          <TabsList className="hidden md:flex rounded-none w-full justify-start overflow-x-auto">
+          <PartnerNavigation tab={tab} onNavigate={setTab} recent={recentTabs} />
+          <MobilePartnerNavigation tab={tab} onNavigate={setTab} />
 
-            <TabsTrigger value="dashboard" className="rounded-none"><LayoutDashboard className="h-4 w-4 mr-2" />Irányítópult</TabsTrigger>
-            <TabsTrigger value="orders" className="rounded-none"><ShoppingBag className="h-4 w-4 mr-2" />Rendelések & ügyfelek</TabsTrigger>
-            <TabsTrigger value="calendar" className="rounded-none"><CalendarDays className="h-4 w-4 mr-2" />Naptár</TabsTrigger>
-            <TabsTrigger value="inventory" className="rounded-none"><Boxes className="h-4 w-4 mr-2" />Készlet & árazás</TabsTrigger>
-            <TabsTrigger value="finance" className="rounded-none"><Wallet className="h-4 w-4 mr-2" />Pénzügy</TabsTrigger>
-            <TabsTrigger value="ai_team" className="rounded-none"><Users className="h-4 w-4 mr-2" />AI Csapatom</TabsTrigger>
-            <TabsTrigger value="action_plans" className="rounded-none"><Target className="h-4 w-4 mr-2" />AI intézkedések</TabsTrigger>
-            <TabsTrigger value="advisor" className="rounded-none"><Sparkles className="h-4 w-4 mr-2" />AI asszisztens</TabsTrigger>
-            <TabsTrigger value="overview" className="rounded-none"><BarChart3 className="h-4 w-4 mr-2" />Jutalék</TabsTrigger>
-
-            <TabsTrigger value="storefront" className="rounded-none"><Store className="h-4 w-4 mr-2" />Saját webshop</TabsTrigger>
-            <TabsTrigger value="products" className="rounded-none"><Package className="h-4 w-4 mr-2" />Termékek</TabsTrigger>
-            <TabsTrigger value="shipping" className="rounded-none"><TruckIcon className="h-4 w-4 mr-2" />Szállítás</TabsTrigger>
-            <TabsTrigger value="sales_sheet" className="rounded-none"><Package className="h-4 w-4 mr-2" />Értékesítési oldal</TabsTrigger>
-            <TabsTrigger value="digital" className="rounded-none"><KeyRound className="h-4 w-4 mr-2" />Digitális kiszolgálás</TabsTrigger>
-            <TabsTrigger value="referrals" className="rounded-none"><ListChecks className="h-4 w-4 mr-2" />Ajánlások</TabsTrigger>
-            <TabsTrigger value="payouts" className="rounded-none"><Banknote className="h-4 w-4 mr-2" />Kifizetések</TabsTrigger>
-            <TabsTrigger value="marketing" className="rounded-none"><Megaphone className="h-4 w-4 mr-2" />Marketing</TabsTrigger>
-            <TabsTrigger value="campaigns" className="rounded-none"><Mail className="h-4 w-4 mr-2" />Hírlevelek</TabsTrigger>
-            <TabsTrigger value="communication" className="rounded-none"><KeyRound className="h-4 w-4 mr-2" />Kommunikációs API</TabsTrigger>
-            <TabsTrigger value="workflows" className="rounded-none"><Workflow className="h-4 w-4 mr-2" />Automatizálás</TabsTrigger>
-            <TabsTrigger value="abtests" className="rounded-none"><FlaskConical className="h-4 w-4 mr-2" />A/B teszt</TabsTrigger>
-            <TabsTrigger value="plugins" className="rounded-none"><Puzzle className="h-4 w-4 mr-2" />Pluginok</TabsTrigger>
-            <TabsTrigger value="ai_marketplace" className="rounded-none"><Bot className="h-4 w-4 mr-2" />AI Marketplace</TabsTrigger>
-            <TabsTrigger value="profile" className="rounded-none"><UserIcon className="h-4 w-4 mr-2" />Profil</TabsTrigger>
-            <TabsTrigger value="cooperation" className="rounded-none"><ShieldCheck className="h-4 w-4 mr-2" />Együttműködés</TabsTrigger>
-          </TabsList>
+          <TabsContent value="cockpit" className="mt-6">
+            <ExecutiveCockpit
+              partnerId={partner.id}
+              partnerName={partner.company_name || partner.full_name}
+              onNavigate={setTab}
+            />
+          </TabsContent>
 
           <TabsContent value="dashboard" className="mt-6">
             <PartnerDashboardTab partnerId={partner.id} onNavigate={setTab} />
           </TabsContent>
+
 
           <TabsContent value="orders" className="mt-6">
             <PartnerOrdersTab partnerId={partner.id} />
