@@ -19,6 +19,7 @@ import AiWebCreatorChat from "./AiWebCreatorChat";
 import AiMediaStudio from "@/components/ai/AiMediaStudio";
 import PartnerPagesTab from "./PartnerPagesTab";
 import StudioPanel from "./studio/StudioPanel";
+import type { QaReport } from "@/lib/storefront-studio";
 
 
 import PreviewTokenManager from "./PreviewTokenManager";
@@ -54,6 +55,7 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
   const { partner, isAdmin } = usePartnerCheck();
   const [sf, setSf] = useState<any>(null);
   const [tab, setTab] = useState("studio");
+  const [qaReport, setQaReport] = useState<QaReport | null>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
@@ -360,7 +362,7 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
         {/* WEBSHOP STUDIO — állapot, minőség, szerkezet + élő előnézet */}
         <TabsContent value="studio">
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-            <StudioPanel partnerId={partnerId} sf={sf} onChange={set} onJumpToTab={setTab} />
+            <StudioPanel partnerId={partnerId} sf={sf} onChange={set} onJumpToTab={setTab} onReport={setQaReport} />
             <StorefrontLivePreview storefrontId={sf?.id ?? null} slug={sf?.slug || ""} draft={sf} refreshKey={previewRefreshKey} />
           </div>
         </TabsContent>
