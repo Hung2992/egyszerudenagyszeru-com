@@ -66,6 +66,18 @@
     <priority>0.3</priority>
   </url>
   <url>
+    <loc>https://egyszerudenagyszeru.com/b/andrea-szolgaltatas</loc>
+    <lastmod>2026-09-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://andrea-szolgaltatas.egyszerudenagyszeru.com/</loc>
+    <lastmod>2026-09-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://egyszerudenagyszeru.com/b/gwggwhwg</loc>
     <lastmod>2026-09-11</lastmod>
     <changefreq>weekly</changefreq>
@@ -85,18 +97,6 @@
   </url>
   <url>
     <loc>https://apexparts-premium-autoalkatreszek-847dd0.egyszerudenagyszeru.com/</loc>
-    <lastmod>2026-09-11</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://egyszerudenagyszeru.com/b/andrea-szolgaltatas</loc>
-    <lastmod>2026-09-11</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://andrea-szolgaltatas.egyszerudenagyszeru.com/</loc>
     <lastmod>2026-09-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
