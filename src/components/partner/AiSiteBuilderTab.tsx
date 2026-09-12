@@ -28,6 +28,8 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
   const [refining, setRefining] = useState(false);
   const [withImages, setWithImages] = useState(true);
   const [imaging, setImaging] = useState(false);
+  const [withPages, setWithPages] = useState(true);
+  const [withProducts, setWithProducts] = useState(true);
 
   const generate = async () => {
     if (prompt.trim().length < 5) {
@@ -106,6 +108,50 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
     }
   };
 
+  const applyPagesAndProducts = async () => {
+    let pageCount = 0;
+    let productCount = 0;
+
+    if (withPages && Array.isArray(result?.pages) && result.pages.length) {
+      const rows = result.pages.map((p: any, i: number) => ({
+        partner_id: partnerId,
+        slug: String(p.slug),
+        title: String(p.title),
+        content_html: String(p.content_html || ""),
+        meta_title: p.meta_title ? String(p.meta_title) : null,
+        meta_description: p.meta_description ? String(p.meta_description) : null,
+        is_published: true,
+        sort_order: i,
+      }));
+      const { error } = await supabase
+        .from("partner_pages")
+        .upsert(rows, { onConflict: "partner_id,slug" });
+      if (error) throw new Error(`Aloldalak: ${error.message}`);
+      pageCount = rows.length;
+    }
+
+    if (withProducts && Array.isArray(result?.product_ideas) && result.product_ideas.length) {
+      const suffix = Math.random().toString(36).slice(2, 6);
+      const rows = result.product_ideas.map((p: any) => ({
+        partner_id: partnerId,
+        slug: `${String(p.slug || "termek")}-${suffix}`,
+        title: String(p.title),
+        description: String(p.description || ""),
+        price_huf: Math.max(0, Math.round(Number(p.suggested_price_huf) || 0)),
+        category: p.category || null,
+        product_type: String(p.product_type || "clothing"),
+        fulfillment_type: String(p.fulfillment_type || "physical"),
+        stock_qty: 0,
+        status: "draft",
+      }));
+      const { error } = await supabase.from("partner_products").insert(rows);
+      if (error) throw new Error(`Termékek: ${error.message}`);
+      productCount = rows.length;
+    }
+
+    return { pageCount, productCount };
+  };
+
   const apply = async () => {
 
     if (!result?.patch) return;
@@ -134,8 +180,16 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
         });
         if (error) throw error;
       }
+      const { pageCount, productCount } = await applyPagesAndProducts();
       onApplied(result.patch);
-      toast({ title: "Alkalmazva", description: "A webshop beállításai frissültek. Nézd meg az Élő előnézetet!" });
+      const extras = [
+        pageCount ? `${pageCount} aloldal publikálva` : "",
+        productCount ? `${productCount} termék piszkozatként létrehozva` : "",
+      ].filter(Boolean).join(", ");
+      toast({
+        title: "Alkalmazva",
+        description: `A webshop beállításai frissültek${extras ? ` — ${extras}` : ""}. Nézd meg az Élő előnézetet!`,
+      });
     } catch (e: any) {
       toast({ title: "Mentés sikertelen", description: e?.message, variant: "destructive" });
     } finally {
@@ -184,9 +238,27 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
           />
           Készüljenek AI képek is a főoldalra (kicsit tovább tart)
         </label>
+        <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+          <input
+            type="checkbox"
+            checked={withPages}
+            onChange={(e) => setWithPages(e.target.checked)}
+            className="h-4 w-4 accent-current"
+          />
+          Készüljenek aloldalak is (Rólunk, Kapcsolat, GYIK, Szállítás, Elállás)
+        </label>
+        <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+          <input
+            type="checkbox"
+            checked={withProducts}
+            onChange={(e) => setWithProducts(e.target.checked)}
+            className="h-4 w-4 accent-current"
+          />
+          Készüljenek termék-piszkozatok is a javasolt kínálatból
+        </label>
         <Button onClick={generate} disabled={loading} className="rounded-none">
           {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Wand2 className="h-4 w-4 mr-2" />}
-          {loading ? "Építés…" : "Webshop generálása"}
+          {loading ? "Építés…" : "Teljes webshop + weboldal generálása"}
         </Button>
       </Card>
 
@@ -304,6 +376,26 @@ const AiSiteBuilderTab = ({ partnerId, onApplied }: Props) => {
                 </div>
               ))}
           </div>
+
+          {!!result.pages?.length && (
+            <div className="space-y-2">
+              <h5 className="text-sm font-medium">Elkészült aloldalak ({result.pages.length})</h5>
+              <div className="grid gap-2 md:grid-cols-2">
+                {result.pages.map((p: any, i: number) => (
+                  <div key={i} className="border border-border p-3">
+                    <div className="text-sm font-medium">{p.title}</div>
+                    <div className="text-[11px] text-muted-foreground">/{p.slug}</div>
+                    <div className="text-xs text-muted-foreground mt-1 line-clamp-3">
+                      {String(p.content_html || "").replace(/<[^>]+>/g, " ").slice(0, 220)}…
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Alkalmazáskor ezek publikált aloldalakként jönnek létre.
+              </p>
+            </div>
+          )}
 
           {!!result.product_ideas?.length && (
             <div className="space-y-2">

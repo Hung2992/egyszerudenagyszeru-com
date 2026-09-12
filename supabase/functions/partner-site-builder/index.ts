@@ -58,7 +58,16 @@ const SCHEMA = `{
     "footer_text": string, "footer_links": [{"label": string, "url": string}],
     "meta_title": string, "meta_description": string, "seo_keywords": [string]
   },
-  "product_ideas": [{"title": string, "description": string, "suggested_price_huf": number}],
+  "pages": [
+    {
+      "slug": string (ékezet nélküli, kisbetűs url-rész, pl. "rolunk", "kapcsolat", "gyik", "szallitas-fizetes", "aszf"),
+      "title": string (magyar oldalcím),
+      "content_html": string (KOMPLETT, kész magyar oldal HTML-je: 500-1200 szó, <h2>, <h3>, <p>, <ul><li> tagekkel, konkrét tartalommal — semmilyen helyőrző, kitalált cégadat, adószám vagy telefonszám nélkül),
+      "meta_title": string (<60 karakter),
+      "meta_description": string (<155 karakter)
+    }
+  ] (PONTOSAN 5 aloldal: Rólunk, Kapcsolat, GYIK, Szállítás és fizetés, Elállás/garancia — a márkára szabva),
+  "product_ideas": [{"title": string, "description": string (2-3 mondat, előny-fókuszú), "suggested_price_huf": number, "category": string, "product_type": "clothing"|"accessory"|"digital"|"service"|"course", "fulfillment_type": "physical"|"digital"|"service"}],
   "image_prompts": {
     "hero": string (ANGOL képgenerálási prompt a hero háttérhez, márkához illő, fotórealisztikus, szöveg és logó NÉLKÜL),
     "section1": string (ANGOL prompt a section1 illusztrációhoz),
@@ -82,6 +91,8 @@ Minőségi elvárások (prémium szint):
 - SEO: meta_title < 60 karakter kulcsszóval, meta_description < 155 karakter, 5-8 releváns magyar kulcsszó.
 - Ne találj ki céges jogi adatot, adószámot, telefonszámot, címet, konkrét árat vagy díjat.
 - Ha vannak meglévő termékek, a szövegek RÁJUK utaljanak konkrétan.
+- Aloldalak: nem vázlat, hanem KÉSZ, publikálható tartalom. A Kapcsolat oldalon csak űrlapra/e-mailre utalj általánosan, konkrét elérhetőséget NE találj ki. A jogi jellegű oldalakon (szállítás, elállás) az általános magyar fogyasztóvédelmi kereteket írd le, konkrét díj és határidő kitalálása nélkül, jelezve hogy a partner pontosítja.
+- Termékötletek: 6 db, a márkához illő, eltérő árszinttel és valódi terméknévvel.
 
 Kizárólag érvényes JSON-t adj vissza, semmi mást.
 
@@ -220,6 +231,70 @@ function contrast(a: string, b: string): number | null {
   if (!ra || !rb) return null;
   const l1 = lum(ra), l2 = lum(rb);
   return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+}
+
+const slugify = (s: string) =>
+  String(s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 60);
+
+const PRODUCT_TYPES = ["clothing", "accessory", "digital", "service", "course"];
+const FULFILLMENTS = ["physical", "digital", "service"];
+
+function normalizePages(raw: unknown) {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  const out: Record<string, string>[] = [];
+  for (const p of raw as any[]) {
+    const title = String(p?.title || "").trim().slice(0, 120);
+    const html = String(p?.content_html || "").trim();
+    if (!title || html.length < 120) continue;
+    const slug = slugify(p?.slug || title) || `oldal-${out.length + 1}`;
+    if (seen.has(slug)) continue;
+    seen.add(slug);
+    out.push({
+      slug,
+      title,
+      content_html: html.slice(0, 20000),
+      meta_title: String(p?.meta_title || title).slice(0, 60),
+      meta_description: String(p?.meta_description || "").slice(0, 155),
+    });
+    if (out.length >= 8) break;
+  }
+  return out;
+}
+
+function normalizeProducts(raw: unknown) {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  const out: Record<string, unknown>[] = [];
+  for (const p of raw as any[]) {
+    const title = String(p?.title || "").trim().slice(0, 140);
+    if (!title) continue;
+    const slug = slugify(title);
+    if (!slug || seen.has(slug)) continue;
+    seen.add(slug);
+    const price = Math.max(0, Math.round(Number(p?.suggested_price_huf) || 0));
+    const type = PRODUCT_TYPES.includes(String(p?.product_type)) ? String(p.product_type) : "clothing";
+    const ff = FULFILLMENTS.includes(String(p?.fulfillment_type))
+      ? String(p.fulfillment_type)
+      : type === "digital" || type === "course" ? "digital" : type === "service" ? "service" : "physical";
+    out.push({
+      title,
+      slug,
+      description: String(p?.description || "").slice(0, 1200),
+      suggested_price_huf: price,
+      category: String(p?.category || "").slice(0, 60) || null,
+      product_type: type,
+      fulfillment_type: ff,
+    });
+    if (out.length >= 8) break;
+  }
+  return out;
 }
 
 function normalize(rawPatch: Record<string, any>) {
@@ -435,6 +510,9 @@ ${JSON.stringify(patch).slice(0, 9000)}`,
       if (Array.isArray(improved?.product_ideas) && improved.product_ideas.length) {
         parsed.product_ideas = improved.product_ideas;
       }
+      if (Array.isArray(improved?.pages) && improved.pages.length) {
+        parsed.pages = improved.pages;
+      }
     }
 
     const textKeys = Object.keys(patch).filter((k) => typeof patch[k] === "string" && String(patch[k]).trim());
@@ -469,6 +547,23 @@ ${JSON.stringify(patch).slice(0, 9000)}`,
       }
     }
 
+    // 4) Aloldalak: ha a fő hívás nem adott vissza kész oldalakat, külön körben megírjuk
+    let pages = normalizePages(parsed?.pages);
+    if (mode === "build" && pages.length < 3) {
+      const extra = await callAI(
+        apiKey,
+        MODEL_BUILD,
+        `Te magyar webshop-tartalomíró vagy. Írd meg a webshop 5 kötelező aloldalát KÉSZ, publikálható minőségben.
+Csak JSON: {"pages":[{"slug":string,"title":string,"content_html":string,"meta_title":string,"meta_description":string}]}
+Oldalak: Rólunk, Kapcsolat, GYIK, Szállítás és fizetés, Elállás és garancia.
+Minden oldal 500-1200 szó, <h2>/<h3>/<p>/<ul><li> tagekkel, a márkára szabva.
+TILOS kitalálni cégnevet, adószámot, címet, telefonszámot, konkrét díjat vagy határidőt.`,
+        `${brandContext}\n\nMárka konfiguráció:\n${JSON.stringify(patch).slice(0, 6000)}`,
+      ).catch(() => null);
+      const more = normalizePages(extra?.pages);
+      if (more.length) pages = more;
+    }
+
     return json({
       ok: true,
       mode,
@@ -478,8 +573,9 @@ ${JSON.stringify(patch).slice(0, 9000)}`,
       target,
       strategy,
       images,
+      pages,
       warnings: [...new Set(warnings)],
-      product_ideas: Array.isArray(parsed.product_ideas) ? parsed.product_ideas.slice(0, 8) : [],
+      product_ideas: normalizeProducts(parsed.product_ideas),
       explanation: String(parsed.explanation || "Elkészült a webshop terve."),
     });
   } catch (e) {
