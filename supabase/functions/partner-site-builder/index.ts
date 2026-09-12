@@ -402,6 +402,32 @@ ${JSON.stringify(patch).slice(0, 9000)}`,
       return json({ error: "Az AI nem adott vissza használható konfigurációt. Próbáld részletesebb leírással." }, 502);
     }
 
+    // 3) Valódi képek generálása a hero és a két szekció számára
+    const images: Record<string, string> = {};
+    if (wantImages) {
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+      if (serviceKey) {
+        const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", serviceKey);
+        const prompts = (parsed?.image_prompts && typeof parsed.image_prompts === "object")
+          ? parsed.image_prompts
+          : {};
+        const brandHint = `Brand: ${patch.display_name || partner.company_name || ""}. Mood: ${patch.tagline || ""}.`;
+        const finalPrompts: Record<string, string> = {
+          hero: String(prompts.hero || `Hero background for a webshop. ${brandHint}`),
+          section1: String(prompts.section1 || ""),
+          section2: String(prompts.section2 || ""),
+        };
+        try {
+          const res = await generateAndStore(apiKey, admin, partnerId, finalPrompts);
+          Object.assign(images, res.paths);
+          Object.assign(patch, res.paths);
+          if (res.failed.length) warnings.push("Néhány kép generálása nem sikerült — később újrapróbálhatod.");
+        } catch {
+          warnings.push("A képgenerálás most nem futott le, a szövegek elkészültek.");
+        }
+      }
+    }
+
     return json({
       ok: true,
       mode,
@@ -409,6 +435,8 @@ ${JSON.stringify(patch).slice(0, 9000)}`,
       qa,
       rounds,
       target,
+      strategy,
+      images,
       warnings: [...new Set(warnings)],
       product_ideas: Array.isArray(parsed.product_ideas) ? parsed.product_ideas.slice(0, 8) : [],
       explanation: String(parsed.explanation || "Elkészült a webshop terve."),
