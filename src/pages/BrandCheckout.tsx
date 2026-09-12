@@ -17,6 +17,7 @@ const ERRORS: Record<string, string> = {
   out_of_stock: "Egy termékből nincs elegendő készlet.",
   product_unavailable: "Egy termék már nem elérhető.",
   store_not_found: "Ez a webshop nem érhető el.",
+  invalid_shipping_method: "Válassz szállítási módot.",
 };
 
 const BrandCheckout = () => {
@@ -79,6 +80,29 @@ const BrandCheckout = () => {
 
   const hasPhysical = items.some((i) => i.physical);
 
+  // Partner szállítási módjai
+  const [methods, setMethods] = useState<any[]>([]);
+  const [methodId, setMethodId] = useState<string>("");
+  useEffect(() => {
+    if (!sf?.partner_id) return;
+    (async () => {
+      const { data } = await supabase.from("partner_shipping_methods")
+        .select("id, name, description, method_type, fee_huf, free_over_huf, requires_address")
+        .eq("partner_id", sf.partner_id).eq("is_active", true).order("sort_order");
+      setMethods(data || []);
+      if (data?.length) setMethodId((m) => m || data[0].id);
+    })();
+  }, [sf?.partner_id]);
+
+  const selectedMethod = methods.find((m) => m.id === methodId) || null;
+  const shippingFee = !hasPhysical || !selectedMethod
+    ? 0
+    : (selectedMethod.free_over_huf && subtotal >= Number(selectedMethod.free_over_huf))
+      ? 0
+      : Math.max(0, Number(selectedMethod.fee_huf) || 0);
+  const needsAddress = hasPhysical && (!selectedMethod || selectedMethod.requires_address !== false);
+  const grandTotal = subtotal + shippingFee;
+
   const style = useMemo(() => ({
     background: sf?.bg_color || "#000",
     color: sf?.text_color || "#fff",
@@ -100,6 +124,7 @@ const BrandCheckout = () => {
         customer_phone: form.customer_phone,
         notes: form.notes,
         payment_method: form.payment_method,
+        shipping_method_id: methodId || undefined,
         shipping_address: { street: form.street, city: form.city, zip: form.zip, country: "Magyarország" },
         items: items.map((i) => ({ product_id: i.product_id, qty: i.qty })),
       },
@@ -181,7 +206,36 @@ const BrandCheckout = () => {
                 <input className={inputCls} style={{ borderColor: border }} placeholder="Teljes név" value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} />
                 <input type="email" className={inputCls} style={{ borderColor: border }} placeholder="E-mail cím" value={form.customer_email} onChange={(e) => setForm({ ...form, customer_email: e.target.value })} />
                 <input className={inputCls} style={{ borderColor: border }} placeholder="Telefonszám (nem kötelező)" value={form.customer_phone} onChange={(e) => setForm({ ...form, customer_phone: e.target.value })} />
-                {hasPhysical && (
+                {hasPhysical && methods.length > 0 && (
+                  <>
+                    <div className="text-xs uppercase tracking-widest opacity-70 pt-2">Szállítási mód</div>
+                    <div className="space-y-2">
+                      {methods.map((m) => (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => setMethodId(m.id)}
+                          className="w-full border p-3 text-left flex justify-between gap-3 items-center"
+                          style={{ borderColor: methodId === m.id ? accent : border }}
+                        >
+                          <span>
+                            <span className="text-sm font-bold block">{m.name}</span>
+                            {m.description && <span className="text-xs opacity-70">{m.description}</span>}
+                            {m.free_over_huf ? (
+                              <span className="text-xs opacity-70 block">
+                                Ingyenes {Number(m.free_over_huf).toLocaleString("hu-HU")} Ft felett
+                              </span>
+                            ) : null}
+                          </span>
+                          <span className="text-sm whitespace-nowrap" style={{ color: accent }}>
+                            {Number(m.fee_huf) > 0 ? `${Number(m.fee_huf).toLocaleString("hu-HU")} Ft` : "Ingyenes"}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {needsAddress && (
                   <>
                     <div className="text-xs uppercase tracking-widest opacity-70 pt-2">Szállítási cím</div>
                     <input className={inputCls} style={{ borderColor: border }} placeholder="Utca, házszám" value={form.street} onChange={(e) => setForm({ ...form, street: e.target.value })} />
@@ -208,9 +262,14 @@ const BrandCheckout = () => {
             <aside className="border p-5 h-fit space-y-3" style={{ borderColor: border }}>
               <div className="text-xs uppercase tracking-widest opacity-70">Összegzés</div>
               <div className="flex justify-between text-sm"><span>Tételek ({count} db)</span><span>{subtotal.toLocaleString("hu-HU")} Ft</span></div>
-              {hasPhysical && <div className="flex justify-between text-sm opacity-70"><span>Szállítás</span><span>a visszaigazolás szerint</span></div>}
+              {hasPhysical && (
+                <div className="flex justify-between text-sm opacity-70">
+                  <span>Szállítás{selectedMethod ? ` – ${selectedMethod.name}` : ""}</span>
+                  <span>{methods.length ? (shippingFee > 0 ? `${shippingFee.toLocaleString("hu-HU")} Ft` : "Ingyenes") : "a visszaigazolás szerint"}</span>
+                </div>
+              )}
               <div className="flex justify-between text-lg font-bold pt-2 border-t" style={{ borderColor: border }}>
-                <span>Végösszeg</span><span style={{ color: accent }}>{subtotal.toLocaleString("hu-HU")} Ft</span>
+                <span>Végösszeg</span><span style={{ color: accent }}>{grandTotal.toLocaleString("hu-HU")} Ft</span>
               </div>
               <button disabled={busy} onClick={() => void submit()} className="w-full py-4 uppercase tracking-widest font-bold border-2 disabled:opacity-40" style={{ borderColor: accent, color: accent }}>
                 {busy ? "Küldés…" : "Rendelés leadása"}

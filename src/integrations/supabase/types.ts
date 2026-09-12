@@ -8611,6 +8611,59 @@ export type Database = {
           },
         ]
       }
+      partner_shipping_methods: {
+        Row: {
+          created_at: string
+          description: string | null
+          fee_huf: number
+          free_over_huf: number | null
+          id: string
+          is_active: boolean
+          method_type: string
+          name: string
+          partner_id: string
+          requires_address: boolean
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          fee_huf?: number
+          free_over_huf?: number | null
+          id?: string
+          is_active?: boolean
+          method_type?: string
+          name: string
+          partner_id: string
+          requires_address?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          fee_huf?: number
+          free_over_huf?: number | null
+          id?: string
+          is_active?: boolean
+          method_type?: string
+          name?: string
+          partner_id?: string
+          requires_address?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_shipping_methods_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_sitemap_cache: {
         Row: {
           etag: string

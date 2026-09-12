@@ -16,6 +16,8 @@ import { copyToClipboard } from "@/lib/clipboard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import StorefrontEditorTab from "@/components/partner/StorefrontEditorTab";
 import PartnerProductsTab from "@/components/partner/PartnerProductsTab";
+import PartnerShippingTab from "@/components/partner/PartnerShippingTab";
+import { Truck as TruckIcon } from "lucide-react";
 import PartnerDigitalDeliveryTab from "@/components/partner/PartnerDigitalDeliveryTab";
 import PartnerMarketingHub from "@/components/partner/PartnerMarketingHub";
 import PartnerWorkflowsTab from "@/components/partner/PartnerWorkflowsTab";
@@ -332,6 +334,7 @@ const PartnerPortal = () => {
 
             <TabsTrigger value="storefront" className="rounded-none"><Store className="h-4 w-4 mr-2" />Saját webshop</TabsTrigger>
             <TabsTrigger value="products" className="rounded-none"><Package className="h-4 w-4 mr-2" />Termékek</TabsTrigger>
+            <TabsTrigger value="shipping" className="rounded-none"><TruckIcon className="h-4 w-4 mr-2" />Szállítás</TabsTrigger>
             <TabsTrigger value="digital" className="rounded-none"><KeyRound className="h-4 w-4 mr-2" />Digitális kiszolgálás</TabsTrigger>
             <TabsTrigger value="referrals" className="rounded-none"><ListChecks className="h-4 w-4 mr-2" />Ajánlások</TabsTrigger>
             <TabsTrigger value="payouts" className="rounded-none"><Banknote className="h-4 w-4 mr-2" />Kifizetések</TabsTrigger>
@@ -386,6 +389,10 @@ const PartnerPortal = () => {
 
           <TabsContent value="products" className="mt-6">
             <PartnerProductsTab partnerId={partner.id} />
+          </TabsContent>
+
+          <TabsContent value="shipping" className="mt-6">
+            <PartnerShippingTab partnerId={partner.id} />
           </TabsContent>
 
           <TabsContent value="digital" className="mt-6">
