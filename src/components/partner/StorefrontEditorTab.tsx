@@ -15,6 +15,7 @@ import MediaImage from "./MediaImage";
 import PartnerDomainTab from "./PartnerDomainTab";
 import StorefrontVersionsTab from "./StorefrontVersionsTab";
 import StorefrontLivePreview from "./StorefrontLivePreview";
+import AiStudioPromptLauncher from "./AiStudioPromptLauncher";
 import AiWebCreatorChat from "./AiWebCreatorChat";
 import AiMediaStudio from "@/components/ai/AiMediaStudio";
 import PartnerPagesTab from "./PartnerPagesTab";
@@ -293,6 +294,11 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
 
   return (
     <div className="space-y-6">
+      <AiStudioPromptLauncher
+        title="Webshop — mondd el, mit változtassunk"
+        placeholder="Pl.: Legyen karácsonyi hangulatú a nyitókép…"
+      />
+
       {/* Status banner */}
       <Card className="rounded-none border-foreground/20 p-4 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3 flex-wrap">

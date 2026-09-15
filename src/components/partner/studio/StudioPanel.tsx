@@ -17,6 +17,8 @@ import {
   type QaArea,
   type QaReport,
 } from "@/lib/storefront-studio";
+import AiStudioPromptLauncher from "../AiStudioPromptLauncher";
+import SectionRedesignPanel from "./SectionRedesignPanel";
 
 interface Props {
   partnerId: string;
@@ -76,6 +78,11 @@ const StudioPanel = ({ partnerId, sf, onChange, onJumpToTab, onReport }: Props) 
 
   return (
     <div className="space-y-4">
+      <AiStudioPromptLauncher
+        title="Partner Studio — mondd el, mit építsünk át"
+        placeholder="Pl.: Tervezd újra a nyitóképernyő szövegeit…"
+      />
+
       {/* Állapot + összpontszám */}
       <Card className="rounded-none border-foreground/20 p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -213,6 +220,9 @@ const StudioPanel = ({ partnerId, sf, onChange, onJumpToTab, onReport }: Props) 
           );
         })}
       </Card>
+
+      {/* Szekciónkénti AI újratervezés */}
+      <SectionRedesignPanel partnerId={partnerId} sf={sf} onChange={onChange} />
     </div>
   );
 };
