@@ -11,6 +11,7 @@ import type { HealthDimension } from "./HealthMetric";
 import DailyBriefing, { type Briefing } from "./DailyBriefing";
 import PriorityList from "./PriorityList";
 import type { Priority } from "./PriorityItem";
+import AiStudioPromptLauncher from "../AiStudioPromptLauncher";
 import { QUICK_ACTIONS } from "../partner-navigation";
 
 interface Pulse {
