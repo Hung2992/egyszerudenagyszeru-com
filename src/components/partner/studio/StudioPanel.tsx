@@ -220,6 +220,9 @@ const StudioPanel = ({ partnerId, sf, onChange, onJumpToTab, onReport }: Props) 
           );
         })}
       </Card>
+
+      {/* Szekciónkénti AI újratervezés */}
+      <SectionRedesignPanel partnerId={partnerId} sf={sf} onChange={onChange} />
     </div>
   );
 };
