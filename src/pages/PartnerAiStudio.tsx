@@ -1,25 +1,29 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { usePartnerCheck } from "@/hooks/usePartnerCheck";
 import AiWebCreatorChat from "@/components/partner/AiWebCreatorChat";
 import StorefrontLivePreview from "@/components/partner/StorefrontLivePreview";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MessageSquare, MonitorPlay, Loader2, ExternalLink } from "lucide-react";
+import { ArrowLeft, MessageSquare, MonitorPlay, Columns2, Loader2, ExternalLink } from "lucide-react";
 import { buildPreviewUrl } from "@/lib/partner-storefront-urls";
+
+type MobileView = "chat" | "preview" | "split";
 
 /**
  * Külön, teljes képernyős AI Studio oldal (Lovable-stílus):
  * bal oldalon a beszélgetés, jobb oldalon az élő webshop előnézet.
- * Mobilon a két nézet között váltani lehet.
+ * Mobilon chat / előnézet / osztott nézet között lehet váltani.
  */
 const PartnerAiStudio = () => {
   const navigate = useNavigate();
   const { partner, loading } = usePartnerCheck();
+  const [params] = useSearchParams();
+  const initialPrompt = params.get("prompt") || "";
   const [sf, setSf] = useState<any>(null);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [mobileView, setMobileView] = useState<"chat" | "preview">("chat");
+  const [mobileView, setMobileView] = useState<MobileView>("chat");
 
   const load = async (partnerId: string) => {
     const { data } = await supabase
@@ -48,6 +52,15 @@ const PartnerAiStudio = () => {
 
   const previewUrl = buildPreviewUrl(window.location.origin, sf || {});
 
+  const VIEWS: { key: MobileView; label: string; Icon: typeof MessageSquare }[] = [
+    { key: "chat", label: "Chat", Icon: MessageSquare },
+    { key: "split", label: "Kettő", Icon: Columns2 },
+    { key: "preview", label: "Bolt", Icon: MonitorPlay },
+  ];
+
+  const showChat = mobileView === "chat" || mobileView === "split";
+  const showPreview = mobileView === "preview" || mobileView === "split";
+
   return (
     <div className="flex h-[100dvh] flex-col bg-background text-foreground">
       <Helmet>
@@ -57,7 +70,7 @@ const PartnerAiStudio = () => {
       </Helmet>
 
       {/* Fejléc */}
-      <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3">
+      <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-2 md:px-3">
         <Button asChild variant="ghost" size="sm" className="rounded-none h-8 px-2">
           <Link to="/partner?tab=storefront" aria-label="Vissza a partnerportálra">
             <ArrowLeft className="h-4 w-4" />
@@ -80,34 +93,30 @@ const PartnerAiStudio = () => {
           )}
           {/* Mobil nézetváltó */}
           <div className="flex border border-border md:hidden">
-            <button
-              type="button"
-              onClick={() => setMobileView("chat")}
-              aria-pressed={mobileView === "chat"}
-              className={`flex items-center gap-1 px-2 py-1.5 text-[11px] ${mobileView === "chat" ? "bg-foreground text-background" : "text-muted-foreground"}`}
-            >
-              <MessageSquare className="h-3 w-3" /> Chat
-            </button>
-            <button
-              type="button"
-              onClick={() => setMobileView("preview")}
-              aria-pressed={mobileView === "preview"}
-              className={`flex items-center gap-1 px-2 py-1.5 text-[11px] ${mobileView === "preview" ? "bg-foreground text-background" : "text-muted-foreground"}`}
-            >
-              <MonitorPlay className="h-3 w-3" /> Előnézet
-            </button>
+            {VIEWS.map(({ key, label, Icon }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setMobileView(key)}
+                aria-pressed={mobileView === key}
+                className={`flex items-center gap-1 px-2 py-1.5 text-[11px] ${mobileView === key ? "bg-foreground text-background" : "text-muted-foreground"}`}
+              >
+                <Icon className="h-3 w-3" /> {label}
+              </button>
+            ))}
           </div>
         </div>
       </header>
 
       {/* Split munkaterület */}
-      <main className="grid min-h-0 flex-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+      <main className="grid min-h-0 flex-1 grid-rows-[auto] md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] md:grid-rows-1 overflow-y-auto md:overflow-hidden">
         <section
-          className={`min-h-0 overflow-auto border-border p-3 md:block md:border-r ${mobileView === "chat" ? "block" : "hidden"}`}
+          className={`min-h-0 overflow-auto border-border p-2 md:block md:p-3 md:border-r ${showChat ? "block" : "hidden"}`}
           aria-label="AI beszélgetés"
         >
           <AiWebCreatorChat
             partnerId={partner.id}
+            initialPrompt={initialPrompt}
             onApplied={(patch) => {
               setSf((cur: any) => ({ ...(cur || {}), ...patch }));
               setRefreshKey((k) => k + 1);
@@ -117,7 +126,7 @@ const PartnerAiStudio = () => {
         </section>
 
         <section
-          className={`min-h-0 overflow-auto bg-muted/20 p-3 md:block ${mobileView === "preview" ? "block" : "hidden"}`}
+          className={`min-h-0 overflow-auto bg-muted/20 p-2 md:block md:p-3 ${showPreview ? "block" : "hidden"}`}
           aria-label="Élő előnézet"
         >
           {sf?.slug ? (
@@ -126,6 +135,7 @@ const PartnerAiStudio = () => {
               slug={sf.slug}
               draft={sf}
               refreshKey={refreshKey}
+              showAiLauncher={false}
             />
           ) : (
             <p className="p-4 text-sm text-muted-foreground">
