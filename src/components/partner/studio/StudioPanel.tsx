@@ -76,6 +76,11 @@ const StudioPanel = ({ partnerId, sf, onChange, onJumpToTab, onReport }: Props) 
 
   return (
     <div className="space-y-4">
+      <AiStudioPromptLauncher
+        title="Partner Studio — mondd el, mit építsünk át"
+        placeholder="Pl.: Tervezd újra a nyitóképernyő szövegeit…"
+      />
+
       {/* Állapot + összpontszám */}
       <Card className="rounded-none border-foreground/20 p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
