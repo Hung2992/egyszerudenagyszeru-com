@@ -493,9 +493,21 @@ const AiWebCreatorChat = ({ partnerId, onApplied, initialPrompt }: Props) => {
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
+    <div className="grid gap-3 lg:gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
+      {/* Mobil kapcsoló: beszélgetések és verziók */}
+      <Button
+        type="button"
+        variant="outline"
+        className="rounded-none w-full lg:hidden h-9 text-xs"
+        onClick={() => setShowSidebar((v) => !v)}
+        aria-expanded={showSidebar}
+      >
+        <History className="h-3.5 w-3.5 mr-2" />
+        {showSidebar ? "Beszélgetések és verziók elrejtése" : "Beszélgetések és verziók"}
+      </Button>
+
       {/* Beszélgetések */}
-      <div className="space-y-2 min-w-0">
+      <div className={`space-y-2 min-w-0 ${showSidebar ? "block" : "hidden"} lg:block`}>
         <Button onClick={() => newSession()} variant="outline" className="rounded-none w-full">
           <Plus className="h-4 w-4 mr-2" /> Új beszélgetés
         </Button>
