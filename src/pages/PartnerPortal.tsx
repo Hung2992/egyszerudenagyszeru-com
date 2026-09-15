@@ -321,6 +321,7 @@ const PartnerPortal = () => {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-6 space-y-6 pb-28 md:pb-6">
+        <AiStudioPromptLauncher />
         <CommandCenter onNavigate={setTab} />
         <PartnerCommandBar partnerId={partner.id} onNavigate={setTab} />
 
