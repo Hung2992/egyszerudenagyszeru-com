@@ -11,6 +11,7 @@ import type { HealthDimension } from "./HealthMetric";
 import DailyBriefing, { type Briefing } from "./DailyBriefing";
 import PriorityList from "./PriorityList";
 import type { Priority } from "./PriorityItem";
+import AiStudioPromptLauncher from "../AiStudioPromptLauncher";
 import { QUICK_ACTIONS } from "../partner-navigation";
 
 interface Pulse {
@@ -67,6 +68,10 @@ const ExecutiveCockpit = ({ partnerId, partnerName, onNavigate }: { partnerId: s
 
   return (
     <div className="space-y-4">
+      <AiStudioPromptLauncher
+        title="AI fejlesztő — mondd el, mit építsünk"
+        placeholder="Pl.: Frissítsd a nyitóoldalt őszi kampányra…"
+      />
       <div className="flex items-end justify-between gap-3 flex-wrap">
         <div>
           <h2 className="text-xl md:text-2xl font-bold tracking-tight">{greeting()}, {partnerName}!</h2>

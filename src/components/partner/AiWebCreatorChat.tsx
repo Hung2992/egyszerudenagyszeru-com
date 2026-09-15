@@ -12,6 +12,8 @@ import { Send, Loader2, Plus, Bot, User as UserIcon, Brain, Check, AlertTriangle
 interface Props {
   partnerId: string;
   onApplied: (patch: Record<string, any>) => void;
+  /** Külső parancsmezőből érkező kezdő utasítás (pl. /partner/ai-studio?prompt=…) */
+  initialPrompt?: string;
 }
 
 interface QaCheck {
@@ -130,7 +132,8 @@ const scoreLabel = (s: number) => tierOf(s).label;
 const deviceIcon = (d: string) => (d === "Desktop" ? "🖥️" : d === "Tablet" ? "📲" : d === "Android" ? "🤖" : "📱");
 
 
-const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
+const AiWebCreatorChat = ({ partnerId, onApplied, initialPrompt }: Props) => {
+  const [showSidebar, setShowSidebar] = useState(false);
   const [sessions, setSessions] = useState<any[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -234,6 +237,17 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
   useEffect(() => { void loadSessions(); void loadMemory(); void loadSnapshots(); /* eslint-disable-next-line */ }, [partnerId]);
   useEffect(() => { if (sessionId) void loadMessages(sessionId); }, [sessionId]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending]);
+
+  // ➡️ Külső parancsmezőből érkező utasítás előtöltése (a küldés a partneré marad)
+  const seededRef = useRef(false);
+  useEffect(() => {
+    const p = (initialPrompt || "").trim();
+    if (!p || seededRef.current) return;
+    seededRef.current = true;
+    setInput(p);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }, [initialPrompt]);
+
 
   // 🔎 KERESÉS — beszélgetéscím + üzenetek tartalma (valós adat, partnerre szűrve)
   useEffect(() => {
@@ -479,9 +493,21 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
+    <div className="grid gap-3 lg:gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
+      {/* Mobil kapcsoló: beszélgetések és verziók */}
+      <Button
+        type="button"
+        variant="outline"
+        className="rounded-none w-full lg:hidden h-9 text-xs"
+        onClick={() => setShowSidebar((v) => !v)}
+        aria-expanded={showSidebar}
+      >
+        <History className="h-3.5 w-3.5 mr-2" />
+        {showSidebar ? "Beszélgetések és verziók elrejtése" : "Beszélgetések és verziók"}
+      </Button>
+
       {/* Beszélgetések */}
-      <div className="space-y-2 min-w-0">
+      <div className={`space-y-2 min-w-0 ${showSidebar ? "block" : "hidden"} lg:block`}>
         <Button onClick={() => newSession()} variant="outline" className="rounded-none w-full">
           <Plus className="h-4 w-4 mr-2" /> Új beszélgetés
         </Button>
@@ -578,7 +604,7 @@ const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
       </div>
 
       {/* Chat */}
-      <Card className="rounded-none border-border flex flex-col h-[620px]">
+      <Card className="rounded-none border-border flex flex-col h-[68dvh] min-h-[380px] lg:h-[620px]">
         <div className="border-b border-border p-3 space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
             <Bot className="h-4 w-4 text-primary shrink-0" />

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Smartphone, Monitor, RefreshCw, Link2 } from "lucide-react";
+import AiStudioPromptLauncher from "./AiStudioPromptLauncher";
 import { toast } from "@/hooks/use-toast";
 
 interface Props {
@@ -10,9 +11,11 @@ interface Props {
   draft: any;
   /** Bump this number to force a cache-busted iframe reload (publish, DNS verified, etc.) */
   refreshKey?: number;
+  /** AI parancsmező az előnézet fölött (az AI Studio oldalon kikapcsolva) */
+  showAiLauncher?: boolean;
 }
 
-const StorefrontLivePreview = ({ storefrontId, slug, draft, refreshKey = 0 }: Props) => {
+const StorefrontLivePreview = ({ storefrontId, slug, draft, refreshKey = 0, showAiLauncher = true }: Props) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const [shareToken, setShareToken] = useState<string | null>(null);
@@ -60,6 +63,12 @@ const StorefrontLivePreview = ({ storefrontId, slug, draft, refreshKey = 0 }: Pr
 
   return (
     <div className="space-y-2 sticky top-2">
+      {showAiLauncher && (
+        <AiStudioPromptLauncher
+          compact
+          placeholder="Mit változtassunk a webshopon? Az AI Studio megnyílik…"
+        />
+      )}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex gap-1">
           <Button size="sm" variant={device === "desktop" ? "default" : "outline"} className="rounded-none" onClick={() => setDevice("desktop")}>
@@ -84,10 +93,9 @@ const StorefrontLivePreview = ({ storefrontId, slug, draft, refreshKey = 0 }: Pr
           ref={iframeRef}
           src={iframeSrc}
           title="Live preview"
-          className="bg-background"
+          className="bg-background h-[60dvh] max-w-full md:h-[720px]"
           style={{
             width: device === "mobile" ? 390 : "100%",
-            height: device === "mobile" ? 720 : 720,
             border: "none",
           }}
         />

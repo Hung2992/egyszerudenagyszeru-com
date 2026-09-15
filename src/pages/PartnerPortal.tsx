@@ -40,6 +40,7 @@ import PartnerCooperationProgress from "@/components/partner/PartnerCooperationP
 import ExecutiveCockpit from "@/components/partner/cockpit/ExecutiveCockpit";
 import PartnerNavigation from "@/components/partner/PartnerNavigation";
 import MobilePartnerNavigation from "@/components/partner/MobilePartnerNavigation";
+import AiStudioPromptLauncher from "@/components/partner/AiStudioPromptLauncher";
 import CommandCenter from "@/components/partner/CommandCenter";
 import { isKnownTab } from "@/components/partner/partner-navigation";
 
@@ -321,6 +322,7 @@ const PartnerPortal = () => {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-6 space-y-6 pb-28 md:pb-6">
+        <AiStudioPromptLauncher />
         <CommandCenter onNavigate={setTab} />
         <PartnerCommandBar partnerId={partner.id} onNavigate={setTab} />
 
