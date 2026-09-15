@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Wand2, Loader2, Check, X, ArrowRight } from "lucide-react";
+import { Wand2, Loader2, Check, X, ArrowRight, Smartphone, Monitor } from "lucide-react";
 import {
   REDESIGN_SECTIONS,
   getRedesignSection,
@@ -16,6 +16,12 @@ import {
   type RedesignProposal,
   type RedesignSectionId,
 } from "@/lib/section-redesign";
+
+type DeviceId = "mobile" | "desktop";
+const DEVICES: { id: DeviceId; label: string; Icon: typeof Smartphone }[] = [
+  { id: "mobile", label: "Mobil", Icon: Smartphone },
+  { id: "desktop", label: "Asztali", Icon: Monitor },
+];
 
 interface Props {
   partnerId: string;
@@ -30,6 +36,7 @@ const SectionRedesignPanel = ({ partnerId, sf, onChange }: Props) => {
   const [proposal, setProposal] = useState<RedesignProposal | null>(null);
   const [rejected, setRejected] = useState<string[]>([]);
   const [applied, setApplied] = useState(false);
+  const [device, setDevice] = useState<DeviceId>("mobile");
 
   const def = useMemo(() => getRedesignSection(section)!, [section]);
 
@@ -142,24 +149,56 @@ const SectionRedesignPanel = ({ partnerId, sf, onChange }: Props) => {
         <div className="border border-foreground/20 p-3 space-y-3">
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Előtte / Utána</p>
-            <Badge variant="secondary" className="rounded-none text-[10px]">
-              {proposal.changes.length} módosítás
-            </Badge>
+            <div className="flex items-center gap-2">
+              <div className="flex border border-border">
+                {DEVICES.map((d) => (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => setDevice(d.id)}
+                    aria-pressed={device === d.id}
+                    className={`flex items-center gap-1 px-2 py-1 text-[11px] ${device === d.id ? "bg-foreground text-background" : "text-muted-foreground"}`}
+                  >
+                    <d.Icon className="h-3 w-3" /> {d.label}
+                  </button>
+                ))}
+              </div>
+              <Badge variant="secondary" className="rounded-none text-[10px]">
+                {proposal.changes.length} módosítás
+              </Badge>
+            </div>
           </div>
 
-          {proposal.changes.map((c) => (
-            <div key={c.key} className="grid gap-2 border-b border-foreground/10 pb-3 last:border-0 last:pb-0 md:grid-cols-[1fr_auto_1fr] md:items-start">
-              <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{c.label} — előtte</p>
-                <p className="text-xs break-words line-through opacity-70">{c.from || "üres"}</p>
-              </div>
-              <ArrowRight className="hidden h-4 w-4 text-muted-foreground md:block md:mt-4" />
-              <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Utána</p>
-                <p className="text-xs break-words font-medium">{c.to}</p>
-              </div>
+          {/* Külön mobil és asztali változat: a mobil nézet 390 px széles keretben, feltekerve */}
+          <div className={device === "mobile" ? "mx-auto w-full max-w-[390px]" : "w-full"}>
+            <div className="border border-dashed border-foreground/20 p-2">
+              <p className="mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                {device === "mobile" ? "Mobil nézet (390 px)" : "Asztali nézet (teljes szélesség)"}
+              </p>
+              {proposal.changes.map((c) => (
+                <div
+                  key={c.key}
+                  className={`gap-2 border-b border-foreground/10 py-3 first:pt-0 last:border-0 last:pb-0 ${
+                    device === "desktop" ? "grid md:grid-cols-[1fr_auto_1fr] md:items-start" : "grid grid-cols-1"
+                  }`}
+                >
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{c.label} — előtte</p>
+                    <p className={`break-words line-through opacity-70 ${device === "mobile" ? "text-[13px] leading-snug" : "text-xs"}`}>
+                      {c.from || "üres"}
+                    </p>
+                  </div>
+                  {device === "desktop" && <ArrowRight className="hidden h-4 w-4 text-muted-foreground md:block md:mt-4" />}
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Utána</p>
+                    <p className={`break-words font-medium ${device === "mobile" ? "text-[15px] leading-snug" : "text-xs"}`}>
+                      {c.to}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
 
           {proposal.rationale && (
             <p className="text-xs text-muted-foreground">{proposal.rationale}</p>

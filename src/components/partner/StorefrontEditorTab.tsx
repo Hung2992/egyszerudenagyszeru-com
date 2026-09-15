@@ -759,7 +759,7 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
 
         {/* VERSIONS */}
         <TabsContent value="versions">
-          <StorefrontVersionsTab storefrontId={sf?.id ?? null} onRestored={load} />
+          <StorefrontVersionsTab storefrontId={sf?.id ?? null} isAdmin={isAdmin} onRestored={load} />
         </TabsContent>
 
         {/* AUDIT */}

@@ -4,14 +4,15 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { RotateCcw, History, Eye } from "lucide-react";
+import { RotateCcw, History, Eye, Rocket, Loader2 } from "lucide-react";
 
-interface Props { storefrontId: string | null; onRestored?: () => void; }
+interface Props { storefrontId: string | null; isAdmin?: boolean; onRestored?: () => void; }
 
-const StorefrontVersionsTab = ({ storefrontId, onRestored }: Props) => {
+const StorefrontVersionsTab = ({ storefrontId, isAdmin = false, onRestored }: Props) => {
   const [versions, setVersions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [preview, setPreview] = useState<any>(null);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
 
   const load = async () => {
     if (!storefrontId) { setVersions([]); setLoading(false); return; }
@@ -41,6 +42,45 @@ const StorefrontVersionsTab = ({ storefrontId, onRestored }: Props) => {
     await load();
   };
 
+
+  /**
+   * Publikálás egy korábbi verzióból: a snapshot visszaáll a valódi webshopra, majd
+   * admin esetén azonnal élesedik, partnernél publikálási kérés indul.
+   */
+  const publishFrom = async (v: any) => {
+    if (!storefrontId) return;
+    const q = isAdmin
+      ? `Élesíted a #${v.version_number} verziót? A valódi webshop azonnal erre a változatra frissül.`
+      : `Beküldöd a #${v.version_number} verziót publikálásra? A webshop tartalma erre a változatra áll vissza.`;
+    if (!confirm(q)) return;
+    setPublishingId(v.id);
+    try {
+      const snap = { ...(v.snapshot || {}) };
+      for (const k of ["id", "created_at", "updated_at", "is_published", "published_at", "last_approved_version_id", "partner_id", "slug"]) delete snap[k];
+      snap.publish_requested_at = new Date().toISOString();
+      if (isAdmin) { snap.is_published = true; snap.published_at = new Date().toISOString(); }
+
+      const { error } = await supabase.from("partner_storefronts").update(snap).eq("id", storefrontId);
+      if (error) throw new Error(error.message);
+
+      if (isAdmin) {
+        await supabase.from("partner_storefront_versions").update({ is_published_version: false }).eq("storefront_id", storefrontId);
+        await supabase.from("partner_storefront_versions").update({ is_published_version: true }).eq("id", v.id);
+      }
+
+      toast({
+        title: isAdmin ? `Élesítve: #${v.version_number}` : `Publikálás kérve: #${v.version_number}`,
+        description: isAdmin ? "A valódi webshop erre a változatra frissült." : "A webshop tartalma visszaállt, az élesítést az admin hagyja jóvá.",
+      });
+      onRestored?.();
+      await load();
+    } catch (e: any) {
+      toast({ title: "Hiba", description: String(e?.message || "Nem sikerült publikálni."), variant: "destructive" });
+    } finally {
+      setPublishingId(null);
+    }
+  };
+
   if (!storefrontId) return <p className="text-sm text-muted-foreground">Először mentsd el a storefrontot, hogy verziók készüljenek.</p>;
 
   return (
@@ -66,8 +106,12 @@ const StorefrontVersionsTab = ({ storefrontId, onRestored }: Props) => {
               <Button size="sm" variant="outline" className="rounded-none" onClick={() => setPreview(v)}>
                 <Eye className="h-3 w-3 mr-1" /> Adatok
               </Button>
-              <Button size="sm" className="rounded-none" onClick={() => restore(v)}>
+              <Button size="sm" variant="outline" className="rounded-none" onClick={() => restore(v)}>
                 <RotateCcw className="h-3 w-3 mr-1" /> Visszaállítás
+              </Button>
+              <Button size="sm" className="rounded-none" onClick={() => publishFrom(v)} disabled={publishingId === v.id}>
+                {publishingId === v.id ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Rocket className="h-3 w-3 mr-1" />}
+                {isAdmin ? "Élesítés" : "Publikálás kérése"}
               </Button>
             </div>
           </Card>
