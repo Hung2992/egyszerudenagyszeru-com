@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Smartphone, Monitor, RefreshCw, Link2 } from "lucide-react";
+import AiStudioPromptLauncher from "./AiStudioPromptLauncher";
 import { toast } from "@/hooks/use-toast";
 
 interface Props {
