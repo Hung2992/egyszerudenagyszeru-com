@@ -15,6 +15,7 @@ import MediaImage from "./MediaImage";
 import PartnerDomainTab from "./PartnerDomainTab";
 import StorefrontVersionsTab from "./StorefrontVersionsTab";
 import StorefrontLivePreview from "./StorefrontLivePreview";
+import AiStudioPromptLauncher from "./AiStudioPromptLauncher";
 import AiWebCreatorChat from "./AiWebCreatorChat";
 import AiMediaStudio from "@/components/ai/AiMediaStudio";
 import PartnerPagesTab from "./PartnerPagesTab";
