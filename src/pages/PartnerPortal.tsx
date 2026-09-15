@@ -40,6 +40,7 @@ import PartnerCooperationProgress from "@/components/partner/PartnerCooperationP
 import ExecutiveCockpit from "@/components/partner/cockpit/ExecutiveCockpit";
 import PartnerNavigation from "@/components/partner/PartnerNavigation";
 import MobilePartnerNavigation from "@/components/partner/MobilePartnerNavigation";
+import AiStudioPromptLauncher from "@/components/partner/AiStudioPromptLauncher";
 import CommandCenter from "@/components/partner/CommandCenter";
 import { isKnownTab } from "@/components/partner/partner-navigation";
 
