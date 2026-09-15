@@ -12,6 +12,8 @@ import { Send, Loader2, Plus, Bot, User as UserIcon, Brain, Check, AlertTriangle
 interface Props {
   partnerId: string;
   onApplied: (patch: Record<string, any>) => void;
+  /** Külső parancsmezőből érkező kezdő utasítás (pl. /partner/ai-studio?prompt=…) */
+  initialPrompt?: string;
 }
 
 interface QaCheck {
