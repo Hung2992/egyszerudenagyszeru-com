@@ -17,6 +17,8 @@ import {
   type QaArea,
   type QaReport,
 } from "@/lib/storefront-studio";
+import AiStudioPromptLauncher from "../AiStudioPromptLauncher";
+import SectionRedesignPanel from "./SectionRedesignPanel";
 
 interface Props {
   partnerId: string;
