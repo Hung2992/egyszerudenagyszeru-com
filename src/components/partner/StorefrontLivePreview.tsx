@@ -10,9 +10,11 @@ interface Props {
   draft: any;
   /** Bump this number to force a cache-busted iframe reload (publish, DNS verified, etc.) */
   refreshKey?: number;
+  /** AI parancsmező az előnézet fölött (az AI Studio oldalon kikapcsolva) */
+  showAiLauncher?: boolean;
 }
 
-const StorefrontLivePreview = ({ storefrontId, slug, draft, refreshKey = 0 }: Props) => {
+const StorefrontLivePreview = ({ storefrontId, slug, draft, refreshKey = 0, showAiLauncher = true }: Props) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const [shareToken, setShareToken] = useState<string | null>(null);
