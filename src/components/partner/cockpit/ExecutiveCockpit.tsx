@@ -12,6 +12,7 @@ import DailyBriefing, { type Briefing } from "./DailyBriefing";
 import PriorityList from "./PriorityList";
 import type { Priority } from "./PriorityItem";
 import AiStudioPromptLauncher from "../AiStudioPromptLauncher";
+import AiCampaignPlanner from "./AiCampaignPlanner";
 import { QUICK_ACTIONS } from "../partner-navigation";
 
 interface Pulse {
@@ -173,8 +174,11 @@ const ExecutiveCockpit = ({ partnerId, partnerName, onNavigate }: { partnerId: s
               ))}
             </div>
           </Card>
+
         </>
       )}
+
+      <AiCampaignPlanner partnerId={partnerId} />
     </div>
   );
 };

@@ -6339,6 +6339,92 @@ export type Database = {
           },
         ]
       }
+      partner_campaign_plans: {
+        Row: {
+          approved_at: string | null
+          audience: string
+          created_at: string
+          goal: string
+          id: string
+          message_body: string | null
+          message_headline: string | null
+          name: string
+          newsletter_body: string | null
+          newsletter_subject: string | null
+          page_body: string | null
+          page_cta_text: string | null
+          page_headline: string | null
+          page_slug: string | null
+          page_subheadline: string | null
+          partner_id: string
+          published_at: string | null
+          published_blast_id: string | null
+          published_landing_page_id: string | null
+          qa_report: Json
+          status: string
+          tone: string | null
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          audience: string
+          created_at?: string
+          goal: string
+          id?: string
+          message_body?: string | null
+          message_headline?: string | null
+          name: string
+          newsletter_body?: string | null
+          newsletter_subject?: string | null
+          page_body?: string | null
+          page_cta_text?: string | null
+          page_headline?: string | null
+          page_slug?: string | null
+          page_subheadline?: string | null
+          partner_id: string
+          published_at?: string | null
+          published_blast_id?: string | null
+          published_landing_page_id?: string | null
+          qa_report?: Json
+          status?: string
+          tone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          audience?: string
+          created_at?: string
+          goal?: string
+          id?: string
+          message_body?: string | null
+          message_headline?: string | null
+          name?: string
+          newsletter_body?: string | null
+          newsletter_subject?: string | null
+          page_body?: string | null
+          page_cta_text?: string | null
+          page_headline?: string | null
+          page_slug?: string | null
+          page_subheadline?: string | null
+          partner_id?: string
+          published_at?: string | null
+          published_blast_id?: string | null
+          published_landing_page_id?: string | null
+          qa_report?: Json
+          status?: string
+          tone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_campaign_plans_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_campaigns: {
         Row: {
           channels: string[]

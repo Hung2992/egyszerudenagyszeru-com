@@ -132,12 +132,22 @@ const scoreLabel = (s: number) => tierOf(s).label;
 const deviceIcon = (d: string) => (d === "Desktop" ? "🖥️" : d === "Tablet" ? "📲" : d === "Android" ? "🤖" : "📱");
 
 
+// A parancs hatóköre: az AI kizárólag a választott szekcióra alkalmazza a kérést.
+const CHAT_SCOPES = [
+  { id: "all", label: "Teljes bolt", prefix: "" },
+  { id: "hero", label: "Nyitókép", prefix: "Kizárólag a nyitóképernyő (hero) szekcióra vonatkozzon, mást ne módosíts:" },
+  { id: "products", label: "Termékek", prefix: "Kizárólag a termékmegjelenítő szekcióra vonatkozzon, mást ne módosíts:" },
+  { id: "search", label: "Kereső", prefix: "Kizárólag a kereső és kategóriaszűrő részre vonatkozzon, mást ne módosíts:" },
+  { id: "checkout", label: "Pénztár", prefix: "Kizárólag a kosár és pénztár folyamatra vonatkozzon, mást ne módosíts:" },
+] as const;
+
 const AiWebCreatorChat = ({ partnerId, onApplied, initialPrompt }: Props) => {
   const [showSidebar, setShowSidebar] = useState(false);
   const [sessions, setSessions] = useState<any[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
+  const [scope, setScope] = useState<string>("all");
   const [sending, setSending] = useState(false);
   const [refining, setRefining] = useState(false);
   const [optimizing, setOptimizing] = useState(false);
@@ -289,11 +299,14 @@ const AiWebCreatorChat = ({ partnerId, onApplied, initialPrompt }: Props) => {
 
 
   const send = async (text?: string) => {
-    const msg = (text ?? input).trim();
-    if (!msg || !sessionId || sending) return;
+    const typed = (text ?? input).trim();
+    const scopeDef = CHAT_SCOPES.find((s) => s.id === scope);
+    const msg = scopeDef && scopeDef.id !== "all" ? `${scopeDef.prefix} ${typed}` : typed;
+    if (!typed || !sessionId || sending) return;
     setInput("");
-    setMessages((m) => [...m, { role: "user", content: msg }]);
-    void autoTitle(sessionId, msg);
+    const shownScope = scopeDef && scopeDef.id !== "all" ? `[${scopeDef.label}] ` : "";
+    setMessages((m) => [...m, { role: "user", content: `${shownScope}${typed}` }]);
+    void autoTitle(sessionId, typed);
     setSending(true);
     setLiveSteps([]);
     setPmIntro("");
@@ -893,7 +906,22 @@ const AiWebCreatorChat = ({ partnerId, onApplied, initialPrompt }: Props) => {
           <div ref={bottomRef} />
         </div>
 
-        <div className="border-t border-border p-3 flex gap-2">
+        <div className="border-t border-border px-3 pt-3 flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground mr-1">Szekció:</span>
+          {CHAT_SCOPES.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setScope(s.id)}
+              aria-pressed={scope === s.id}
+              className={`border px-2 py-1 text-[11px] ${scope === s.id ? "border-foreground bg-foreground text-background" : "border-border text-muted-foreground"}`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="border-t-0 p-3 flex gap-2">
           <Textarea
             ref={inputRef}
             rows={2}
