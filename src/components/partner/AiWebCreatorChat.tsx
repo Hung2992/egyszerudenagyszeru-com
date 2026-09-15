@@ -238,6 +238,17 @@ const AiWebCreatorChat = ({ partnerId, onApplied, initialPrompt }: Props) => {
   useEffect(() => { if (sessionId) void loadMessages(sessionId); }, [sessionId]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending]);
 
+  // ➡️ Külső parancsmezőből érkező utasítás előtöltése (a küldés a partneré marad)
+  const seededRef = useRef(false);
+  useEffect(() => {
+    const p = (initialPrompt || "").trim();
+    if (!p || seededRef.current) return;
+    seededRef.current = true;
+    setInput(p);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }, [initialPrompt]);
+
+
   // 🔎 KERESÉS — beszélgetéscím + üzenetek tartalma (valós adat, partnerre szűrve)
   useEffect(() => {
     const q = query.trim();
