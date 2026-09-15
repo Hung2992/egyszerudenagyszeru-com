@@ -62,6 +62,12 @@ const StorefrontLivePreview = ({ storefrontId, slug, draft, refreshKey = 0, show
 
   return (
     <div className="space-y-2 sticky top-2">
+      {showAiLauncher && (
+        <AiStudioPromptLauncher
+          compact
+          placeholder="Mit változtassunk a webshopon? Az AI Studio megnyílik…"
+        />
+      )}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex gap-1">
           <Button size="sm" variant={device === "desktop" ? "default" : "outline"} className="rounded-none" onClick={() => setDevice("desktop")}>
