@@ -604,7 +604,7 @@ const AiWebCreatorChat = ({ partnerId, onApplied, initialPrompt }: Props) => {
       </div>
 
       {/* Chat */}
-      <Card className="rounded-none border-border flex flex-col h-[620px]">
+      <Card className="rounded-none border-border flex flex-col h-[68dvh] min-h-[380px] lg:h-[620px]">
         <div className="border-b border-border p-3 space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
             <Bot className="h-4 w-4 text-primary shrink-0" />
