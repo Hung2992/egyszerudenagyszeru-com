@@ -93,10 +93,9 @@ const StorefrontLivePreview = ({ storefrontId, slug, draft, refreshKey = 0, show
           ref={iframeRef}
           src={iframeSrc}
           title="Live preview"
-          className="bg-background"
+          className="bg-background h-[60dvh] max-w-full md:h-[720px]"
           style={{
             width: device === "mobile" ? 390 : "100%",
-            height: device === "mobile" ? 720 : 720,
             border: "none",
           }}
         />
