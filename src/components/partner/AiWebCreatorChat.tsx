@@ -132,7 +132,8 @@ const scoreLabel = (s: number) => tierOf(s).label;
 const deviceIcon = (d: string) => (d === "Desktop" ? "🖥️" : d === "Tablet" ? "📲" : d === "Android" ? "🤖" : "📱");
 
 
-const AiWebCreatorChat = ({ partnerId, onApplied }: Props) => {
+const AiWebCreatorChat = ({ partnerId, onApplied, initialPrompt }: Props) => {
+  const [showSidebar, setShowSidebar] = useState(false);
   const [sessions, setSessions] = useState<any[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
