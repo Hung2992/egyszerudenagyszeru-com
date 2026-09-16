@@ -137,6 +137,16 @@ const BrandCheckout = () => {
       return;
     }
     clearBrandCart(slug);
+    // Kampány-konverzió: ha a vásárló kampányból érkezett, ehhez a kampányhoz számoljuk.
+    const attrPlanId = getCampaignAttribution();
+    if (attrPlanId) {
+      void supabase.rpc("track_campaign_event", {
+        _plan_id: attrPlanId,
+        _kind: "order",
+        _amount: Number((data as any).total_huf || 0),
+      });
+      clearCampaignAttribution();
+    }
     setDone({ order_number: (data as any).order_number, total_huf: (data as any).total_huf });
   };
 
