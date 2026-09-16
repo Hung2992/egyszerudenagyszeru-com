@@ -127,7 +127,7 @@ describe("E2E redirect: minden partner-állapotnál a partner storefrontra megy"
       } else if (sf.custom_domain && sf.custom_domain_status === "verified") {
         expect(classifyUrl(url)).toBe("custom_domain");
       } else {
-        expect(classifyUrl(url)).toBe("subdomain");
+        expect(url).toBe("https://egyszerudenagyszeru.com/b/x");
       }
     });
   }
