@@ -14621,12 +14621,10 @@ export type Database = {
         Args: { _password: string }
         Returns: boolean
       }
-      track_campaign_event:
-        | { Args: { _kind: string; _plan_id: string }; Returns: undefined }
-        | {
-            Args: { _amount?: number; _kind: string; _plan_id: string }
-            Returns: undefined
-          }
+      track_campaign_event: {
+        Args: { _amount?: number; _kind: string; _plan_id: string }
+        Returns: undefined
+      }
       tts_cleanup_expired: { Args: never; Returns: Json }
       update_strategy_stats: {
         Args: { _strategy_id: string }
