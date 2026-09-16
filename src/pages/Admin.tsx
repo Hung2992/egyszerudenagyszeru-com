@@ -41,6 +41,7 @@ const AdminPilotPartnersTab = lazy(lazyRetry(() => import("@/components/admin/Ad
 const AdminPartnerCenterTab = lazy(lazyRetry(() => import("@/components/admin/AdminPartnerCenterTab")));
 const AdminPartnerManagerTab = lazy(lazyRetry(() => import("@/components/admin/AdminPartnerManagerTab")));
 const AdminPartnerConnectionsTab = lazy(lazyRetry(() => import("@/components/admin/AdminPartnerConnectionsTab")));
+const AdminTransferLinksTab = lazy(lazyRetry(() => import("@/components/admin/AdminTransferLinksTab")));
 const AdminMarketingHubTab = lazy(lazyRetry(() => import("@/components/admin/AdminMarketingHubTab")));
 const AdminAiMarketingCeo = lazy(lazyRetry(() => import("@/components/admin/AdminAiMarketingCeo")));
 import { Facebook as FacebookIcon, Instagram as InstagramIcon, Youtube as YoutubeIcon, Music2, Linkedin as LinkedinIcon, Twitter as TwitterIcon } from "lucide-react";

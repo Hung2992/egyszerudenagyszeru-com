@@ -101,6 +101,7 @@ const VisualSearch = lazy(lazyRetry(() => import("./components/VisualSearch")));
 const VoiceShopping = lazy(lazyRetry(() => import("./components/VoiceShopping")));
 const TrackShipment = lazy(lazyRetry(() => import("./pages/TrackShipment.tsx")));
 const DropDetail = lazy(lazyRetry(() => import("./pages/DropDetail.tsx")));
+const TransferPayment = lazy(lazyRetry(() => import("./pages/TransferPayment.tsx")));
 
 const OAuthConsent = lazy(lazyRetry(() => import("./pages/OAuthConsent.tsx")));
 
@@ -198,6 +199,8 @@ const App = () => (
             <Route path="/csomagkovetes" element={<TrackShipment />} />
             <Route path="/track" element={<TrackShipment />} />
             <Route path="/drop/:slug" element={<DropDetail />} />
+            <Route path="/atutalas" element={<TransferPayment />} />
+            <Route path="/atutalas/:token" element={<TransferPayment />} />
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
