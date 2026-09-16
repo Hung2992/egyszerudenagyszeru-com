@@ -91,6 +91,7 @@ const PartnerShippingTab = ({ partnerId }: Props) => {
 
   return (
     <div className="space-y-6">
+      <PartnerPaymentSettings partnerId={partnerId} />
       <Card className="rounded-none border-border p-5 space-y-3">
         <div className="flex items-center gap-2">
           <Truck className="h-5 w-5 text-primary" />
