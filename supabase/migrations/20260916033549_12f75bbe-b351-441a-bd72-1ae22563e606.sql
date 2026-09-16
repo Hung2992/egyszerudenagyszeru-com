@@ -1,0 +1,1 @@
+drop function if exists public.track_campaign_event(uuid, text);

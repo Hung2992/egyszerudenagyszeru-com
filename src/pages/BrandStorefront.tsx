@@ -6,6 +6,7 @@ import { storeBaseUrl, publicStorageUrl } from "@/lib/storefrontSeo";
 
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/untyped-client";
+import { setCampaignAttribution } from "@/lib/campaign-attribution";
 import { Instagram, Music2, Facebook, Youtube, ShoppingBag, Flame, Star, ArrowRight, Eye, User, Search, Menu, X, ShieldCheck, Truck, RotateCcw, Headphones } from "lucide-react";
 import { useBrandCart } from "@/lib/brand-cart";
 import MediaImage from "@/components/partner/MediaImage";
@@ -263,7 +264,7 @@ const BrandStorefront = () => {
       {campaign && (
         <Link
           to={`/b/${resolvedSlug}/kampany/${campaign.page_slug}`}
-          onClick={() => { void supabase.rpc("track_campaign_event", { _plan_id: campaign.id, _kind: "click" }); }}
+          onClick={() => { setCampaignAttribution(campaign.id); void supabase.rpc("track_campaign_event", { _plan_id: campaign.id, _kind: "click", _amount: 0 }); }}
           className="block px-5 py-3 text-center text-xs font-bold uppercase tracking-widest"
           style={{ background: sf.accent_color, color: sf.bg_color }}
         >

@@ -6343,6 +6343,7 @@ export type Database = {
         Row: {
           approved_at: string | null
           audience: string
+          category: string
           click_count: number
           created_at: string
           forecast: Json | null
@@ -6375,6 +6376,7 @@ export type Database = {
         Insert: {
           approved_at?: string | null
           audience: string
+          category?: string
           click_count?: number
           created_at?: string
           forecast?: Json | null
@@ -6407,6 +6409,7 @@ export type Database = {
         Update: {
           approved_at?: string | null
           audience?: string
+          category?: string
           click_count?: number
           created_at?: string
           forecast?: Json | null
@@ -14619,7 +14622,7 @@ export type Database = {
         Returns: boolean
       }
       track_campaign_event: {
-        Args: { _kind: string; _plan_id: string }
+        Args: { _amount?: number; _kind: string; _plan_id: string }
         Returns: undefined
       }
       tts_cleanup_expired: { Args: never; Returns: Json }

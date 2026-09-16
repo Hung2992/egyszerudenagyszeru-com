@@ -5,6 +5,7 @@ import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { ArrowRight, Loader2 } from "lucide-react";
+import { setCampaignAttribution } from "@/lib/campaign-attribution";
 import { campaignPageHtml, type CampaignPlanDraft } from "@/lib/campaign-plan";
 
 const BrandCampaign = () => {
@@ -37,13 +38,19 @@ const BrandCampaign = () => {
       if (!alive) return;
       setPlan(p || null);
       setLoading(false);
-      if (p?.id) void supabase.rpc("track_campaign_event", { _plan_id: p.id, _kind: "view" });
+      if (p?.id) {
+        setCampaignAttribution(p.id);
+        void supabase.rpc("track_campaign_event", { _plan_id: p.id, _kind: "view", _amount: 0 });
+      }
     })();
     return () => { alive = false; };
   }, [slug, campaignSlug]);
 
   const trackClick = () => {
-    if (plan?.id) void supabase.rpc("track_campaign_event", { _plan_id: plan.id, _kind: "click" });
+    if (plan?.id) {
+      setCampaignAttribution(plan.id);
+      void supabase.rpc("track_campaign_event", { _plan_id: plan.id, _kind: "click", _amount: 0 });
+    }
   };
 
   if (loading) {
