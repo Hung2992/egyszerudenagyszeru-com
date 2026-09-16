@@ -88,6 +88,7 @@ const BrandProductDetail = lazy(lazyRetry(() => import("./pages/BrandProductDeta
 const BrandPage = lazy(lazyRetry(() => import("./pages/BrandPage.tsx")));
 const BrandInfoPage = lazy(lazyRetry(() => import("./pages/BrandInfoPage.tsx")));
 const BrandNews = lazy(lazyRetry(() => import("./pages/BrandNews.tsx")));
+const BrandCampaign = lazy(lazyRetry(() => import("./pages/BrandCampaign.tsx")));
 const BrandCustomerAccount = lazy(lazyRetry(() => import("./pages/BrandCustomerAccount.tsx")));
 const BrandCheckout = lazy(lazyRetry(() => import("./pages/BrandCheckout.tsx")));
 const PartnerApprovals = lazy(lazyRetry(() => import("./pages/PartnerApprovals.tsx")));
@@ -179,6 +180,7 @@ const App = () => (
             <Route path="/b/:slug/termek/:productSlug" element={<BrandProductDetail />} />
             <Route path="/b/:slug/oldal/:pageSlug" element={<BrandPage />} />
             <Route path="/b/:slug/info/:infoSlug" element={<BrandInfoPage />} />
+            <Route path="/b/:slug/kampany/:campaignSlug" element={<BrandCampaign />} />
             <Route path="/info/:infoSlug" element={<BrandInfoPage />} />
             <Route path="/b/:slug/kozpont" element={<BrandHub />} />
             <Route path="/b/:slug/fiok" element={<BrandCustomerAccount />} />
