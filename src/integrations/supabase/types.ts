@@ -9143,10 +9143,6 @@ export type Database = {
           about_html: string | null
           accent_color: string | null
           active_campaign_plan_id: string | null
-          bank_account_holder: string | null
-          bank_account_number: string | null
-          bank_iban: string | null
-          bank_name: string | null
           banner_url: string | null
           bg_color: string | null
           brand_dna: Json | null
@@ -9192,7 +9188,6 @@ export type Database = {
           newsletter_title: string | null
           og_image_url: string | null
           partner_id: string
-          payment_instructions: string | null
           payment_methods: Json
           primary_color: string | null
           publish_requested_at: string | null
@@ -9232,10 +9227,6 @@ export type Database = {
           about_html?: string | null
           accent_color?: string | null
           active_campaign_plan_id?: string | null
-          bank_account_holder?: string | null
-          bank_account_number?: string | null
-          bank_iban?: string | null
-          bank_name?: string | null
           banner_url?: string | null
           bg_color?: string | null
           brand_dna?: Json | null
@@ -9281,7 +9272,6 @@ export type Database = {
           newsletter_title?: string | null
           og_image_url?: string | null
           partner_id: string
-          payment_instructions?: string | null
           payment_methods?: Json
           primary_color?: string | null
           publish_requested_at?: string | null
@@ -9321,10 +9311,6 @@ export type Database = {
           about_html?: string | null
           accent_color?: string | null
           active_campaign_plan_id?: string | null
-          bank_account_holder?: string | null
-          bank_account_number?: string | null
-          bank_iban?: string | null
-          bank_name?: string | null
           banner_url?: string | null
           bg_color?: string | null
           brand_dna?: Json | null
@@ -9370,7 +9356,6 @@ export type Database = {
           newsletter_title?: string | null
           og_image_url?: string | null
           partner_id?: string
-          payment_instructions?: string | null
           payment_methods?: Json
           primary_color?: string | null
           publish_requested_at?: string | null
