@@ -202,7 +202,7 @@ const TransferPayment = () => {
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  A bolt még nem adta meg a bankszámlaadatait. Vedd fel a kapcsolatot a boltttal a rendelési szám megadásával.
+                  A bolt még nem adta meg a bankszámlaadatait. Vedd fel a kapcsolatot a bolttal a rendelési szám megadásával.
                 </p>
               )}
             </Card>
