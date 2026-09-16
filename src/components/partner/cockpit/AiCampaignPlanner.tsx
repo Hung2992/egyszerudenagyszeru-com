@@ -1,6 +1,7 @@
 // AI kampánytervező: cél → célcsoport → AI javaslat (üzenet, hírlevél, kampányoldal)
-// → determinisztikus ellenőrzés → jóváhagyás → publikálás valódi kampányoldalként és
-// hírlevél-vázlatként. Az AI semmit nem tesz élesbe automatikusan.
+// → determinisztikus ellenőrzés és előrejelzés → jóváhagyás → publikálás valódi
+// kampányoldalként, webshop kiemelt sávként és hírlevél-vázlatként.
+// Az AI semmit nem tesz élesbe automatikusan.
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { Card } from "@/components/ui/card";
@@ -9,15 +10,19 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Megaphone, Loader2, Check, ShieldCheck, Rocket, RefreshCw } from "lucide-react";
+import { Megaphone, Loader2, Check, ShieldCheck, Rocket, RefreshCw, TrendingUp, PackageSearch } from "lucide-react";
 import {
   normalizeCampaignPlan,
   runCampaignQa,
   campaignPageHtml,
   campaignNewsletterHtml,
   slugifyCampaign,
+  forecastCampaign,
+  selectSlowMovers,
   type CampaignPlanDraft,
   type CampaignQaReport,
+  type CampaignForecast,
+  type CampaignForecastInput,
 } from "@/lib/campaign-plan";
 
 interface Props { partnerId: string }
@@ -30,15 +35,20 @@ const EMPTY: CampaignPlanDraft = {
   page_subheadline: "", page_body: "", page_cta_text: "",
 };
 
+const ft = (n: number) => `${Math.round(n || 0).toLocaleString("hu-HU")} Ft`;
+
 const AiCampaignPlanner = ({ partnerId }: Props) => {
   const [goal, setGoal] = useState("");
   const [audience, setAudience] = useState("");
   const [tone, setTone] = useState("");
   const [busy, setBusy] = useState(false);
+  const [slowBusy, setSlowBusy] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [step, setStep] = useState<Step>("brief");
   const [plan, setPlan] = useState<CampaignPlanDraft>(EMPTY);
   const [qa, setQa] = useState<CampaignQaReport | null>(null);
+  const [forecast, setForecast] = useState<CampaignForecast | null>(null);
+  const [source, setSource] = useState<"manual" | "auto_slow_movers">("manual");
   const [planId, setPlanId] = useState<string | null>(null);
   const [pageUrl, setPageUrl] = useState<string | null>(null);
   const [recent, setRecent] = useState<any[]>([]);
@@ -46,7 +56,7 @@ const AiCampaignPlanner = ({ partnerId }: Props) => {
   const loadRecent = async () => {
     const { data } = await supabase
       .from("partner_campaign_plans")
-      .select("id, name, status, created_at, page_slug")
+      .select("id, name, status, created_at, page_slug, view_count, click_count")
       .eq("partner_id", partnerId)
       .order("created_at", { ascending: false })
       .limit(5);
@@ -54,6 +64,26 @@ const AiCampaignPlanner = ({ partnerId }: Props) => {
   };
 
   useEffect(() => { void loadRecent(); }, [partnerId]);
+
+  // Valódi bolti adatok az előrejelzéshez (nincs becsült vagy kitalált érték).
+  const loadForecastInput = async (qaScore: number): Promise<CampaignForecastInput> => {
+    const since = new Date(Date.now() - 30 * 86400_000).toISOString();
+    const [{ count: subs }, prods, orders] = await Promise.all([
+      supabase.from("partner_email_subscribers").select("id", { count: "exact", head: true }).eq("partner_id", partnerId),
+      supabase.from("partner_products").select("view_count").eq("partner_id", partnerId).eq("status", "active"),
+      supabase.from("partner_orders").select("total_huf, created_at").eq("partner_id", partnerId).gte("created_at", since),
+    ]);
+    const visitors = (prods.data || []).reduce((s: number, p: any) => s + (p.view_count || 0), 0);
+    const list = orders.data || [];
+    const revenue = list.reduce((s: number, o: any) => s + Number(o.total_huf || 0), 0);
+    return {
+      subscribers: subs || 0,
+      visitors30d: visitors,
+      orders30d: list.length,
+      avgOrderValueHuf: list.length ? revenue / list.length : 0,
+      qaScore,
+    };
+  };
 
   const setField = (k: keyof CampaignPlanDraft, v: string) => {
     setPlan((p) => {
@@ -63,65 +93,99 @@ const AiCampaignPlanner = ({ partnerId }: Props) => {
     });
   };
 
+  const runGenerate = async (g: string, a: string, src: "manual" | "auto_slow_movers") => {
+    const { data, error } = await supabase.functions.invoke("partner-campaign-plan", {
+      body: { partner_id: partnerId, goal: g, audience: a, tone },
+    });
+    if (error) throw new Error(error.message);
+    if (data?.error) throw new Error(data.error);
+
+    const normalized = normalizeCampaignPlan(data.plan, { goal: g, audience: a, tone });
+    normalized.goal = g.trim();
+    normalized.audience = a.trim();
+    const report = runCampaignQa(normalized);
+    const fc = forecastCampaign(normalized, await loadForecastInput(report.score));
+    setPlan(normalized);
+    setQa(report);
+    setForecast(fc);
+    setSource(src);
+    setStep("review");
+
+    const { data: saved } = await supabase
+      .from("partner_campaign_plans")
+      .insert({
+        partner_id: partnerId,
+        name: normalized.name || "AI kampány",
+        goal: normalized.goal,
+        audience: normalized.audience,
+        tone: tone || null,
+        message_headline: normalized.message_headline,
+        message_body: normalized.message_body,
+        newsletter_subject: normalized.newsletter_subject,
+        newsletter_body: normalized.newsletter_body,
+        page_slug: normalized.page_slug,
+        page_headline: normalized.page_headline,
+        page_subheadline: normalized.page_subheadline,
+        page_body: normalized.page_body,
+        page_cta_text: normalized.page_cta_text,
+        qa_report: report as unknown as Record<string, unknown>,
+        forecast: fc as unknown as Record<string, unknown>,
+        source: src,
+        status: "draft",
+      })
+      .select("id")
+      .maybeSingle();
+    setPlanId(saved?.id ?? null);
+    void loadRecent();
+  };
+
+  const errMsg = (e: any) => {
+    const m = String(e?.message || "");
+    return m.includes("ai_unavailable") ? "Az AI most nem elérhető, próbáld újra pár perc múlva."
+      : m.includes("rate_limited") ? "Túl sok kérés, várj egy kicsit."
+      : m.includes("not_partner") ? "Ehhez a partnerfiókhoz nincs jogosultságod."
+      : "Nem sikerült elkészíteni a kampánytervet.";
+  };
+
   const generate = async () => {
     if (!goal.trim() || !audience.trim()) {
       toast({ title: "Hiányzó adat", description: "Add meg a kampány célját és a célcsoportot.", variant: "destructive" });
       return;
     }
     setBusy(true);
+    try { await runGenerate(goal, audience, "manual"); }
+    catch (e: any) { toast({ title: "Hiba", description: errMsg(e), variant: "destructive" }); }
+    finally { setBusy(false); }
+  };
+
+  // Lassan fogyó termékek: valódi készlet- és eladási adatok alapján.
+  const generateForSlowMovers = async () => {
+    setSlowBusy(true);
     try {
-      const { data, error } = await supabase.functions.invoke("partner-campaign-plan", {
-        body: { partner_id: partnerId, goal, audience, tone },
-      });
-      if (error) throw new Error(error.message);
-      if (data?.error) throw new Error(data.error);
-
-      const normalized = normalizeCampaignPlan(data.plan, { goal, audience, tone });
-      normalized.goal = goal.trim();
-      normalized.audience = audience.trim();
-      const report = runCampaignQa(normalized);
-      setPlan(normalized);
-      setQa(report);
-      setStep("review");
-
-      const { data: saved } = await supabase
-        .from("partner_campaign_plans")
-        .insert({
-          partner_id: partnerId,
-          name: normalized.name || "AI kampány",
-          goal: normalized.goal,
-          audience: normalized.audience,
-          tone: tone || null,
-          message_headline: normalized.message_headline,
-          message_body: normalized.message_body,
-          newsletter_subject: normalized.newsletter_subject,
-          newsletter_body: normalized.newsletter_body,
-          page_slug: normalized.page_slug,
-          page_headline: normalized.page_headline,
-          page_subheadline: normalized.page_subheadline,
-          page_body: normalized.page_body,
-          page_cta_text: normalized.page_cta_text,
-          qa_report: report as unknown as Record<string, unknown>,
-          status: "draft",
-        })
-        .select("id")
-        .maybeSingle();
-      setPlanId(saved?.id ?? null);
-      void loadRecent();
+      const { data: prods } = await supabase
+        .from("partner_products")
+        .select("id, title, price_huf, stock, category, sales_count, created_at")
+        .eq("partner_id", partnerId)
+        .eq("status", "active");
+      const slow = selectSlowMovers(
+        (prods || []).map((p: any) => ({
+          id: p.id, title: p.title, price_huf: p.price_huf, stock: p.stock,
+          category: p.category, sold30d: p.sales_count || 0, created_at: p.created_at,
+        })),
+      );
+      if (slow.length === 0) {
+        toast({ title: "Nincs lassan fogyó termék", description: "Minden készleten lévő terméked jól fogy." });
+        return;
+      }
+      const names = slow.map((p) => `${p.title}${p.price_huf ? ` (${ft(Number(p.price_huf))})` : ""}`).join(", ");
+      const g = `Készleten maradt, lassan fogyó termékek eladásának felpörgetése: ${names}`;
+      const a = audience.trim() || "meglévő vásárlók és hírlevél-feliratkozók";
+      setGoal(g);
+      setAudience(a);
+      await runGenerate(g, a, "auto_slow_movers");
     } catch (e: any) {
-      const m = String(e?.message || "");
-      toast({
-        title: "Hiba",
-        description:
-          m.includes("ai_unavailable") ? "Az AI most nem elérhető, próbáld újra pár perc múlva."
-          : m.includes("rate_limited") ? "Túl sok kérés, várj egy kicsit."
-          : m.includes("not_partner") ? "Ehhez a partnerfiókhoz nincs jogosultságod."
-          : "Nem sikerült elkészíteni a kampánytervet.",
-        variant: "destructive",
-      });
-    } finally {
-      setBusy(false);
-    }
+      toast({ title: "Hiba", description: errMsg(e), variant: "destructive" });
+    } finally { setSlowBusy(false); }
   };
 
   const publish = async () => {
@@ -134,6 +198,7 @@ const AiCampaignPlanner = ({ partnerId }: Props) => {
     setPublishing(true);
     try {
       const now = new Date().toISOString();
+      const fc = forecast ?? forecastCampaign(plan, await loadForecastInput(report.score));
 
       const { data: page, error: pageErr } = await supabase
         .from("partner_landing_pages")
@@ -162,6 +227,36 @@ const AiCampaignPlanner = ({ partnerId }: Props) => {
         .maybeSingle();
       if (blastErr) throw new Error(blastErr.message);
 
+      // Webshop kiemelt sáv + verzióbejegyzés a történetbe.
+      const { data: sfRow } = await supabase
+        .from("partner_storefronts")
+        .select("*")
+        .eq("partner_id", partnerId)
+        .maybeSingle();
+
+      let versionId: string | null = null;
+      if (sfRow?.id) {
+        const { data: last } = await supabase
+          .from("partner_storefront_versions")
+          .select("version_number")
+          .eq("storefront_id", sfRow.id)
+          .order("version_number", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        const { data: ver } = await supabase
+          .from("partner_storefront_versions")
+          .insert({
+            storefront_id: sfRow.id,
+            version_number: (last?.version_number || 0) + 1,
+            snapshot: { ...sfRow, active_campaign_plan_id: planId },
+            change_summary: `Kampány publikálva: ${plan.name || plan.message_headline}`,
+          })
+          .select("id")
+          .maybeSingle();
+        versionId = ver?.id ?? null;
+        await supabase.from("partner_storefronts").update({ active_campaign_plan_id: planId }).eq("id", sfRow.id);
+      }
+
       const payload = {
         partner_id: partnerId,
         name: plan.name || "AI kampány",
@@ -178,26 +273,25 @@ const AiCampaignPlanner = ({ partnerId }: Props) => {
         page_body: plan.page_body,
         page_cta_text: plan.page_cta_text,
         qa_report: report as unknown as Record<string, unknown>,
+        forecast: fc as unknown as Record<string, unknown>,
+        source,
         status: "published",
         approved_at: now,
         published_at: now,
         published_landing_page_id: page?.id ?? null,
         published_blast_id: blast?.id ?? null,
+        storefront_version_id: versionId,
       };
       const { error: planErr } = planId
         ? await supabase.from("partner_campaign_plans").update(payload).eq("id", planId)
         : await supabase.from("partner_campaign_plans").insert(payload);
       if (planErr) throw new Error(planErr.message);
 
-      const { data: sfRow } = await supabase
-        .from("partner_storefronts")
-        .select("slug")
-        .eq("partner_id", partnerId)
-        .maybeSingle();
-      setPageUrl(page?.slug && sfRow?.slug ? `${window.location.origin}/p/${sfRow.slug}/${page.slug}` : null);
+      setPageUrl(sfRow?.slug ? `${window.location.origin}/b/${sfRow.slug}/kampany/${plan.page_slug}` : null);
+      setForecast(fc);
       setStep("done");
       void loadRecent();
-      toast({ title: "Kampány publikálva", description: "A kampányoldal él, a hírlevél piszkozatként elkészült." });
+      toast({ title: "Kampány publikálva", description: "A kampányoldal él, a webshopban kiemelt sáv jelenik meg." });
     } catch (e: any) {
       toast({ title: "Publikálás sikertelen", description: String(e?.message || "Ismeretlen hiba"), variant: "destructive" });
     } finally {
@@ -234,6 +328,29 @@ const AiCampaignPlanner = ({ partnerId }: Props) => {
     );
   };
 
+  const forecastBlock = forecast && (
+    <div className="border border-foreground/15 p-3 space-y-2">
+      <p className="text-[11px] uppercase tracking-widest text-muted-foreground flex items-center gap-1">
+        <TrendingUp className="h-3 w-3" /> Várható eredmény
+      </p>
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-4 text-xs">
+        <div><span className="block text-muted-foreground">Megtekintés</span><b>{forecast.expectedViews.toLocaleString("hu-HU")}</b></div>
+        <div><span className="block text-muted-foreground">Kattintás</span><b>{forecast.expectedClicks.toLocaleString("hu-HU")}</b></div>
+        <div><span className="block text-muted-foreground">Rendelés</span><b>{forecast.expectedConversions}</b></div>
+        <div><span className="block text-muted-foreground">Bevétel</span><b>{ft(forecast.expectedRevenueHuf)}</b></div>
+      </div>
+      <div className="space-y-1">
+        {forecast.sections.map((s) => (
+          <div key={s.key} className="flex justify-between text-[11px]">
+            <span>{s.label}</span>
+            <span className="text-muted-foreground">{s.expectedClicks} kattintás · {ft(s.expectedRevenueHuf)}</span>
+          </div>
+        ))}
+      </div>
+      <p className="text-[11px] text-muted-foreground">{forecast.basis}</p>
+    </div>
+  );
+
   return (
     <Card className="rounded-none border-foreground/20 p-4 md:p-5 space-y-4">
       <div>
@@ -259,10 +376,16 @@ const AiCampaignPlanner = ({ partnerId }: Props) => {
             <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Hangnem (opcionális)</label>
             <Input value={tone} onChange={(e) => setTone(e.target.value)} placeholder="Pl.: magabiztos, barátságos" className="rounded-none" disabled={busy} />
           </div>
-          <Button type="submit" className="rounded-none w-full sm:w-auto" disabled={busy}>
-            {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Megaphone className="h-4 w-4 mr-2" />}
-            Kampányterv készítése
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" className="rounded-none" disabled={busy || slowBusy}>
+              {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Megaphone className="h-4 w-4 mr-2" />}
+              Kampányterv készítése
+            </Button>
+            <Button type="button" variant="outline" className="rounded-none" onClick={() => void generateForSlowMovers()} disabled={busy || slowBusy}>
+              {slowBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <PackageSearch className="h-4 w-4 mr-2" />}
+              Kampány a lassan fogyó termékekre
+            </Button>
+          </div>
         </form>
       )}
 
@@ -272,8 +395,11 @@ const AiCampaignPlanner = ({ partnerId }: Props) => {
             <Badge variant={qa?.publishable ? "default" : "destructive"} className="rounded-none">
               <ShieldCheck className="h-3 w-3 mr-1" /> Ellenőrzés: {qa?.score ?? 0}/100
             </Badge>
+            {source === "auto_slow_movers" && <Badge variant="secondary" className="rounded-none">Lassan fogyó termékek</Badge>}
             {!qa?.publishable && <span className="text-[11px] text-destructive">Javítsd a hibákat a publikáláshoz.</span>}
           </div>
+
+          {forecastBlock}
 
           <div className="grid gap-3 md:grid-cols-2">
             {field("name", "Kampány neve")}
@@ -321,9 +447,10 @@ const AiCampaignPlanner = ({ partnerId }: Props) => {
             {pageUrl && <a href={pageUrl} target="_blank" rel="noreferrer" className="underline break-all">{pageUrl}</a>}
           </p>
           <p className="text-xs text-muted-foreground">
-            A hírlevél piszkozatként elkészült — a kiküldést a Marketing fülön indíthatod, hogy te döntsd el, mikor megy ki.
+            A webshop tetején kiemelt sáv vezet a kampányra, a hírlevél pedig piszkozatként készült el — a kiküldést a Marketing fülön indíthatod.
           </p>
-          <Button variant="outline" className="rounded-none" onClick={() => { setStep("brief"); setPlan(EMPTY); setQa(null); setPlanId(null); }}>
+          {forecastBlock}
+          <Button variant="outline" className="rounded-none" onClick={() => { setStep("brief"); setPlan(EMPTY); setQa(null); setForecast(null); setPlanId(null); }}>
             Új kampány
           </Button>
         </div>
@@ -335,6 +462,7 @@ const AiCampaignPlanner = ({ partnerId }: Props) => {
           {recent.map((r) => (
             <div key={r.id} className="flex items-center justify-between gap-2 text-xs">
               <span className="truncate">{r.name}</span>
+              <span className="shrink-0 text-muted-foreground">{r.view_count || 0} / {r.click_count || 0}</span>
               <Badge variant={r.status === "published" ? "default" : "secondary"} className="rounded-none text-[10px] shrink-0">
                 {r.status === "published" ? "Publikált" : r.status === "approved" ? "Jóváhagyott" : "Vázlat"}
               </Badge>
