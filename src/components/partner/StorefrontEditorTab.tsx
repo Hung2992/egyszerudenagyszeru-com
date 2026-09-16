@@ -272,7 +272,7 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
 
   const previewUrl = buildPreviewUrl(window.location.origin, sf);
   const publicUrl = buildPublicUrl(window.location.origin, sf);
-  const subdomainUrl = sf.slug ? `https://${sf.slug}.egyszerudenagyszeru.com` : null;
+  const subdomainUrl = buildLiveUrl(sf);
   const canPreview = canUsePreviewButton(partner?.status, isAdmin, sf);
   const canPublish = canUsePublishButton(partner?.status, isAdmin, sf);
 
