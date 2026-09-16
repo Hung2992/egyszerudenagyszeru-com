@@ -164,7 +164,7 @@ Deno.serve(async (req) => {
       notes || null,
       shippingMethod ? `Szállítási mód: ${shippingMethod.name}` : null,
     ].filter(Boolean).join("\n") || null,
-  }).select("id, order_number, total_huf").single();
+  }).select("id, order_number, total_huf, transfer_access_token").single();
 
   if (insErr) return json({ error: "order_failed" }, 502);
 
@@ -231,5 +231,7 @@ Deno.serve(async (req) => {
     total_huf: order.total_huf,
     shipping_huf: shippingFee,
     subtotal_huf: subtotal,
+    // Csak átutalásnál kap a vásárló hozzáférési kulcsot a banki adatokhoz.
+    transfer_access_token: paymentMethod === "transfer" ? order.transfer_access_token : null,
   });
 });
