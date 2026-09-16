@@ -261,7 +261,7 @@ const BrandCheckout = () => {
                 )}
                 <div className="text-xs uppercase tracking-widest opacity-70 pt-2">Fizetési mód</div>
                 <div className="grid grid-cols-2 gap-3">
-                  {[{ v: "cod", l: "Utánvét" }, { v: "transfer", l: "Banki átutalás" }].map((o) => (
+                  {paymentOptions.map((o) => (
                      <Button key={o.v} variant="outline" onClick={() => setForm({ ...form, payment_method: o.v })}
                        className="rounded-none border py-3 text-xs uppercase"
                       style={{ borderColor: form.payment_method === o.v ? accent : border, color: form.payment_method === o.v ? accent : undefined }}>
