@@ -31,6 +31,8 @@ const BrandCheckout = () => {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ order_number: string; total_huf: number; payment_method: string } | null>(null);
+  // Az átutalási banki adatok csak a rendeléshez tartozó egyedi kulccsal kérhetők le.
+  const [bank, setBank] = useState<any>(null);
   const [session, setSession] = useState<any>(null);
 
   const { items, count, subtotal } = useBrandCart(slug);
