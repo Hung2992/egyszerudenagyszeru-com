@@ -312,7 +312,7 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
           )}
           {subdomainUrl && sf.is_published && (
             <a href={subdomainUrl} target="_blank" rel="noreferrer" onClick={handleSubdomainClick} className="text-xs underline flex items-center gap-1 text-accent">
-              <ExternalLink className="h-3 w-3" /> {sf.slug}.egyszerudenagyszeru.com
+              <ExternalLink className="h-3 w-3" /> Éles bolt megnyitása
             </a>
           )}
           {!canPreview && partner?.status && partner.status !== "active" && (
