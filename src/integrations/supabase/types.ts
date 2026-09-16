@@ -14475,6 +14475,10 @@ export type Database = {
           total_revenue: number
         }[]
       }
+      get_transfer_order_public: {
+        Args: { _transfer_access_token: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
