@@ -16,6 +16,7 @@ import {
   Link2, MousePointerClick, Globe as GlobeIcon, Wrench, Key, HelpCircle, BarChart3 as BarChart3Icon, Heart, SlidersHorizontal,
   MonitorSmartphone, Factory, Trophy, Rss, Database, RefreshCw, Globe as Globe2, ShieldCheck, Sparkles, Layers, Wallet, Rocket, Brain, Calculator, Building2,
   View,
+  Banknote,
 } from "lucide-react";
 const AdminShippingTab = lazy(lazyRetry(() => import("@/components/admin/AdminShippingTab")));
 import AdminSectionSearch from "@/components/admin/AdminSectionSearch";
