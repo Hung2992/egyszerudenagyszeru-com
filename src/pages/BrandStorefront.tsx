@@ -259,6 +259,18 @@ const BrandStorefront = () => {
 
 
 
+      {/* KAMPÁNY SÁV */}
+      {campaign && (
+        <Link
+          to={`/b/${resolvedSlug}/kampany/${campaign.page_slug}`}
+          onClick={() => { void supabase.rpc("track_campaign_event", { _plan_id: campaign.id, _kind: "click" }); }}
+          className="block px-5 py-3 text-center text-xs font-bold uppercase tracking-widest"
+          style={{ background: sf.accent_color, color: sf.bg_color }}
+        >
+          {campaign.message_headline} · {campaign.page_cta_text || "Megnézem"}
+        </Link>
+      )}
+
       {/* HERO */}
       <section className={`storefront-hero relative ${sf.hero_layout === "fullscreen" ? "min-h-[min(48rem,calc(100svh-5rem))]" : "min-h-[60vh]"} flex items-end overflow-hidden`}>
         {sf.hero_image_url && (
