@@ -7644,6 +7644,7 @@ export type Database = {
           subtotal_huf: number
           total_huf: number
           tracking_number: string | null
+          transfer_access_token: string | null
           updated_at: string
         }
         Insert: {
@@ -7675,6 +7676,7 @@ export type Database = {
           subtotal_huf?: number
           total_huf?: number
           tracking_number?: string | null
+          transfer_access_token?: string | null
           updated_at?: string
         }
         Update: {
@@ -7706,6 +7708,7 @@ export type Database = {
           subtotal_huf?: number
           total_huf?: number
           tracking_number?: string | null
+          transfer_access_token?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -9016,11 +9019,16 @@ export type Database = {
           accept_card: boolean
           accept_cod: boolean
           bank_account_for_payouts: string | null
+          bank_account_holder: string | null
+          bank_account_number: string | null
+          bank_iban: string | null
+          bank_name: string | null
           created_at: string
           free_shipping_threshold_huf: number | null
           id: string
           min_order_huf: number | null
           partner_id: string
+          payment_instructions: string | null
           return_policy_html: string | null
           shipping_policy_html: string | null
           shipping_rates: Json
@@ -9033,11 +9041,16 @@ export type Database = {
           accept_card?: boolean
           accept_cod?: boolean
           bank_account_for_payouts?: string | null
+          bank_account_holder?: string | null
+          bank_account_number?: string | null
+          bank_iban?: string | null
+          bank_name?: string | null
           created_at?: string
           free_shipping_threshold_huf?: number | null
           id?: string
           min_order_huf?: number | null
           partner_id: string
+          payment_instructions?: string | null
           return_policy_html?: string | null
           shipping_policy_html?: string | null
           shipping_rates?: Json
@@ -9050,11 +9063,16 @@ export type Database = {
           accept_card?: boolean
           accept_cod?: boolean
           bank_account_for_payouts?: string | null
+          bank_account_holder?: string | null
+          bank_account_number?: string | null
+          bank_iban?: string | null
+          bank_name?: string | null
           created_at?: string
           free_shipping_threshold_huf?: number | null
           id?: string
           min_order_huf?: number | null
           partner_id?: string
+          payment_instructions?: string | null
           return_policy_html?: string | null
           shipping_policy_html?: string | null
           shipping_rates?: Json
@@ -14454,6 +14472,10 @@ export type Database = {
           total: number
           weak_response_count: number
         }[]
+      }
+      get_storefront_transfer_details: {
+        Args: { _transfer_access_token: string }
+        Returns: Json
       }
       get_top_partners: {
         Args: { _from?: string; _limit?: number; _to?: string }
