@@ -8,6 +8,7 @@ import MediaImage from "@/components/partner/MediaImage";
 import { toast } from "@/hooks/use-toast";
 import { addToBrandCart } from "@/lib/brand-cart";
 import { Button } from "@/components/ui/button";
+import AiStudioPromptLauncher from "@/components/partner/AiStudioPromptLauncher";
 
 const BrandProductDetail = () => {
   const { slug, productSlug } = useParams<{ slug: string; productSlug: string }>();
@@ -23,6 +24,7 @@ const BrandProductDetail = () => {
   const [bookingDone, setBookingDone] = useState(false);
   const [form, setForm] = useState({ customer_name: "", customer_email: "", customer_phone: "", starts_at: "", notes: "" });
   const [live, setLive] = useState<{ booked_today: number; next_booking_at: string | null } | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
 
   const loadLive = async (productId: string) => {
     const { data } = await supabase.rpc("public_product_day_status", { _product_id: productId });
@@ -70,6 +72,32 @@ const BrandProductDetail = () => {
       }
     })();
   }, [slug, productSlug]);
+
+  // Automatikus frissülés: a partner termékmódosítása azonnal látszik ezen az oldalon.
+  useEffect(() => {
+    const id = product?.id;
+    if (!id) return;
+    const channel = supabase
+      .channel(`sf-product-${id}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "partner_products", filter: `id=eq.${id}` }, (payload: any) => {
+        if (payload?.new?.status === "active") setProduct((p: any) => ({ ...(p || {}), ...payload.new }));
+      })
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [product?.id]);
+
+  // A bolt tulajdonosa a termékoldalon is indíthat AI parancsot a valódi webshopra.
+  useEffect(() => {
+    if (!sf?.partner_id) return;
+    let alive = true;
+    (async () => {
+      const { data: s } = await supabase.auth.getSession();
+      if (!s.session?.user) return;
+      const { data } = await supabase.from("partners").select("id").eq("user_id", s.session.user.id).maybeSingle();
+      if (alive) setIsOwner(!!data && data.id === sf.partner_id);
+    })();
+    return () => { alive = false; };
+  }, [sf?.partner_id]);
 
   const seo = useMemo(() => {
     if (!sf || !product) return null;
