@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import { Boxes, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import AiStudioPromptLauncher from "../AiStudioPromptLauncher";
 
 interface Props { partnerId: string }
 
@@ -119,6 +120,16 @@ const ProductListEditor = ({ partnerId }: Props) => {
           Név, ár, készlet, kép, leírás és kategória — a mentett adatok a saját webshopodban jelennek meg.
         </p>
       </div>
+
+      <AiStudioPromptLauncher
+        title="Termékek megjelenése a webshopban"
+        placeholder="Pl.: Emeld ki a legjobb termékeket a főoldalon…"
+        examples={[
+          "Emeld ki a legjobb termékeket a főoldalon",
+          "Rendezd a termékeket kategóriák szerint",
+          "Készíts akciós blokkot a termékekből",
+        ]}
+      />
 
       <div className="border border-foreground/15 p-3 space-y-2">
         <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Új termék</p>
