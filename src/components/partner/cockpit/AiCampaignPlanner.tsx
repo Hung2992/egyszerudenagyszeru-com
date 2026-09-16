@@ -49,6 +49,7 @@ const AiCampaignPlanner = ({ partnerId }: Props) => {
   const [qa, setQa] = useState<CampaignQaReport | null>(null);
   const [forecast, setForecast] = useState<CampaignForecast | null>(null);
   const [source, setSource] = useState<"manual" | "auto_slow_movers">("manual");
+  const [category, setCategory] = useState("Általános");
   const [planId, setPlanId] = useState<string | null>(null);
   const [pageUrl, setPageUrl] = useState<string | null>(null);
   const [recent, setRecent] = useState<any[]>([]);
@@ -131,6 +132,7 @@ const AiCampaignPlanner = ({ partnerId }: Props) => {
         qa_report: report as unknown as Record<string, unknown>,
         forecast: fc as unknown as Record<string, unknown>,
         source: src,
+        category: src === "auto_slow_movers" ? "Készletkisöprés" : category,
         status: "draft",
       })
       .select("id")
@@ -164,12 +166,12 @@ const AiCampaignPlanner = ({ partnerId }: Props) => {
     try {
       const { data: prods } = await supabase
         .from("partner_products")
-        .select("id, title, price_huf, stock, category, sales_count, created_at")
+        .select("id, title, price_huf, stock_qty, category, sales_count, created_at")
         .eq("partner_id", partnerId)
         .eq("status", "active");
       const slow = selectSlowMovers(
         (prods || []).map((p: any) => ({
-          id: p.id, title: p.title, price_huf: p.price_huf, stock: p.stock,
+          id: p.id, title: p.title, price_huf: p.price_huf, stock: p.stock_qty,
           category: p.category, sold30d: p.sales_count || 0, created_at: p.created_at,
         })),
       );
@@ -182,6 +184,7 @@ const AiCampaignPlanner = ({ partnerId }: Props) => {
       const a = audience.trim() || "meglévő vásárlók és hírlevél-feliratkozók";
       setGoal(g);
       setAudience(a);
+      setCategory("Készletkisöprés");
       await runGenerate(g, a, "auto_slow_movers");
     } catch (e: any) {
       toast({ title: "Hiba", description: errMsg(e), variant: "destructive" });
@@ -275,6 +278,7 @@ const AiCampaignPlanner = ({ partnerId }: Props) => {
         qa_report: report as unknown as Record<string, unknown>,
         forecast: fc as unknown as Record<string, unknown>,
         source,
+        category: source === "auto_slow_movers" ? "Készletkisöprés" : category,
         status: "published",
         approved_at: now,
         published_at: now,
@@ -416,7 +420,11 @@ const AiCampaignPlanner = ({ partnerId }: Props) => {
           <div className="border-t border-foreground/10 pt-3 space-y-3">
             <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Webshop kampányoldal</p>
             <div className="grid gap-3 md:grid-cols-2">
-              {field("page_slug", "Oldal URL")}
+              <div className="space-y-1">
+              <label className="text-[11px] uppercase tracking-widest text-muted-foreground">Kampány kategória</label>
+              <Input value={category} onChange={(e) => setCategory(e.target.value)} className="rounded-none" placeholder="Pl.: Akció, Újdonság" />
+            </div>
+            {field("page_slug", "Oldal URL")}
               {field("page_cta_text", "Gomb felirata")}
             </div>
             {field("page_headline", "Cím")}
