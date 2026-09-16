@@ -30,23 +30,32 @@ const PartnerPaymentSettings = ({ partnerId }: Props) => {
     if (!partnerId) return;
     let alive = true;
     (async () => {
-      const { data } = await supabase
-        .from("partner_storefronts")
-        .select("id,payment_methods,bank_account_holder,bank_name,bank_account_number,bank_iban,payment_instructions")
-        .eq("partner_id", partnerId)
-        .maybeSingle();
+      const [{ data }, { data: settings }] = await Promise.all([
+        supabase
+          .from("partner_storefronts")
+          .select("id,payment_methods")
+          .eq("partner_id", partnerId)
+          .maybeSingle(),
+        supabase
+          .from("partner_storefront_settings")
+          .select("bank_account_holder,bank_name,bank_account_number,bank_iban,payment_instructions")
+          .eq("partner_id", partnerId)
+          .maybeSingle(),
+      ]);
       if (!alive) return;
       if (data) {
         setSfId(data.id);
         const pm: string[] = Array.isArray(data.payment_methods) ? data.payment_methods : ["cod", "transfer"];
         setCod(pm.includes("cod"));
         setTransfer(pm.includes("transfer"));
+      }
+      if (settings) {
         setF({
-          bank_account_holder: data.bank_account_holder || "",
-          bank_name: data.bank_name || "",
-          bank_account_number: data.bank_account_number || "",
-          bank_iban: data.bank_iban || "",
-          payment_instructions: data.payment_instructions || "",
+          bank_account_holder: settings.bank_account_holder || "",
+          bank_name: settings.bank_name || "",
+          bank_account_number: settings.bank_account_number || "",
+          bank_iban: settings.bank_iban || "",
+          payment_instructions: settings.payment_instructions || "",
         });
       }
       setLoading(false);
@@ -68,10 +77,15 @@ const PartnerPaymentSettings = ({ partnerId }: Props) => {
     setSaving(true);
     const { error } = await supabase
       .from("partner_storefronts")
-      .update({ payment_methods: methods, ...f })
+      .update({ payment_methods: methods })
       .eq("id", sfId);
+    // A banki adatok védett helyen, a partner beállításai között tárolódnak.
+    const { error: sErr } = await supabase
+      .from("partner_storefront_settings")
+      .upsert({ partner_id: partnerId, ...f }, { onConflict: "partner_id" });
     setSaving(false);
-    if (error) { toast({ title: "Hiba", description: error.message, variant: "destructive" }); return; }
+    const err = error || sErr;
+    if (err) { toast({ title: "Hiba", description: err.message, variant: "destructive" }); return; }
     toast({ title: "Fizetési beállítások mentve", description: "A webshop pénztárában azonnal érvényes." });
   };
 
