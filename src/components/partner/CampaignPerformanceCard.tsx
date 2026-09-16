@@ -44,6 +44,12 @@ const CampaignPerformanceCard = ({ partnerId, compact = false }: Props) => {
     };
   }, [rows]);
 
+  const rates = useMemo(() => ({
+    ctr: totals.views > 0 ? (totals.clicks / totals.views) * 100 : 0,
+    conversion: totals.clicks > 0 ? (totals.orders / totals.clicks) * 100 : 0,
+    aov: totals.orders > 0 ? totals.revenue / totals.orders : 0,
+  }), [totals]);
+
   if (loading) return <Skeleton className="h-40 w-full rounded-none" />;
 
   return (
@@ -73,6 +79,19 @@ const CampaignPerformanceCard = ({ partnerId, compact = false }: Props) => {
             ))}
           </div>
 
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              ["Átkattintás", `${rates.ctr.toFixed(1)}%`],
+              ["Vásárlási arány", `${rates.conversion.toFixed(1)}%`],
+              ["Átlagos kosár", ft(rates.aov)],
+            ].map(([label, value]) => (
+              <div key={label} className="border border-foreground/10 p-3">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
+                <p className="mt-1 text-base font-bold">{value}</p>
+              </div>
+            ))}
+          </div>
+
           <p className="flex items-center gap-2 text-xs text-muted-foreground">
             <TrendingUp className="h-3 w-3" /> Előrejelzett bevétel a publikált kampányokból: {ft(totals.forecastRevenue)}
           </p>
@@ -85,6 +104,7 @@ const CampaignPerformanceCard = ({ partnerId, compact = false }: Props) => {
                     <p className="truncate font-semibold">{r.name}</p>
                     <p className="text-muted-foreground">
                       {r.view_count || 0} megtekintés · {r.click_count || 0} kattintás · {r.order_count || 0} rendelés · {ft(Number(r.revenue_huf || 0))}
+                      {r.click_count > 0 && ` · ${(((r.order_count || 0) / r.click_count) * 100).toFixed(1)}% vásárlási arány`}
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-1">

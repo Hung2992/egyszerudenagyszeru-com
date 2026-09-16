@@ -14,6 +14,7 @@ import type { Priority } from "./PriorityItem";
 import AiStudioPromptLauncher from "../AiStudioPromptLauncher";
 import AiCampaignPlanner from "./AiCampaignPlanner";
 import ProductListEditor from "./ProductListEditor";
+import ProductPageEditor from "./ProductPageEditor";
 import { QUICK_ACTIONS } from "../partner-navigation";
 
 interface Pulse {
@@ -180,6 +181,7 @@ const ExecutiveCockpit = ({ partnerId, partnerName, onNavigate }: { partnerId: s
       )}
 
       <ProductListEditor partnerId={partnerId} />
+      <ProductPageEditor partnerId={partnerId} />
 
       <AiCampaignPlanner partnerId={partnerId} />
     </div>
