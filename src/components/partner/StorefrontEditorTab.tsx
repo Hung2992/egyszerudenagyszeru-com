@@ -27,7 +27,7 @@ import type { QaReport } from "@/lib/storefront-studio";
 
 import PreviewTokenManager from "./PreviewTokenManager";
 import PartnerStorefrontAuditLogTab from "./PartnerStorefrontAuditLogTab";
-import { buildPreviewUrl, buildPublicUrl } from "@/lib/partner-storefront-urls";
+import { buildPreviewUrl, buildPublicUrl, buildLiveUrl } from "@/lib/partner-storefront-urls";
 import {
   logButtonEvent,
   canUsePreviewButton,
