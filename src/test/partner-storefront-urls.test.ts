@@ -33,7 +33,7 @@ describe("partner storefront URL builders", () => {
     ).toBe("https://myshop.hu");
   });
 
-  it("Publikus URL: nem-ellenőrzött custom domaint NEM használ, subdomainre esik vissza", () => {
+  it("Publikus URL: nem-ellenőrzött custom domaint NEM használ, éles path URL-re esik vissza", () => {
     expect(
       buildPublicUrl(ORIGIN, {
         slug: "john",
@@ -41,7 +41,14 @@ describe("partner storefront URL builders", () => {
         custom_domain: "myshop.hu",
         custom_domain_status: "pending",
       }),
-    ).toBe("https://john.egyszerudenagyszeru.com");
+    ).toBe("https://egyszerudenagyszeru.com/b/john");
+  });
+
+  it("Éles URL a működő path alapú címre mutat, nem a be nem kötött aldomainre", () => {
+    expect(buildLiveUrl({ slug: "john", is_published: true })).toBe(
+      "https://egyszerudenagyszeru.com/b/john",
+    );
+    expect(buildLiveUrl({ slug: "" })).toBeNull();
   });
 
   it("Publikus URL: nem publikált állapotban is partner storefrontra mutat (preview), sosem főoldalra", () => {
