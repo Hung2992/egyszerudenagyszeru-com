@@ -9,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
-import MediaImage from "@/components/partner/MediaImage";
 import { ExternalLink, Image as ImageIcon, Loader2, Plus, Save, Trash2, ArrowUp } from "lucide-react";
 
 interface Props { partnerId: string }
@@ -183,7 +182,7 @@ const ProductPageEditor = ({ partnerId }: Props) => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {(form.images || []).map((url, i) => (
                     <div key={`${url}-${i}`} className="border border-foreground/10 p-1 space-y-1">
-                      <MediaImage src={url} alt={`${form.title} kép ${i + 1}`} className="h-20 w-full object-cover" />
+                      <img src={url} alt={`${form.title} kép ${i + 1}`} loading="lazy" className="h-20 w-full object-cover" />
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] text-muted-foreground">{i === 0 ? "Borító" : `#${i + 1}`}</span>
                         <div className="flex gap-1">
