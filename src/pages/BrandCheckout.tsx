@@ -30,7 +30,7 @@ const BrandCheckout = () => {
   const [sf, setSf] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState<{ order_number: string; total_huf: number } | null>(null);
+  const [done, setDone] = useState<{ order_number: string; total_huf: number; payment_method: string } | null>(null);
   const [session, setSession] = useState<any>(null);
 
   const { items, count, subtotal } = useBrandCart(slug);
@@ -164,7 +164,7 @@ const BrandCheckout = () => {
       });
       clearCampaignAttribution();
     }
-    setDone({ order_number: (data as any).order_number, total_huf: (data as any).total_huf });
+    setDone({ order_number: (data as any).order_number, total_huf: (data as any).total_huf, payment_method: form.payment_method });
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-black text-white">Betöltés…</div>;
@@ -196,6 +196,18 @@ const BrandCheckout = () => {
             <div className="text-xl font-bold" style={{ color: accent }}>Köszönjük a rendelést!</div>
             <p className="text-sm opacity-80">Rendelésszám: <strong>{done.order_number}</strong></p>
             <p className="text-sm opacity-80">Fizetendő: <strong>{done.total_huf.toLocaleString("hu-HU")} Ft</strong></p>
+            {done.payment_method === "transfer" && (sf.bank_account_number || sf.bank_iban) && (
+              <div className="border p-4 space-y-1 text-sm" style={{ borderColor: border }}>
+                <div className="text-xs uppercase tracking-widest opacity-70">Banki átutalás adatai</div>
+                {sf.bank_account_holder && <p>Kedvezményezett: <strong>{sf.bank_account_holder}</strong></p>}
+                {sf.bank_name && <p>Bank: {sf.bank_name}</p>}
+                {sf.bank_account_number && <p>Számlaszám: <strong>{sf.bank_account_number}</strong></p>}
+                {sf.bank_iban && <p>IBAN: <strong>{sf.bank_iban}</strong></p>}
+                <p>Összeg: <strong>{done.total_huf.toLocaleString("hu-HU")} Ft</strong></p>
+                <p>Közlemény: <strong>{done.order_number}</strong></p>
+                {sf.payment_instructions && <p className="opacity-70">{sf.payment_instructions}</p>}
+              </div>
+            )}
             <p className="text-sm opacity-70">A rendelést a webshop tulajdonosa dolgozza fel. A státuszt a vásárlói fiókodban követheted.</p>
             <div className="flex gap-3 pt-2">
               <Link to={shopHome} className="border px-4 py-2 text-xs uppercase tracking-widest" style={{ borderColor: border }}>Tovább nézelődöm</Link>
