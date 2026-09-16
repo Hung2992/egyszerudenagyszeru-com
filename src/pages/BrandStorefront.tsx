@@ -101,6 +101,23 @@ const BrandStorefront = () => {
     return () => { alive = false; };
   }, [resolvedSlug, previewToken, isEditorPreview, isAdminPreview, tokenValid]);
 
+  // A terméklista automatikus frissítése: ha a partner szerkeszti a termékeit,
+  // az élő webshop azonnal az új adatokat mutatja.
+  useEffect(() => {
+    const partnerId = sf?.partner_id;
+    if (!partnerId) return;
+    const refresh = async () => {
+      const { data } = await supabase.from("partner_products").select("*")
+        .eq("partner_id", partnerId).eq("status", "active").order("created_at", { ascending: false });
+      setProducts(data || []);
+    };
+    const channel = supabase
+      .channel(`sf-products-${partnerId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "partner_products", filter: `partner_id=eq.${partnerId}` }, () => { void refresh(); })
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [sf?.partner_id]);
+
   // editor live preview: listen for postMessage
   useEffect(() => {
     if (!isEditorPreview) return;
