@@ -167,6 +167,11 @@ const BrandCheckout = () => {
       clearCampaignAttribution();
     }
     setDone({ order_number: (data as any).order_number, total_huf: (data as any).total_huf, payment_method: form.payment_method });
+    const token = (data as any).transfer_access_token;
+    if (form.payment_method === "transfer" && token) {
+      const { data: details } = await supabase.rpc("get_storefront_transfer_details", { _transfer_access_token: token });
+      setBank(details || null);
+    }
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-black text-white">Betöltés…</div>;
@@ -198,16 +203,16 @@ const BrandCheckout = () => {
             <div className="text-xl font-bold" style={{ color: accent }}>Köszönjük a rendelést!</div>
             <p className="text-sm opacity-80">Rendelésszám: <strong>{done.order_number}</strong></p>
             <p className="text-sm opacity-80">Fizetendő: <strong>{done.total_huf.toLocaleString("hu-HU")} Ft</strong></p>
-            {done.payment_method === "transfer" && (sf.bank_account_number || sf.bank_iban) && (
+            {done.payment_method === "transfer" && bank && (bank.bank_account_number || bank.bank_iban) && (
               <div className="border p-4 space-y-1 text-sm" style={{ borderColor: border }}>
                 <div className="text-xs uppercase tracking-widest opacity-70">Banki átutalás adatai</div>
-                {sf.bank_account_holder && <p>Kedvezményezett: <strong>{sf.bank_account_holder}</strong></p>}
-                {sf.bank_name && <p>Bank: {sf.bank_name}</p>}
-                {sf.bank_account_number && <p>Számlaszám: <strong>{sf.bank_account_number}</strong></p>}
-                {sf.bank_iban && <p>IBAN: <strong>{sf.bank_iban}</strong></p>}
+                {bank.bank_account_holder && <p>Kedvezményezett: <strong>{bank.bank_account_holder}</strong></p>}
+                {bank.bank_name && <p>Bank: {bank.bank_name}</p>}
+                {bank.bank_account_number && <p>Számlaszám: <strong>{bank.bank_account_number}</strong></p>}
+                {bank.bank_iban && <p>IBAN: <strong>{bank.bank_iban}</strong></p>}
                 <p>Összeg: <strong>{done.total_huf.toLocaleString("hu-HU")} Ft</strong></p>
                 <p>Közlemény: <strong>{done.order_number}</strong></p>
-                {sf.payment_instructions && <p className="opacity-70">{sf.payment_instructions}</p>}
+                {bank.payment_instructions && <p className="opacity-70">{bank.payment_instructions}</p>}
               </div>
             )}
             <p className="text-sm opacity-70">A rendelést a webshop tulajdonosa dolgozza fel. A státuszt a vásárlói fiókodban követheted.</p>
