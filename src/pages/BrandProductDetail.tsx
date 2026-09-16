@@ -202,6 +202,20 @@ const BrandProductDetail = () => {
         </div>
       </header>
 
+      {isOwner && (
+        <div className="mx-auto max-w-7xl px-4 pt-4">
+          <AiStudioPromptLauncher
+            title="Termékoldal módosítása AI-val"
+            placeholder={`pl. Írd át a(z) "${product.title}" termék leírását meggyőzőbbre`}
+            examples={[
+              `Írd át a(z) "${product.title}" leírását meggyőzőbbre`,
+              "Emeld ki jobban az árat és a készletet a termékoldalon",
+              "Legyen látványosabb a termékoldal galériája",
+            ]}
+          />
+        </div>
+      )}
+
       <main className="mx-auto max-w-7xl px-4 py-8 md:py-14 grid md:grid-cols-2 gap-10 lg:gap-16">
         <div className="min-w-0 md:sticky md:top-28 md:self-start">
           <div className="aspect-[4/5] bg-muted/30 overflow-hidden">
