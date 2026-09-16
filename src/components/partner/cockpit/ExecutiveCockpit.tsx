@@ -15,6 +15,7 @@ import AiStudioPromptLauncher from "../AiStudioPromptLauncher";
 import AiCampaignPlanner from "./AiCampaignPlanner";
 import ProductListEditor from "./ProductListEditor";
 import ProductPageEditor from "./ProductPageEditor";
+import LiveShopCard from "./LiveShopCard";
 import { QUICK_ACTIONS } from "../partner-navigation";
 
 interface Pulse {
@@ -75,6 +76,7 @@ const ExecutiveCockpit = ({ partnerId, partnerName, onNavigate }: { partnerId: s
         title="AI fejlesztő — mondd el, mit építsünk"
         placeholder="Pl.: Frissítsd a nyitóoldalt őszi kampányra…"
       />
+      <LiveShopCard partnerId={partnerId} />
       <div className="flex items-end justify-between gap-3 flex-wrap">
         <div>
           <h2 className="text-xl md:text-2xl font-bold tracking-tight">{greeting()}, {partnerName}!</h2>

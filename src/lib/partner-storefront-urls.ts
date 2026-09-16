@@ -10,20 +10,29 @@ export type StorefrontState = {
 
 const BASE_ROOT = "egyszerudenagyszeru.com";
 
+/** Az éles (published) bolt origin-je — sosem a preview host. */
+export const LIVE_ORIGIN = `https://${BASE_ROOT}`;
+
+/** Az éles bolt path alapú URL-je. A wildcard aldomain nincs bekötve, ezért path alapú. */
+export const buildLiveUrl = (sf: StorefrontState): string | null => {
+  if (!sf?.slug) return null;
+  if (sf.custom_domain && sf.custom_domain_status === "verified") {
+    return `https://${sf.custom_domain}`;
+  }
+  return `${LIVE_ORIGIN}/b/${sf.slug}`;
+};
+
 /** Internal editor preview URL — always works, regardless of published state. */
 export const buildPreviewUrl = (origin: string, sf: StorefrontState): string | null => {
   if (!sf?.slug) return null;
   return `${origin}/b/${sf.slug}?preview=editor`;
 };
 
-/** Public-facing URL the partner should share. Prefers verified custom domain → subdomain → path. */
+/** Public-facing URL the partner should share. Prefers verified custom domain → éles path URL. */
 export const buildPublicUrl = (origin: string, sf: StorefrontState): string | null => {
   if (!sf?.slug) return null;
   if (sf.is_published) {
-    if (sf.custom_domain && sf.custom_domain_status === "verified") {
-      return `https://${sf.custom_domain}`;
-    }
-    return `https://${sf.slug}.${BASE_ROOT}`;
+    return buildLiveUrl(sf);
   }
   // Not published yet — fall back to internal preview so the link never points to the main site.
   return buildPreviewUrl(origin, sf);

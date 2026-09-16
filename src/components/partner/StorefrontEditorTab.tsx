@@ -27,7 +27,7 @@ import type { QaReport } from "@/lib/storefront-studio";
 
 import PreviewTokenManager from "./PreviewTokenManager";
 import PartnerStorefrontAuditLogTab from "./PartnerStorefrontAuditLogTab";
-import { buildPreviewUrl, buildPublicUrl } from "@/lib/partner-storefront-urls";
+import { buildPreviewUrl, buildPublicUrl, buildLiveUrl } from "@/lib/partner-storefront-urls";
 import {
   logButtonEvent,
   canUsePreviewButton,
@@ -272,7 +272,7 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
 
   const previewUrl = buildPreviewUrl(window.location.origin, sf);
   const publicUrl = buildPublicUrl(window.location.origin, sf);
-  const subdomainUrl = sf.slug ? `https://${sf.slug}.egyszerudenagyszeru.com` : null;
+  const subdomainUrl = buildLiveUrl(sf);
   const canPreview = canUsePreviewButton(partner?.status, isAdmin, sf);
   const canPublish = canUsePublishButton(partner?.status, isAdmin, sf);
 
@@ -312,7 +312,7 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
           )}
           {subdomainUrl && sf.is_published && (
             <a href={subdomainUrl} target="_blank" rel="noreferrer" onClick={handleSubdomainClick} className="text-xs underline flex items-center gap-1 text-accent">
-              <ExternalLink className="h-3 w-3" /> {sf.slug}.egyszerudenagyszeru.com
+              <ExternalLink className="h-3 w-3" /> Éles bolt megnyitása
             </a>
           )}
           {!canPreview && partner?.status && partner.status !== "active" && (
@@ -434,7 +434,7 @@ const StorefrontEditorTab = ({ partnerId }: Props) => {
                 <Input className="rounded-none font-mono" value={sf.slug} onChange={e => set("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} placeholder="pl. john-streetwear" />
                 <div className="mt-2 space-y-1 text-[11px]">
                   <div className="font-bold uppercase tracking-widest text-muted-foreground">A te címeid:</div>
-                  {subdomainUrl && <div className="font-mono">{sf.slug}.egyszerudenagyszeru.com</div>}
+                  {subdomainUrl && <div className="font-mono">{subdomainUrl.replace("https://", "")}</div>}
                   <div className="font-mono text-muted-foreground">egyszerudenagyszeru.com/b/{sf.slug || "..."}</div>
                 </div>
               </div>
