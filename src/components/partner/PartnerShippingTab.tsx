@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Truck, Plus, Trash2, Loader2, Save } from "lucide-react";
+import PartnerPaymentSettings from "@/components/partner/PartnerPaymentSettings";
 
 interface Props {
   partnerId: string;
@@ -91,6 +92,7 @@ const PartnerShippingTab = ({ partnerId }: Props) => {
 
   return (
     <div className="space-y-6">
+      <PartnerPaymentSettings partnerId={partnerId} />
       <Card className="rounded-none border-border p-5 space-y-3">
         <div className="flex items-center gap-2">
           <Truck className="h-5 w-5 text-primary" />
