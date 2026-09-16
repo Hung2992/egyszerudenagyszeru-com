@@ -156,3 +156,116 @@ export function campaignNewsletterHtml(plan: CampaignPlanDraft): string {
     .join("\n");
   return `<h1>${esc(plan.message_headline)}</h1>\n${body || `<p>${esc(plan.newsletter_body)}</p>`}`;
 }
+
+// ---------------------------------------------------------------------------
+// Determinisztikus kampány-előrejelzés és lassan fogyó termékek kiválasztása.
+// Nem AI: a valódi bolti adatokból számol, hogy az előrejelzés ellenőrizhető legyen.
+// ---------------------------------------------------------------------------
+
+export interface CampaignSectionImpact {
+  key: "hirlevel" | "webshop_banner" | "kampanyoldal" | "fo_uzenet";
+  label: string;
+  expectedClicks: number;
+  expectedConversions: number;
+  expectedRevenueHuf: number;
+}
+
+export interface CampaignForecast {
+  expectedViews: number;
+  expectedClicks: number;
+  expectedConversions: number;
+  expectedRevenueHuf: number;
+  conversionRate: number;
+  sections: CampaignSectionImpact[];
+  basis: string;
+  computedAt: string;
+}
+
+export interface CampaignForecastInput {
+  subscribers: number;
+  visitors30d: number;
+  orders30d: number;
+  avgOrderValueHuf: number;
+  qaScore: number;
+}
+
+const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+const round = (v: number) => Math.round(v);
+
+export function forecastCampaign(plan: CampaignPlanDraft, input: CampaignForecastInput): CampaignForecast {
+  const subscribers = Math.max(0, input.subscribers || 0);
+  const visitors = Math.max(0, input.visitors30d || 0);
+  const aov = Math.max(0, input.avgOrderValueHuf || 0);
+  // Alap konverzió: valós rendelés/látogató arány, ésszerű korlátok között.
+  const baseCr = visitors > 0 ? clamp((input.orders30d || 0) / visitors, 0.004, 0.08) : 0.015;
+  // A minőségi pontszám kismértékben módosítja a várható konverziót (0.85–1.15).
+  const qaFactor = clamp(0.85 + ((input.qaScore || 0) / 100) * 0.3, 0.85, 1.15);
+  const cr = clamp(baseCr * qaFactor, 0.003, 0.09);
+
+  // Csatornánkénti elérés és átkattintás.
+  const newsletterViews = round(subscribers * 0.42); // átlagos megnyitási arány
+  const newsletterClicks = round(newsletterViews * 0.14);
+  const bannerViews = round(visitors * 0.6); // a látogatók többsége látja a kiemelt sávot
+  const bannerClicks = round(bannerViews * 0.06);
+  const pageViews = newsletterClicks + bannerClicks;
+  const pageClicks = round(pageViews * 0.35); // kampányoldal → termékek
+
+  const mk = (
+    key: CampaignSectionImpact["key"],
+    label: string,
+    clicks: number,
+    crMul: number,
+  ): CampaignSectionImpact => {
+    const conversions = clicks * cr * crMul;
+    return {
+      key,
+      label,
+      expectedClicks: round(clicks),
+      expectedConversions: Math.round(conversions * 10) / 10,
+      expectedRevenueHuf: round(conversions * aov),
+    };
+  };
+
+  const sections: CampaignSectionImpact[] = [
+    mk("hirlevel", "Hírlevél", newsletterClicks, 1.6),
+    mk("webshop_banner", "Webshop kiemelt sáv", bannerClicks, 1.0),
+    mk("kampanyoldal", "Kampányoldal", pageClicks, 2.2),
+    mk("fo_uzenet", "Fő üzenet (közösségi)", round(newsletterClicks * 0.3 + bannerClicks * 0.2), 0.8),
+  ].sort((a, b) => b.expectedRevenueHuf - a.expectedRevenueHuf);
+
+  const expectedClicks = sections.reduce((s, x) => s + x.expectedClicks, 0);
+  const expectedConversions = Math.round(sections.reduce((s, x) => s + x.expectedConversions, 0) * 10) / 10;
+  const expectedRevenueHuf = sections.reduce((s, x) => s + x.expectedRevenueHuf, 0);
+
+  return {
+    expectedViews: newsletterViews + bannerViews,
+    expectedClicks,
+    expectedConversions,
+    expectedRevenueHuf,
+    conversionRate: Math.round(cr * 10000) / 100,
+    sections,
+    basis: `${subscribers} feliratkozó, ${visitors} látogató és ${round(aov)} Ft átlagos kosárérték alapján (utolsó 30 nap).`,
+    computedAt: new Date().toISOString(),
+  };
+}
+
+export interface SlowProductInput {
+  id: string;
+  title: string;
+  price_huf?: number | null;
+  stock?: number | null;
+  category?: string | null;
+  sold30d?: number;
+  created_at?: string | null;
+}
+
+/** Lassan fogyó termékek: van készlet, de az elmúlt 30 napban alig vagy egyáltalán nem fogyott. */
+export function selectSlowMovers(products: SlowProductInput[], limit = 5): SlowProductInput[] {
+  return [...products]
+    .filter((p) => (p.stock ?? 0) > 0)
+    .map((p) => ({ p, score: (p.sold30d ?? 0) / Math.max(1, p.stock ?? 1) }))
+    .filter(({ p, score }) => score < 0.25 || (p.sold30d ?? 0) === 0)
+    .sort((a, b) => a.score - b.score || (b.p.stock ?? 0) - (a.p.stock ?? 0))
+    .slice(0, limit)
+    .map(({ p }) => p);
+}

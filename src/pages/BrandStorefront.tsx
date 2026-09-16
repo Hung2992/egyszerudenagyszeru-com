@@ -32,6 +32,7 @@ const BrandStorefront = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [tokenValid, setTokenValid] = useState<boolean | null>(null);
+  const [campaign, setCampaign] = useState<any>(null);
   const { count: cartCount } = useBrandCart(resolvedSlug);
 
   // resolve custom domain → slug
@@ -83,6 +84,18 @@ const BrandStorefront = () => {
       if (!alive) return;
       setPages(pgs || []);
       setLoading(false);
+      // Kiemelt kampány sáv: csak publikált, a bolthoz beállított kampányterv jelenhet meg.
+      if (store.active_campaign_plan_id) {
+        const { data: camp } = await supabase
+          .from("partner_campaign_plans")
+          .select("id, name, page_slug, message_headline, page_cta_text, status")
+          .eq("id", store.active_campaign_plan_id)
+          .eq("status", "published")
+          .maybeSingle();
+        if (alive) setCampaign(camp || null);
+      } else if (alive) {
+        setCampaign(null);
+      }
     })();
     return () => { alive = false; };
   }, [resolvedSlug, previewToken, isEditorPreview, isAdminPreview, tokenValid]);
@@ -245,6 +258,18 @@ const BrandStorefront = () => {
       </header>
 
 
+
+      {/* KAMPÁNY SÁV */}
+      {campaign && (
+        <Link
+          to={`/b/${resolvedSlug}/kampany/${campaign.page_slug}`}
+          onClick={() => { void supabase.rpc("track_campaign_event", { _plan_id: campaign.id, _kind: "click" }); }}
+          className="block px-5 py-3 text-center text-xs font-bold uppercase tracking-widest"
+          style={{ background: sf.accent_color, color: sf.bg_color }}
+        >
+          {campaign.message_headline} · {campaign.page_cta_text || "Megnézem"}
+        </Link>
+      )}
 
       {/* HERO */}
       <section className={`storefront-hero relative ${sf.hero_layout === "fullscreen" ? "min-h-[min(48rem,calc(100svh-5rem))]" : "min-h-[60vh]"} flex items-end overflow-hidden`}>

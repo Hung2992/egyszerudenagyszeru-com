@@ -8,6 +8,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingUp, TrendingDown, Banknote, Percent, Wallet, Home } from "lucide-react";
 import { calculatePartnerRentalFee } from "@/lib/partner-rental-fee";
+import CampaignPerformanceCard from "@/components/partner/CampaignPerformanceCard";
 
 interface Props { partnerId: string }
 
@@ -160,6 +161,8 @@ const PartnerFinanceTab = ({ partnerId }: Props) => {
         </div>
         <p className="text-xs text-muted-foreground mt-2">* Beszerzési ár hiányában forgalom szerepel. Add meg a beszerzési árat a pontos profithoz.</p>
       </Card>
+
+      <CampaignPerformanceCard partnerId={partnerId} compact />
 
       <Card className="rounded-none p-4">
         <h3 className="font-semibold mb-3">📉 Leggyengébben teljesítő élő termékek</h3>

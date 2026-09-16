@@ -6343,7 +6343,9 @@ export type Database = {
         Row: {
           approved_at: string | null
           audience: string
+          click_count: number
           created_at: string
+          forecast: Json | null
           goal: string
           id: string
           message_body: string | null
@@ -6351,6 +6353,7 @@ export type Database = {
           name: string
           newsletter_body: string | null
           newsletter_subject: string | null
+          order_count: number
           page_body: string | null
           page_cta_text: string | null
           page_headline: string | null
@@ -6361,14 +6364,20 @@ export type Database = {
           published_blast_id: string | null
           published_landing_page_id: string | null
           qa_report: Json
+          revenue_huf: number
+          source: string
           status: string
+          storefront_version_id: string | null
           tone: string | null
           updated_at: string
+          view_count: number
         }
         Insert: {
           approved_at?: string | null
           audience: string
+          click_count?: number
           created_at?: string
+          forecast?: Json | null
           goal: string
           id?: string
           message_body?: string | null
@@ -6376,6 +6385,7 @@ export type Database = {
           name: string
           newsletter_body?: string | null
           newsletter_subject?: string | null
+          order_count?: number
           page_body?: string | null
           page_cta_text?: string | null
           page_headline?: string | null
@@ -6386,14 +6396,20 @@ export type Database = {
           published_blast_id?: string | null
           published_landing_page_id?: string | null
           qa_report?: Json
+          revenue_huf?: number
+          source?: string
           status?: string
+          storefront_version_id?: string | null
           tone?: string | null
           updated_at?: string
+          view_count?: number
         }
         Update: {
           approved_at?: string | null
           audience?: string
+          click_count?: number
           created_at?: string
+          forecast?: Json | null
           goal?: string
           id?: string
           message_body?: string | null
@@ -6401,6 +6417,7 @@ export type Database = {
           name?: string
           newsletter_body?: string | null
           newsletter_subject?: string | null
+          order_count?: number
           page_body?: string | null
           page_cta_text?: string | null
           page_headline?: string | null
@@ -6411,9 +6428,13 @@ export type Database = {
           published_blast_id?: string | null
           published_landing_page_id?: string | null
           qa_report?: Json
+          revenue_huf?: number
+          source?: string
           status?: string
+          storefront_version_id?: string | null
           tone?: string | null
           updated_at?: string
+          view_count?: number
         }
         Relationships: [
           {
@@ -9097,6 +9118,7 @@ export type Database = {
         Row: {
           about_html: string | null
           accent_color: string | null
+          active_campaign_plan_id: string | null
           banner_url: string | null
           bg_color: string | null
           brand_dna: Json | null
@@ -9179,6 +9201,7 @@ export type Database = {
         Insert: {
           about_html?: string | null
           accent_color?: string | null
+          active_campaign_plan_id?: string | null
           banner_url?: string | null
           bg_color?: string | null
           brand_dna?: Json | null
@@ -9261,6 +9284,7 @@ export type Database = {
         Update: {
           about_html?: string | null
           accent_color?: string | null
+          active_campaign_plan_id?: string | null
           banner_url?: string | null
           bg_color?: string | null
           brand_dna?: Json | null
@@ -14593,6 +14617,10 @@ export type Database = {
       set_maintenance_password: {
         Args: { _password: string }
         Returns: boolean
+      }
+      track_campaign_event: {
+        Args: { _kind: string; _plan_id: string }
+        Returns: undefined
       }
       tts_cleanup_expired: { Args: never; Returns: Json }
       update_strategy_stats: {

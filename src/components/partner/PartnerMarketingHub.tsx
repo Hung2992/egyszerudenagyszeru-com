@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+import CampaignPerformanceCard from "@/components/partner/CampaignPerformanceCard";
 import { Sparkles, Share2, QrCode, Mail, FlaskConical, Globe, Radio, FileText, TrendingUp, Copy, Download, Loader2, Trash2, Plus, BarChart3 } from "lucide-react";
 
 interface Props { partner: { id: string; company_name: string | null; coupon_code: string | null }; }
@@ -48,6 +49,7 @@ const PartnerMarketingHub = ({ partner }: Props) => {
         <TabsTrigger value="live" className="rounded-none"><Radio className="w-3 h-3 mr-1" />Live shop</TabsTrigger>
         <TabsTrigger value="kit" className="rounded-none"><FileText className="w-3 h-3 mr-1" />Media Kit</TabsTrigger>
         <TabsTrigger value="analytics" className="rounded-none"><BarChart3 className="w-3 h-3 mr-1" />Analitika</TabsTrigger>
+        <TabsTrigger value="plans" className="rounded-none"><TrendingUp className="w-3 h-3 mr-1" />Kampányok</TabsTrigger>
       </TabsList>
 
       <TabsContent value="ai" className="mt-4"><AiCampaignPanel partner={partner} products={products} /></TabsContent>
@@ -59,6 +61,7 @@ const PartnerMarketingHub = ({ partner }: Props) => {
       <TabsContent value="live" className="mt-4"><LivePanel partner={partner} products={products} /></TabsContent>
       <TabsContent value="kit" className="mt-4"><MediaKitPanel partner={partner} /></TabsContent>
       <TabsContent value="analytics" className="mt-4"><AnalyticsPanel partner={partner} /></TabsContent>
+      <TabsContent value="plans" className="mt-4"><CampaignPerformanceCard partnerId={partner.id} /></TabsContent>
     </Tabs>
   );
 };
