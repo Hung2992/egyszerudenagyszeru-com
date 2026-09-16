@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Truck, Plus, Trash2, Loader2, Save } from "lucide-react";
+import PartnerPaymentSettings from "@/components/partner/PartnerPaymentSettings";
 
 interface Props {
   partnerId: string;
