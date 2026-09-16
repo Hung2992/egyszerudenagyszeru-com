@@ -15,6 +15,7 @@ import AiStudioPromptLauncher from "../AiStudioPromptLauncher";
 import AiCampaignPlanner from "./AiCampaignPlanner";
 import ProductListEditor from "./ProductListEditor";
 import ProductPageEditor from "./ProductPageEditor";
+import LiveShopCard from "./LiveShopCard";
 import { QUICK_ACTIONS } from "../partner-navigation";
 
 interface Pulse {
