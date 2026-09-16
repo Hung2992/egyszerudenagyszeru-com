@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/untyped-client";
+import { getCampaignAttribution, clearCampaignAttribution } from "@/lib/campaign-attribution";
 import { toast } from "@/hooks/use-toast";
 import MediaImage from "@/components/partner/MediaImage";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
