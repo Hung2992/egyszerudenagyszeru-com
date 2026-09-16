@@ -105,6 +105,22 @@ const BrandCheckout = () => {
   const needsAddress = hasPhysical && (!selectedMethod || selectedMethod.requires_address !== false);
   const grandTotal = subtotal + shippingFee;
 
+  // A partner által engedélyezett fizetési módok (valós bankszámlás átutalás / utánvét)
+  const paymentOptions = useMemo(() => {
+    const all = [{ v: "cod", l: "Utánvét" }, { v: "transfer", l: "Banki átutalás" }];
+    const enabled: string[] = Array.isArray(sf?.payment_methods) && sf.payment_methods.length
+      ? sf.payment_methods
+      : ["cod", "transfer"];
+    const list = all.filter((o) => enabled.includes(o.v));
+    return list.length ? list : all;
+  }, [sf]);
+
+  useEffect(() => {
+    if (!paymentOptions.some((o) => o.v === form.payment_method)) {
+      setForm((f) => ({ ...f, payment_method: paymentOptions[0].v }));
+    }
+  }, [paymentOptions]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const style = useMemo(() => ({
     background: sf?.bg_color || "#000",
     color: sf?.text_color || "#fff",
