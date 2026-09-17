@@ -83,12 +83,22 @@ const TransferPayment = () => {
     if (!orderId) return;
     setSaving(true);
     const { error } = await supabase.from("partner_orders").update(patch).eq("id", orderId);
-    setSaving(false);
     if (error) {
+      setSaving(false);
       toast({ title: "Nem sikerült menteni", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: label });
+    let extra = "";
+    // Fizetettre állításnál a rendelés bekerül a bolt kampány-konverziós számlálójába (Marketing oldal).
+    if (patch.payment_status === "paid") {
+      const { data: res } = await supabase.rpc("count_order_conversion", { _order_id: orderId });
+      const reason = (res as { reason?: string } | null)?.reason;
+      if (reason === "counted") extra = "Konverzióként rögzítve a Marketing kimutatásban.";
+      else if (reason === "already_counted") extra = "Ez a rendelés már szerepel a kimutatásban.";
+      else if (reason === "no_campaign") extra = "Nincs aktív kampány, így kampányhoz nem lett rendelve.";
+    }
+    setSaving(false);
+    toast({ title: label, description: extra || undefined });
     void load(token);
   };
 

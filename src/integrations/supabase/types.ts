@@ -7617,6 +7617,8 @@ export type Database = {
       partner_orders: {
         Row: {
           billing_address: Json | null
+          campaign_counted_at: string | null
+          campaign_plan_id: string | null
           carrier: string | null
           created_at: string
           customer_email: string
@@ -7649,6 +7651,8 @@ export type Database = {
         }
         Insert: {
           billing_address?: Json | null
+          campaign_counted_at?: string | null
+          campaign_plan_id?: string | null
           carrier?: string | null
           created_at?: string
           customer_email: string
@@ -7681,6 +7685,8 @@ export type Database = {
         }
         Update: {
           billing_address?: Json | null
+          campaign_counted_at?: string | null
+          campaign_plan_id?: string | null
           carrier?: string | null
           created_at?: string
           customer_email?: string
@@ -7712,6 +7718,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "partner_orders_campaign_plan_id_fkey"
+            columns: ["campaign_plan_id"]
+            isOneToOne: false
+            referencedRelation: "partner_campaign_plans"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "partner_orders_partner_id_fkey"
             columns: ["partner_id"]
@@ -14225,6 +14238,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      count_order_conversion: { Args: { _order_id: string }; Returns: Json }
       decay_ai_knowledge_quality: { Args: never; Returns: number }
       delete_email: {
         Args: { message_id: number; queue_name: string }
