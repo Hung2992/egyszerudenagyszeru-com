@@ -1,5 +1,11 @@
 # Partner webshop 2026
 
+## SUPER ADMIN ∞ — aktuális feladat
+
+- [ ] Meglévő admin-, AI-, adat- és jogosultsági rétegek feltérképezése; bizonyított és nem ellenőrzött működés szétválasztása.
+- [ ] Teljes technikai terv: COMMAND / MISSIONS / CONTROL, közös szerződések, ügynökök, API-k, jogosultságok, audit és fejlesztési kapuk.
+- [ ] CORE → INTELLIGENCE → AUTONOMY → EVOLUTION terv felhasználói jóváhagyása (jóváhagyásra vár).
+
 - [x] Egységes prémium mobil- és asztali kezdőoldal
 - [x] Dinamikus partner branding, hero, kategóriák és termékblokkok
 - [x] Keresés, kedvencek és gyors kosárba helyezés
