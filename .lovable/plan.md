@@ -10,9 +10,7 @@ A teljes terv négy szintet fed le. A megvalósítás CORE-ral indul; a követke
 
 ## Mit mutatott a feltérképezés?
 
-**Kódban bekötött, újrahasznosítható alapok:** admin-szerepkör ellenőrzés, AI Command Center, ügynök- és futástörténet, Agent Bus, partneri munkafolyamatok, akciótervek, jóváhagyások, webshopverziók, visszaállítás és KPI-tesztek.
-
-**Nem bizonyított egységes képesség:** tartós, duplikációbiztos végrehajtás; minden műveletre érvényes jóváhagyási kapu; teljes tenant-izoláció; megváltoztathatatlan audit; összeegyeztetett pénzügyi kimutatás; autonóm eredményellenőrzés.
+**Újrahasznosítható kódbeli alapok:** adminellenőrzés, Command Center, ügynökök, Agent Bus, workflow, akcióterv, jóváhagyás, verziózás, rollback és KPI-tesztek. Ezek jelenleg külön folyamatok; egységes végrehajtásukat a feltérképezés nem igazolja.
 
 **Javítandó forráskódbeli kockázatok:** hamis sikert sugalló feladatállapotok és hibás approval-számláló; hiányos workflow partnerszűrés és webhook-célvédelem; best-effort Agent Bus; nem atomikus queue-foglalás; külön publikálási/audit írás; rollback állapotalak-eltérés; eltérő bevételdefiníciók. Ezek a CORE biztonsági kapujába tartoznak.
 
@@ -29,7 +27,7 @@ Folyamatban lévő munkák, felelős ügynök, lépések, költség, várakozás
 ### CONTROL
 Jóváhagyások, előtte–utána eltérés, hatókör, jogosultságok, limitek, audit, hibák és visszaállítás. Globális vészleállító és partnerenkénti szüneteltetés. A részletes meglévő adminmodulok kereshető eszköztárból érhetők el.
 
-Megjelenés: a meglévő fekete–fehér–arany, szögletes arculat és betűtípusok megtartása; három elsődleges navigációs elem, mobilon rendezett váltás, részletek fokozatos kibontása.
+Megjelenés: meglévő fekete–fehér–arany arculat, szögletes elemek, három mobilbarát főnézet és fokozatosan kibontott részletek.
 
 ## Technikai architektúra
 
