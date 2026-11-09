@@ -4,7 +4,7 @@
 
 A meglévő Super Admin fölé egységes vállalati irányítóközpont épül, nem újabb modulhalmaz. A meglévő szakfelületek megmaradnak és közvetlenül megnyithatók.
 
-**Mind a négy üzleti célt együtt mérjük:** kevesebb kézi javítás, gyorsabb webshopindítás, alacsonyabb AI-költség és magasabb konverzió. Ezeket nem kezeljük garantált eredményként: előbb valós kiinduló mérés, majd ellenőrizhető változás kell. A további platformmutatók: elsőre sikeres QA és partnermegtartás.
+**Mind a négy üzleti célt együtt mérjük:** kevesebb kézi javítás, gyorsabb webshopindítás, alacsonyabb AI-költség és magasabb konverzió. Ezeket nem kezeljük garantált eredményként: előbb valós kiinduló mérés, majd ellenőrizhető változás kell. 
 
 A teljes terv négy szintet fed le. A megvalósítás CORE-ral indul; a következő szintek csak saját ellenőrzési kapujuk után kapnak végrehajtási jogosultságot. Nincs korlátlan autopilot és nincs automatikus pénzügyi vagy jogi döntés.
 
@@ -25,7 +25,7 @@ Egy magyar parancsmező, vállalati/partneri hatókör, rövid üzleti összefog
 Folyamatban lévő munkák, felelős ügynök, lépések, költség, várakozás oka és eredménybizonyíték. Megállítás, részletek és újraindítás csak az aktuális állapotból engedélyezett. Nem készül mesterségesen „sikeres” feladat vagy kitalált aktivitás.
 
 ### CONTROL
-Jóváhagyások, előtte–utána eltérés, hatókör, jogosultságok, limitek, audit, hibák és visszaállítás. Globális vészleállító és partnerenkénti szüneteltetés. A részletes meglévő adminmodulok kereshető eszköztárból érhetők el.
+Jóváhagyások, előtte–utána eltérés, hatókör, jogosultságok, limitek, audit, hibák és visszaállítás. Globális vészleállító és partnerenkénti szüneteltetés. A régi modulok kereshetőek maradnak.
 
 Megjelenés: meglévő fekete–fehér–arany arculat, szögletes elemek, három mobilbarát főnézet és fokozatosan kibontott részletek.
 
