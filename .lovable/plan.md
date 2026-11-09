@@ -14,13 +14,7 @@ A teljes terv négy szintet fed le. A megvalósítás CORE-ral indul; a követke
 
 **Nem bizonyított egységes képesség:** tartós, duplikációbiztos végrehajtás; minden műveletre érvényes jóváhagyási kapu; teljes tenant-izoláció; megváltoztathatatlan audit; összeegyeztetett pénzügyi kimutatás; autonóm eredményellenőrzés.
 
-**Konkrét forráskódbeli javítási pontok:**
-- Az ügynökfeladat alapértelmezett „completed / auto_executed” állapota nem bizonyít végrehajtást; a jóváhagyásszámláló hibás mezőt olvas.
-- A workflow A/B-kiértékelésből hiányzik a partnerellenőrzés; eseményelosztásnál nem látható megfelelő partnerszűrés. A webhook célcímek védelme hiányos.
-- Az Agent Bus kézbesítése best-effort; újrajátszáskor nem bizonyított az ismételt mellékhatások kivédése.
-- A kommunikációs queue-ban hiányzik az atomikus foglalás; egy másik workerben nincs lejáró foglalás utáni helyreállítás.
-- Jóváhagyás, publikálás és audit több helyen külön írás; rollbacknél állapotalak-eltérés és részleges visszaállítás kockázata látható.
-- A bevételt különböző modulok eltérő rendelési állapotokból számolják.
+**Javítandó forráskódbeli kockázatok:** hamis sikert sugalló feladatállapotok és hibás approval-számláló; hiányos workflow partnerszűrés és webhook-célvédelem; best-effort Agent Bus; nem atomikus queue-foglalás; külön publikálási/audit írás; rollback állapotalak-eltérés; eltérő bevételdefiníciók. Ezek a CORE biztonsági kapujába tartoznak.
 
 **Ellenőrzési korlát:** a mostani élő adatbázis-lekérdezés elérhetőségi hibával meghiúsult. A lekért biztonsági eredmények között elavult és hiányos vizsgálat is szerepel. Ezért a jelenlegi éles RLS, deploy, ütemezés és biztonsági állapot nem minősíthető ellenőrzöttnek. Az első kapu friss vizsgálat és kontrollált hozzáférési teszt.
 
@@ -75,7 +69,7 @@ Elsőként a meglévő `ai_agents`, `ai_agent_tasks`, `ai_agent_runs`, `partner_
 
 Csak a hiányzó garanciákhoz kerülnek új `public` táblák: mission/step kapcsolat, policy és képesség-hozzárendelés, verzióhoz kötött approval, lejáró execution lease, tartós outbox/delivery és szerverírású audit. A pontos bővítés élő sémavizsgálat után készül; minden új tábla GRANT → RLS → policy védelemmel, nyilvános olvasás nélkül.
 
-Tervezett szerveroldali belépési pontok: context read, mission propose/read/cancel, plan approve/reject, worker claim/execute/verify, rollback preview/commit és control pause/resume. A böngésző csak hitelesített `functions.invoke` hívásokat indít; a workernek külön belső jogosultsága van. Nincs tetszőleges SQL, kódvégrehajtás vagy szabadon megadott webhook-cél.
+API-k: context read; mission propose/read/cancel; plan approve/reject; worker claim/execute/verify; rollback preview/commit; control pause/resume. Hitelesített hívások és külön worker-jogosultság; nincs tetszőleges SQL, kód vagy webhook-cél.
 
 Adatbázison belüli módosításnál jogosultság, jóváhagyás, verzióellenőrzés, írás, audit és outbox egy tranzakcióba kerül. Külső küldésnél ez nem lehetséges: tartós lépésállapot, szolgáltatói idempotencia és visszaigazolás kell. Bizonytalan eredményt nem ismétlünk vakon és nem állítunk általános „exactly once” garanciát.
 

@@ -2,9 +2,10 @@
 
 ## SUPER ADMIN ∞ — aktuális feladat
 
-- [ ] Meglévő admin-, AI-, adat- és jogosultsági rétegek feltérképezése; bizonyított és nem ellenőrzött működés szétválasztása.
-- [ ] Teljes technikai terv: COMMAND / MISSIONS / CONTROL, közös szerződések, ügynökök, API-k, jogosultságok, audit és fejlesztési kapuk.
+- [x] Forráskódbeli admin-, AI-, adat- és jogosultsági rétegek feltérképezése; nem ellenőrzött éles működés külön jelölve.
+- [x] Teljes technikai terv: COMMAND / MISSIONS / CONTROL, közös szerződések, ügynökök, API-k, jogosultságok, audit és fejlesztési kapuk.
 - [ ] CORE → INTELLIGENCE → AUTONOMY → EVOLUTION terv felhasználói jóváhagyása (jóváhagyásra vár).
+- [ ] CORE élő séma és biztonsági ellenőrzés: jelenleg adatbázis-elérhetőségi hibába ütközik; éles végrehajtás előtt kötelező.
 
 - [x] Egységes prémium mobil- és asztali kezdőoldal
 - [x] Dinamikus partner branding, hero, kategóriák és termékblokkok
