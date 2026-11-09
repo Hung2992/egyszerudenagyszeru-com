@@ -192,3 +192,29 @@
   font-weight: var(--sf-heading-weight, 700);
   letter-spacing: var(--sf-heading-tracking, 0em);
 }
+
+/* BLACK CROWN is scoped to the enterprise admin; storefront themes remain intact. */
+.empyrean {
+  --background: 240 14% 4%;
+  --foreground: 37 39% 94%;
+  --card: 250 14% 9%;
+  --card-foreground: 37 39% 94%;
+  --popover: 250 14% 9%;
+  --popover-foreground: 37 39% 94%;
+  --primary: 38 57% 62%;
+  --primary-foreground: 240 14% 4%;
+  --secondary: 250 14% 14%;
+  --secondary-foreground: 37 39% 94%;
+  --muted: 250 14% 14%;
+  --muted-foreground: 267 4% 60%;
+  --accent: 38 57% 62%;
+  --accent-foreground: 240 14% 4%;
+  --destructive: 352 39% 54%;
+  --destructive-foreground: 37 39% 94%;
+  --border: 250 10% 22%;
+  --input: 250 10% 22%;
+  --ring: 38 57% 62%;
+  --intelligence: 256 51% 82%;
+  --verified: 104 31% 86%;
+  --data: 215 24% 64%;
+}
