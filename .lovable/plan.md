@@ -1,72 +1,124 @@
-# Partner Webshop Studio — 1. fázis
+# SUPER ADMIN ∞ — ABSOLUTE INTELLIGENCE
 
-A mostani webshop-szerkesztő (fülek: alapok, szekciók, SEO, domain) helyére egy összefüggő Studio kerül,
-ahol a partner nem mezőket tölt ki, hanem elmondja milyen üzletet akar, és a rendszer felépíti a boltot.
+## Cél és vállalás
 
-A blueprint teljes egésze több fázis. Ez a fázis a gerincet építi meg: stratégia → márka-DNS → struktúra →
-tartalom → valós termékek → előnézet → QA → publikálás → verzió/visszaállítás. A jövőbeli fázisok
-(A/B teszt, autonóm optimalizálás, több nyelv/pénznem, mega menu, merchandising motor) az itt lefektetett
-adatszerkezetre épülnek, de most nem készülnek el.
+A meglévő Super Admin fölé egységes vállalati irányítóközpont épül, nem újabb modulhalmaz. A meglévő szakfelületek megmaradnak és közvetlenül megnyithatók.
 
-## Mit fog látni a partner
+**Mind a négy üzleti célt együtt mérjük:** kevesebb kézi javítás, gyorsabb webshopindítás, alacsonyabb AI-költség és magasabb konverzió. Ezeket nem kezeljük garantált eredményként: előbb valós kiinduló mérés, majd ellenőrizhető változás kell. 
 
-**Egy képernyő, két oldal.** Bal oldalon a vezérlés, jobb oldalon az élő, kattintható webshop-előnézet
-(mobil / tablet / desktop váltóval).
+A teljes terv négy szintet fed le. A megvalósítás CORE-ral indul; a következő szintek csak saját ellenőrzési kapujuk után kapnak végrehajtási jogosultságot. Nincs korlátlan autopilot és nincs automatikus pénzügyi vagy jogi döntés.
 
-Bal oldal felülről lefelé:
-1. **Állapotsáv** — Élő / Vázlat / Publikálási probléma, és a bolt minőségi pontszáma (0–100).
-2. **AI parancsmező** — „Legyen a hero látványosabb”, „Tedd a bestsellereket a hero után”,
-   „Adj hozzá egy prémium bemutatkozó szekciót”. A parancs a kijelölt szekció kontextusában értelmeződik.
-3. **Szekciófa** — a főoldal felépítése listaként; kattintásra a előnézet odagördül, fogd-és-vidd
-   sorrendezés, szekciónként be-/kikapcsolás, AI-újraírás, törlés.
-4. **Beállítások panel** — a kijelölt szekció mezői, valamint márka, színek, tipográfia, SEO, domain
-   (a mai szerkesztő tartalma ide költözik, nem vész el semmi).
+## Mit mutatott a feltérképezés?
 
-Minden nagyobb AI-módosítás előtt előbb-utóbb összehasonlítás jelenik meg: mi volt, mi lesz, és
-egy mondatos magyarázat, hogy miért. A partner fogadja el vagy dobja el.
+**Újrahasznosítható kódbeli alapok:** adminellenőrzés, Command Center, ügynökök, Agent Bus, workflow, akcióterv, jóváhagyás, verziózás, rollback és KPI-tesztek. Ezek jelenleg külön folyamatok; egységes végrehajtásukat a feltérképezés nem igazolja.
 
-**Publikálás kapuval.** Publikálás előtt lefut az ellenőrzés (design, mobil, tartalom, linkek, SEO,
-akadálymentesség, kereskedelem). Piros hiba esetén a publikálás blokkolva van, és a hibára kattintva
-a Studio a hibás szekcióra ugrik. Minden publikálás verzió lesz, egy kattintással visszaállítható.
+**Javítandó forráskódbeli kockázatok:** hamis sikert sugalló feladatállapotok és hibás approval-számláló; hiányos workflow partnerszűrés és webhook-célvédelem; best-effort Agent Bus; nem atomikus queue-foglalás; külön publikálási/audit írás; rollback állapotalak-eltérés; eltérő bevételdefiníciók. Ezek a CORE biztonsági kapujába tartoznak.
 
-**Üres bolt.** Termék nélkül nem hibás oldal jön létre, hanem: „A webshopod szerkezete elkészült.
-Adj hozzá termékeket.” Az AI soha nem talál ki terméket, árat, készletet, vásárlói véleményt.
+**Ellenőrzési korlát:** a mostani élő adatbázis-lekérdezés elérhetőségi hibával meghiúsult. A lekért biztonsági eredmények között elavult és hiányos vizsgálat is szerepel. Ezért a jelenlegi éles RLS, deploy, ütemezés és biztonsági állapot nem minősíthető ellenőrzöttnek. Az első kapu friss vizsgálat és kontrollált hozzáférési teszt.
 
-## Technikai terv
+## Három fő felület
 
-**Adatbázis** (egy migráció, meglévő táblák bővítése, RLS + GRANT a meglévő minta szerint):
-- `partner_storefronts`: `brand_dna jsonb`, `section_layout jsonb`, `studio_strategy jsonb`,
-  `last_quality_report jsonb`, `studio_state text` (draft/ready/published/failed).
-- `partner_storefront_versions`: már létezik — a snapshot kiterjed az új mezőkre is.
+### COMMAND
+Egy magyar parancsmező, vállalati/partneri hatókör, rövid üzleti összefoglaló és ajánlott következő lépés. A válasz külön mutatja a tényeket, becsléseket, tervet és végrehajtható műveleteket. Bizonytalan kérésnél pontosítás; nincs rejtett módosítás.
 
-**Edge function** — a meglévő `partner-site-builder` átalakul több lépcsős láncra
-(`mode`: `strategy` | `build` | `section` | `command` | `qa`):
-- *strategy*: a partner leírásából márka-pozicionálás, célközönség, vizuális irány, oldalstruktúra-javaslat.
-- *build*: teljes főoldal-szerkezet + szövegek + SEO, kizárólag a partner valós termékeiből/kategóriáiból.
-- *section*: egyetlen szekció újratervezése a márka-DNS alapján.
-- *command*: természetes nyelvű parancs lefordítása konkrét szerkezeti/token-módosításra.
-- *qa*: pontozás hét területen, hibalistával, mindegyikhez a javítás helyére mutató hivatkozással.
-Modell: `openai/gpt-6-astra` a Responses API-n, streameléssel; a partner jogosultsága szerveroldalon
-ellenőrizve, az AI csak a saját partner szűkített adatait kapja.
+### MISSIONS
+Folyamatban lévő munkák, felelős ügynök, lépések, költség, várakozás oka és eredménybizonyíték. Megállítás, részletek és újraindítás csak az aktuális állapotból engedélyezett. Nem készül mesterségesen „sikeres” feladat vagy kitalált aktivitás.
 
-**Frontend** — új `src/components/partner/studio/` mappa:
-`WebshopStudio.tsx` (váz, split nézet), `StudioSectionTree.tsx`, `StudioInspector.tsx`,
-`StudioCommandBar.tsx`, `StudioQualityPanel.tsx`, `StudioPublishDialog.tsx`, `StudioDiffDialog.tsx`.
-A `StorefrontEditorTab` beépül inspector-panelként, a `StorefrontLivePreview` marad az előnézet motorja
-(postMessage-alapú azonnali frissítéssel).
+### CONTROL
+Jóváhagyások, előtte–utána eltérés, hatókör, jogosultságok, limitek, audit, hibák és visszaállítás. Globális vészleállító és partnerenkénti szüneteltetés. A régi modulok kereshetőek maradnak.
 
-**Megjelenítő oldal** — `BrandStorefront.tsx` a fix szekciósorrend helyett a `section_layout` alapján
-renderel (ismeretlen típus kihagyva, hibás szekció nem dönti le az oldalt).
+Megjelenés: meglévő fekete–fehér–arany arculat, szögletes elemek, három mobilbarát főnézet és fokozatosan kibontott részletek.
 
-**Deep link** — `/partner?tab=storefront&section=hero` a Partner OS javaslataiból közvetlenül
-a megfelelő szekcióra nyit.
+## Technikai architektúra
 
-**Ellenőrzés zárás előtt**: typecheck, meglévő tesztek, új egységtesztek a szekció-normalizálásra és a
-QA-pontozásra, valamint valódi Playwright-futás a partnerportálon és egy publikált bolton
-mobil (390×844) és desktop (1280×1800) méretben.
+```text
+COMMAND / MISSIONS / CONTROL
+              |
+      Auth + Scope + Policy
+              |
+ Intelligence Core — Mission Planner
+              |
+  Domain agents — typed tool registry
+              |
+    Approval-bound execution queue
+              |
+ Existing commerce / finance / marketing / security adapters
+              |
+ Audit + transactional outbox + result verification
+              |
+     Metrics + reviewed learning
+```
 
-## Amit ez a fázis nem tartalmaz
+React/Vite felület és Lovable Cloud szerveroldali funkciók; nincs új állandó szerver a sandboxban. A közös mag moduláris, a meglévő kereskedelmi adattáblák maradnak az üzleti igazság forrásai. Nem olvasztjuk egyetlen óriástáblába a vállalatot, és nem készítünk második párhuzamos rendelési vagy pénzügyi rendszert.
 
-Mega menu, merchandising motor, A/B teszt, autonóm optimalizálás, több nyelv/pénznem,
-vizuális regressziós képösszehasonlítás, oldalanként külön page builder (most a főoldal szerkeszthető,
-a többi oldal a design systemet örökli).
+### Közös adatszerződések
+
+Minden szerződés verziózott és sémaellenőrzött:
+- **Business context:** hatókör, forrásazonosítók, adatfrissesség, időablak, pénznem, mért mutatók; hiányzó adat nem nulla.
+- **Mission:** cél, létrehozó, partner/tenant vagy kifejezett platformhatókör, lépésfüggőségek, állapot, idő- és költségkeret, correlation ID.
+- **Action proposal:** engedélyezett művelettípus, célrekordok, előtte/utána, várható verzió, kockázat, validáció, visszaállíthatóság, változatlenyomat.
+- **Approval:** a konkrét tervlenyomathoz kötött döntés, jóváhagyó, hatókör és lejárat. Módosított tervre új jóváhagyás kell.
+- **Execution receipt:** foglalás, idempotenciakulcs, próbálkozások, eredmény, hibakód, külső visszaigazolás és ellenőrzési bizonyíték.
+- **Audit event:** szerver által rögzített szereplő, cél, döntés, policy-verzió, időpont, előtte/utána, eredmény és rollbackhivatkozás; hozzáférési token és titok nélkül.
+
+### Adatbázis és API
+
+Elsőként a meglévő `ai_agents`, `ai_agent_tasks`, `ai_agent_runs`, `partner_workflows`, `partner_workflow_runs`, akcióterv-, audit-, verzió- és KPI-szerződésekhez készül kompatibilitási térkép. A partner és tenant kapcsolatát explicit módon kell igazolni; nem következtetünk a névből.
+
+Csak a hiányzó garanciákhoz kerülnek új `public` táblák: mission/step kapcsolat, policy és képesség-hozzárendelés, verzióhoz kötött approval, lejáró execution lease, tartós outbox/delivery és szerverírású audit. A pontos bővítés élő sémavizsgálat után készül; minden új tábla GRANT → RLS → policy védelemmel, nyilvános olvasás nélkül.
+
+API-k: context read; mission propose/read/cancel; plan approve/reject; worker claim/execute/verify; rollback preview/commit; control pause/resume. Hitelesített hívások és külön worker-jogosultság; nincs tetszőleges SQL, kód vagy webhook-cél.
+
+Adatbázison belüli módosításnál jogosultság, jóváhagyás, verzióellenőrzés, írás, audit és outbox egy tranzakcióba kerül. Külső küldésnél ez nem lehetséges: tartós lépésállapot, szolgáltatói idempotencia és visszaigazolás kell. Bizonytalan eredményt nem ismétlünk vakon és nem állítunk általános „exactly once” garanciát.
+
+### Nyolc ügynök, egy közös kontrollréteg
+
+| Szerep | Első feladat | Korlát |
+|---|---|---|
+| CEO | Összesített stratégia és prioritás | Nem adhat magának jogosultságot |
+| COO | Folyamatok és beragadt feladatok | Csak regisztrált műveletek |
+| CFO | Fizetett bevétel, refund, settlement eltérései | Pénzügyi döntés emberi kontroll |
+| CTO | Rendszerállapot és ellenőrzési eredmények | Nincs önálló éles kódtelepítés |
+| CISO | Jogosultsági és biztonsági eltérések | Nem oldhat fel saját tiltást |
+| CMO | Kampányterv és célcsoport | Külső publikálás/küldés kapuval |
+| CRO | Konverziós veszteségpontok | Árváltozás nem automatikus |
+| CHRO | Feladatfelelős és kapacitás | Csak létező csapatadat; nincs kitalált teljesítmény |
+
+Az AI csak tervez és regisztrált eszközt kérhet; a policy-motor és az executor determinisztikus. Új hívások a Lovable AI Gateway SDK-val, a munkaterület elérhetőségének ellenőrzésével készülnek. Feladatkiosztás képesség, költségkeret és adatkezelési szabály alapján; tiltást modellváltással nem kerülünk meg.
+
+### Biztonság és hibabiztos végrehajtás
+
+- Szerveroldali szerepkör és képességellenőrzés minden belépési ponton; a belső worker nem helyettesíti az emberi jóváhagyást.
+- Partnerszűrés minden service-jogú lekérdezésben; két külön partnerrel pozitív és negatív teszt.
+- Állapotlánc: tervezés → jóváhagyásra vár → sorban → fut → ellenőrzés → igazolt siker / hiba / részleges / bizonytalan. A visszaállítás külön ellenőrzött folyamat.
+- Kis korlátos batch, lejáró adatbázis-lease, deduplikáció, timeout, próbálkozás- és láncmélység-korlát, késleltetés, dead-letter queue.
+- Kredit-/policy-tiltás és provider-denial leállítja a háttérmunkát; nem végtelen retry.
+- Snapshot a módosítás előtt; verzióütközésnél megállás. Rollback nem töröl véglegesen, és maga is visszavonható; külső visszafordíthatatlan hatás külön jelölve.
+- Tanulás csak felülvizsgált változatokkal; partnerközi memória kizárólag engedélyezett, anonimizált aggregátum.
+
+## Konkrét fejlesztési sorrend és kapuk
+
+### 1. CORE — egységesítés és bizonyítás
+1. Élő séma/deploy/role/policy inventár, friss security scan és a feltárt magas kockázatú útvonalak javítása.
+2. Közös hatókör, pénzügyi és KPI-definíciók, adapterek és capability registry.
+3. COMMAND / MISSIONS / CONTROL váz a jelenlegi adminban; csak valós adatok, hibánál világos állapot.
+4. Első teljes vertikális folyamat: egy meglévő webshop SEO-leírásának javaslata, pontos diff, adminjóváhagyás, verzióellenőrzött mentés, audit, visszaolvasás, rollback. Nincs automatikus publikálás.
+**Kapu:** jogosulatlan hívás elutasítva; párhuzamos végrehajtás nem dupláz; audit nélkül nincs commit; verzióütközés és rollback-drift biztonságosan megáll.
+
+### 2. INTELLIGENCE — közös értelmezés
+Összesített context, nyolc szerep, forráshivatkozásos brief, strukturált missionterv, költségmérés. A hiányzó adatok és becslések külön jelennek meg.
+**Kapu:** valós adatokból reprodukálható számok; szabálytalan AI-output elutasítva; tenant-szivárgás nincs; minden futásnak valós eredménye vagy látható hibája van.
+
+### 3. AUTONOMY — korlátozott végrehajtás
+Szimuláció és dry-run, tartós queue, jóváhagyásos eszközök, eredményellenőrzés és kompenzáció. Kezdetben automatikus elemzés; üzleti módosítás csak explicit engedéllyel. Pénzügyi, jogi, külső publikálási és visszafordíthatatlan művelet külön emberi kaput kap.
+**Kapu:** crash/retry/replay/stop tesztek; bizonytalan külső eredmény kezelése; rollback bizonyíték; költségkorlát valóban megállítja a munkát.
+
+### 4. EVOLUTION — mérés és kontrollált javulás
+Verziózott szabályok, felülvizsgált memória, megfelelő mintájú A/B vizsgálat, várható és tényleges eredmény összevetése. Előrejelzés csak adatminőséggel és bizonytalansággal együtt; nem garantált hozam.
+**Kapu:** a hat platform-KPI visszaolvasható; nincs igazolatlan „uplift”; javulás hiányában leállítható vagy visszaállítható változás.
+
+## Ellenőrzés és lezárás
+
+Minden szint: automatikus fordításellenőrzés → célzott teszt → valós ellenőrzés → javítás → újrateszt. Unit: szabályok, pénzügyi értékek, állapotváltások. Integration: RLS, API, konkurens foglalás, idempotencia, audit és rollback. E2E: valódi adminnal parancs → terv → jóváhagyás → írás → visszaolvasás → rollback; mobil 390×844 és desktop 1280×1800.
+
+Ez a terv nem igazolja a teljes autonóm rendszer meglétét, banki teljesítést vagy külső kézbesítést. A következő megvalósítás a CORE-szakasz; élő adatbázis-elérés és friss biztonsági bizonyíték nélkül éles íróvégrehajtás nem engedélyezhető.
