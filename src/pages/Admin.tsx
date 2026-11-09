@@ -33,6 +33,7 @@ const MarketingStudioRouter = lazy(lazyRetry(() => import("@/components/admin/Ma
 const AdminPartnerRecruitmentAgent = lazy(lazyRetry(() => import("@/components/admin/AdminPartnerRecruitmentAgent")));
 const AdminPartnerAcquisitionEngine = lazy(lazyRetry(() => import("@/components/admin/AdminPartnerAcquisitionEngine")));
 const AdminAiCommandCenter = lazy(lazyRetry(() => import("@/components/admin/AdminAiCommandCenter")));
+const EmpyreanControlPlane = lazy(lazyRetry(() => import("@/components/admin/EmpyreanControlPlane")));
 const AdminSocialAutoPublish = lazy(lazyRetry(() => import("@/components/admin/AdminSocialAutoPublish")));
 const AdminAgentBus = lazy(lazyRetry(() => import("@/components/admin/AdminAgentBus")));
 const AdminMultiAgentMemory = lazy(lazyRetry(() => import("@/components/admin/AdminMultiAgentMemory")));
@@ -554,7 +555,7 @@ type SettingsSection = "store" | "payment" | "email" | "seo" | "appearance" | "h
 const Admin = () => {
   const navigate = useNavigate();
   const { isAdmin, loading, userId } = useAdminCheck();
-  const [tab, setTab] = useState<Tab>("ai_marketing_studio");
+  const [tab, setTab] = useState<Tab | "empyrean">("empyrean");
   const [marketingStudioTab, setMarketingStudioTab] = useState<Tab>("ai_studio_recorder");
   const [settingsSection, setSettingsSection] = useState<SettingsSection>("store");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1595,7 +1596,7 @@ const Admin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="empyrean min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-background/90 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
@@ -1604,7 +1605,7 @@ const Admin = () => {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <span className="text-sm font-bold uppercase tracking-wider text-foreground">
-              Admin Panel
+              EMPYREAN ∞
             </span>
           </div>
           <span className="text-[10px] font-medium uppercase tracking-widest text-accent">
@@ -1621,7 +1622,7 @@ const Admin = () => {
       </header>
 
       {/* Tabs */}
-      <div className="border-b">
+      <div className="border-b" hidden={tab === "empyrean"}>
         <div className="mx-auto max-w-6xl space-y-3 px-4 py-3">
           {/* ⚖️ JOGI + ÁFA MEGA KIEMELT SÁV — minden képernyőn látható */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -2985,6 +2986,7 @@ const Admin = () => {
         {tab === "ai_marketplace" && <AdminAiMarketplaceTab />}
         {tab === "multi_agent_memory" && <AdminMultiAgentMemory />}
         {tab === "ai_marketing_ceo" && <AdminAiMarketingCeo />}
+        {tab === "empyrean" && <EmpyreanControlPlane onOpen={setTab} />}
         {tab === "ai_command_center" && <AdminAiCommandCenter />}
         {tab === "ar_3d_center" && <AdminArAssetsTab />}
         {tab === "gdpr" && <AdminGdprTab />}
