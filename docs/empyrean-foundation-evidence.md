@@ -25,6 +25,7 @@ Client predicates do not establish backend enforcement. No database objects, pol
 - Automated build signal after type-narrowing fix: build OK.
 - Authenticated browser check: blocked. `lovable auth-session --json` failed because the database was inaccessible. No admin access was bypassed and no mocked session was presented as real evidence.
 - Live schema read: failed with database accessibility error.
+- Public browser guard: `/admin` redirected to `/auth?redirect=/admin`; protected EMPYREAN heading absent. Screenshot inspected. This verifies only signed-out protection, not authenticated operation.
 - Mobile/desktop authenticated render, real data readback and product SEO workflow: unverified.
 
 ## Not implemented / remaining risk
