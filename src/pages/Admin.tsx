@@ -1611,6 +1611,7 @@ const Admin = () => {
           <span className="text-[10px] font-medium uppercase tracking-widest text-accent">
             Szuper Admin
           </span>
+          <Button variant="ghost" size="icon" title="EMPYREAN központ" aria-label="EMPYREAN központ" onClick={() => setTab("empyrean")}><Shield className="h-4 w-4" /></Button>
           <Button
             size="sm"
             onClick={() => openMarketingStudio()}
@@ -1629,7 +1630,7 @@ const Admin = () => {
             <button
               onClick={() => openMarketingStudio()}
               className={`group relative flex items-center justify-between gap-3 border-2 px-4 py-3 text-left transition-all sm:col-span-2 ${
-                tab === "ai_marketing_studio" || marketingStudioKeys.includes(tab)
+                tab === "ai_marketing_studio" || (tab !== "empyrean" && marketingStudioKeys.includes(tab))
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-primary bg-primary/10 text-foreground hover:bg-primary hover:text-primary-foreground"
               }`}
