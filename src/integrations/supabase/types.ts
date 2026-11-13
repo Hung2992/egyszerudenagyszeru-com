@@ -14264,6 +14264,7 @@ export type Database = {
           id: string
           plan_id: string
           prev_hash: string | null
+          seq: number
           step_id: string | null
         }
         Insert: {
@@ -14275,6 +14276,7 @@ export type Database = {
           id?: string
           plan_id: string
           prev_hash?: string | null
+          seq?: never
           step_id?: string | null
         }
         Update: {
@@ -14286,6 +14288,7 @@ export type Database = {
           id?: string
           plan_id?: string
           prev_hash?: string | null
+          seq?: never
           step_id?: string | null
         }
         Relationships: [

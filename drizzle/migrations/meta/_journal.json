@@ -197,6 +197,13 @@
       "when": 1794602295620,
       "tag": "0027_aegis_evidence_gate",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1794603727015,
+      "tag": "0028_aegis_ledger_seq",
+      "breakpoints": true
     }
   ]
 }
