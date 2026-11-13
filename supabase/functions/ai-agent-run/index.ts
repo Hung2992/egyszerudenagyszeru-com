@@ -332,7 +332,7 @@ async function runOne(supabase: any, apiKey: string, slug: string) {
   const { data: agent } = await supabase.from("ai_agents").select("*").eq("slug", slug).maybeSingle();
   if (!agent) throw new Error(`Agent not found: ${slug}`);
   if (!agent.is_active) return { skipped: true, reason: "agent inactive" };
-  USAGE_DB = supabase;
+  USAGE_DB = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 
   const t0 = Date.now();
   const { data: run } = await supabase.from("ai_agent_runs")
