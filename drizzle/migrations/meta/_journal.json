@@ -134,6 +134,13 @@
       "when": 1794598392897,
       "tag": "0018_aegis_events",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794599060624,
+      "tag": "0019_aegis_security_command",
+      "breakpoints": true
     }
   ]
 }
