@@ -99,6 +99,13 @@
       "when": 1794595082362,
       "tag": "0013_admin_set_order_dates",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1794595254494,
+      "tag": "0014_ai_invoices_and_admin_orders",
+      "breakpoints": true
     }
   ]
 }

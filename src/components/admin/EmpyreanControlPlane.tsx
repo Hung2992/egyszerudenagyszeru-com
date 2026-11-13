@@ -12,6 +12,8 @@ import EmpyreanAiBudget from "./EmpyreanAiBudget";
 import EmpyreanReturns from "./EmpyreanReturns";
 import EmpyreanPnl from "./EmpyreanPnl";
 import EmpyreanOrderDates from "./EmpyreanOrderDates";
+import EmpyreanNewOrder from "./EmpyreanNewOrder";
+import EmpyreanAiInvoice from "./EmpyreanAiInvoice";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -426,9 +428,11 @@ export default function EmpyreanControlPlane({ onOpen }: { onOpen: (destination:
         <div className="space-y-8">
           <EmpyreanSecurityPosture />
           <EmpyreanPnl />
+          <EmpyreanNewOrder />
           <EmpyreanOrderDates />
           <EmpyreanReturns />
           <EmpyreanAiBudget />
+          <EmpyreanAiInvoice />
           <EmpyreanOptimization />
           <section className="flex gap-3 border border-border p-4 sm:p-6">
             <Shield className="text-accent shrink-0" />
