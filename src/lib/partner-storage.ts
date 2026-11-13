@@ -8,10 +8,19 @@ export async function getPartnerMediaUrl(bucket: "partner-storefront-media" | "p
   const key = `${bucket}/${path}`;
   const c = cache.get(key);
   if (c && c.exp > Date.now()) return c.url;
+  if (/^https?:\/\//.test(path)) return path;
+  // Owners/admins: direct signed URL (their own RLS read access).
   const { data } = await supabase.storage.from(bucket).createSignedUrl(path, ONE_YEAR);
-  if (!data?.signedUrl) return null;
-  cache.set(key, { url: data.signedUrl, exp: Date.now() + ONE_YEAR * 1000 * 0.9 });
-  return data.signedUrl;
+  if (data?.signedUrl) {
+    cache.set(key, { url: data.signedUrl, exp: Date.now() + ONE_YEAR * 1000 * 0.9 });
+    return data.signedUrl;
+  }
+  // Visitors: server verifies the file is used by a published shop / active product.
+  const { data: res } = await supabase.functions.invoke("partner-public-media", { body: { bucket, paths: [path] } });
+  const url = (res as { urls?: Record<string, string> } | null)?.urls?.[path];
+  if (!url) return null;
+  cache.set(key, { url, exp: Date.now() + 60 * 60 * 1000 * 20 });
+  return url;
 }
 
 export async function uploadPartnerMedia(bucket: "partner-storefront-media" | "partner-product-images", partnerId: string, file: File): Promise<string | null> {

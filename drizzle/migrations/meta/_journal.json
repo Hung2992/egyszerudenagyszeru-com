@@ -36,6 +36,13 @@
       "when": 1794589122720,
       "tag": "0004_empyrean_automation_security",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794589847254,
+      "tag": "0005_drop_anon_partner_media_read",
+      "breakpoints": true
     }
   ]
 }
