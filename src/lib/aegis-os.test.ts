@@ -22,6 +22,6 @@ import { simulate } from "./aegis-os";
 describe("Szimuláció", () => {
   it("visszatérítés nem visszaállítható", () => expect(simulate("Visszatérítés a vásárlónak").rollback).toBe("nincs"));
   it("SEO-szöveg teljesen visszaállítható", () => expect(simulate("SEO leírások frissítése").rollback).toBe("teljes"));
-  it("a legrosszabb visszaállíthatóság nyer", () => expect(simulate("SEO kampány és hírlevél").rollback).toBe("nincs"));
+  it("a legrosszabb visszaállíthatóság nyer", () => expect(simulate("Küldj hírlevelet és SEO leírások").rollback).toBe("nincs"));
   it("elemzés belső marad", () => expect(simulate("Elemezd a forgalmat").reach).toBe("belső"));
 });

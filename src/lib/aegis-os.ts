@@ -46,7 +46,7 @@ export function needsHuman(p: PlanLite, now = Date.now()): boolean {
 export type Simulation = { effects: string[]; sideEffects: string[]; rollback: "teljes" | "részleges" | "nincs"; reach: string };
 const SIM: { re: RegExp; effect: string; side: string; rollback: Simulation["rollback"]; reach: string }[] = [
   { re: /visszatérít|utal|fizet|refund|pénz|árazás|ár(at|ak)?\b/i, effect: "Pénzmozgás vagy bevételváltozás", side: "Könyvelési és adózási hatás", rollback: "nincs", reach: "vásárlók és pénzügy" },
-  { re: /hírlevél|newsletter|e-?mail|sms|értesít|üzen/i, effect: "Üzenet megy ki vásárlóknak", side: "Kiküldött üzenet nem vonható vissza; leiratkozás kockázata", rollback: "nincs", reach: "vásárlók" },
+  { re: /hírlev[eé]l|newsletter|e-?mail|sms|értesít|üzen/i, effect: "Üzenet megy ki vásárlóknak", side: "Kiküldött üzenet nem vonható vissza; leiratkozás kockázata", rollback: "nincs", reach: "vásárlók" },
   { re: /töröl|delete|purge|eltávolít/i, effect: "Adat vagy tartalom törlése", side: "Kapcsolódó rendelések, linkek sérülhetnek", rollback: "részleges", reach: "adatbázis" },
   { re: /publik|élesít|közzétesz|publish/i, effect: "Nyilvános tartalom változik", side: "Keresőmotorok és látogatók azonnal látják", rollback: "részleges", reach: "nyilvánosság" },
   { re: /seo|leírás|cím|meta|tartalom/i, effect: "Termék- vagy oldalszöveg változik", side: "Keresési helyezés átmenetileg ingadozhat", rollback: "teljes", reach: "webshop" },
