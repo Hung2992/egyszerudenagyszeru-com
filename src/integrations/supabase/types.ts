@@ -882,6 +882,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_budget: {
+        Row: {
+          block_at_limit: boolean
+          id: boolean
+          last_warned_month: string | null
+          monthly_limit_credits: number
+          updated_at: string
+          updated_by: string | null
+          warn_pct: number
+        }
+        Insert: {
+          block_at_limit?: boolean
+          id?: boolean
+          last_warned_month?: string | null
+          monthly_limit_credits?: number
+          updated_at?: string
+          updated_by?: string | null
+          warn_pct?: number
+        }
+        Update: {
+          block_at_limit?: boolean
+          id?: boolean
+          last_warned_month?: string | null
+          monthly_limit_credits?: number
+          updated_at?: string
+          updated_by?: string | null
+          warn_pct?: number
+        }
+        Relationships: []
+      }
       ai_build_playbook: {
         Row: {
           created_at: string
@@ -3179,6 +3209,33 @@ export type Database = {
           total_price?: number | null
           user_id?: string | null
           user_prompt?: string | null
+        }
+        Relationships: []
+      }
+      ai_usage_daily: {
+        Row: {
+          calls: number
+          cost: number
+          function_name: string
+          tokens: number
+          updated_at: string
+          usage_date: string
+        }
+        Insert: {
+          calls?: number
+          cost?: number
+          function_name: string
+          tokens?: number
+          updated_at?: string
+          usage_date?: string
+        }
+        Update: {
+          calls?: number
+          cost?: number
+          function_name?: string
+          tokens?: number
+          updated_at?: string
+          usage_date?: string
         }
         Relationships: []
       }
@@ -14413,6 +14470,7 @@ export type Database = {
         }
         Returns: string
       }
+      ai_budget_state: { Args: never; Returns: Json }
       ai_endpoint_record: {
         Args: {
           _error?: string
@@ -14421,6 +14479,10 @@ export type Database = {
           _ok: boolean
         }
         Returns: undefined
+      }
+      ai_record_usage: {
+        Args: { _cost: number; _fn: string; _tokens: number }
+        Returns: Json
       }
       apply_meta_action: {
         Args: { _action_id: string; _user_id?: string }
@@ -14506,6 +14568,7 @@ export type Database = {
         }[]
       }
       empyrean_action_snapshot: { Args: { _action_id: string }; Returns: Json }
+      empyrean_ai_budget: { Args: never; Returns: Json }
       empyrean_approve_action: {
         Args: {
           _action_id: string
@@ -14544,6 +14607,10 @@ export type Database = {
           tags: string[]
           title: string
         }[]
+      }
+      empyrean_set_ai_budget: {
+        Args: { _block: boolean; _limit: number; _warn_pct: number }
+        Returns: Json
       }
       empyrean_set_pause: {
         Args: { _paused: boolean; _reason?: string }

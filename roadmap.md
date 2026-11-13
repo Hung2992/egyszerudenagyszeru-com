@@ -32,3 +32,9 @@
 
 - Az online fizetéshez aktív partneri fizetési kapcsolat szükséges.
 - A teljes éles rendelési teszthez valódi fizetés és külső kézbesítés szükséges.
+## Új kérések (2026-11-13)
+- [x] AI-költségkeret a CONTROL panelen + előzetes figyelmeztetés (admin értesítés, leállítás a keretnél)
+- [x] AI-hívás rögzítés: segédek + közös AI útvonal (8 funkció). [ ] Maradék ~40 közvetlen hívó funkció bekötése
+- [x] 30 napos összesítés: 231 hívás, 2,60 kredit, 247 109 token
+- [ ] Befolyt bevétel: blokkolva — nincs fizetett partnerrendelés (5 függő, szeptemberi)
+- [ ] Következő fázis: szállítási és visszaküldési folyamat

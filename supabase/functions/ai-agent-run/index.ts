@@ -2,6 +2,9 @@
 // Aggresszív mód: minden agent automatán fut, mindent naplóz.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.104.1";
 import { requireInternalOrAdmin } from "../_shared/internal-auth.ts";
+import { assertAiBudget, recordAiUsage } from "../_shared/ai-usage.ts";
+
+let USAGE_DB: any = null;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,6 +26,7 @@ interface AgentContext {
 
 // ---------- AI helper ----------
 async function chat(apiKey: string, system: string, user: string, jsonMode = true): Promise<any> {
+  if (USAGE_DB) await assertAiBudget(USAGE_DB);
   const r = await fetch(AI_CHAT, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
@@ -34,6 +38,7 @@ async function chat(apiKey: string, system: string, user: string, jsonMode = tru
   });
   if (!r.ok) throw new Error(`AI ${r.status}: ${await r.text()}`);
   const d = await r.json();
+  if (USAGE_DB) await recordAiUsage(USAGE_DB, "ai-agent-run", MODEL, d?.usage);
   const c = d?.choices?.[0]?.message?.content ?? "{}";
   if (!jsonMode) return c;
   try { return JSON.parse(c); } catch { const m = c.match(/\{[\s\S]*\}/); return m ? JSON.parse(m[0]) : {}; }
@@ -327,6 +332,7 @@ async function runOne(supabase: any, apiKey: string, slug: string) {
   const { data: agent } = await supabase.from("ai_agents").select("*").eq("slug", slug).maybeSingle();
   if (!agent) throw new Error(`Agent not found: ${slug}`);
   if (!agent.is_active) return { skipped: true, reason: "agent inactive" };
+  USAGE_DB = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 
   const t0 = Date.now();
   const { data: run } = await supabase.from("ai_agent_runs")
