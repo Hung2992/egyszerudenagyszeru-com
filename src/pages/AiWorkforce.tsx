@@ -4,6 +4,7 @@ import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
 import EmpyreanAiWorld from "@/components/admin/EmpyreanAiWorld";
 import AegisPolicyZeroTrust from "@/components/admin/AegisPolicyZeroTrust";
+import AegisApprovalQueue from "@/components/admin/AegisApprovalQueue";
 import AegisFullStop from "@/components/admin/AegisFullStop";
 import EmpyreanAegisKillSwitch from "@/components/admin/EmpyreanAegisKillSwitch";
 import EmpyreanAegisIncidents from "@/components/admin/EmpyreanAegisIncidents";
@@ -19,6 +20,7 @@ const failLabel: Record<string, string> = { step_failed: "Hibás lépés", aegis
 const AiWorkforce = () => {
   const { isAdmin, loading } = useAdminCheck();
   const navigate = useNavigate();
+  const [reload, setReload] = useState(0);
   const [tab, setTab] = useState<(typeof TABS)[number]>("COMMAND CENTER");
   const [d, setD] = useState<{ plans: Plan[]; steps: Step[]; audit: { action: string; created_at: string }[]; ev: { action: string; findings: string[]; created_at: string }[]; inc: number; agents: { state: string }[]; paused: boolean; mode: string; ledger: { ok: boolean; checked: number } | null } | null>(null);
   useEffect(() => { if (!loading && !isAdmin) navigate("/"); }, [loading, isAdmin, navigate]);
@@ -40,7 +42,7 @@ const AiWorkforce = () => {
       inc: i.count ?? 0, agents: ag.data ?? [], paused: (em.data ?? []).some((r: { paused: boolean }) => r.paused),
       mode: (st.data as { input_mode?: string } | null)?.input_mode ?? "?", ledger: l.data as never,
     }));
-  }, [isAdmin]);
+  }, [isAdmin, reload]);
   if (loading || !isAdmin) return <div className="min-h-screen flex items-center justify-center">…</div>;
 
   const stepsOf = (id: string) => d?.steps.filter((s) => s.plan_id === id) ?? [];
@@ -79,7 +81,7 @@ const AiWorkforce = () => {
         {tab === "COMMAND CENTER" && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border border border-border">
-              {kpi.map(([l, v, warn]) => <div key={l} className="bg-background p-3"><p className="text-[11px] text-muted-foreground">{l}</p><p className={`text-xl ${warn ? "text-destructive" : ""}`}>{v}</p></div>)}
+              {kpi.map(([l, v, warn]) => <div key={l} className="bg-background p-3"><p className="text-[11px] text-muted-foreground">{l}</p><p onClick={l === "Emberi döntésre vár" ? () => setTab("HUMAN GATE") : undefined} className={`text-xl ${l === "Emberi döntésre vár" ? "cursor-pointer underline " : ""}${warn ? "text-destructive" : ""}`}>{v}</p></div>)}
             </div>
             <section className="space-y-2">
               <h2 className="text-lg font-medium">Állapotgép</h2>
@@ -106,8 +108,8 @@ const AiWorkforce = () => {
           <div className="space-y-8">
             <section className="space-y-2">
               <h2 className="text-lg font-medium">Emberi döntésre vár ({gate.length})</h2>
-              <p className="text-xs text-muted-foreground">Magas kockázatnál nincs automatikus végrehajtás: javaslat → kockázat → ellenőrzés → ember → végrehajtás. A döntést a WORKFORCE fülön hozod meg.</p>
-              <ul className="text-xs space-y-1">{gate.map((p) => <li key={p.id} className="border border-border p-2">{p.risk === "red" ? "🔴" : p.risk === "yellow" ? "🟡" : "🟢"} {p.goal} — {p.status === "draft" ? "jóváhagyásra vár" : "a jóváhagyás lejárt"}</li>)}</ul>
+              <p className="text-xs text-muted-foreground">Magas kockázatnál nincs automatikus végrehajtás: javaslat → kockázat → ellenőrzés → ember → végrehajtás. Itt dönthetsz.</p>
+              <AegisApprovalQueue plans={gate} onDone={() => setReload((r) => r + 1)} />
             </section>
             <AegisFullStop />
             <EmpyreanAegisKillSwitch />
