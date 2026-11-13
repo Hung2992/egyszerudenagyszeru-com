@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Activity, ArrowRight, Check, Clock, Crown, ListChecks, Lock, RefreshCw,
-  RotateCcw, Shield, Square, Terminal, TriangleAlert, Unlock, X,
+  RotateCcw, Shield, Square, Terminal, TriangleAlert, Unlock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
-import { executiveRoles, hasIndependentVerification } from "@/lib/empyrean-contracts";
+import { allowedOperations, buildSeoProposal, executiveRoles, hasIndependentVerification } from "@/lib/empyrean-contracts";
 
 type Destination = "ai_command_center" | "permissions" | "platform_kpi" | "products" | "financial_center" | "ai_agent_bus";
 
@@ -114,14 +114,10 @@ export default function EmpyreanControlPlane({ onOpen }: { onOpen: (destination:
     });
   }).length;
 
-  const proposalPayload = useMemo(() => {
-    const payload: Record<string, Json> = {};
-    if (included.title) payload.title = draft.title.trim();
-    if (included.description) payload.description = draft.description.trim();
-    if (included.category) payload.category = draft.category.trim();
-    if (included.tags) payload.tags = draft.tags.split(",").map((tag) => tag.trim()).filter(Boolean);
-    return payload;
-  }, [included, draft]);
+  const proposalPayload = useMemo(
+    () => buildSeoProposal({ included, draft }) as Record<string, Json>,
+    [included, draft],
+  );
 
   const pickProduct = (id: string) => {
     setProductId(id);
@@ -384,22 +380,22 @@ export default function EmpyreanControlPlane({ onOpen }: { onOpen: (destination:
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                      {["PROPOSED", "VALIDATED", "AUTHORIZED", "REJECTED"].includes(row.state) && (
+                      {allowedOperations(row.state).includes("approve") && (
                         <Button size="sm" variant="outline" className="rounded-none" disabled={busy === `approve:${row.id}`} onClick={() => void approve(row)}>
                           <Check size={14} className="mr-2" />Jóváhagyás
                         </Button>
                       )}
-                      {row.state === "APPROVED" && (
+                      {allowedOperations(row.state).includes("execute") && (
                         <Button size="sm" variant="outline" className="rounded-none" disabled={busy === `execute:${row.id}` || paused} onClick={() => void execute(row)}>
                           <ArrowRight size={14} className="mr-2" />Végrehajtás
                         </Button>
                       )}
-                      {row.state === "EXECUTING" && (
+                      {allowedOperations(row.state).includes("verify") && (
                         <Button size="sm" variant="outline" className="rounded-none" disabled={busy === `verify:${row.id}`} onClick={() => void verify(row)}>
                           <Shield size={14} className="mr-2" />Független ellenőrzés
                         </Button>
                       )}
-                      {["EXECUTING", "VERIFIED", "REQUIRES_REVIEW", "FAILED"].includes(row.state) && (
+                      {allowedOperations(row.state).includes("rollback") && (
                         <Button size="sm" variant="outline" className="rounded-none" disabled={busy === `rollback:${row.id}`} onClick={() => void rollback(row)}>
                           <RotateCcw size={14} className="mr-2" />Visszaállítás
                         </Button>
