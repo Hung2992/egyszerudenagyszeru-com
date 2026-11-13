@@ -8041,10 +8041,12 @@ export type Database = {
           payment_status: string | null
           platform_fee_huf: number
           platform_fee_pct: number
+          promised_days: number | null
           seen_by_partner_at: string | null
           shipped_at: string | null
           shipping_address: Json
           shipping_huf: number
+          shipping_method_id: string | null
           status: string
           stripe_payment_intent: string | null
           subtotal_huf: number
@@ -8075,10 +8077,12 @@ export type Database = {
           payment_status?: string | null
           platform_fee_huf?: number
           platform_fee_pct?: number
+          promised_days?: number | null
           seen_by_partner_at?: string | null
           shipped_at?: string | null
           shipping_address?: Json
           shipping_huf?: number
+          shipping_method_id?: string | null
           status?: string
           stripe_payment_intent?: string | null
           subtotal_huf?: number
@@ -8109,10 +8113,12 @@ export type Database = {
           payment_status?: string | null
           platform_fee_huf?: number
           platform_fee_pct?: number
+          promised_days?: number | null
           seen_by_partner_at?: string | null
           shipped_at?: string | null
           shipping_address?: Json
           shipping_huf?: number
+          shipping_method_id?: string | null
           status?: string
           stripe_payment_intent?: string | null
           subtotal_huf?: number
@@ -9158,6 +9164,7 @@ export type Database = {
           method_type: string
           name: string
           partner_id: string
+          promised_days: number | null
           requires_address: boolean
           sort_order: number
           updated_at: string
@@ -9172,6 +9179,7 @@ export type Database = {
           method_type?: string
           name: string
           partner_id: string
+          promised_days?: number | null
           requires_address?: boolean
           sort_order?: number
           updated_at?: string
@@ -9186,6 +9194,7 @@ export type Database = {
           method_type?: string
           name?: string
           partner_id?: string
+          promised_days?: number | null
           requires_address?: boolean
           sort_order?: number
           updated_at?: string
@@ -14689,6 +14698,18 @@ export type Database = {
         Args: { _action: string; _note?: string; _return_id: string }
         Returns: Json
       }
+      empyrean_delivery_delays: {
+        Args: never
+        Returns: {
+          actual_days: number
+          delivered_at: string
+          extra_days: number
+          order_number: string
+          promised_days: number
+          ratio: number
+          shipped_at: string
+        }[]
+      }
       empyrean_execute_action: { Args: { _action_id: string }; Returns: Json }
       empyrean_hash_payload: { Args: { _payload: Json }; Returns: string }
       empyrean_is_admin: { Args: never; Returns: boolean }
@@ -14752,6 +14773,10 @@ export type Database = {
       empyrean_set_pause: {
         Args: { _paused: boolean; _reason?: string }
         Returns: boolean
+      }
+      empyrean_set_promised_days: {
+        Args: { _days: number; _method_id: string }
+        Returns: undefined
       }
       empyrean_verify_action: { Args: { _action_id: string }; Returns: Json }
       enqueue_email: {

@@ -14,6 +14,7 @@ import EmpyreanPnl from "./EmpyreanPnl";
 import EmpyreanOrderDates from "./EmpyreanOrderDates";
 import EmpyreanNewOrder from "./EmpyreanNewOrder";
 import EmpyreanAiInvoice from "./EmpyreanAiInvoice";
+import EmpyreanDelays from "./EmpyreanDelays";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -430,6 +431,7 @@ export default function EmpyreanControlPlane({ onOpen }: { onOpen: (destination:
           <EmpyreanPnl />
           <EmpyreanNewOrder />
           <EmpyreanOrderDates />
+          <EmpyreanDelays />
           <EmpyreanReturns />
           <EmpyreanAiBudget />
           <EmpyreanAiInvoice />
