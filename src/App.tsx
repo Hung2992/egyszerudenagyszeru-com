@@ -92,6 +92,7 @@ const BrandCampaign = lazy(lazyRetry(() => import("./pages/BrandCampaign.tsx")))
 const BrandCampaigns = lazy(lazyRetry(() => import("./pages/BrandCampaigns.tsx")));
 const BrandCustomerAccount = lazy(lazyRetry(() => import("./pages/BrandCustomerAccount.tsx")));
 const BrandCheckout = lazy(lazyRetry(() => import("./pages/BrandCheckout.tsx")));
+const AiWorkforce = lazy(lazyRetry(() => import("./pages/AiWorkforce.tsx")));
 const PartnerApprovals = lazy(lazyRetry(() => import("./pages/PartnerApprovals.tsx")));
 const PartnerLanding = lazy(lazyRetry(() => import("./pages/PartnerLanding.tsx")));
 const PartnerShareRedirect = lazy(lazyRetry(() => import("./pages/PartnerShareRedirect.tsx")));
@@ -139,6 +140,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/ai-workforce" element={<AiWorkforce />} />
             <Route path="/admin/partner-approvals" element={<PartnerApprovals />} />
             <Route path="/konyvelo" element={<AccountantPortal />} />
             <Route path="/partner" element={<PartnerPortal />} />
