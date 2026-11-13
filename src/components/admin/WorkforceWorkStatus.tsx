@@ -3,12 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 type Plan = { id: string; goal: string; status: string; risk: string; owner: string | null; due_date: string | null; created_at: string };
-type Step = { id: string; plan_id: string; idx: number; task: string; owner: string; status: string; due_date: string | null; executed_at: string | null; result: string | null };
+type Step = { id: string; plan_id: string; idx: number; phase: string; task: string; owner: string; status: string; due_date: string | null; executed_at: string | null; result: string | null };
 type Img = { id: string; plan_id: string; path: string; url?: string };
 
 export const isTestPlan = (goal: string) => /pr[óo]ba|teszt|test/i.test(goal);
 export const isOverdue = (due: string | null, done: boolean, now = new Date()) =>
   !!due && !done && new Date(due + "T23:59:59") < now;
+export const stepMark = (st: { status: string }[], k: number) => {
+  const s = st[k].status; if (s === "done") return "kész"; if (s === "failed") return "hibás";
+  const first = st.findIndex((x) => x.status !== "done"); return first === k ? "következő" : "vár";
+};
+const statusHu: Record<string, string> = { draft: "tervezet", approved: "jóváhagyva", in_progress: "folyamatban", done: "kész", cancelled: "megszakítva" };
 const dur = (ms: number) => { const m = Math.round(ms / 60000); return m < 60 ? `${m} perc` : m < 1440 ? `${(m / 60).toFixed(1)} óra` : `${(m / 1440).toFixed(1)} nap`; };
 
 const WorkforceWorkStatus = () => {
@@ -17,7 +22,7 @@ const WorkforceWorkStatus = () => {
   useEffect(() => { (async () => {
     const [p, s, i] = await Promise.all([
       supabase.from("workforce_plans").select("id,goal,status,risk,owner,due_date,created_at").order("created_at", { ascending: false }).limit(200),
-      supabase.from("workforce_plan_steps").select("id,plan_id,idx,task,owner,status,due_date,executed_at,result").order("idx"),
+      supabase.from("workforce_plan_steps").select("id,plan_id,idx,phase,task,owner,status,due_date,executed_at,result").order("idx"),
       supabase.from("workforce_plan_images").select("id,plan_id,path").order("created_at"),
     ]);
     setPlans((p.data ?? []) as Plan[]); setSteps((s.data ?? []) as Step[]);
@@ -61,6 +66,22 @@ const WorkforceWorkStatus = () => {
           <div key={l} className="bg-background p-3"><p className="text-[11px] text-muted-foreground">{l}</p><p className={`text-xl ${l === "Lejárt" && overdue ? "text-destructive" : ""}`}>{v}</p></div>)}
       </div>
       <div className="h-2 bg-muted"><div className="h-2 bg-accent" style={{ width: `${pct}%` }} /></div>
+      <section className="grid md:grid-cols-2 gap-4 text-xs">
+        <div className="border border-border p-3 space-y-1">
+          <h3 className="text-sm font-medium">Tervek összegzése</h3>
+          {Object.entries(shown.reduce<Record<string, number>>((a, p) => { const k = isOverdue(p.due_date, p.status === "done") ? "LEJÁRT" : statusHu[p.status] ?? p.status; a[k] = (a[k] ?? 0) + 1; return a; }, {})).map(([k, v]) =>
+            <div key={k} className="flex justify-between"><span className={k === "LEJÁRT" ? "text-destructive" : ""}>{k}</span><strong>{v}</strong></div>)}
+          <h3 className="text-sm font-medium pt-2">Lépések kategóriánként</h3>
+          {Object.entries(all.reduce<Record<string, [number, number]>>((a, s) => { const k = s.phase.replace(/^\d+\.\s*/, "") || "egyéb"; a[k] = a[k] ?? [0, 0]; a[k][1]++; if (s.status === "done") a[k][0]++; return a; }, {})).map(([k, [d2, t]]) =>
+            <div key={k} className="flex justify-between"><span>{k}</span><span>{d2}/{t}</span></div>)}
+        </div>
+        <div className="border border-border p-3 space-y-1">
+          <h3 className="text-sm font-medium">Felelősök összegzése</h3>
+          <table className="w-full"><thead><tr className="text-left text-muted-foreground"><th>Felelős</th><th>Kész</th><th>Vár</th><th>Hibás</th></tr></thead>
+          <tbody>{Object.entries(all.reduce<Record<string, [number, number, number]>>((a, s) => { const k = s.owner || "—"; a[k] = a[k] ?? [0, 0, 0]; a[k][s.status === "done" ? 0 : s.status === "failed" ? 2 : 1]++; return a; }, {})).sort((x, y) => y[1][1] - x[1][1]).map(([k, [a1, b1, c1]]) =>
+            <tr key={k} className="border-t border-border"><td className="py-1">{k}</td><td>{a1}</td><td>{b1}</td><td className={c1 ? "text-destructive" : ""}>{c1}</td></tr>)}</tbody></table>
+        </div>
+      </section>
       <ul className="space-y-2 text-xs">
         {shown.map((p) => {
           const st = steps.filter((s) => s.plan_id === p.id); const ok = st.filter((s) => s.status === "done").length;
@@ -71,7 +92,7 @@ const WorkforceWorkStatus = () => {
             <li key={p.id} className={`border p-3 space-y-2 ${late ? "border-destructive" : "border-border"}`}>
               <button className="w-full text-left flex justify-between gap-2" onClick={() => setOpen(open === p.id ? null : p.id)}>
                 <span className="font-medium">{p.goal}</span>
-                <span className={`shrink-0 ${late ? "text-destructive font-medium" : "text-muted-foreground"}`}>{late ? "LEJÁRT" : p.status}</span>
+                <span className={`shrink-0 ${late ? "text-destructive font-medium" : "text-muted-foreground"}`}>{late ? "LEJÁRT" : statusHu[p.status] ?? p.status}</span>
               </button>
               <div className="h-1.5 bg-muted"><div className="h-1.5 bg-accent" style={{ width: `${pp}%` }} /></div>
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
@@ -80,19 +101,22 @@ const WorkforceWorkStatus = () => {
                 <span>Felelős: {p.owner || "—"}</span>
                 <span className={late ? "text-destructive" : ""}>Határidő: {p.due_date ? new Date(p.due_date).toLocaleDateString("hu-HU") : "—"}</span>
                 <span>Képek: {pi.length}</span>
+                {st.some((x) => x.status !== "done") && <span>Következő: <strong className="text-accent">{st.find((x) => x.status !== "done")?.task}</strong></span>}
               </div>
               {open === p.id && (
                 <div className="space-y-3 pt-2 border-t border-border">
                   <table className="w-full">
-                    <thead><tr className="text-left text-muted-foreground"><th className="p-1">#</th><th className="p-1">Lépés</th><th className="p-1">Állapot</th><th className="p-1">Időtartam</th><th className="p-1">Tervszerű</th></tr></thead>
+                    <thead><tr className="text-left text-muted-foreground"><th className="p-1">#</th><th className="p-1">Lépés</th><th className="p-1">Kategória</th><th className="p-1">Állapot</th><th className="p-1">Időtartam</th><th className="p-1">Tervszerű</th></tr></thead>
                     <tbody>{st.map((s, k) => {
                       const start = k === 0 ? p.created_at : st[k - 1].executed_at;
                       const d = s.executed_at && start ? dur(new Date(s.executed_at).getTime() - new Date(start).getTime()) : s.status === "pending" && start ? `fut: ${dur(Date.now() - new Date(start).getTime())}` : "—";
                       const ontime = s.status !== "done" ? (isOverdue(s.due_date, false) ? "késik" : "—") : !s.due_date || s.executed_at!.slice(0, 10) <= s.due_date ? "igen" : "késve";
-                      return <tr key={s.id} className="border-t border-border align-top">
+                      const mk = stepMark(st, k);
+                      return <tr key={s.id} className={`border-t border-border align-top ${mk === "következő" ? "bg-accent/10" : ""}`}>
                         <td className="p-1">{s.idx + 1}</td>
                         <td className="p-1"><div>{s.task}</div><div className="text-muted-foreground">{s.owner}{s.result ? ` · ${s.result}` : ""}</div></td>
-                        <td className={`p-1 ${s.status === "failed" ? "text-destructive" : ""}`}>{s.status === "done" ? "kész" : s.status === "failed" ? "hibás" : "vár"}</td>
+                        <td className="p-1 text-muted-foreground">{s.phase.replace(/^\d+\.\s*/, "")}</td>
+                        <td className={`p-1 whitespace-nowrap ${mk === "hibás" ? "text-destructive" : mk === "következő" ? "text-accent font-medium" : mk === "kész" ? "" : "text-muted-foreground"}`}>{mk === "kész" ? "✓ kész" : mk === "következő" ? "▶ következő" : mk === "hibás" ? "✕ hibás" : "○ vár"}</td>
                         <td className="p-1">{d}</td>
                         <td className={`p-1 ${ontime === "késik" || ontime === "késve" ? "text-destructive" : ""}`}>{ontime}</td>
                       </tr>; })}</tbody>
