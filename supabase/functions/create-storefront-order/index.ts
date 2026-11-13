@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
   let shippingMethod: Record<string, unknown> | null = null;
   if (needsAddress) {
     const { data: methods } = await svc.from("partner_shipping_methods")
-      .select("id, name, method_type, fee_huf, free_over_huf, requires_address")
+      .select("id, name, method_type, fee_huf, free_over_huf, requires_address, promised_days")
       .eq("partner_id", store.partner_id).eq("is_active", true).order("sort_order");
 
     if (methods && methods.length) {
@@ -160,6 +160,8 @@ Deno.serve(async (req) => {
     status: "pending",
     payment_method: paymentMethod,
     payment_status: "pending",
+    shipping_method_id: shippingMethod ? shippingMethod.id : null,
+    promised_days: shippingMethod && shippingMethod.promised_days != null ? Number(shippingMethod.promised_days) : null,
     notes: [
       notes || null,
       shippingMethod ? `Szállítási mód: ${shippingMethod.name}` : null,
