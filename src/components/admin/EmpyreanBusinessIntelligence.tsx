@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { aov, BusinessSnapshot, collectionRate, runRateForecast, delta, huf, METRIC_DEFINITIONS, pct } from "@/lib/empyrean-bi";
+import { aov, BusinessSnapshot, collectionRate, runRateForecast, delta, huf, METRIC_DEFINITIONS, pct , netPaid } from "@/lib/empyrean-bi";
 
 const WINDOWS = [7, 30, 90] as const;
 
@@ -23,6 +23,7 @@ export default function EmpyreanBusinessIntelligence() {
   const rows = snap ? [
     { label: "Foglalt bevétel", value: huf(c.booked ?? 0), d: delta(c.booked ?? 0, p.booked ?? 0), def: METRIC_DEFINITIONS.booked },
     { label: "Befolyt bevétel", value: huf(c.paid ?? 0), d: delta(c.paid ?? 0, p.paid ?? 0), def: METRIC_DEFINITIONS.paid },
+    { label: "Nettó befolyt (visszatérítés után)", value: huf(netPaid(c)), d: delta(netPaid(c), netPaid(p)), def: METRIC_DEFINITIONS.net },
     { label: "Platform díj", value: huf(c.fee ?? 0), d: delta(c.fee ?? 0, p.fee ?? 0), def: METRIC_DEFINITIONS.fee },
     { label: "Átlagos kosárérték", value: huf(aov(c)), d: delta(aov(c), aov(p)), def: METRIC_DEFINITIONS.aov },
     { label: "Beszedési arány", value: pct(collectionRate(c)), d: null, def: METRIC_DEFINITIONS.collection },
@@ -72,7 +73,7 @@ export default function EmpyreanBusinessIntelligence() {
             <p className="text-xs text-muted-foreground mb-2">Szállítás és visszaküldés</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border border border-border text-sm">
               {[
-                ["Szállítási díj (foglalt)", huf(c.shipping ?? 0)], ["Szállítási díj (befolyt)", huf(c.shipping_paid ?? 0)],
+                ["Szállítási díj (foglalt)", huf(c.shipping ?? 0)], ["Szállítási díj (befolyt)", huf(c.shipping_paid ?? 0)], ["Visszatérítve", huf(c.refunded ?? 0)],
                 ["Feladásra vár", c.to_ship ?? 0], ["Úton", c.in_transit ?? 0],
                 ["Átvéve", c.delivered ?? 0], ["Visszaküldés", c.returns ?? 0],
                 ["Átl. kézbesítés", c.avg_delivery_days != null ? `${c.avg_delivery_days} nap` : "—"],
