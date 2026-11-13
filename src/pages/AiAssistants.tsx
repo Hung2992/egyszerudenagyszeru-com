@@ -121,7 +121,7 @@ function Chat({ dept }: { dept: (typeof departments)[number] }) {
         {err && <div className="text-sm text-destructive">{err}</div>}
         <div ref={end} />
       </div>
-      <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="flex gap-2 p-3 border-t border-border">
+      <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="flex gap-2 p-3 pr-20 border-t border-border">
         <button type="button" onClick={toggleMic} aria-label="Mikrofon" className={`p-3 border border-border ${listening ? "bg-destructive text-destructive-foreground" : ""}`}>{listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}</button>
         <textarea ref={ta} value={input} onChange={(e) => setInput(e.target.value)} rows={1} placeholder="Írj üzenetet…"
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
