@@ -155,6 +155,13 @@
       "when": 1794599758681,
       "tag": "0021_aegis_least_privilege_strict_input",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1794600137178,
+      "tag": "0022_aegis_incident_response",
+      "breakpoints": true
     }
   ]
 }

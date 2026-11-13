@@ -4,22 +4,22 @@ import { supabase } from "@/integrations/supabase/client";
 type Ev = { id: string; source: string; stage: string; action: string; findings: string[]; created_at: string };
 const label: Record<string, string> = {
   prompt_injection: "Szabály-felülírás", privilege: "Jogosultság-emelés", ssrf: "Belső cím", card_data: "Kártyaszám",
-  jwt: "Hozzáférési kulcs", api_key: "API-kulcs", replay: "Ismételt webhook", paused: "Szüneteltetett ügynök", isolated: "Elkülönített ügynök", revoked: "Visszavont ügynök", killed: "Leállított ügynök", credential: "Titok/jelszó", mass_change: "Tömeges művelet", money: "Pénzmozgás",
+  jwt: "Hozzáférési kulcs", api_key: "API-kulcs", replay: "Ismételt webhook", paused: "Szüneteltetett ügynök", isolated: "Elkülönített ügynök", revoked: "Visszavont ügynök", killed: "Leállított ügynök", credential: "Titok/jelszó", mass_change: "Tömeges művelet", money: "Pénzmozgás", prompt_exfiltration: "Rendszerprompt-kicsalás", destructive_sql: "Romboló adatbázis-parancs", private_key: "Privát kulcs",
 };
 const actionLabel: Record<string, string> = { blocked: "Blokkolva", redacted: "Kitakarva", flagged: "Jelezve" };
 const clean = (f: string) => f.replace(/^(block|warn|global):/, "");
 
 const THREATS: { name: string; control: string; codes: string[] }[] = [
-  { name: "Prompt injection", control: "Minden AI-bemenet AEGIS-szűrése, munkatervben blokk", codes: ["prompt_injection"] },
+  { name: "Prompt injection", control: "Minden AI-bemenet AEGIS-szűrése, munkatervben blokk", codes: ["prompt_injection", "prompt_exfiltration"] },
   { name: "Jogosultság-emelés", control: "Szerveroldali admin-ellenőrzés minden műveletnél, emelési kérés blokkolva", codes: ["privilege"] },
   { name: "Adatszivárgás", control: "Kártyaszám kitakarása minden AI-válaszból, tenant-szintű hozzáférés", codes: ["card_data"] },
-  { name: "Rosszindulatú ügynök", control: "Csak jóváhagyott, sorrendhelyes lépés; 3 blokk után 10 perc zárolás; vészleállítás", codes: ["mass_change", "money"] },
+  { name: "Rosszindulatú ügynök", control: "Csak jóváhagyott lépés; 3 blokk után zárolás; ismételt szivárgásnál automatikus elkülönítés; vészleállítás", codes: ["mass_change", "money", "destructive_sql"] },
   { name: "SSRF / belső cím", control: "Belső hálózati címek blokkolva bemenetben", codes: ["ssrf"] },
-  { name: "Kulcs- és jelszószivárgás", control: "Kulcsok kitakarása a válaszokból, titkot tartalmazó eredmény blokkolva", codes: ["credential", "jwt", "api_key"] },
+  { name: "Kulcs- és jelszószivárgás", control: "Kulcsok kitakarása a válaszokból, titkot tartalmazó eredmény blokkolva", codes: ["credential", "jwt", "api_key", "private_key"] },
 ];
 const CONTROLS = [
   "Szerveroldali jogosultság", "Képesség alapú engedély", "Legkisebb jogosultság", "Tenant-elkülönítés", "Titkok védelme",
-  "Rátakorlát (20/perc, zárolás)", "Bemenet-ellenőrzés", "Kimenet-ellenőrzés", "Ismétlés elleni védelem", "Jóváhagyás lejárata (72 óra)", "Napló védelme (csak bővíthető, hash-lánc)", "Webhook-aláírás + ismétlésszűrés", "Webhook-cél SSRF-szűrés", "Ügynökönkénti vészleállítás + GLOBAL STOP",
+  "Rátakorlát (20/perc, zárolás)", "Bemenet-ellenőrzés", "Kimenet-ellenőrzés", "Ismétlés elleni védelem", "Jóváhagyás lejárata (72 óra)", "Napló védelme (csak bővíthető, hash-lánc)", "Webhook-aláírás + ismétlésszűrés", "Webhook-cél SSRF-szűrés", "Ügynökönkénti vészleállítás + GLOBAL STOP", "Automatikus incidenskezelés (elkülönítés + bizonyíték)", "Képtárak listázása lezárva",
 ];
 
 export default function EmpyreanAegisEvents() {

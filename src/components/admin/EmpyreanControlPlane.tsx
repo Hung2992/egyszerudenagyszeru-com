@@ -9,6 +9,7 @@ import EmpyreanAutomation from "./EmpyreanAutomation";
 import EmpyreanSecurityPosture from "./EmpyreanSecurityPosture";
 import EmpyreanAegisEvents from "./EmpyreanAegisEvents";
 import EmpyreanAegisKillSwitch from "./EmpyreanAegisKillSwitch";
+import EmpyreanAegisIncidents from "./EmpyreanAegisIncidents";
 import EmpyreanOptimization from "./EmpyreanOptimization";
 import EmpyreanAiBudget from "./EmpyreanAiBudget";
 import EmpyreanReturns from "./EmpyreanReturns";
@@ -433,6 +434,7 @@ export default function EmpyreanControlPlane({ onOpen }: { onOpen: (destination:
         <div className="space-y-8">
           <EmpyreanSecurityPosture />
           <EmpyreanAegisKillSwitch />
+          <EmpyreanAegisIncidents />
           <EmpyreanAegisEvents />
           <EmpyreanPnl />
           <EmpyreanNewOrder />

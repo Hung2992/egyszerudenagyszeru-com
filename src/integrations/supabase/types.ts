@@ -364,6 +364,54 @@ export type Database = {
         }
         Relationships: []
       }
+      aegis_incidents: {
+        Row: {
+          action_taken: string
+          agent: string
+          event_count: number
+          findings: string[]
+          id: string
+          kind: string
+          opened_at: string
+          preserved_events: Json
+          resolution: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          status: string
+        }
+        Insert: {
+          action_taken: string
+          agent: string
+          event_count: number
+          findings?: string[]
+          id?: string
+          kind: string
+          opened_at?: string
+          preserved_events?: Json
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: string
+          status?: string
+        }
+        Update: {
+          action_taken?: string
+          agent?: string
+          event_count?: number
+          findings?: string[]
+          id?: string
+          kind?: string
+          opened_at?: string
+          preserved_events?: Json
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+        }
+        Relationships: []
+      }
       aegis_settings: {
         Row: {
           id: boolean
@@ -14810,6 +14858,10 @@ export type Database = {
       }
       aegis_agent_allowed: { Args: { _agent: string }; Returns: string }
       aegis_policy: { Args: { _agent: string }; Returns: Json }
+      aegis_resolve_incident: {
+        Args: { _id: string; _reactivate: boolean; _resolution: string }
+        Returns: undefined
+      }
       aegis_scan: { Args: { _t: string }; Returns: string[] }
       aegis_set_agent_state: {
         Args: { _agent: string; _reason: string; _state: string }
