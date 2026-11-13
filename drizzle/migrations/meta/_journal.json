@@ -148,6 +148,13 @@
       "when": 1794599407697,
       "tag": "0020_aegis_agent_controls_webhooks",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1794599758681,
+      "tag": "0021_aegis_least_privilege_strict_input",
+      "breakpoints": true
     }
   ]
 }

@@ -364,6 +364,27 @@ export type Database = {
         }
         Relationships: []
       }
+      aegis_settings: {
+        Row: {
+          id: boolean
+          input_mode: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: boolean
+          input_mode?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: boolean
+          input_mode?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       aegis_webhook_replay: {
         Row: {
           digest: string
@@ -14788,9 +14809,14 @@ export type Database = {
         }[]
       }
       aegis_agent_allowed: { Args: { _agent: string }; Returns: string }
+      aegis_policy: { Args: { _agent: string }; Returns: Json }
       aegis_scan: { Args: { _t: string }; Returns: string[] }
       aegis_set_agent_state: {
         Args: { _agent: string; _reason: string; _state: string }
+        Returns: undefined
+      }
+      aegis_set_input_mode: {
+        Args: { _mode: string; _reason: string }
         Returns: undefined
       }
       aegis_verify_ledger: { Args: never; Returns: Json }
