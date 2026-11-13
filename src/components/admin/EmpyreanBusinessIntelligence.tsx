@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { aov, BusinessSnapshot, collectionRate, delta, huf, METRIC_DEFINITIONS, pct } from "@/lib/empyrean-bi";
+import { aov, BusinessSnapshot, collectionRate, runRateForecast, delta, huf, METRIC_DEFINITIONS, pct } from "@/lib/empyrean-bi";
 
 const WINDOWS = [7, 30, 90] as const;
 
@@ -52,6 +52,12 @@ export default function EmpyreanBusinessIntelligence() {
                 </p>
               </div>
             ))}
+          </div>
+          <div className="border border-border p-4 text-sm space-y-1">
+            <p className="text-xs text-muted-foreground">FORECAST · lineáris run-rate, következő 90 nap</p>
+            {runRateForecast(c.booked ?? 0, snap.window_days, 90) === null
+              ? <p className="text-muted-foreground">Nincs elég adat előrejelzéshez — nem becsülünk kitalált számot.</p>
+              : <p>Foglalt: {huf(runRateForecast(c.booked ?? 0, snap.window_days, 90))} · Befolyt: {huf(runRateForecast(c.paid ?? 0, snap.window_days, 90))}</p>}
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-px bg-border border border-border text-sm">
             {[
