@@ -3,18 +3,24 @@ export type PeriodMetrics = {
   orders?: number; booked?: number; paid?: number; paid_orders?: number;
   fee?: number; shipping?: number; awaiting_transfer?: number;
   shipping_paid?: number; to_ship?: number; in_transit?: number; delivered?: number; returns?: number; avg_delivery_days?: number | null;
+  refunded?: number; refund_count?: number;
 };
 export type BusinessSnapshot = {
   window_days: number; generated_at: string;
   current: PeriodMetrics; previous: PeriodMetrics;
   top_partners: { partner_id: string; name: string; orders: number; booked: number }[];
   active_partners: number; published_storefronts: number; active_products: number;
-  low_stock_products: number; pending_review_products: number;
+  low_stock_products: number; pending_review_products: number; open_returns?: number;
 };
+/** Nettó befolyt bevétel: befolyt − visszatérített (soha nem negatív a megjelenítésben). */
+export function netPaid(p: PeriodMetrics): number {
+  return Math.max(0, n(p.paid) - n(p.refunded));
+}
 
 export const METRIC_DEFINITIONS = {
   booked: "Foglalt bevétel: nem sztornózott partnerrendelések bruttó végösszege (szállítással).",
   paid: "Befolyt bevétel: kifizetettnek jelölt (paid_at vagy payment_status=paid), nem sztornózott rendelések.",
+  net: "Nettó befolyt: befolyt bevétel − jóváhagyott és visszatérített visszaküldések.",
   fee: "Platform díj: a befolyt rendeléseken rögzített platform részesedés.",
   aov: "Átlagos kosárérték: foglalt bevétel / nem sztornózott rendelések száma.",
   collection: "Beszedési arány: befolyt bevétel / foglalt bevétel.",

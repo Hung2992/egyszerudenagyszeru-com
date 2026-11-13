@@ -7929,6 +7929,62 @@ export type Database = {
           },
         ]
       }
+      partner_order_returns: {
+        Row: {
+          amount_huf: number
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          id: string
+          order_id: string
+          partner_id: string
+          reason: string
+          refunded_at: string | null
+          refunded_by: string | null
+          requested_by: string | null
+          status: string
+        }
+        Insert: {
+          amount_huf: number
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          id?: string
+          order_id: string
+          partner_id: string
+          reason: string
+          refunded_at?: string | null
+          refunded_by?: string | null
+          requested_by?: string | null
+          status?: string
+        }
+        Update: {
+          amount_huf?: number
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          id?: string
+          order_id?: string
+          partner_id?: string
+          reason?: string
+          refunded_at?: string | null
+          refunded_by?: string | null
+          requested_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_order_returns_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "partner_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_orders: {
         Row: {
           billing_address: Json | null
@@ -14585,6 +14641,10 @@ export type Database = {
         Returns: boolean
       }
       empyrean_business_snapshot: { Args: { _days?: number }; Returns: Json }
+      empyrean_decide_return: {
+        Args: { _action: string; _note?: string; _return_id: string }
+        Returns: Json
+      }
       empyrean_execute_action: { Args: { _action_id: string }; Returns: Json }
       empyrean_hash_payload: { Args: { _payload: Json }; Returns: string }
       empyrean_is_admin: { Args: never; Returns: boolean }
@@ -14598,6 +14658,10 @@ export type Database = {
           _product_id: string
           _proposal: Json
         }
+        Returns: string
+      }
+      empyrean_request_return: {
+        Args: { _amount: number; _order_id: string; _reason: string }
         Returns: string
       }
       empyrean_rollback_action: { Args: { _action_id: string }; Returns: Json }
