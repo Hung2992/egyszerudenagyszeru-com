@@ -337,6 +337,51 @@ export type Database = {
         }
         Relationships: []
       }
+      aegis_decisions: {
+        Row: {
+          consequence: string | null
+          created_at: string
+          data_findings: Json
+          decision: string
+          id: string
+          permission: string
+          policy_hits: Json
+          resource: string
+          risk: string | null
+          what: string
+          who: string | null
+          why: string | null
+        }
+        Insert: {
+          consequence?: string | null
+          created_at?: string
+          data_findings?: Json
+          decision: string
+          id?: string
+          permission: string
+          policy_hits?: Json
+          resource: string
+          risk?: string | null
+          what: string
+          who?: string | null
+          why?: string | null
+        }
+        Update: {
+          consequence?: string | null
+          created_at?: string
+          data_findings?: Json
+          decision?: string
+          id?: string
+          permission?: string
+          policy_hits?: Json
+          resource?: string
+          risk?: string | null
+          what?: string
+          who?: string | null
+          why?: string | null
+        }
+        Relationships: []
+      }
       aegis_events: {
         Row: {
           action: string
@@ -409,6 +454,42 @@ export type Database = {
           resolved_by?: string | null
           severity?: string
           status?: string
+        }
+        Relationships: []
+      }
+      aegis_policies: {
+        Row: {
+          code: string
+          effect: string
+          enabled: boolean
+          locked: boolean
+          params: Json
+          rule: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          code: string
+          effect: string
+          enabled?: boolean
+          locked?: boolean
+          params?: Json
+          rule: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          code?: string
+          effect?: string
+          enabled?: boolean
+          locked?: boolean
+          params?: Json
+          rule?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -14923,12 +15004,27 @@ export type Database = {
         }[]
       }
       aegis_agent_allowed: { Args: { _agent: string }; Returns: string }
+      aegis_evaluate_policies: {
+        Args: { _actor: string; _plan: string }
+        Returns: string[]
+      }
       aegis_full_stop: { Args: { _reason: string }; Returns: Json }
       aegis_grant_privilege: {
         Args: { _minutes: number; _plan: string; _reason: string }
         Returns: string
       }
       aegis_has_card: { Args: { _t: string }; Returns: boolean }
+      aegis_log_decision: {
+        Args: {
+          _decision: string
+          _findings: string[]
+          _hits: string[]
+          _p: Database["public"]["Tables"]["workforce_plans"]["Row"]
+          _st: Database["public"]["Tables"]["workforce_plan_steps"]["Row"]
+        }
+        Returns: undefined
+      }
+      aegis_plan_max_amount: { Args: { _plan: string }; Returns: number }
       aegis_policy: { Args: { _agent: string }; Returns: Json }
       aegis_privilege_active: { Args: { _plan: string }; Returns: boolean }
       aegis_resolve_incident: {
@@ -14950,6 +15046,15 @@ export type Database = {
       }
       aegis_set_input_mode: {
         Args: { _mode: string; _reason: string }
+        Returns: undefined
+      }
+      aegis_set_policy: {
+        Args: {
+          _code: string
+          _enabled: boolean
+          _params: Json
+          _reason: string
+        }
         Returns: undefined
       }
       aegis_variants: { Args: { _t: string }; Returns: string[] }
