@@ -38,6 +38,7 @@
 - [x] 30 napos összesítés: 231 hívás, 2,60 kredit, 247 109 token
 - [ ] Befolyt bevétel: blokkolva — nincs fizetett partnerrendelés (5 függő, szeptemberi)
 - [x] Szállítás/visszaküldés mutatók az Üzleti intelligenciában (díj, feladásra vár, úton, átvéve, visszaküldés, átl. kézbesítés)
-- [ ] Partneri visszaküldés-kezelő (kérés → jóváhagyás → visszatérítés) felület
+- [x] Visszaküldés-kezelő a CONTROL panelen (kérés → jóváhagyás → visszatérítés), visszatérítés levonva a befolyt bevételből
+- [ ] Szállítási dátumok az 5 függő rendelésre — valós feladási adat kell a felhasználótól
 - [x] AI kredit számlázási ár beállítható, havi költség pénzben
 - [ ] Tényleges kredit ár megadása — a felhasználótól vár
