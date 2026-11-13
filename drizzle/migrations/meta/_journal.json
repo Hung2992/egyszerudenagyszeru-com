@@ -57,6 +57,13 @@
       "when": 1794590288960,
       "tag": "0007_empyrean_optimization_physical_stock",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794591325872,
+      "tag": "0008_empyrean_credit_blocked_agents",
+      "breakpoints": true
     }
   ]
 }
