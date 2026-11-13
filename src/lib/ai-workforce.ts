@@ -56,3 +56,10 @@ export function nextRunnable<T extends TrackedStep>(planStatus: string, steps: T
   if (planStatus !== "approved" && planStatus !== "in_progress") return null;
   return [...steps].sort((a, b) => a.idx - b.idx).find((s) => s.status !== "done") ?? null;
 }
+
+// AEGIS bizonyítékkövetelés (OMEGA: „a rendszer bizonyítékot követel”) — a szerveroldali workforce_evidence_ok tükre.
+const FILLER = /^(ok|oké|kész|done|megvan|megcsinálva|rendben|igen|teszt|test|x+|\.+|-+)[\s.!]*$/i;
+export function evidenceOk(r: string): boolean {
+  const t = (r ?? "").trim();
+  return t.length >= 20 && !FILLER.test(t) && (/\d/.test(t) || /https?:\/\//i.test(t) || t.split(/\s+/).length >= 5);
+}
