@@ -6,12 +6,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { nextRunnable } from "@/lib/ai-workforce";
 import { toast } from "sonner";
 
-type Plan = { id: string; goal: string; risk: string; status: string; owner: string; due_date: string | null; created_at: string };
+type Plan = { id: string; goal: string; risk: string; status: string; owner: string; due_date: string | null; created_at: string; approval_expires_at: string | null };
 type Step = { id: string; plan_id: string; idx: number; phase: string; owner: string; reviewer: string; task: string; evidence: string; due_date: string | null; status: "pending" | "done" | "failed"; result: string | null; executed_at: string | null };
 type Audit = { id: string; plan_id: string; action: string; detail: Record<string, unknown>; created_at: string };
 
 const statusLabel: Record<string, string> = { draft: "Tervezet", approved: "Jóváhagyva", in_progress: "Folyamatban", done: "Kész", cancelled: "Megszakítva", pending: "Vár", failed: "Hibás" };
-const actionLabel: Record<string, string> = { created: "Mentve", approved: "Jóváhagyva", cancelled: "Megszakítva", step_done: "Lépés kész", step_failed: "Lépés hibás", done: "Terv kész", aegis_blocked: "AEGIS blokkolta" };
+const actionLabel: Record<string, string> = { created: "Mentve", approved: "Jóváhagyva", cancelled: "Megszakítva", step_done: "Lépés kész", step_failed: "Lépés hibás", done: "Terv kész", aegis_blocked: "AEGIS blokkolta", reapproved: "Jóváhagyás megújítva" };
 
 export default function EmpyreanWorkforcePlans({ reloadKey }: { reloadKey: number }) {
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -24,7 +24,7 @@ export default function EmpyreanWorkforcePlans({ reloadKey }: { reloadKey: numbe
 
   const load = useCallback(async () => {
     const [p, s, a] = await Promise.all([
-      supabase.from("workforce_plans").select("id,goal,risk,status,owner,due_date,created_at").order("created_at", { ascending: false }).limit(50),
+      supabase.from("workforce_plans").select("id,goal,risk,status,owner,due_date,created_at,approval_expires_at").order("created_at", { ascending: false }).limit(50),
       supabase.from("workforce_plan_steps").select("*").order("idx"),
       supabase.from("workforce_audit").select("id,plan_id,action,detail,created_at").order("created_at", { ascending: false }).limit(500),
     ]);
@@ -36,6 +36,10 @@ export default function EmpyreanWorkforcePlans({ reloadKey }: { reloadKey: numbe
   const setStatus = async (id: string, status: string) => {
     const { error } = await supabase.rpc("workforce_set_status", { _plan: id, _status: status, _note: note || undefined });
     if (error) toast.error(error.message); else { toast.success(statusLabel[status]); load(); }
+  };
+  const reapprove = async (id: string) => {
+    const { error } = await supabase.rpc("workforce_reapprove", { _plan: id, _note: note });
+    if (error) toast.error(error.message); else { toast.success("Jóváhagyás megújítva (72 óra)"); load(); }
   };
   const execute = async () => {
     if (!run) return;
@@ -55,7 +59,8 @@ export default function EmpyreanWorkforcePlans({ reloadKey }: { reloadKey: numbe
       {plans.map((p) => {
         const ps = steps.filter((s) => s.plan_id === p.id);
         const done = ps.filter((s) => s.status === "done").length;
-        const next = nextRunnable(p.status, ps);
+        const expired = p.status === "approved" && !!p.approval_expires_at && new Date(p.approval_expires_at) < new Date();
+        const next = expired ? null : nextRunnable(p.status, ps);
         const late = p.due_date && p.status !== "done" && p.due_date < new Date().toISOString().slice(0, 10);
         return (
           <div key={p.id} className="border border-border">
@@ -70,6 +75,7 @@ export default function EmpyreanWorkforcePlans({ reloadKey }: { reloadKey: numbe
                   {["draft", "approved", "in_progress"].includes(p.status) && <Button size="sm" variant="outline" className="rounded-none" onClick={() => setStatus(p.id, "cancelled")}>Megszakítás</Button>}
                 </div>
                 {p.status === "draft" && p.risk === "red" && <Textarea value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} placeholder="AEGIS: piros kockázat — írásos indoklás a jóváhagyáshoz (min. 10 karakter)" className="rounded-none text-xs" />}
+                {p.status === "approved" && p.approval_expires_at && <p className={`text-xs ${expired ? "text-destructive" : "text-muted-foreground"}`}>{expired ? "AEGIS: a jóváhagyás lejárt" : "Jóváhagyás érvényes"}: {new Date(p.approval_expires_at).toLocaleString("hu-HU")}{expired && <Button size="sm" variant="outline" className="rounded-none h-7 ml-2" onClick={() => reapprove(p.id)}>Megújítás</Button>}</p>}
                 {p.status === "draft" && <p className="text-xs text-muted-foreground">Lépés csak a terv jóváhagyása után hajtható végre.</p>}
                 <ol className="text-xs space-y-1">
                   {ps.map((s) => (

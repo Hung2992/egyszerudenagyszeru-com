@@ -14125,8 +14125,10 @@ export type Database = {
           actor: string | null
           created_at: string
           detail: Json
+          hash: string | null
           id: string
           plan_id: string
+          prev_hash: string | null
           step_id: string | null
         }
         Insert: {
@@ -14134,8 +14136,10 @@ export type Database = {
           actor?: string | null
           created_at?: string
           detail?: Json
+          hash?: string | null
           id?: string
           plan_id: string
+          prev_hash?: string | null
           step_id?: string | null
         }
         Update: {
@@ -14143,8 +14147,10 @@ export type Database = {
           actor?: string | null
           created_at?: string
           detail?: Json
+          hash?: string | null
           id?: string
           plan_id?: string
+          prev_hash?: string | null
           step_id?: string | null
         }
         Relationships: [
@@ -14222,6 +14228,7 @@ export type Database = {
       }
       workforce_plans: {
         Row: {
+          approval_expires_at: string | null
           approved_at: string | null
           approved_by: string | null
           created_at: string
@@ -14236,6 +14243,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          approval_expires_at?: string | null
           approved_at?: string | null
           approved_by?: string | null
           created_at?: string
@@ -14250,6 +14258,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          approval_expires_at?: string | null
           approved_at?: string | null
           approved_by?: string | null
           created_at?: string
@@ -14737,6 +14746,7 @@ export type Database = {
         }[]
       }
       aegis_scan: { Args: { _t: string }; Returns: string[] }
+      aegis_verify_ledger: { Args: never; Returns: Json }
       agent_bus_publish: {
         Args: {
           _correlation_id?: string
@@ -15416,6 +15426,10 @@ export type Database = {
           _step: string
         }
         Returns: string
+      }
+      workforce_reapprove: {
+        Args: { _note: string; _plan: string }
+        Returns: undefined
       }
       workforce_save_plan: {
         Args: {

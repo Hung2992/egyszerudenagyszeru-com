@@ -9,8 +9,23 @@ const label: Record<string, string> = {
 const actionLabel: Record<string, string> = { blocked: "Blokkolva", redacted: "Kitakarva", flagged: "Jelezve" };
 const clean = (f: string) => f.replace(/^(block|warn):/, "");
 
+const THREATS: { name: string; control: string; codes: string[] }[] = [
+  { name: "Prompt injection", control: "Minden AI-bemenet AEGIS-szűrése, munkatervben blokk", codes: ["prompt_injection"] },
+  { name: "Jogosultság-emelés", control: "Szerveroldali admin-ellenőrzés minden műveletnél, emelési kérés blokkolva", codes: ["privilege"] },
+  { name: "Adatszivárgás", control: "Kártyaszám kitakarása minden AI-válaszból, tenant-szintű hozzáférés", codes: ["card_data"] },
+  { name: "Rosszindulatú ügynök", control: "Csak jóváhagyott, sorrendhelyes lépés; 3 blokk után 10 perc zárolás; vészleállítás", codes: ["mass_change", "money"] },
+  { name: "SSRF / belső cím", control: "Belső hálózati címek blokkolva bemenetben", codes: ["ssrf"] },
+  { name: "Kulcs- és jelszószivárgás", control: "Kulcsok kitakarása a válaszokból, titkot tartalmazó eredmény blokkolva", codes: ["credential", "jwt", "api_key"] },
+];
+const CONTROLS = [
+  "Szerveroldali jogosultság", "Képesség alapú engedély", "Legkisebb jogosultság", "Tenant-elkülönítés", "Titkok védelme",
+  "Rátakorlát (20/perc, zárolás)", "Bemenet-ellenőrzés", "Kimenet-ellenőrzés", "Ismétlés elleni védelem", "Jóváhagyás lejárata (72 óra)", "Napló védelme (csak bővíthető, hash-lánc)",
+];
+
 export default function EmpyreanAegisEvents() {
   const [ev, setEv] = useState<Ev[] | null>(null);
+  const [ledger, setLedger] = useState<{ checked: number; broken: number; legacy: number; ok: boolean } | null>(null);
+  const verify = async () => { const { data } = await supabase.rpc("aegis_verify_ledger"); setLedger(data as never); };
   useEffect(() => {
     supabase.from("aegis_events").select("*").order("created_at", { ascending: false }).limit(50)
       .then(({ data }) => setEv((data ?? []) as Ev[]));
@@ -26,6 +41,20 @@ export default function EmpyreanAegisEvents() {
         {(["blocked", "redacted", "flagged"] as const).map((a) => (
           <div key={a} className="bg-background p-2"><p className="text-xl">{count(a)}</p><p className="text-xs text-muted-foreground">{actionLabel[a]} · 30 nap</p></div>
         ))}
+      </div>
+      <div className="border border-border">
+        <p className="p-2 text-xs uppercase tracking-wide text-muted-foreground border-b border-border">Fenyegetés-modell · 30 nap</p>
+        <ul className="divide-y divide-border text-xs">
+          {THREATS.map((t) => {
+            const n = recent.filter((e) => e.findings.some((f) => t.codes.includes(clean(f)))).length;
+            return <li key={t.name} className="p-2"><span className="font-medium">{t.name}</span> · <span className={n ? "text-destructive" : "text-muted-foreground"}>{n} esemény</span><div className="text-muted-foreground">{t.control}</div></li>;
+          })}
+        </ul>
+      </div>
+      <p className="text-xs text-muted-foreground">Aktív védelmek: {CONTROLS.join(" · ")}</p>
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        <button type="button" onClick={verify} className="border border-border px-2 py-1 hover:bg-muted">Napló sértetlenségének ellenőrzése</button>
+        {ledger && <span className={ledger.ok ? "" : "text-destructive"}>{ledger.ok ? "Sértetlen" : `${ledger.broken} sérült bejegyzés!`} · {ledger.checked} ellenőrizve{ledger.legacy ? ` · ${ledger.legacy} régebbi, lánc előtti` : ""}</span>}
       </div>
       {ev === null ? <p className="text-xs text-muted-foreground">Betöltés…</p> : ev.length === 0 ? <p className="text-xs text-muted-foreground">Még nincs AEGIS esemény.</p> : (
         <ul className="border border-border divide-y divide-border text-xs">
