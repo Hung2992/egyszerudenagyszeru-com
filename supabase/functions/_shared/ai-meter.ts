@@ -1,6 +1,7 @@
 // Global AI gateway meter: wraps fetch so every Lovable AI gateway call in this
 // function is budget-checked and recorded into ai_usage_daily (CONTROL panel).
 import { estimateAiCost } from "./ai-usage.ts";
+import { aegisInput, aegisRedact } from "./aegis.ts";
 
 const GATEWAY = "ai.gateway.lovable.dev";
 // deno-lint-ignore no-explicit-any
@@ -25,6 +26,26 @@ export function installAiMeter(fn: string): void {
     } catch (e) { console.warn("ai meter record failed", (e as Error).message); }
   };
 
+  const aegis = (stage: "input" | "output", action: "flagged" | "redacted", findings: string[]) => {
+    if (!findings.length) return;
+    orig(`${url}/rest/v1/aegis_events`, {
+      method: "POST",
+      headers: { apikey: key!, Authorization: `Bearer ${key}`, "Content-Type": "application/json", Prefer: "return=minimal" },
+      body: JSON.stringify({ source: fn, stage, action, findings }),
+    }).catch(() => {});
+  };
+  // deno-lint-ignore no-explicit-any
+  const redactChoices = (j: any, key2: "message" | "delta"): string[] => {
+    const all: string[] = [];
+    for (const c of j?.choices ?? []) {
+      const m = c?.[key2];
+      if (typeof m?.content === "string") {
+        const r = aegisRedact(m.content); m.content = r.text; r.findings.forEach((f) => all.includes(f) || all.push(f));
+      }
+    }
+    return all;
+  };
+
   globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const href = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
     if (!url || !key || !href.includes(GATEWAY)) return orig(input, init);
@@ -35,12 +56,29 @@ export function installAiMeter(fn: string): void {
       }
     } catch { /* never block on meter failure */ }
     let model = "unknown";
-    try { model = JSON.parse(String(init?.body ?? "{}")).model ?? model; } catch { /* binary body */ }
+    try {
+      const body = JSON.parse(String(init?.body ?? "{}"));
+      model = body.model ?? model;
+      // deno-lint-ignore no-explicit-any
+      const users = (body.messages ?? []).filter((m: any) => m?.role === "user");
+      const last = users[users.length - 1]?.content;
+      const text = typeof last === "string" ? last : Array.isArray(last) ? last.map((p: { text?: string }) => p?.text ?? "").join(" ") : "";
+      if (text) aegis("input", "flagged", aegisInput(text));
+    } catch { /* binary body */ }
     const res = await orig(input, init);
     if (!res.ok) return res;
     const ct = res.headers.get("content-type") ?? "";
     if (ct.includes("application/json")) {
-      res.clone().json().then((j) => record(model, j?.usage ?? null)).catch(() => record(model, null));
+      try {
+        const j = await res.json();
+        record(model, j?.usage ?? null);
+        aegis("output", "redacted", redactChoices(j, "message"));
+        const h = new Headers(res.headers); h.delete("content-length");
+        return new Response(JSON.stringify(j), { status: res.status, statusText: res.statusText, headers: h });
+      } catch {
+        record(model, null);
+        return new Response(null, { status: 502 });
+      }
     } else if (ct.includes("text/event-stream") && res.body) {
       const [a, b] = res.body.tee();
       (async () => {
@@ -50,7 +88,24 @@ export function installAiMeter(fn: string): void {
           const m = buf.match(/"usage"\s*:\s*(\{[^{}]*\})/g); if (m) { try { usage = JSON.parse(m[m.length - 1].replace(/^"usage"\s*:\s*/, "")); } catch { /**/ } } }
         await record(model, usage);
       })().catch(() => {});
-      return new Response(a, { status: res.status, statusText: res.statusText, headers: res.headers });
+      const found: string[] = [];
+      let carry = "";
+      const enc = new TextEncoder();
+      const guarded = a.pipeThrough(new TextDecoderStream()).pipeThrough(new TransformStream<string, Uint8Array>({
+        transform(chunk, ctl) {
+          const lines = (carry + chunk).split("\n"); carry = lines.pop() ?? "";
+          for (const line of lines) {
+            if (line.startsWith("data: ") && line !== "data: [DONE]") {
+              try { const j = JSON.parse(line.slice(6)); const f = redactChoices(j, "delta");
+                if (f.length) { f.forEach((x) => found.includes(x) || found.push(x)); ctl.enqueue(enc.encode("data: " + JSON.stringify(j) + "\n")); continue; } } catch { /* pass through */ }
+            }
+            ctl.enqueue(enc.encode(line + "\n"));
+          }
+        },
+        flush(ctl) { if (carry) ctl.enqueue(enc.encode(carry)); aegis("output", "redacted", found); },
+      }));
+      const h = new Headers(res.headers); h.delete("content-length");
+      return new Response(guarded, { status: res.status, statusText: res.statusText, headers: h });
     } else {
       record(model, null);
     }
