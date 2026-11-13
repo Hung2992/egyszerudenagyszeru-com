@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
 import EmpyreanAiWorld from "@/components/admin/EmpyreanAiWorld";
+import AegisFullStop from "@/components/admin/AegisFullStop";
 import EmpyreanAegisKillSwitch from "@/components/admin/EmpyreanAegisKillSwitch";
 import EmpyreanAegisIncidents from "@/components/admin/EmpyreanAegisIncidents";
 import EmpyreanAegisEvents, { label as aegisLabel } from "@/components/admin/EmpyreanAegisEvents";
@@ -12,7 +13,7 @@ import { ArrowLeft } from "lucide-react";
 type Plan = PlanLite & { id: string; goal: string };
 type Step = StepLite & { plan_id: string };
 const TABS = ["COMMAND CENTER", "WORKFORCE", "HUMAN GATE", "FAILURE MEMORY"] as const;
-const failLabel: Record<string, string> = { step_failed: "Hibás lépés", aegis_blocked: "AEGIS blokkolt eredmény", aegis_weak_evidence: "Gyenge bizonyíték", aegis_tamper: "Jóváhagyás utáni átírás", cancelled: "Megszakított terv" };
+const failLabel: Record<string, string> = { step_failed: "Hibás lépés", aegis_blocked: "AEGIS blokkolt eredmény", aegis_weak_evidence: "Gyenge bizonyíték", aegis_tamper: "Jóváhagyás utáni átírás", cancelled: "Megszakított terv", aegis_full_stop: "Vészleállítással leállított terv" };
 
 const AiWorkforce = () => {
   const { isAdmin, loading } = useAdminCheck();
@@ -107,6 +108,7 @@ const AiWorkforce = () => {
               <p className="text-xs text-muted-foreground">Magas kockázatnál nincs automatikus végrehajtás: javaslat → kockázat → ellenőrzés → ember → végrehajtás. A döntést a WORKFORCE fülön hozod meg.</p>
               <ul className="text-xs space-y-1">{gate.map((p) => <li key={p.id} className="border border-border p-2">{p.risk === "red" ? "🔴" : p.risk === "yellow" ? "🟡" : "🟢"} {p.goal} — {p.status === "draft" ? "jóváhagyásra vár" : "a jóváhagyás lejárt"}</li>)}</ul>
             </section>
+            <AegisFullStop />
             <EmpyreanAegisKillSwitch />
             <EmpyreanAegisIncidents />
           </div>
