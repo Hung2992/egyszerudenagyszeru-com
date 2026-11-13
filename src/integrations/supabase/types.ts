@@ -885,6 +885,8 @@ export type Database = {
       ai_budget: {
         Row: {
           block_at_limit: boolean
+          credit_currency: string
+          credit_price: number | null
           id: boolean
           last_warned_month: string | null
           monthly_limit_credits: number
@@ -894,6 +896,8 @@ export type Database = {
         }
         Insert: {
           block_at_limit?: boolean
+          credit_currency?: string
+          credit_price?: number | null
           id?: boolean
           last_warned_month?: string | null
           monthly_limit_credits?: number
@@ -903,6 +907,8 @@ export type Database = {
         }
         Update: {
           block_at_limit?: boolean
+          credit_currency?: string
+          credit_price?: number | null
           id?: boolean
           last_warned_month?: string | null
           monthly_limit_credits?: number
@@ -14610,6 +14616,10 @@ export type Database = {
       }
       empyrean_set_ai_budget: {
         Args: { _block: boolean; _limit: number; _warn_pct: number }
+        Returns: Json
+      }
+      empyrean_set_ai_credit_price: {
+        Args: { _currency: string; _price: number }
         Returns: Json
       }
       empyrean_set_pause: {
