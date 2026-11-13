@@ -14519,6 +14519,10 @@ export type Database = {
       empyrean_execute_action: { Args: { _action_id: string }; Returns: Json }
       empyrean_hash_payload: { Args: { _payload: Json }; Returns: string }
       empyrean_is_admin: { Args: never; Returns: boolean }
+      empyrean_optimization_snapshot: {
+        Args: { _days?: number }
+        Returns: Json
+      }
       empyrean_propose_product_seo: {
         Args: {
           _idempotency_key?: string
