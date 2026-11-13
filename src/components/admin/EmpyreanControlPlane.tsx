@@ -492,7 +492,7 @@ export default function EmpyreanControlPlane({ onOpen }: { onOpen: (destination:
           <section className="border border-border p-4 space-y-2 text-xs text-muted-foreground">
             <p className="flex items-center gap-2"><TriangleAlert size={14} className="text-accent" />Kikötések</p>
             <p>A független ellenőrzést nem a végrehajtó adminisztrátor végezheti el — a rendszert két különböző adminisztrátori fiókkal kell használni.</p>
-            <p>A javaslatok nem publikálnak automatikusan, és a jóváhagyás a csomag hash-jéhez以及 a termék verziójához kötött.</p>
+            <p>A javaslatok nem publikálnak automatikusan, és a jóváhagyás a csomag hash-jéhez és a termék verziójához kötött.</p>
           </section>
         </div>
       )}
