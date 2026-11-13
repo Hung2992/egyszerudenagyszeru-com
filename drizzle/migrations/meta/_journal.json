@@ -43,6 +43,13 @@
       "when": 1794589847254,
       "tag": "0005_drop_anon_partner_media_read",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794590160268,
+      "tag": "0006_empyrean_optimization_snapshot",
+      "breakpoints": true
     }
   ]
 }
