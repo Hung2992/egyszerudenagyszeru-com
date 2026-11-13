@@ -4,10 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 type Ev = { id: string; source: string; stage: string; action: string; findings: string[]; created_at: string };
 const label: Record<string, string> = {
   prompt_injection: "Szabály-felülírás", privilege: "Jogosultság-emelés", ssrf: "Belső cím", card_data: "Kártyaszám",
-  jwt: "Hozzáférési kulcs", api_key: "API-kulcs", credential: "Titok/jelszó", mass_change: "Tömeges művelet", money: "Pénzmozgás",
+  jwt: "Hozzáférési kulcs", api_key: "API-kulcs", replay: "Ismételt webhook", paused: "Szüneteltetett ügynök", isolated: "Elkülönített ügynök", revoked: "Visszavont ügynök", killed: "Leállított ügynök", credential: "Titok/jelszó", mass_change: "Tömeges művelet", money: "Pénzmozgás",
 };
 const actionLabel: Record<string, string> = { blocked: "Blokkolva", redacted: "Kitakarva", flagged: "Jelezve" };
-const clean = (f: string) => f.replace(/^(block|warn):/, "");
+const clean = (f: string) => f.replace(/^(block|warn|global):/, "");
 
 const THREATS: { name: string; control: string; codes: string[] }[] = [
   { name: "Prompt injection", control: "Minden AI-bemenet AEGIS-szűrése, munkatervben blokk", codes: ["prompt_injection"] },
@@ -19,7 +19,7 @@ const THREATS: { name: string; control: string; codes: string[] }[] = [
 ];
 const CONTROLS = [
   "Szerveroldali jogosultság", "Képesség alapú engedély", "Legkisebb jogosultság", "Tenant-elkülönítés", "Titkok védelme",
-  "Rátakorlát (20/perc, zárolás)", "Bemenet-ellenőrzés", "Kimenet-ellenőrzés", "Ismétlés elleni védelem", "Jóváhagyás lejárata (72 óra)", "Napló védelme (csak bővíthető, hash-lánc)",
+  "Rátakorlát (20/perc, zárolás)", "Bemenet-ellenőrzés", "Kimenet-ellenőrzés", "Ismétlés elleni védelem", "Jóváhagyás lejárata (72 óra)", "Napló védelme (csak bővíthető, hash-lánc)", "Webhook-aláírás + ismétlésszűrés", "Webhook-cél SSRF-szűrés", "Ügynökönkénti vészleállítás + GLOBAL STOP",
 ];
 
 export default function EmpyreanAegisEvents() {

@@ -141,6 +141,13 @@
       "when": 1794599060624,
       "tag": "0019_aegis_security_command",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1794599407697,
+      "tag": "0020_aegis_agent_controls_webhooks",
+      "breakpoints": true
     }
   ]
 }

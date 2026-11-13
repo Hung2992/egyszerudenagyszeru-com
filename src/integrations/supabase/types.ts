@@ -313,6 +313,30 @@ export type Database = {
           },
         ]
       }
+      aegis_agent_controls: {
+        Row: {
+          agent: string
+          reason: string | null
+          state: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          agent: string
+          reason?: string | null
+          state?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          agent?: string
+          reason?: string | null
+          state?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       aegis_events: {
         Row: {
           action: string
@@ -337,6 +361,24 @@ export type Database = {
           id?: string
           source?: string
           stage?: string
+        }
+        Relationships: []
+      }
+      aegis_webhook_replay: {
+        Row: {
+          digest: string
+          received_at: string
+          source: string
+        }
+        Insert: {
+          digest: string
+          received_at?: string
+          source: string
+        }
+        Update: {
+          digest?: string
+          received_at?: string
+          source?: string
         }
         Relationships: []
       }
@@ -14745,8 +14787,17 @@ export type Database = {
           user_id: string
         }[]
       }
+      aegis_agent_allowed: { Args: { _agent: string }; Returns: string }
       aegis_scan: { Args: { _t: string }; Returns: string[] }
+      aegis_set_agent_state: {
+        Args: { _agent: string; _reason: string; _state: string }
+        Returns: undefined
+      }
       aegis_verify_ledger: { Args: never; Returns: Json }
+      aegis_webhook_seen: {
+        Args: { _digest: string; _source: string }
+        Returns: boolean
+      }
       agent_bus_publish: {
         Args: {
           _correlation_id?: string
