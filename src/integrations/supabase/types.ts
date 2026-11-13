@@ -14425,6 +14425,41 @@ export type Database = {
           },
         ]
       }
+      workforce_plan_images: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          path: string
+          plan_id: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          path: string
+          plan_id: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          path?: string
+          plan_id?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workforce_plan_images_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "workforce_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workforce_plan_steps: {
         Row: {
           due_date: string | null

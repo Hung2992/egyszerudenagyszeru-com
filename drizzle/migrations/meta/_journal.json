@@ -232,6 +232,13 @@
       "when": 1794604470350,
       "tag": "0032_aegis_policy_eval_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1794605352408,
+      "tag": "0033_workforce_plan_images",
+      "breakpoints": true
     }
   ]
 }
