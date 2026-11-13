@@ -14528,6 +14528,19 @@ export type Database = {
         Returns: string
       }
       empyrean_rollback_action: { Args: { _action_id: string }; Returns: Json }
+      empyrean_security_posture: { Args: never; Returns: Json }
+      empyrean_seo_audit: {
+        Args: { _limit?: number }
+        Returns: {
+          category: string
+          description: string
+          issues: string[]
+          product_id: string
+          score: number
+          tags: string[]
+          title: string
+        }[]
+      }
       empyrean_set_pause: {
         Args: { _paused: boolean; _reason?: string }
         Returns: boolean
