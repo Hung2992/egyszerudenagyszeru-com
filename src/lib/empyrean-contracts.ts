@@ -24,3 +24,30 @@ export function hasIndependentVerification(result: { status: string; verifierId?
 }
 
 export const executiveRoles = ["CEO", "COO", "CFO", "CTO", "CISO", "CMO", "CRO", "CHRO"] as const;
+
+export type EmpyreanOperation = "approve" | "execute" | "verify" | "rollback";
+
+const OPERATION_GATE: Record<EmpyreanOperation, string[]> = {
+  approve: ["PROPOSED", "VALIDATED", "AUTHORIZED", "REJECTED"],
+  execute: ["APPROVED"],
+  verify: ["EXECUTING"],
+  rollback: ["EXECUTING", "VERIFIED", "REQUIRES_REVIEW", "FAILED"],
+};
+
+export function allowedOperations(state: string): EmpyreanOperation[] {
+  return (Object.keys(OPERATION_GATE) as EmpyreanOperation[]).filter((operation) => OPERATION_GATE[operation].includes(state));
+}
+
+export type SeoField = "title" | "description" | "category" | "tags";
+
+export function buildSeoProposal(input: {
+  included: Partial<Record<SeoField, boolean>>;
+  draft: Record<SeoField, string>;
+}): Record<string, unknown> {
+  const payload: Record<string, unknown> = {};
+  if (input.included.title) payload.title = input.draft.title.trim();
+  if (input.included.description) payload.description = input.draft.description.trim();
+  if (input.included.category) payload.category = input.draft.category.trim();
+  if (input.included.tags) payload.tags = input.draft.tags.split(",").map((tag) => tag.trim()).filter(Boolean);
+  return payload;
+}
