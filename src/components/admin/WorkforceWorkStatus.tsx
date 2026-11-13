@@ -105,7 +105,7 @@ const WorkforceWorkStatus = () => {
               </div>
               {open === p.id && (
                 <div className="space-y-3 pt-2 border-t border-border">
-                  <table className="w-full">
+                  <div className="overflow-x-auto"><table className="w-full min-w-[520px]">
                     <thead><tr className="text-left text-muted-foreground"><th className="p-1">#</th><th className="p-1">Lépés</th><th className="p-1">Kategória</th><th className="p-1">Állapot</th><th className="p-1">Időtartam</th><th className="p-1">Tervszerű</th></tr></thead>
                     <tbody>{st.map((s, k) => {
                       const start = k === 0 ? p.created_at : st[k - 1].executed_at;
@@ -120,7 +120,7 @@ const WorkforceWorkStatus = () => {
                         <td className="p-1">{d}</td>
                         <td className={`p-1 ${ontime === "késik" || ontime === "késve" ? "text-destructive" : ""}`}>{ontime}</td>
                       </tr>; })}</tbody>
-                  </table>
+                  </table></div>
                   <div className="grid grid-cols-3 gap-2">
                     {pi.map((i) => <div key={i.id} className="relative"><img src={i.url} alt={p.goal} className="aspect-square w-full object-cover border border-border" /><button onClick={() => remove(i)} className="absolute top-0 right-0 bg-background px-1">✕</button></div>)}
                   </div>
