@@ -211,6 +211,13 @@
       "when": 1794603857761,
       "tag": "0029_aegis_full_stop",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1794604059164,
+      "tag": "0030_aegis_temporary_privilege",
+      "breakpoints": true
     }
   ]
 }

@@ -412,6 +412,42 @@ export type Database = {
         }
         Relationships: []
       }
+      aegis_privilege_grants: {
+        Row: {
+          capability: string
+          expires_at: string
+          granted_at: string
+          granted_by: string | null
+          id: string
+          plan_id: string
+          reason: string
+          revoke_reason: string | null
+          revoked_at: string | null
+        }
+        Insert: {
+          capability?: string
+          expires_at: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          plan_id: string
+          reason: string
+          revoke_reason?: string | null
+          revoked_at?: string | null
+        }
+        Update: {
+          capability?: string
+          expires_at?: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          plan_id?: string
+          reason?: string
+          revoke_reason?: string | null
+          revoked_at?: string | null
+        }
+        Relationships: []
+      }
       aegis_settings: {
         Row: {
           id: boolean
@@ -14888,11 +14924,20 @@ export type Database = {
       }
       aegis_agent_allowed: { Args: { _agent: string }; Returns: string }
       aegis_full_stop: { Args: { _reason: string }; Returns: Json }
+      aegis_grant_privilege: {
+        Args: { _minutes: number; _plan: string; _reason: string }
+        Returns: string
+      }
       aegis_has_card: { Args: { _t: string }; Returns: boolean }
       aegis_policy: { Args: { _agent: string }; Returns: Json }
+      aegis_privilege_active: { Args: { _plan: string }; Returns: boolean }
       aegis_resolve_incident: {
         Args: { _id: string; _reactivate: boolean; _resolution: string }
         Returns: undefined
+      }
+      aegis_revoke_privilege: {
+        Args: { _plan: string; _reason: string }
+        Returns: number
       }
       aegis_risk_floor: {
         Args: { _f: string[]; _risk: string }
