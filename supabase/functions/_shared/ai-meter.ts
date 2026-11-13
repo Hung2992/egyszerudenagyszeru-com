@@ -53,8 +53,9 @@ export function installAiMeter(fn: string): void {
     try {
       const now = Date.now();
       if (!g.__aegisState || now - g.__aegisState.at > 15_000) {
-        const ar = await rpc("aegis_agent_allowed", { _agent: fn });
-        g.__aegisState = { at: now, state: ar.ok ? String(await ar.json()) : "active" };
+        const ar = await rpc("aegis_policy", { _agent: fn });
+        const pol = ar.ok ? await ar.json() : null;
+        g.__aegisState = { at: now, state: String(pol?.state ?? "active"), mode: String(pol?.input_mode ?? "block") };
       }
       if (g.__aegisState.state !== "active") {
         orig(`${url}/rest/v1/aegis_events`, { method: "POST", headers: { apikey: key!, Authorization: `Bearer ${key}`, "Content-Type": "application/json", Prefer: "return=minimal" },
@@ -76,7 +77,13 @@ export function installAiMeter(fn: string): void {
       const users = (body.messages ?? []).filter((m: any) => m?.role === "user");
       const last = users[users.length - 1]?.content;
       const text = typeof last === "string" ? last : Array.isArray(last) ? last.map((p: { text?: string }) => p?.text ?? "").join(" ") : "";
-      if (text) aegis("input", "flagged", aegisInput(text));
+      const found = text ? aegisInput(text) : [];
+      if (found.length && g.__aegisState?.mode !== "flag") {
+        orig(`${url}/rest/v1/aegis_events`, { method: "POST", headers: { apikey: key!, Authorization: `Bearer ${key}`, "Content-Type": "application/json", Prefer: "return=minimal" },
+          body: JSON.stringify({ source: fn, stage: "input", action: "blocked", findings: found }) }).catch(() => {});
+        return new Response(JSON.stringify({ error: "aegis_input_blocked", findings: found }), { status: 403, headers: { "Content-Type": "application/json" } });
+      }
+      aegis("input", "flagged", found);
     } catch { /* binary body */ }
     const res = await orig(input, init);
     if (!res.ok) return res;
