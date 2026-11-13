@@ -25,8 +25,25 @@ export function luhn(d: string): boolean {
   return sum % 10 === 0;
 }
 
+// Álcázás elleni normalizálás: láthatatlan karakterek, ékezetek, leetspeak, széthúzott betűk, base64.
+const LEET: Record<string, string> = { "0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", "@": "a", "$": "s" };
+export function aegisVariants(text: string): string[] {
+  const noZw = text.replace(/[\u200B-\u200D\u2060\uFEFF\u00AD]/g, "");
+  const folded = noZw.normalize("NFKC");
+  const leet = folded.replace(/[013457@$]/g, (c) => LEET[c]);
+  const joined = leet.replace(/\b(\w)([ ._\-*]+(?=\w\b))/g, "$1").replace(/(?<=\b\w) (?=\w\b)/g, "");
+  const out = [noZw, folded, leet, joined];
+  for (const m of noZw.match(/[A-Za-z0-9+/]{24,}={0,2}/g) ?? []) {
+    try { const d = atob(m); if (/^[\x20-\x7E\u00C0-\u017F\s]+$/.test(d)) out.push(d); } catch { /* nem base64 */ }
+  }
+  return out;
+}
+
 export function aegisInput(text: string): string[] {
-  return INPUT.filter(([, re]) => re.test(text)).map(([c]) => c);
+  const vs = aegisVariants(text);
+  const found = INPUT.filter(([, re]) => vs.some((v) => re.test(v))).map(([c]) => c);
+  if (found.length && !INPUT.some(([, re]) => re.test(text))) found.push("obfuscation");
+  return found;
 }
 
 export function aegisRedact(text: string): { text: string; findings: string[] } {
