@@ -42,7 +42,7 @@ export default function AegisPolicyZeroTrust() {
               <p className="font-mono text-[11px] text-muted-foreground">{p.rule}</p>
               {Object.keys(p.params).length > 0 && (
                 <div className="flex flex-wrap items-center gap-2">
-                  {Object.entries(p.params).map(([k, v]) => (
+                  {Object.entries(p.params).sort(([a], [b]) => Object.keys(PARAM_LABEL).indexOf(a) - Object.keys(PARAM_LABEL).indexOf(b)).map(([k, v]) => (
                     <label key={k} className="text-xs flex items-center gap-1">{PARAM_LABEL[k] ?? k}
                       <Input type="number" value={edit[p.code]?.[k] ?? v} onChange={(e) => setEdit((s) => ({ ...s, [p.code]: { ...(s[p.code] ?? {}), [k]: Number(e.target.value) } }))} className="rounded-none h-7 w-28" />
                     </label>
