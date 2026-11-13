@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
+import WorkforceWorkStatus from "@/components/admin/WorkforceWorkStatus";
 import EmpyreanAiWorld from "@/components/admin/EmpyreanAiWorld";
 import AegisPolicyZeroTrust from "@/components/admin/AegisPolicyZeroTrust";
 import AegisApprovalQueue from "@/components/admin/AegisApprovalQueue";
@@ -103,39 +104,7 @@ const AiWorkforce = () => {
             </section>
           </div>
         )}
-        {tab === "MUNKA ÁLLAPOT" && (() => {
-          const all = d?.steps ?? []; const done = all.filter((s) => s.status === "done").length;
-          const pct = all.length ? Math.round((done / all.length) * 100) : 0;
-          return (
-            <div className="space-y-4">
-              <h2 className="text-lg font-medium">Munka állapot · mi készült el, mi van hátra</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border border border-border">
-                {([["Összes terv", d?.plans.length ?? "…"], ["Kész terv", cnt("COMPLETED")], ["Elkészült lépés", `${done} / ${all.length}`], ["Teljes haladás", `${pct}%`]] as [string, string | number][]).map(([l, v]) => <div key={l} className="bg-background p-3"><p className="text-[11px] text-muted-foreground">{l}</p><p className="text-xl">{v}</p></div>)}
-              </div>
-              <div className="h-2 bg-muted"><div className="h-2 bg-accent" style={{ width: `${pct}%` }} /></div>
-              <ul className="space-y-2 text-xs">
-                {(d?.plans ?? []).map((p, i) => {
-                  const st = stepsOf(p.id); const ok = st.filter((s) => s.status === "done").length; const bad = st.filter((s) => s.status === "failed").length;
-                  const pp = st.length ? Math.round((ok / st.length) * 100) : 0;
-                  const late = p.due_date && new Date(p.due_date) < new Date() && states[i] !== "COMPLETED";
-                  return (
-                    <li key={p.id} className="border border-border p-3 space-y-2">
-                      <div className="flex justify-between gap-2"><span className="font-medium">{p.goal}</span><span className="shrink-0 text-muted-foreground">{states[i]}</span></div>
-                      <div className="h-1.5 bg-muted"><div className="h-1.5 bg-accent" style={{ width: `${pp}%` }} /></div>
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
-                        <span>Kész: <strong className="text-foreground">{ok}/{st.length}</strong> ({pp}%)</span>
-                        {bad > 0 && <span className="text-destructive">Hibás lépés: {bad}</span>}
-                        <span>Felelős: {p.owner || "—"}</span>
-                        <span className={late ? "text-destructive" : ""}>Határidő: {p.due_date ? new Date(p.due_date).toLocaleDateString("hu-HU") : "—"}{late ? " (lejárt)" : ""}</span>
-                      </div>
-                    </li>
-                  );
-                })}
-                {d && d.plans.length === 0 && <li className="text-muted-foreground">Még nincs mentett munkaterv.</li>}
-              </ul>
-            </div>
-          );
-        })()}
+        {tab === "MUNKA ÁLLAPOT" && <WorkforceWorkStatus />}
         {tab === "WORKFORCE" && <EmpyreanAiWorld />}
         {tab === "HUMAN GATE" && (
           <div className="space-y-8">
