@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("shopping-assistant");
 // AI Shopping Assistant - természetes nyelvű termékkeresés
 // Cache (1h) + napi kvóta (50/user) + monitoring integrálva
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.104.1'

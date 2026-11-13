@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("ai-knowledge-consolidate");
 // AI Knowledge Consolidation: meta-learning layer
 // Reviews self-learned facts, clusters related ones, merges into higher-level meta-knowledge
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";

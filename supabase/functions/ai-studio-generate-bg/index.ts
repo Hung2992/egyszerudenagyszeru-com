@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("ai-studio-generate-bg");
 // AI háttér generálás szövegből — Lovable AI Gateway (Gemini image)
 // + emberi/arc/silhouette ellenőrzés vision modellel + auto-újragenerálás
 // Kimenet: ai_studio_backgrounds rekord létrehozva

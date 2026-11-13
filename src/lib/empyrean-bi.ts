@@ -2,6 +2,7 @@
 export type PeriodMetrics = {
   orders?: number; booked?: number; paid?: number; paid_orders?: number;
   fee?: number; shipping?: number; awaiting_transfer?: number;
+  shipping_paid?: number; to_ship?: number; in_transit?: number; delivered?: number; returns?: number; avg_delivery_days?: number | null;
 };
 export type BusinessSnapshot = {
   window_days: number; generated_at: string;

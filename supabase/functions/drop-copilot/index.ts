@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("drop-copilot");
 // 🤖 Sprint A.4 — AI Drop Copilot
 // Admin conversational asszisztens drop-tervezéshez.
 // POST { messages: [{role, content}], focus_drop_id?: uuid }

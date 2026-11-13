@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("fashion-stylist");
 // Sprint B.5 — Fashion Stylist AI
 // POST { occasion, style?, budget_max?, gender?, size?, user_prompt?, session_id? }
 // Response: { session_id, outfit_tip, items: [{ slot, description, keywords, why, products:[...] }], total_price }

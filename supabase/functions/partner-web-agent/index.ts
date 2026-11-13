@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("partner-web-agent");
 // AI Web Creator Agent — beszélgetős, több-ügynökös webshop/weboldal építő partnereknek
 // MINŐSÉGBIZTOSÍTÁSI LÁNC: iparágspecifikus promptok → érdemes QA validáció → minőségi pontszám + jóváhagyás
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.104.1";

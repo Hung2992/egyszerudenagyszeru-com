@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("ar-style-recommend");
 // Sprint B — AI stílus ajánló
 // POST { product_id, product_name, product_category?, product_colors?, occasion? }
 // Válasz: { outfit_tip: string, suggestions: [{ category, keywords, why }], matched_products: [...] }

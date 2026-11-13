@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("partner-product-builder");
 // AI Product Studio — prémium DIGITÁLIS / KURZUS / SZOLGÁLTATÁS termék felépítése ötletből.
 // Lánc: 🧠 Architect → 📝 Content → 💰 Pricing → 🛒 Checkout → 🔐 Access/License → 🧪 QA → 💎 Premium Score
 import { createClient } from "npm:@supabase/supabase-js@2";

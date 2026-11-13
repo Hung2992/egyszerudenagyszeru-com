@@ -78,6 +78,13 @@
       "when": 1794591780216,
       "tag": "0010_ai_usage_daily_ledger",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794592195657,
+      "tag": "0011_ai_credit_price_and_fulfillment_bi",
+      "breakpoints": true
     }
   ]
 }

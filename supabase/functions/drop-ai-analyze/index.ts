@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("drop-ai-analyze");
 // 🤖 Drop AI Analytics — előrejelzés, timing, executive summary
 // POST { drop_id: uuid, insight_types?: string[] }
 // Adminok / drops_manager hívhatja

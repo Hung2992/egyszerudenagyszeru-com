@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("ar-commerce-optimizer");
 // Sprint B.3 — AI AR Commerce Optimizer
 // Elemzi az ar_events, orders és shop_products összefüggéseit,
 // konkrét, számokra épülő optimalizálási javaslatokat ad az adminnak.

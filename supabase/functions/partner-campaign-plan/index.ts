@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("partner-campaign-plan");
 // AI kampánytervező: cél + célcsoport alapján üzenet, hírlevél és webshop-kampányoldal
 // szövegjavaslat. Semmit nem ír az adatbázisba és nem publikál — csak javaslatot ad vissza.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";

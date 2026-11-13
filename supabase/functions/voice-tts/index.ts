@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("voice-tts");
 // Hangalapú vásárlás – Text-to-Speech (Lovable AI Gateway, SSE streaming)
 // Body: { text: string, voice?: string }  ->  audio/mpeg fájl (mp3)
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
