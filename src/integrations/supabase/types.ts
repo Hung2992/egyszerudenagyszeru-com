@@ -1119,6 +1119,39 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_invoices: {
+        Row: {
+          amount: number
+          billing_month: string
+          created_at: string
+          created_by: string | null
+          credits: number
+          currency: string
+          id: string
+          invoice_ref: string | null
+        }
+        Insert: {
+          amount: number
+          billing_month: string
+          created_at?: string
+          created_by?: string | null
+          credits: number
+          currency: string
+          id?: string
+          invoice_ref?: string | null
+        }
+        Update: {
+          amount?: number
+          billing_month?: string
+          created_at?: string
+          created_by?: string | null
+          credits?: number
+          currency?: string
+          id?: string
+          invoice_ref?: string | null
+        }
+        Relationships: []
+      }
       ai_knowledge_chunks: {
         Row: {
           chunk_index: number
@@ -14641,6 +14674,17 @@ export type Database = {
         Returns: boolean
       }
       empyrean_business_snapshot: { Args: { _days?: number }; Returns: Json }
+      empyrean_create_order: {
+        Args: {
+          _customer_email: string
+          _customer_name: string
+          _payment_method: string
+          _product_id: string
+          _qty: number
+          _shipping_huf: number
+        }
+        Returns: Json
+      }
       empyrean_decide_return: {
         Args: { _action: string; _note?: string; _return_id: string }
         Returns: Json
@@ -14659,6 +14703,16 @@ export type Database = {
           _proposal: Json
         }
         Returns: string
+      }
+      empyrean_record_ai_invoice: {
+        Args: {
+          _amount: number
+          _credits: number
+          _currency: string
+          _month: string
+          _ref: string
+        }
+        Returns: undefined
       }
       empyrean_request_return: {
         Args: { _amount: number; _order_id: string; _reason: string }
