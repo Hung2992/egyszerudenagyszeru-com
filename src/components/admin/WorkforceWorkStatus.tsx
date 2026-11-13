@@ -18,13 +18,15 @@ const dur = (ms: number) => { const m = Math.round(ms / 60000); return m < 60 ? 
 
 const WorkforceWorkStatus = () => {
   const [plans, setPlans] = useState<Plan[]>([]); const [steps, setSteps] = useState<Step[]>([]); const [imgs, setImgs] = useState<Img[]>([]);
-  const [showTest, setShowTest] = useState(false); const [open, setOpen] = useState<string | null>(null); const [r, setR] = useState(0);
+  const [showTest, setShowTest] = useState(false); const [open, setOpen] = useState<string | null>(null); const [r, setR] = useState(0); const [led, setLed] = useState<Record<string, number>>({});
   useEffect(() => { (async () => {
     const [p, s, i] = await Promise.all([
       supabase.from("workforce_plans").select("id,goal,status,risk,owner,due_date,created_at").order("created_at", { ascending: false }).limit(200),
       supabase.from("workforce_plan_steps").select("id,plan_id,idx,phase,task,owner,status,due_date,executed_at,result").order("idx"),
       supabase.from("workforce_plan_images").select("id,plan_id,path").order("created_at"),
     ]);
+    const au = await supabase.from("workforce_audit").select("plan_id").eq("action", "step_done").limit(5000);
+    setLed((au.data ?? []).reduce<Record<string, number>>((a, x: { plan_id: string }) => { a[x.plan_id] = (a[x.plan_id] ?? 0) + 1; return a; }, {}));
     setPlans((p.data ?? []) as Plan[]); setSteps((s.data ?? []) as Step[]);
     const list = (i.data ?? []) as Img[];
     if (list.length) { const { data } = await supabase.storage.from("workforce-images").createSignedUrls(list.map((x) => x.path), 3600); list.forEach((x, k) => (x.url = data?.[k]?.signedUrl)); }
@@ -101,6 +103,7 @@ const WorkforceWorkStatus = () => {
                 <span>Felelős: {p.owner || "—"}</span>
                 <span className={late ? "text-destructive" : ""}>Határidő: {p.due_date ? new Date(p.due_date).toLocaleDateString("hu-HU") : "—"}</span>
                 <span>Képek: {pi.length}</span>
+                <span className={(led[p.id] ?? 0) >= ok ? "" : "text-destructive"}>Védett napló: {led[p.id] ?? 0} kész lépés · {(led[p.id] ?? 0) >= ok ? "egyezik" : "ELTÉR"}</span>
                 {st.some((x) => x.status !== "done") && <span>Következő: <strong className="text-accent">{st.find((x) => x.status !== "done")?.task}</strong></span>}
               </div>
               {open === p.id && (
@@ -121,8 +124,8 @@ const WorkforceWorkStatus = () => {
                         <td className={`p-1 ${ontime === "késik" || ontime === "késve" ? "text-destructive" : ""}`}>{ontime}</td>
                       </tr>; })}</tbody>
                   </table></div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {pi.map((i) => <div key={i.id} className="relative"><img src={i.url} alt={p.goal} className="aspect-square w-full object-cover border border-border" /><button onClick={() => remove(i)} className="absolute top-0 right-0 bg-background px-1">✕</button></div>)}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {pi.map((i) => <div key={i.id} className="relative"><img src={i.url} alt={p.goal} className="w-full h-auto object-contain border border-border" /><button onClick={() => remove(i)} className="absolute top-0 right-0 bg-background px-1">✕</button></div>)}
                   </div>
                   <label className="inline-block border border-border px-3 py-2 cursor-pointer">Kép feltöltése<input type="file" accept="image/*" multiple className="hidden" onChange={(e) => upload(p.id, e.target.files)} /></label>
                 </div>

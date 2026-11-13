@@ -22,7 +22,8 @@ const AiWorkforce = () => {
   const { isAdmin, loading } = useAdminCheck();
   const navigate = useNavigate();
   const [reload, setReload] = useState(0);
-  const [tab, setTab] = useState<(typeof TABS)[number]>("COMMAND CENTER");
+  const [tab, setTab] = useState<(typeof TABS)[number]>(new URLSearchParams(window.location.search).get("tab") === "munka" ? "MUNKA ÁLLAPOT" : "COMMAND CENTER");
+  useEffect(() => { const h = () => setTab("MUNKA ÁLLAPOT"); window.addEventListener("wf-tab-munka", h); return () => window.removeEventListener("wf-tab-munka", h); }, []);
   const [d, setD] = useState<{ plans: Plan[]; steps: Step[]; audit: { action: string; created_at: string }[]; ev: { action: string; findings: string[]; created_at: string }[]; inc: number; agents: { state: string }[]; paused: boolean; mode: string; ledger: { ok: boolean; checked: number } | null } | null>(null);
   useEffect(() => { if (!loading && !isAdmin) navigate("/"); }, [loading, isAdmin, navigate]);
   useEffect(() => {
@@ -84,6 +85,18 @@ const AiWorkforce = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border border border-border">
               {kpi.map(([l, v, warn]) => <div key={l} className="bg-background p-3"><p className="text-[11px] text-muted-foreground">{l}</p><p onClick={l === "Emberi döntésre vár" ? () => setTab("HUMAN GATE") : undefined} className={`text-xl ${l === "Emberi döntésre vár" ? "cursor-pointer underline " : ""}${warn ? "text-destructive" : ""}`}>{v}</p></div>)}
             </div>
+            {(() => {
+              const real = (d?.plans ?? []).filter((p) => !/pr[óo]ba|teszt|test/i.test(p.goal) && p.status !== "cancelled");
+              const rs = d?.steps.filter((s) => real.some((p) => p.id === s.plan_id)) ?? []; const ok = rs.filter((s) => s.status === "done").length;
+              const late = real.filter((p) => p.due_date && p.status !== "done" && new Date(p.due_date + "T23:59:59") < new Date()).length;
+              return (
+                <section className="border border-border p-3 space-y-2 cursor-pointer" onClick={() => setTab("MUNKA ÁLLAPOT")}>
+                  <div className="flex justify-between"><h2 className="text-lg font-medium">Valós munkák</h2><span className="text-xs underline text-accent">Munka állapot →</span></div>
+                  <div className="flex flex-wrap gap-4 text-xs"><span>Terv: <strong>{real.length}</strong></span><span>Kész terv: <strong>{real.filter((p) => p.status === "done").length}</strong></span><span>Lépés: <strong>{ok}/{rs.length}</strong></span><span className={late ? "text-destructive" : ""}>Lejárt: <strong>{late}</strong></span></div>
+                  <div className="h-1.5 bg-muted"><div className="h-1.5 bg-accent" style={{ width: `${rs.length ? (ok / rs.length) * 100 : 0}%` }} /></div>
+                </section>
+              );
+            })()}
             <section className="space-y-2">
               <h2 className="text-lg font-medium">Állapotgép</h2>
               <div className="flex flex-wrap gap-2 text-xs">

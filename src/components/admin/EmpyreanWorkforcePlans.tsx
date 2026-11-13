@@ -6,6 +6,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { nextRunnable } from "@/lib/ai-workforce";
 import AegisPrivilege from "./AegisPrivilege";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 type Plan = { id: string; goal: string; risk: string; status: string; owner: string; due_date: string | null; created_at: string; approval_expires_at: string | null; payload_hash: string | null };
 type Step = { id: string; plan_id: string; idx: number; phase: string; owner: string; reviewer: string; task: string; evidence: string; due_date: string | null; status: "pending" | "done" | "failed"; result: string | null; executed_at: string | null };
@@ -60,7 +61,7 @@ export default function EmpyreanWorkforcePlans({ reloadKey }: { reloadKey: numbe
   if (!plans.length) return <p className="text-xs text-muted-foreground">Még nincs mentett munkaterv.</p>;
   return (
     <div className="space-y-2" aria-label="Mentett munkatervek">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">Mentett munkatervek</p>
+      <div className="flex justify-between items-center"><p className="text-xs uppercase tracking-wide text-muted-foreground">Mentett munkatervek</p><Link to="/admin/ai-workforce?tab=munka" onClick={() => window.dispatchEvent(new Event("wf-tab-munka"))} className="text-xs underline text-accent">Munka állapot →</Link></div>
       {plans.map((p) => {
         const ps = steps.filter((s) => s.plan_id === p.id);
         const done = ps.filter((s) => s.status === "done").length;
