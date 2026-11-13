@@ -6,9 +6,10 @@
 - [x] Teljes technikai terv: COMMAND / MISSIONS / CONTROL, közös szerződések, ügynökök, API-k, jogosultságok, audit és fejlesztési kapuk.
 - [x] Felhasználó által szerkesztett EMPYREAN terv jóváhagyva.
 - [x] FOUNDATION: arculati tokenek, adminba bekötött COMMAND / MISSIONS / CONTROL alapnézet, közös jóváhagyási és bizonyítékszerződések.
-- [ ] FOUNDATION éles séma, RLS, biztonsági és hitelesített adminellenőrzés: adatbázis-elérés szükséges.
-- [ ] Első teljes termék-SEO javaslat → approval → kontrollált mentés → audit → független ellenőrzés → rollback folyamat: élő séma és jogosultságvizsgálat szükséges.
-- [ ] BUSINESS INTELLIGENCE, CONTROLLED AUTOMATION, PREDICTIVE INTELLIGENCE, ENTERPRISE SECURITY, CONTINUOUS OPTIMIZATION: az éles FOUNDATION és SEO workflow ellenőrzési kapujára várnak.
+- [x] FOUNDATION éles séma, RLS, biztonsági és hitelesített adminellenőrzés: `empyrean_*` táblák, admin-RLS, szerveroldali vészleállítás, csak-hozzáírható audit napló.
+- [x] Első teljes termék-SEO javaslat → approval → kontrollált mentés → audit → független ellenőrzés → rollback folyamat: élesben igazolva (PROPOSED → APPROVED → EXECUTING → VERIFIED → ROLLED_BACK, sha256 bizonylattal).
+- [x] Partner média tároló publikus olvasása csak a valóban megjelenített képekre: anon kulccsal ellenőrizve.
+- [ ] BUSINESS INTELLIGENCE, CONTROLLED AUTOMATION, PREDICTIVE INTELLIGENCE, ENTERPRISE SECURITY, CONTINUOUS OPTIMIZATION: a FOUNDATION és SEO workflow kapu megnyílt, a fázisok még nem kezdődtek.
 
 - [x] Egységes prémium mobil- és asztali kezdőoldal
 - [x] Dinamikus partner branding, hero, kategóriák és termékblokkok
