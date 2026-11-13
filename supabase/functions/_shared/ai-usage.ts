@@ -16,7 +16,8 @@ export async function recordAiUsage(db: any, fn: string, model: string, usage: a
   try {
     const pin = Number(usage?.prompt_tokens ?? 0), pout = Number(usage?.completion_tokens ?? 0);
     const cost = typeof usage?.cost === "number" ? usage.cost : estimateAiCost(model, pin, pout);
-    await db.rpc("ai_record_usage", { _fn: fn, _tokens: pin + pout, _cost: cost });
+    const { error } = await db.rpc("ai_record_usage", { _fn: fn, _tokens: pin + pout, _cost: cost });
+    if (error) console.warn("ai usage record failed:", error.message);
   } catch (e) {
     console.warn("ai usage record failed:", (e as Error).message);
   }
