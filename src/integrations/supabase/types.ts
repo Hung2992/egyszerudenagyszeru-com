@@ -15580,6 +15580,7 @@ export type Database = {
       }
       welcome20_eligible: { Args: { _user_id: string }; Returns: boolean }
       welcome20_status: { Args: { _user_id: string }; Returns: Json }
+      workforce_evidence_ok: { Args: { _r: string }; Returns: boolean }
       workforce_execute_step: {
         Args: {
           _confirmed: boolean
