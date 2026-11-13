@@ -131,7 +131,7 @@ export default function EmpyreanControlPlane({ onOpen }: { onOpen: (destination:
     setNotice("");
   };
 
-  const run = async (key: string, task: () => Promise<{ error: { message: string } | null }>) => {
+  const run = async (key: string, task: () => PromiseLike<{ error: { message: string } | null }>) => {
     setBusy(key);
     setError("");
     setNotice("");
