@@ -1,7 +1,7 @@
 // Returns short-lived signed URLs for partner media that is referenced by a
 // published storefront or an active product. Replaces anonymous storage reads.
 import { createClient } from "npm:@supabase/supabase-js@2.45.0";
-import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+const corsHeaders = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
 
 const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 const BUCKETS = new Set(["partner-storefront-media", "partner-product-images"]);
