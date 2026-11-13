@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canExecute, hasIndependentVerification } from "@/lib/empyrean-contracts";
+import { allowedOperations, buildSeoProposal, canExecute, hasIndependentVerification } from "@/lib/empyrean-contracts";
 
 const input = {
   approval: { payloadHash: "exact-payload", targetVersion: "v1", approvedBy: "00000000-0000-4000-8000-000000000001", expiresAt: "2026-11-10T00:00:00Z" },
