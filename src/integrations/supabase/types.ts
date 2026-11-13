@@ -14686,6 +14686,15 @@ export type Database = {
         Args: { _currency: string; _price: number }
         Returns: Json
       }
+      empyrean_set_order_dates: {
+        Args: {
+          _delivered: string
+          _order_id: string
+          _paid: string
+          _shipped: string
+        }
+        Returns: undefined
+      }
       empyrean_set_pause: {
         Args: { _paused: boolean; _reason?: string }
         Returns: boolean
