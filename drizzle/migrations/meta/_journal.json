@@ -162,6 +162,13 @@
       "when": 1794600137178,
       "tag": "0022_aegis_incident_response",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1794601307605,
+      "tag": "0023_aegis_cost_anomaly_prompt_leak",
+      "breakpoints": true
     }
   ]
 }

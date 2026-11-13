@@ -3416,6 +3416,30 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_usage_hourly: {
+        Row: {
+          calls: number
+          cost: number
+          function_name: string
+          tokens: number
+          usage_hour: string
+        }
+        Insert: {
+          calls?: number
+          cost?: number
+          function_name: string
+          tokens?: number
+          usage_hour: string
+        }
+        Update: {
+          calls?: number
+          cost?: number
+          function_name?: string
+          tokens?: number
+          usage_hour?: string
+        }
+        Relationships: []
+      }
       ai_usage_quota: {
         Row: {
           estimated_cost_credits: number

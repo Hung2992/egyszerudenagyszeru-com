@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 type Inc = { id: string; agent: string; kind: string; severity: string; action_taken: string; event_count: number; findings: string[]; preserved_events: unknown[]; status: string; opened_at: string; resolved_at: string | null; resolution: string | null };
-const kindLabel: Record<string, string> = { leak_isolate: "Adatszivárgás → automatikus elkülönítés", attack_wave: "Támadási hullám → riasztás", stop_storm: "Leállítási vihar" };
+const kindLabel: Record<string, string> = { leak_isolate: "Adatszivárgás → automatikus elkülönítés", attack_wave: "Támadási hullám → riasztás", stop_storm: "Leállítási vihar", cost_anomaly: "Szokatlan AI-költség → riasztás", prompt_leak_wave: "Rejtett utasítások kicsalása → riasztás" };
 
 export default function EmpyreanAegisIncidents() {
   const [rows, setRows] = useState<Inc[] | null>(null);
@@ -20,7 +20,7 @@ export default function EmpyreanAegisIncidents() {
   return (
     <section className="space-y-2" aria-labelledby="aegis-inc">
       <h2 id="aegis-inc" className="text-lg font-medium">AEGIS · incidensek</h2>
-      <p className="text-xs text-muted-foreground">Észlelés → elkülönítés → bizonyíték megőrzése. Ha egy AI-segéd válasza 10 percen belül 3-szor kitakarandó adatot tartalmaz, az AEGIS magától elkülöníti. 10+ veszélyes kérés 10 percen belül riasztást ad, de a segédet nem állítja le, hogy egy támadó ne tudja megbénítani a boltot.</p>
+      <p className="text-xs text-muted-foreground">Észlelés → elkülönítés → bizonyíték megőrzése. Ha egy AI-segéd válasza 10 percen belül 3-szor kitakarandó adatot tartalmaz, az AEGIS magától elkülöníti. 10+ veszélyes kérés 10 percen belül riasztást ad, de a segédet nem állítja le, hogy egy támadó ne tudja megbénítani a boltot. Riaszt akkor is, ha egy segéd egy órán belül a szokásos 5-szörösét hívja (legalább 40-et), vagy ha 10 percen belül 3-szor próbálják kicsalni a rejtett utasításait.</p>
       <p className={`text-sm ${open.length ? "text-destructive" : "text-muted-foreground"}`}>{open.length ? `${open.length} nyitott incidens` : "Nincs nyitott incidens"}</p>
       {rows === null ? <p className="text-xs text-muted-foreground">Betöltés…</p> : rows.length === 0 ? <p className="text-xs text-muted-foreground">Még nem volt incidens.</p> : (
         <ul className="border border-border divide-y divide-border text-xs">

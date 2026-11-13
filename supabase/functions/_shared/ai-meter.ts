@@ -1,7 +1,7 @@
 // Global AI gateway meter: wraps fetch so every Lovable AI gateway call in this
 // function is budget-checked and recorded into ai_usage_daily (CONTROL panel).
 import { estimateAiCost } from "./ai-usage.ts";
-import { aegisInput, aegisRedact } from "./aegis.ts";
+import { aegisArmSystem, aegisCanary, aegisCanaryHit, aegisRedact, aegisSanitizeHistory, AegisStreamGuard, AEGIS_PROMPT_LEAK_REPLY } from "./aegis.ts";
 
 const GATEWAY = "ai.gateway.lovable.dev";
 // deno-lint-ignore no-explicit-any
@@ -35,15 +35,16 @@ export function installAiMeter(fn: string): void {
     }).catch(() => {});
   };
   // deno-lint-ignore no-explicit-any
-  const redactChoices = (j: any, key2: "message" | "delta"): string[] => {
-    const all: string[] = [];
+  const redactChoices = (j: any, canary?: string): { found: string[]; leak: boolean } => {
+    const all: string[] = []; let leak = false;
     for (const c of j?.choices ?? []) {
-      const m = c?.[key2];
+      const m = c?.message;
       if (typeof m?.content === "string") {
+        if (aegisCanaryHit(m.content, canary)) { m.content = AEGIS_PROMPT_LEAK_REPLY; leak = true; continue; }
         const r = aegisRedact(m.content); m.content = r.text; r.findings.forEach((f) => all.includes(f) || all.push(f));
       }
     }
-    return all;
+    return { found: all, leak };
   };
 
   globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -70,20 +71,24 @@ export function installAiMeter(fn: string): void {
       }
     } catch { /* never block on meter failure */ }
     let model = "unknown";
+    let canary: string | undefined;
     try {
       const body = JSON.parse(String(init?.body ?? "{}"));
       model = body.model ?? model;
-      // deno-lint-ignore no-explicit-any
-      const users = (body.messages ?? []).filter((m: any) => m?.role === "user");
-      const last = users[users.length - 1]?.content;
-      const text = typeof last === "string" ? last : Array.isArray(last) ? last.map((p: { text?: string }) => p?.text ?? "").join(" ") : "";
-      const found = text ? aegisInput(text) : [];
-      if (found.length && g.__aegisState?.mode !== "flag") {
-        orig(`${url}/rest/v1/aegis_events`, { method: "POST", headers: { apikey: key!, Authorization: `Bearer ${key}`, "Content-Type": "application/json", Prefer: "return=minimal" },
-          body: JSON.stringify({ source: fn, stage: "input", action: "blocked", findings: found }) }).catch(() => {});
-        return new Response(JSON.stringify({ error: "aegis_input_blocked", findings: found }), { status: 403, headers: { "Content-Type": "application/json" } });
+      if (Array.isArray(body.messages)) {
+        // 1) csak az utolsó felhasználói kérdést blokkoljuk; a korábbi (kliens által küldött) üzenetekből kivesszük a támadást
+        const { lastUser, neutralized } = aegisSanitizeHistory(body.messages);
+        if (lastUser.length && g.__aegisState?.mode !== "flag") {
+          orig(`${url}/rest/v1/aegis_events`, { method: "POST", headers: { apikey: key!, Authorization: `Bearer ${key}`, "Content-Type": "application/json", Prefer: "return=minimal" },
+            body: JSON.stringify({ source: fn, stage: "input", action: "blocked", findings: lastUser }) }).catch(() => {});
+          return new Response(JSON.stringify({ error: "aegis_input_blocked", findings: lastUser }), { status: 403, headers: { "Content-Type": "application/json" } });
+        }
+        aegis("input", "flagged", [...lastUser, ...neutralized.filter((x) => !lastUser.includes(x))]);
+        // 2) kanári-jelölő a rendszerpromptba: ha a válaszban megjelenik, rejtett-utasítás szivárgás
+        const c = aegisCanary();
+        if (aegisArmSystem(body.messages, c)) canary = c;
+        if (neutralized.length || canary) init = { ...init, body: JSON.stringify(body) };
       }
-      aegis("input", "flagged", found);
     } catch { /* binary body */ }
     const res = await orig(input, init);
     if (!res.ok) return res;
@@ -92,7 +97,9 @@ export function installAiMeter(fn: string): void {
       try {
         const j = await res.json();
         record(model, j?.usage ?? null);
-        aegis("output", "redacted", redactChoices(j, "message"));
+        const rc = redactChoices(j, canary);
+        aegis("output", "redacted", rc.found);
+        if (rc.leak) aegis("output", "flagged", ["prompt_leak"]);
         const h = new Headers(res.headers); h.delete("content-length");
         return new Response(JSON.stringify(j), { status: res.status, statusText: res.statusText, headers: h });
       } catch {
@@ -108,21 +115,41 @@ export function installAiMeter(fn: string): void {
           const m = buf.match(/"usage"\s*:\s*(\{[^{}]*\})/g); if (m) { try { usage = JSON.parse(m[m.length - 1].replace(/^"usage"\s*:\s*/, "")); } catch { /**/ } } }
         await record(model, usage);
       })().catch(() => {});
-      const found: string[] = [];
+      // darabokon átívelő titkok ellen: választásonként egy visszatartó őr
+      const guards = new Map<number, AegisStreamGuard>();
+      const gd = (i: number) => { let x = guards.get(i); if (!x) { x = new AegisStreamGuard(canary); guards.set(i, x); } return x; };
       let carry = "";
       const enc = new TextEncoder();
+      const flushAll = (ctl: TransformStreamDefaultController<Uint8Array>) => {
+        for (const [i, x] of guards) { const rest = x.end(); if (rest) ctl.enqueue(enc.encode("data: " + JSON.stringify({ choices: [{ index: i, delta: { content: rest } }] }) + "\n\n")); }
+      };
+      const report = () => {
+        const found: string[] = []; let leak = false;
+        for (const x of guards.values()) { x.findings.forEach((f) => f === "prompt_leak" ? (leak = true) : found.includes(f) || found.push(f)); }
+        aegis("output", "redacted", found);
+        if (leak) aegis("output", "flagged", ["prompt_leak"]);
+      };
+      let done = false;
       const guarded = a.pipeThrough(new TextDecoderStream()).pipeThrough(new TransformStream<string, Uint8Array>({
         transform(chunk, ctl) {
           const lines = (carry + chunk).split("\n"); carry = lines.pop() ?? "";
           for (const line of lines) {
-            if (line.startsWith("data: ") && line !== "data: [DONE]") {
-              try { const j = JSON.parse(line.slice(6)); const f = redactChoices(j, "delta");
-                if (f.length) { f.forEach((x) => found.includes(x) || found.push(x)); ctl.enqueue(enc.encode("data: " + JSON.stringify(j) + "\n")); continue; } } catch { /* pass through */ }
+            if (line.trim() === "data: [DONE]") { flushAll(ctl); done = true; ctl.enqueue(enc.encode(line + "\n")); continue; }
+            if (line.startsWith("data: ")) {
+              try {
+                const j = JSON.parse(line.slice(6)); let touched = false;
+                for (const c of j?.choices ?? []) {
+                  const i = Number(c?.index ?? 0);
+                  if (typeof c?.delta?.content === "string") { c.delta.content = gd(i).push(c.delta.content); touched = true; }
+                  if (c?.finish_reason && guards.has(i)) { const rest = gd(i).end(); if (rest) { c.delta = { ...(c.delta ?? {}), content: (c.delta?.content ?? "") + rest }; touched = true; } }
+                }
+                if (touched) { ctl.enqueue(enc.encode("data: " + JSON.stringify(j) + "\n")); continue; }
+              } catch { /* pass through */ }
             }
             ctl.enqueue(enc.encode(line + "\n"));
           }
         },
-        flush(ctl) { if (carry) ctl.enqueue(enc.encode(carry)); aegis("output", "redacted", found); },
+        flush(ctl) { if (carry) ctl.enqueue(enc.encode(carry)); if (!done) flushAll(ctl); report(); },
       }));
       const h = new Headers(res.headers); h.delete("content-length");
       return new Response(guarded, { status: res.status, statusText: res.statusText, headers: h });
