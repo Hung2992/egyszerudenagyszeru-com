@@ -49,3 +49,10 @@ export function buildWorkOrder(goal: string): WorkOrder {
 }
 
 export const riskOrder: Risk[] = ["green", "yellow", "red"];
+
+// Fokozatos végrehajtás: csak a legelső nem kész lépés futtatható, és csak jóváhagyott tervben.
+export type TrackedStep = { idx: number; status: "pending" | "done" | "failed" };
+export function nextRunnable<T extends TrackedStep>(planStatus: string, steps: T[]): T | null {
+  if (planStatus !== "approved" && planStatus !== "in_progress") return null;
+  return [...steps].sort((a, b) => a.idx - b.idx).find((s) => s.status !== "done") ?? null;
+}

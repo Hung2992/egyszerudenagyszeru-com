@@ -17,3 +17,11 @@ describe("AI WORKFORCE", () => {
     expect(s.some((x) => x.level === 0)).toBe(true);
   });
 });
+
+import { nextRunnable } from "./ai-workforce";
+describe("fokozatos végrehajtás", () => {
+  const steps = [{ idx: 0, status: "done" as const }, { idx: 1, status: "failed" as const }, { idx: 2, status: "pending" as const }];
+  it("jóváhagyás nélkül semmi nem futtatható", () => expect(nextRunnable("draft", steps)).toBeNull());
+  it("csak a legelső nem kész lépés futtatható (hibás újrapróbálható)", () => expect(nextRunnable("in_progress", steps)?.idx).toBe(1));
+  it("kész tervnél nincs több lépés", () => expect(nextRunnable("approved", [{ idx: 0, status: "done" as const }])).toBeNull());
+});
