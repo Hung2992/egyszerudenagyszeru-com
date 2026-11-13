@@ -313,6 +313,33 @@ export type Database = {
           },
         ]
       }
+      aegis_events: {
+        Row: {
+          action: string
+          created_at: string
+          findings: string[]
+          id: string
+          source: string
+          stage: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          findings?: string[]
+          id?: string
+          source: string
+          stage: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          findings?: string[]
+          id?: string
+          source?: string
+          stage?: string
+        }
+        Relationships: []
+      }
       ai_agent_briefings: {
         Row: {
           brief_date: string
