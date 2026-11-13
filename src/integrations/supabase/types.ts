@@ -14709,6 +14709,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      aegis_scan: { Args: { _t: string }; Returns: string[] }
       agent_bus_publish: {
         Args: {
           _correlation_id?: string
