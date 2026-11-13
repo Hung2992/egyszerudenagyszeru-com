@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("virtual-tryon");
 // Sprint B.4 — Virtual Try-On (AI Outfit Preview)
 // POST { photo_base64 (data URL or raw base64), photo_mime, product_id, product_source, product_name, product_image_url, session_id? }
 // Response: { image_base64, generation_id }

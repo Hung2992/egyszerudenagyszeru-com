@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("ai-product-studio");
 // AI Product Studio – szöveg/képgenerálás termékekhez (admin),
 // plusz partner webshop/weboldal és aloldal generálás (partner + admin)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.104.1";

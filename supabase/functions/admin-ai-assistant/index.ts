@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("admin-ai-assistant");
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.104.1'
 
 const corsHeaders = {

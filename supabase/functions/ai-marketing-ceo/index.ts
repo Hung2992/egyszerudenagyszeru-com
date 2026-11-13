@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("ai-marketing-ceo");
 // AI Marketing CEO — napi/heti briefing + insights generálás
 // Actions: run_daily, run_weekly, generate_insights
 import { createClient } from "npm:@supabase/supabase-js@2";

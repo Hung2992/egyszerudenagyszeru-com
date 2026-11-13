@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("partner-acquisition-agent");
 // Partner Acquisition Engine — AI dispatcher
 // Actions:
 //   generate_strategy   -> AI generálja a kampány stratégiát

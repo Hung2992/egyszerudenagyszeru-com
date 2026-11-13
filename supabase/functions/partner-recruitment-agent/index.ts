@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("partner-recruitment-agent");
 // Partner Toborzó AI Agent — PRO
 // Actions: run, regenerate_image, score_post, research_trends, weekly_plan, schedule_post
 import { createClient } from "npm:@supabase/supabase-js@2";

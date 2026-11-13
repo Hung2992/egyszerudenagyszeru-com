@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("partner-site-builder");
 // AI Webshop Builder — partner szövegből generál teljes, publikálásra kész storefront konfigurációt
 // Lánc: 🧠 Architect (pro) → 🧪 QA kritika → ✨ Javítás → ✅ Validáció (kontraszt, hossz, kötelező mezők)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.104.1";

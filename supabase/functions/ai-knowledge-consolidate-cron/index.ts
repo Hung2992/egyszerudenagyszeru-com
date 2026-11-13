@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("ai-knowledge-consolidate-cron");
 // Cron-callable variant of knowledge consolidation: no auth, runs as service role
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { requireInternalOrAdmin } from "../_shared/internal-auth.ts";

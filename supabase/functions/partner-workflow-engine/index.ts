@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("partner-workflow-engine");
 // AI Workflow Engine — természetes nyelvből eseményvezérelt folyamat + futtatás
 // + A/B variáns generálás és kiértékelés.
 import { createClient } from "npm:@supabase/supabase-js@2";

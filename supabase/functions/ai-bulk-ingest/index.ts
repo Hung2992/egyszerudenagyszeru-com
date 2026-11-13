@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("ai-bulk-ingest");
 // AI Bulk Ingest: JSON / URL list / ZIP -> structured article -> embedding-ready knowledge docs
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { Unzip, UnzipInflate, strFromU8 } from "https://esm.sh/fflate@0.8.2";

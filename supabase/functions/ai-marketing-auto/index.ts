@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("ai-marketing-auto");
 // AI Marketing Automation - vásárlói szegmentáció + auto kampány javaslat
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.104.1'
 

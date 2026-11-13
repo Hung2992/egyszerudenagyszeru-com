@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("price-negotiate");
 // 💰 AI Price Negotiation Engine
 // Vásárló áralku kérése -> AI javasol -> Rules Engine engedélyez -> Ajánlat
 // SOHA nem enged a szabálymotor felett. Minden kérést auditlogol.

@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("ai-self-learn");
 // AI Self-Learning v2: with confidence, domain classification, daily quota, review queue
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 

@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("ai-meta-learn");
 // Meta-tanulási réteg: a rendszer felfedezi a saját mintázatait és új elveket alkot
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { requireInternalOrAdmin } from "../_shared/internal-auth.ts";

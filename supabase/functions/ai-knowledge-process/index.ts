@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("ai-knowledge-process");
 // AI Knowledge Processor: extracts text, chunks it, embeds with Gemini, stores in pgvector
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 

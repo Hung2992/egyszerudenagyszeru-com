@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("ai-studio-render");
 // AI Marketing Studio — Render Pipeline (TELJES KOMPOZÍCIÓ)
 // 1. Matting: premium = Replicate RVM (alpha videó), fast = forrás chroma key-jelve
 // 2. Background: AI kép (Nano Banana Pro) / AI videó (LTX) / saját kép / saját mp4

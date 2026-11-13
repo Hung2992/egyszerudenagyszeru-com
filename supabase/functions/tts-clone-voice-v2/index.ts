@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("tts-clone-voice-v2");
 // Saját TTS klónozó — multi-provider + tartalom-/víruscheck
 // XTTS-v2 / F5-TTS / Chatterbox / custom_gpu: csak feltöltjük a mintát
 // ElevenLabs: regisztráljuk és tároljuk a voice_id-t

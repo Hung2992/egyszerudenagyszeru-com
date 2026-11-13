@@ -1,3 +1,5 @@
+import { installAiMeter } from "../_shared/ai-meter.ts";
+installAiMeter("partner-action-engine");
 // AI intézkedés motor: cél → elemzés → terv → jóváhagyás → végrehajtás → mérés → tanulás.
 // Minden intézkedés auditált: ki, mikor, mit, előtte/utána, correlation_id, rollback.
 import { createClient } from "npm:@supabase/supabase-js@2";
