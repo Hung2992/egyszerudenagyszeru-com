@@ -42,3 +42,24 @@ export function needsHuman(p: PlanLite, now = Date.now()): boolean {
   if (p.status === "draft") return true;
   return p.status === "approved" && !!p.approval_expires_at && new Date(p.approval_expires_at).getTime() < now;
 }
+
+export type Simulation = { effects: string[]; sideEffects: string[]; rollback: "teljes" | "részleges" | "nincs"; reach: string };
+const SIM: { re: RegExp; effect: string; side: string; rollback: Simulation["rollback"]; reach: string }[] = [
+  { re: /visszatérít|utal|fizet|refund|pénz|árazás|ár(at|ak)?\b/i, effect: "Pénzmozgás vagy bevételváltozás", side: "Könyvelési és adózási hatás", rollback: "nincs", reach: "vásárlók és pénzügy" },
+  { re: /hírlevél|newsletter|e-?mail|sms|értesít|üzen/i, effect: "Üzenet megy ki vásárlóknak", side: "Kiküldött üzenet nem vonható vissza; leiratkozás kockázata", rollback: "nincs", reach: "vásárlók" },
+  { re: /töröl|delete|purge|eltávolít/i, effect: "Adat vagy tartalom törlése", side: "Kapcsolódó rendelések, linkek sérülhetnek", rollback: "részleges", reach: "adatbázis" },
+  { re: /publik|élesít|közzétesz|publish/i, effect: "Nyilvános tartalom változik", side: "Keresőmotorok és látogatók azonnal látják", rollback: "részleges", reach: "nyilvánosság" },
+  { re: /seo|leírás|cím|meta|tartalom/i, effect: "Termék- vagy oldalszöveg változik", side: "Keresési helyezés átmenetileg ingadozhat", rollback: "teljes", reach: "webshop" },
+  { re: /kampány|hirdet|marketing/i, effect: "Marketingköltés vagy kampány indul", side: "Költségkeret felhasználása", rollback: "részleges", reach: "marketing" },
+];
+const ORDER = { teljes: 0, "részleges": 1, nincs: 2 } as const;
+/** 14. SIMULATION ENGINE: végrehajtás előtt várható hatás, mellékhatás és visszaállíthatóság. */
+export function simulate(goal: string): Simulation {
+  const hits = SIM.filter((s) => s.re.test(goal));
+  if (!hits.length) return { effects: ["Csak elemzés, rendszerváltozás nélkül"], sideEffects: [], rollback: "teljes", reach: "belső" };
+  return {
+    effects: hits.map((h) => h.effect), sideEffects: hits.map((h) => h.side),
+    rollback: hits.reduce<Simulation["rollback"]>((w, h) => (ORDER[h.rollback] > ORDER[w] ? h.rollback : w), "teljes"),
+    reach: [...new Set(hits.map((h) => h.reach))].join(", "),
+  };
+}

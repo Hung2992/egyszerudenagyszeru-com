@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import EmpyreanWorkforcePlans from "./EmpyreanWorkforcePlans";
+import { simulate } from "@/lib/aegis-os";
 
 const riskLabel: Record<Risk, string> = { green: "🟢 elemzés", yellow: "🟡 jóváhagyás", red: "🔴 emberi döntés" };
 
@@ -49,6 +50,13 @@ export default function EmpyreanAiWorld() {
               {plan.findings.map((f) => <li key={f.code} className={f.severity === "block" ? "text-destructive" : "text-muted-foreground"}>AEGIS · {f.label} ({f.severity === "block" ? "blokk" : "figyelmeztetés"})</li>)}
             </ul>
           )}
+          {!plan.blocked && (() => { const sim = simulate(submitted); return (
+            <div className="border border-border p-2 text-xs space-y-1" aria-label="AEGIS szimuláció">
+              <p className="uppercase tracking-wide text-muted-foreground">Szimuláció végrehajtás előtt</p>
+              <p>Várható hatás: {sim.effects.join(" · ")}</p>
+              {sim.sideEffects.length > 0 && <p>Mellékhatás: {sim.sideEffects.join(" · ")}</p>}
+              <p>Érintett: {sim.reach} · Visszaállítható: <strong className={sim.rollback === "nincs" ? "text-destructive" : ""}>{sim.rollback}</strong></p>
+            </div>); })()}
           {plan.assignments.length > 0 && (
             <ol className="text-sm space-y-1">
               {plan.assignments.map((a, i) => (
