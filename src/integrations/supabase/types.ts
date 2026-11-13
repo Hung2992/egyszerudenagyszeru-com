@@ -14372,6 +14372,7 @@ export type Database = {
           goal: string
           id: string
           owner: string
+          payload_hash: string | null
           plan: Json
           risk: string
           status: string
@@ -14387,6 +14388,7 @@ export type Database = {
           goal: string
           id?: string
           owner: string
+          payload_hash?: string | null
           plan?: Json
           risk: string
           status?: string
@@ -14402,6 +14404,7 @@ export type Database = {
           goal?: string
           id?: string
           owner?: string
+          payload_hash?: string | null
           plan?: Json
           risk?: string
           status?: string
@@ -14881,10 +14884,15 @@ export type Database = {
         }[]
       }
       aegis_agent_allowed: { Args: { _agent: string }; Returns: string }
+      aegis_has_card: { Args: { _t: string }; Returns: boolean }
       aegis_policy: { Args: { _agent: string }; Returns: Json }
       aegis_resolve_incident: {
         Args: { _id: string; _reactivate: boolean; _resolution: string }
         Returns: undefined
+      }
+      aegis_risk_floor: {
+        Args: { _f: string[]; _risk: string }
+        Returns: string
       }
       aegis_scan: { Args: { _t: string }; Returns: string[] }
       aegis_set_agent_state: {
@@ -14895,6 +14903,7 @@ export type Database = {
         Args: { _mode: string; _reason: string }
         Returns: undefined
       }
+      aegis_variants: { Args: { _t: string }; Returns: string[] }
       aegis_verify_ledger: { Args: never; Returns: Json }
       aegis_webhook_seen: {
         Args: { _digest: string; _source: string }
@@ -15580,6 +15589,7 @@ export type Database = {
         }
         Returns: string
       }
+      workforce_payload_hash: { Args: { _plan: string }; Returns: string }
       workforce_reapprove: {
         Args: { _note: string; _plan: string }
         Returns: undefined
