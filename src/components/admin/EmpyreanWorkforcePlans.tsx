@@ -12,7 +12,7 @@ type Step = { id: string; plan_id: string; idx: number; phase: string; owner: st
 type Audit = { id: string; plan_id: string; action: string; detail: Record<string, unknown>; created_at: string };
 
 const statusLabel: Record<string, string> = { draft: "Tervezet", approved: "Jóváhagyva", in_progress: "Folyamatban", done: "Kész", cancelled: "Megszakítva", pending: "Vár", failed: "Hibás" };
-const actionLabel: Record<string, string> = { created: "Mentve", approved: "Jóváhagyva", cancelled: "Megszakítva", step_done: "Lépés kész", step_failed: "Lépés hibás", done: "Terv kész", aegis_blocked: "AEGIS blokkolta", reapproved: "Jóváhagyás megújítva", aegis_weak_evidence: "AEGIS: gyenge bizonyíték — elutasítva", privilege_granted: "AEGIS: ideiglenes jogosultság megadva", privilege_revoked: "AEGIS: ideiglenes jogosultság visszavonva", aegis_full_stop: "AEGIS: teljes vészleállítás — terv leállítva", aegis_tamper: "AEGIS: a tartalom eltért a jóváhagyottól — terv leállítva" };
+const actionLabel: Record<string, string> = { created: "Mentve", approved: "Jóváhagyva", cancelled: "Megszakítva", step_done: "Lépés kész", step_failed: "Lépés hibás", done: "Terv kész", aegis_blocked: "AEGIS blokkolta", reapproved: "Jóváhagyás megújítva", aegis_weak_evidence: "AEGIS: gyenge bizonyíték — elutasítva", aegis_policy: "AEGIS: szabály tiltotta", privilege_granted: "AEGIS: ideiglenes jogosultság megadva", privilege_revoked: "AEGIS: ideiglenes jogosultság visszavonva", aegis_full_stop: "AEGIS: teljes vészleállítás — terv leállítva", aegis_tamper: "AEGIS: a tartalom eltért a jóváhagyottól — terv leállítva" };
 
 export default function EmpyreanWorkforcePlans({ reloadKey }: { reloadKey: number }) {
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -50,6 +50,8 @@ export default function EmpyreanWorkforcePlans({ reloadKey }: { reloadKey: numbe
     if (error) return toast.error(error.message);
     if (data === "aegis_tamper") { toast.error("AEGIS: a terv tartalma eltér attól, amit jóváhagytál. A tervet leállította és naplózta."); load(); return; }
     if (data === "aegis_weak_evidence") { toast.error("AEGIS: ez nem bizonyíték. Írj konkrét eredményt (legalább 20 karakter, szám, link vagy részletes leírás)."); load(); return; }
+    if (data === "aegis_privilege") { toast.error("AEGIS: piros tervhez érvényes ideiglenes jogosultság kell. Kérj időablakot a terv alatt."); load(); return; }
+    if (data === "aegis_policy") { toast.error("AEGIS: egy szabály tiltja (pénzügyi limit, munkaidő vagy napi limit). Részletek: AEGIS oldal → POLICY · ZERO-TRUST."); load(); return; }
     if (data === "aegis_blocked") { toast.error("AEGIS blokkolta: az eredmény titkot, kártyaadatot vagy tiltott utasítást tartalmaz. Naplózva."); load(); return; }
     toast.success(run.ok ? "Lépés kész, naplózva" : "Hiba naplózva");
     setRun(null); setResult(""); load();

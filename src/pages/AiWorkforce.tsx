@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
 import EmpyreanAiWorld from "@/components/admin/EmpyreanAiWorld";
+import AegisPolicyZeroTrust from "@/components/admin/AegisPolicyZeroTrust";
 import AegisFullStop from "@/components/admin/AegisFullStop";
 import EmpyreanAegisKillSwitch from "@/components/admin/EmpyreanAegisKillSwitch";
 import EmpyreanAegisIncidents from "@/components/admin/EmpyreanAegisIncidents";
@@ -12,8 +13,8 @@ import { ArrowLeft } from "lucide-react";
 
 type Plan = PlanLite & { id: string; goal: string };
 type Step = StepLite & { plan_id: string };
-const TABS = ["COMMAND CENTER", "WORKFORCE", "HUMAN GATE", "FAILURE MEMORY"] as const;
-const failLabel: Record<string, string> = { step_failed: "Hibás lépés", aegis_blocked: "AEGIS blokkolt eredmény", aegis_weak_evidence: "Gyenge bizonyíték", aegis_tamper: "Jóváhagyás utáni átírás", cancelled: "Megszakított terv", aegis_full_stop: "Vészleállítással leállított terv" };
+const TABS = ["COMMAND CENTER", "WORKFORCE", "HUMAN GATE", "POLICY · ZERO-TRUST", "FAILURE MEMORY"] as const;
+const failLabel: Record<string, string> = { step_failed: "Hibás lépés", aegis_blocked: "AEGIS blokkolt eredmény", aegis_weak_evidence: "Gyenge bizonyíték", aegis_tamper: "Jóváhagyás utáni átírás", cancelled: "Megszakított terv", aegis_full_stop: "Vészleállítással leállított terv", aegis_policy: "Szabály (policy) tiltotta" };
 
 const AiWorkforce = () => {
   const { isAdmin, loading } = useAdminCheck();
@@ -113,6 +114,7 @@ const AiWorkforce = () => {
             <EmpyreanAegisIncidents />
           </div>
         )}
+        {tab === "POLICY · ZERO-TRUST" && <AegisPolicyZeroTrust />}
         {tab === "FAILURE MEMORY" && (
           <div className="space-y-8">
             <section className="space-y-2">
