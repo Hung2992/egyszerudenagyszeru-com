@@ -4,6 +4,7 @@ import {
   RotateCcw, Shield, Square, Terminal, TriangleAlert, Unlock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import EmpyreanBusinessIntelligence from "./EmpyreanBusinessIntelligence";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -195,7 +196,7 @@ export default function EmpyreanControlPlane({ onOpen }: { onOpen: (destination:
     <section className="empyrean min-h-[70dvh] bg-background text-foreground border border-border p-4 sm:p-8 space-y-8">
       <header className="flex flex-wrap gap-4 items-start justify-between">
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-accent text-xs"><Crown size={16} /> BLACK CROWN · FOUNDATION</div>
+          <div className="flex items-center gap-2 text-accent text-xs"><Crown size={16} /> BLACK CROWN · BUSINESS INTELLIGENCE</div>
           <h1 className="text-2xl sm:text-4xl font-semibold">EMPYREAN ∞</h1>
           <p className="text-sm text-muted-foreground">Vállalati irányítóközpont · irányított végrehajtás</p>
         </div>
@@ -257,6 +258,8 @@ export default function EmpyreanControlPlane({ onOpen }: { onOpen: (destination:
               </div>
             ))}
           </div>
+
+          <EmpyreanBusinessIntelligence />
 
           <div className="grid sm:grid-cols-2 gap-3">
             {filteredTools.map((tool) => (

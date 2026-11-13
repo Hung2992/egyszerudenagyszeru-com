@@ -9,7 +9,8 @@
 - [x] FOUNDATION éles séma, RLS, biztonsági és hitelesített adminellenőrzés: `empyrean_*` táblák, admin-RLS, szerveroldali vészleállítás, csak-hozzáírható audit napló.
 - [x] Első teljes termék-SEO javaslat → approval → kontrollált mentés → audit → független ellenőrzés → rollback folyamat: élesben igazolva (PROPOSED → APPROVED → EXECUTING → VERIFIED → ROLLED_BACK, sha256 bizonylattal).
 - [x] Partner média tároló publikus olvasása csak a valóban megjelenített képekre: anon kulccsal ellenőrizve.
-- [ ] BUSINESS INTELLIGENCE, CONTROLLED AUTOMATION, PREDICTIVE INTELLIGENCE, ENTERPRISE SECURITY, CONTINUOUS OPTIMIZATION: a FOUNDATION és SEO workflow kapu megnyílt, a fázisok még nem kezdődtek.
+- [x] BUSINESS INTELLIGENCE: egységes pénzügyi definíciók, admin-only szerveroldali üzleti pillanatkép, időszak-összehasonlítás, COMMAND dashboard.
+- [ ] CONTROLLED AUTOMATION, PREDICTIVE INTELLIGENCE, ENTERPRISE SECURITY, CONTINUOUS OPTIMIZATION: a FOUNDATION és SEO workflow kapu megnyílt, a fázisok még nem kezdődtek.
 
 - [x] Egységes prémium mobil- és asztali kezdőoldal
 - [x] Dinamikus partner branding, hero, kategóriák és termékblokkok
