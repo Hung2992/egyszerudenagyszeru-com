@@ -14,6 +14,8 @@
 - [x] PREDICTIVE (1. kör): run-rate előrejelzés, adat nélkül nem becsül.
 - [x] ENTERPRISE SECURITY (1. kör): AEGIS élő biztonsági állapot a CONTROL nézetben.
 - [x] CONTINUOUS OPTIMIZATION (1. kör): AI-költség, cache, költségcsúcs, ügynök-értékelés, AI-visszajelzés, kézbesítés, fizetés, csalás, készlet, javaslatmotor, szimulátor (csak olvasás).
+- [x] MODEL COMMAND (1. kör): AI-keret kimerülése külön jelölve, nem rontja az ügynök-pontszámot; riasztó javaslat.
+- [ ] MODEL COMMAND (2. kör): tényleges AI-költség és tokenhasználat rögzítése minden hívásnál, költségkeret.
 
 - [x] Egységes prémium mobil- és asztali kezdőoldal
 - [x] Dinamikus partner branding, hero, kategóriák és termékblokkok

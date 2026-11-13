@@ -6,7 +6,7 @@ export type OptSnapshot = {
   ai_cost_by_function: { fn: string; requests: number; tokens: number; cost: number | null }[];
   ai_cost_daily: { day: string; cost: number | null }[];
   cache: { entries: number; hits: number; live: number };
-  agents: { slug: string; runs: number; ok: number; failed: number; avg_ms: number; cost: number; tasks_done: number }[];
+  agents: { slug: string; runs: number; ok: number; failed: number; credit_blocked?: number; avg_ms: number; cost: number; tasks_done: number }[];
   feedback: { count: number; avg_rating: number | null; negative: number };
   email: Record<string, number>;
   messaging: Record<string, number>;
@@ -26,10 +26,12 @@ export function cacheHitRatio(c: OptSnapshot["cache"]): number | null {
 }
 
 /** Agent score 0–100: success rate weighted, penalised by failures. Null without runs. */
-export function agentScore(a: { runs: number; ok: number; failed: number }): number | null {
-  if (a.runs <= 0) return null;
-  const success = a.ok / a.runs;
-  const failure = a.failed / a.runs;
+export function agentScore(a: { runs: number; ok: number; failed: number; credit_blocked?: number }): number | null {
+  // Runs blocked by an exhausted AI credit limit are infrastructure outages, not agent quality.
+  const runs = a.runs - (a.credit_blocked ?? 0);
+  if (runs <= 0) return null;
+  const success = a.ok / runs;
+  const failure = a.failed / runs;
   return Math.max(0, Math.min(100, Math.round(success * 100 - failure * 20)));
 }
 
@@ -74,10 +76,13 @@ export function recommendations(s: OptSnapshot): Recommendation[] {
   const total = s.ai_cost_by_function.reduce((t, f) => t + (f.cost ?? 0), 0);
   if (top && total > 0 && (top.cost ?? 0) / total > 0.5)
     out.push({ id: "cost-concentration", area: "AI költség", severity: "medium", title: `A költség ${Math.round(((top.cost ?? 0) / total) * 100)}%-a egy funkcióé: ${top.fn}`, why: "Olcsóbb modell vagy gyorsítótár vizsgálata javasolt.", kpi: "AI-költség" });
+  const blocked = s.agents.reduce((t, a) => t + (a.credit_blocked ?? 0), 0);
+  if (blocked > 0)
+    out.push({ id: "ai-credit", area: "AI költség", severity: "high", title: `${blocked} ügynökfutás elakadt AI-keret hiánya miatt`, why: "Keretkimerülés, nem ügynökhiba. Költségkeret és riasztás javasolt.", kpi: "AI-költség" });
   for (const a of s.agents) {
     const sc = agentScore(a);
     if (sc != null && a.runs >= 5 && sc < 60)
-      out.push({ id: `agent-${a.slug}`, area: "Ügynökök", severity: sc < 30 ? "high" : "medium", title: `Gyenge ügynök: ${a.slug} (${sc}/100)`, why: `${a.failed}/${a.runs} futás hibás.`, kpi: "Kevesebb kézi javítás" });
+      out.push({ id: `agent-${a.slug}`, area: "Ügynökök", severity: sc < 30 ? "high" : "medium", title: `Gyenge ügynök: ${a.slug} (${sc}/100)`, why: `${a.failed}/${a.runs - (a.credit_blocked ?? 0)} futás hibás.`, kpi: "Kevesebb kézi javítás" });
   }
   if (s.feedback.count >= 5 && s.feedback.negative / s.feedback.count > 0.3)
     out.push({ id: "feedback", area: "AI minőség", severity: "medium", title: "Sok negatív AI-visszajelzés", why: `${s.feedback.negative}/${s.feedback.count} értékelés ≤ 2.`, kpi: "Kevesebb kézi javítás" });

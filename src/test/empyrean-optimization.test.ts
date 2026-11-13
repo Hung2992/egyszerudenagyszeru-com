@@ -36,3 +36,12 @@ describe("empyrean optimization", () => {
     expect(r.at(-1)?.id).toBe("never-sold");
   });
 });
+
+describe("credit-limit outages", () => {
+  it("excludes credit-blocked runs from the agent score", () => {
+    expect(agentScore({ runs: 558, ok: 175, failed: 0, credit_blocked: 383 })).toBe(100);
+  });
+  it("returns null when every run was credit-blocked", () => {
+    expect(agentScore({ runs: 8, ok: 0, failed: 0, credit_blocked: 8 })).toBeNull();
+  });
+});
