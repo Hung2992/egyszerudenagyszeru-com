@@ -120,6 +120,13 @@
       "when": 1794597747662,
       "tag": "0016_workforce_plans",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794598237854,
+      "tag": "0017_workforce_aegis_server",
+      "breakpoints": true
     }
   ]
 }
