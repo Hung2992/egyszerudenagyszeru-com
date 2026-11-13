@@ -6,12 +6,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { nextRunnable } from "@/lib/ai-workforce";
 import { toast } from "sonner";
 
-type Plan = { id: string; goal: string; risk: string; status: string; owner: string; due_date: string | null; created_at: string; approval_expires_at: string | null };
+type Plan = { id: string; goal: string; risk: string; status: string; owner: string; due_date: string | null; created_at: string; approval_expires_at: string | null; payload_hash: string | null };
 type Step = { id: string; plan_id: string; idx: number; phase: string; owner: string; reviewer: string; task: string; evidence: string; due_date: string | null; status: "pending" | "done" | "failed"; result: string | null; executed_at: string | null };
 type Audit = { id: string; plan_id: string; action: string; detail: Record<string, unknown>; created_at: string };
 
 const statusLabel: Record<string, string> = { draft: "Tervezet", approved: "Jóváhagyva", in_progress: "Folyamatban", done: "Kész", cancelled: "Megszakítva", pending: "Vár", failed: "Hibás" };
-const actionLabel: Record<string, string> = { created: "Mentve", approved: "Jóváhagyva", cancelled: "Megszakítva", step_done: "Lépés kész", step_failed: "Lépés hibás", done: "Terv kész", aegis_blocked: "AEGIS blokkolta", reapproved: "Jóváhagyás megújítva" };
+const actionLabel: Record<string, string> = { created: "Mentve", approved: "Jóváhagyva", cancelled: "Megszakítva", step_done: "Lépés kész", step_failed: "Lépés hibás", done: "Terv kész", aegis_blocked: "AEGIS blokkolta", reapproved: "Jóváhagyás megújítva", aegis_tamper: "AEGIS: a tartalom eltért a jóváhagyottól — terv leállítva" };
 
 export default function EmpyreanWorkforcePlans({ reloadKey }: { reloadKey: number }) {
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -24,7 +24,7 @@ export default function EmpyreanWorkforcePlans({ reloadKey }: { reloadKey: numbe
 
   const load = useCallback(async () => {
     const [p, s, a] = await Promise.all([
-      supabase.from("workforce_plans").select("id,goal,risk,status,owner,due_date,created_at,approval_expires_at").order("created_at", { ascending: false }).limit(50),
+      supabase.from("workforce_plans").select("id,goal,risk,status,owner,due_date,created_at,approval_expires_at,payload_hash").order("created_at", { ascending: false }).limit(50),
       supabase.from("workforce_plan_steps").select("*").order("idx"),
       supabase.from("workforce_audit").select("id,plan_id,action,detail,created_at").order("created_at", { ascending: false }).limit(500),
     ]);
@@ -47,6 +47,7 @@ export default function EmpyreanWorkforcePlans({ reloadKey }: { reloadKey: numbe
     const { data, error } = await supabase.rpc("workforce_execute_step", { _step: run.step.id, _confirmed: true, _ok: run.ok, _result: result });
     setBusy(false);
     if (error) return toast.error(error.message);
+    if (data === "aegis_tamper") { toast.error("AEGIS: a terv tartalma eltér attól, amit jóváhagytál. A tervet leállította és naplózta."); load(); return; }
     if (data === "aegis_blocked") { toast.error("AEGIS blokkolta: az eredmény titkot, kártyaadatot vagy tiltott utasítást tartalmaz. Naplózva."); load(); return; }
     toast.success(run.ok ? "Lépés kész, naplózva" : "Hiba naplózva");
     setRun(null); setResult(""); load();
@@ -76,6 +77,7 @@ export default function EmpyreanWorkforcePlans({ reloadKey }: { reloadKey: numbe
                 </div>
                 {p.status === "draft" && p.risk === "red" && <Textarea value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} placeholder="AEGIS: piros kockázat — írásos indoklás a jóváhagyáshoz (min. 10 karakter)" className="rounded-none text-xs" />}
                 {p.status === "approved" && p.approval_expires_at && <p className={`text-xs ${expired ? "text-destructive" : "text-muted-foreground"}`}>{expired ? "AEGIS: a jóváhagyás lejárt" : "Jóváhagyás érvényes"}: {new Date(p.approval_expires_at).toLocaleString("hu-HU")}{expired && <Button size="sm" variant="outline" className="rounded-none h-7 ml-2" onClick={() => reapprove(p.id)}>Megújítás</Button>}</p>}
+                {p.payload_hash && <p className="text-xs text-muted-foreground">AEGIS-zár: a jóváhagyott tartalom ujjlenyomata <span className="font-mono">{p.payload_hash.slice(0, 12)}</span>. Ha a terv bármely része eltér tőle, a végrehajtás leáll.</p>}
                 {p.status === "draft" && <p className="text-xs text-muted-foreground">Lépés csak a terv jóváhagyása után hajtható végre.</p>}
                 <ol className="text-xs space-y-1">
                   {ps.map((s) => (
