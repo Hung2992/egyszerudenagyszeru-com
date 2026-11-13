@@ -49,6 +49,19 @@ export function installAiMeter(fn: string): void {
   globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const href = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
     if (!url || !key || !href.includes(GATEWAY)) return orig(input, init);
+    // AEGIS vészleállítás: GLOBAL STOP / PAUSE / ISOLATE / REVOKE / KILL ügynökönként
+    try {
+      const now = Date.now();
+      if (!g.__aegisState || now - g.__aegisState.at > 15_000) {
+        const ar = await rpc("aegis_agent_allowed", { _agent: fn });
+        g.__aegisState = { at: now, state: ar.ok ? String(await ar.json()) : "active" };
+      }
+      if (g.__aegisState.state !== "active") {
+        orig(`${url}/rest/v1/aegis_events`, { method: "POST", headers: { apikey: key!, Authorization: `Bearer ${key}`, "Content-Type": "application/json", Prefer: "return=minimal" },
+          body: JSON.stringify({ source: fn, stage: "agent", action: "blocked", findings: [g.__aegisState.state] }) }).catch(() => {});
+        return new Response(JSON.stringify({ error: "aegis_agent_stopped", state: g.__aegisState.state }), { status: 423, headers: { "Content-Type": "application/json" } });
+      }
+    } catch { /* AEGIS check failure must not hide budget check */ }
     try {
       const st = await rpc("ai_budget_state", {});
       if (st.ok && (await st.json())?.state === "blocked") {

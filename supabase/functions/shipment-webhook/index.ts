@@ -40,16 +40,33 @@ Deno.serve(async (req) => {
 
     const rawBody = await req.text();
     const secret = Deno.env.get(`${carrier.toUpperCase()}_WEBHOOK_SECRET`);
-    if (secret) {
-      const signature = req.headers.get("x-signature") || req.headers.get("x-hub-signature-256") || "";
-      const expected = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(secret + rawBody))))
-        .map((b) => b.toString(16).padStart(2, "0")).join("");
-      if (!signature.includes(expected)) {
-        console.warn("Webhook signature mismatch for", carrier);
-        return new Response(JSON.stringify({ error: "Invalid signature" }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    // AEGIS: aláírás nélküli szállítói webhook nem módosíthat rendelést.
+    if (!secret) {
+      return new Response(JSON.stringify({ error: "Webhook not configured" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const hex = (b: ArrayBuffer) => Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, "0")).join("");
+    const enc = new TextEncoder();
+    const signature = (req.headers.get("x-signature") || req.headers.get("x-hub-signature-256") || "").replace(/^sha256=/i, "").trim().toLowerCase();
+    const hmacKey = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+    const candidates = [
+      hex(await crypto.subtle.sign("HMAC", hmacKey, enc.encode(rawBody))),
+      hex(await crypto.subtle.digest("SHA-256", enc.encode(secret + rawBody))),
+    ];
+    const safeEq = (a: string, b: string) => { if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; };
+    if (!signature || !candidates.some((c) => safeEq(c, signature))) {
+      console.warn("Webhook signature mismatch for", carrier);
+      return new Response(JSON.stringify({ error: "Invalid signature" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const replayDb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const digest = hex(await crypto.subtle.digest("SHA-256", enc.encode(carrier + "|" + rawBody)));
+    const { data: seen } = await replayDb.rpc("aegis_webhook_seen", { _digest: digest, _source: `shipment:${carrier}` });
+    if (seen === true) {
+      await replayDb.from("aegis_events").insert({ source: `shipment-webhook:${carrier}`, stage: "webhook", action: "blocked", findings: ["replay"] });
+      return new Response(JSON.stringify({ ok: true, ignored: "replay" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     let payload: any = {};

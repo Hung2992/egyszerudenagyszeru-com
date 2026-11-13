@@ -183,6 +183,11 @@ async function callCloud(opts: AiChatOptions): Promise<{ content: string; model:
 export async function aiChat(opts: AiChatOptions): Promise<AiChatResult> {
   const db = admin();
   const src = opts.functionName ?? "ai-router";
+  const { data: agentState } = await db.rpc("aegis_agent_allowed", { _agent: src });
+  if (agentState && agentState !== "active") {
+    db.from("aegis_events").insert({ source: src, stage: "agent", action: "blocked", findings: [String(agentState)] }).then(() => {}, () => {});
+    throw new Error(`aegis_agent_stopped:${agentState}`);
+  }
   aegisLog(db, src, "input", "flagged", aegisInput(opts.user));
   const guard = (raw: string) => { const r = aegisRedact(raw); aegisLog(db, src, "output", "redacted", r.findings); return r.text; };
   const started = Date.now();

@@ -47,6 +47,13 @@ Deno.serve(async (req) => {
     let error: string | null = null;
 
     try {
+      // AEGIS: csak nyilvános https cél (SSRF-védelem)
+      const target = new URL(hook.url);
+      const h = target.hostname.toLowerCase();
+      if (target.protocol !== "https:" || h === "localhost" || h.endsWith(".internal") || h.endsWith(".local") ||
+          /^(127\.|10\.|0\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h) || h === "[::1]" || h.startsWith("[fc") || h.startsWith("[fd") || h === "metadata.google.internal") {
+        throw new Error("aegis_blocked_target");
+      }
       const signature = await hmacHex(hook.secret, bodyText);
       const res = await fetch(hook.url, {
         method: "POST",
@@ -55,6 +62,7 @@ Deno.serve(async (req) => {
           "X-Apex-Event": row.event,
           "X-Apex-Signature": `sha256=${signature}`,
           "X-Apex-Delivery": row.id,
+          "X-Apex-Timestamp": String(now),
         },
         body: bodyText,
         signal: AbortSignal.timeout(10_000),
