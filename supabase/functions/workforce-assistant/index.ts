@@ -50,7 +50,7 @@ ${ctx}`;
     const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "google/gemini-3.5-flash", stream: true, messages: [{ role: "system", content: system }, ...messages] }),
+      body: JSON.stringify({ model: "openai/gpt-6-astra", stream: true, messages: [{ role: "system", content: system }, ...messages] }),
     });
     if (!r.ok) return j({ error: r.status === 429 ? "Túl sok kérés, próbáld később." : r.status === 402 ? "Elfogyott az AI keret." : "AI hiba" }, r.status);
     return new Response(r.body, { headers: { ...cors, "Content-Type": "text/event-stream" } });
