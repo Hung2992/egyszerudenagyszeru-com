@@ -149,6 +149,7 @@ async function callCloudOnce(model: string, opts: AiChatOptions): Promise<string
   if (res.status === 401) throw new Error("ai_unauthorized");
   if (!res.ok) throw new Error(`ai_error_${res.status}`);
   const j = await res.json();
+  await recordAiUsage(admin(), opts.usageTag ?? "ai-router", model, j?.usage);
   const text = j?.choices?.[0]?.message?.content ?? "";
   if (!text) throw new Error("ai_empty_response");
   return text;
@@ -242,6 +243,7 @@ export async function aiChat(opts: AiChatOptions): Promise<AiChatResult> {
   }
 
   attempts++;
+  await assertAiBudget(db);
   const { content, model } = await callCloud(opts);
   return { content, source: "cloud", provider: model, latencyMs: Date.now() - started, attempts };
 }
