@@ -8,3 +8,9 @@ describe("EMPYREAN BI definíciók", () => {
   it("nincs kitalált változás nulla alapnál", () => expect(delta(100, 0)).toBeNull());
   it("változás az előző időszakhoz", () => expect(delta(150, 100)).toBe(0.5));
 });
+
+import { runRateForecast } from "@/lib/empyrean-bi";
+describe("EMPYREAN előrejelzés", () => {
+  it("30 nap 30 000 Ft → 90 nap 90 000 Ft", () => expect(runRateForecast(30000, 30, 90)).toBe(90000));
+  it("nulla adatnál nincs előrejelzés", () => expect(runRateForecast(0, 30, 90)).toBeNull());
+});

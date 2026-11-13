@@ -10,7 +10,10 @@
 - [x] Első teljes termék-SEO javaslat → approval → kontrollált mentés → audit → független ellenőrzés → rollback folyamat: élesben igazolva (PROPOSED → APPROVED → EXECUTING → VERIFIED → ROLLED_BACK, sha256 bizonylattal).
 - [x] Partner média tároló publikus olvasása csak a valóban megjelenített képekre: anon kulccsal ellenőrizve.
 - [x] BUSINESS INTELLIGENCE: egységes pénzügyi definíciók, admin-only szerveroldali üzleti pillanatkép, időszak-összehasonlítás, COMMAND dashboard.
-- [ ] CONTROLLED AUTOMATION, PREDICTIVE INTELLIGENCE, ENTERPRISE SECURITY, CONTINUOUS OPTIMIZATION: a FOUNDATION és SEO workflow kapu megnyílt, a fázisok még nem kezdődtek.
+- [x] CONTROLLED AUTOMATION (1. kör): szerveroldali SEO-felderítő ügynök, javaslat csak jóváhagyási láncon.
+- [x] PREDICTIVE (1. kör): run-rate előrejelzés, adat nélkül nem becsül.
+- [x] ENTERPRISE SECURITY (1. kör): AEGIS élő biztonsági állapot a CONTROL nézetben.
+- [ ] CONTINUOUS OPTIMIZATION, szimulációk, ügynök-értékelés, költségkezelés.
 
 - [x] Egységes prémium mobil- és asztali kezdőoldal
 - [x] Dinamikus partner branding, hero, kategóriák és termékblokkok

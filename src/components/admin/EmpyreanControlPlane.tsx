@@ -5,6 +5,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import EmpyreanBusinessIntelligence from "./EmpyreanBusinessIntelligence";
+import EmpyreanAutomation from "./EmpyreanAutomation";
+import EmpyreanSecurityPosture from "./EmpyreanSecurityPosture";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -196,7 +198,7 @@ export default function EmpyreanControlPlane({ onOpen }: { onOpen: (destination:
     <section className="empyrean min-h-[70dvh] bg-background text-foreground border border-border p-4 sm:p-8 space-y-8">
       <header className="flex flex-wrap gap-4 items-start justify-between">
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-accent text-xs"><Crown size={16} /> BLACK CROWN · BUSINESS INTELLIGENCE</div>
+          <div className="flex items-center gap-2 text-accent text-xs"><Crown size={16} /> BLACK CROWN · AUTOMATION · ORACLE · AEGIS</div>
           <h1 className="text-2xl sm:text-4xl font-semibold">EMPYREAN ∞</h1>
           <p className="text-sm text-muted-foreground">Vállalati irányítóközpont · irányított végrehajtás</p>
         </div>
@@ -274,7 +276,8 @@ export default function EmpyreanControlPlane({ onOpen }: { onOpen: (destination:
 
       {view === "MISSIONS" && (
         <div className="space-y-8">
-          <section className="border border-border p-4 sm:p-6 space-y-4">
+          <EmpyreanAutomation onPick={(id) => { pickProduct(id); setTimeout(() => document.getElementById("empyrean-seo-editor")?.scrollIntoView({ behavior: "smooth" }), 50); }} />
+          <section id="empyrean-seo-editor" className="border border-border p-4 sm:p-6 space-y-4">
             <div>
               <h2 className="text-xl">Új SEO javaslat</h2>
               <p className="text-sm text-muted-foreground mt-1">A javaslat csak javaslat: jóváhagyás, kontrollált mentés, független ellenőrzés és visszaállítás nélkül nem változik semmi.</p>
@@ -416,6 +419,7 @@ export default function EmpyreanControlPlane({ onOpen }: { onOpen: (destination:
 
       {view === "CONTROL" && (
         <div className="space-y-8">
+          <EmpyreanSecurityPosture />
           <section className="flex gap-3 border border-border p-4 sm:p-6">
             <Shield className="text-accent shrink-0" />
             <div className="space-y-3 w-full">

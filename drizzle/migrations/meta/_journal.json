@@ -29,6 +29,13 @@
       "when": 1794588823614,
       "tag": "0003_empyrean_business_snapshot",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794589122720,
+      "tag": "0004_empyrean_automation_security",
+      "breakpoints": true
     }
   ]
 }

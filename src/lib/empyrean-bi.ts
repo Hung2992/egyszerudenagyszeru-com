@@ -34,3 +34,14 @@ export function delta(current: number | null, previous: number | null): number |
 }
 export const huf = (v: number | null) => (v === null ? "—" : `${Math.round(v).toLocaleString("hu-HU")} Ft`);
 export const pct = (v: number | null) => (v === null ? "—" : `${(v * 100).toFixed(1)}%`);
+
+export const SEO_ISSUE_LABELS: Record<string, string> = {
+  title_short: "Rövid cím (<20)", title_long: "Hosszú cím (>70)", description_short: "Rövid leírás (<120)",
+  category_missing: "Nincs kategória", tags_missing: "Nincs címke", image_missing: "Nincs kép",
+};
+
+/** FORECAST: lineáris run-rate vetítés a következő `horizonDays` napra. Nulla adatnál null (nem találunk ki számot). */
+export function runRateForecast(value: number, windowDays: number, horizonDays: number): number | null {
+  if (!(windowDays > 0) || !(value > 0)) return null;
+  return Math.round((value / windowDays) * horizonDays);
+}
