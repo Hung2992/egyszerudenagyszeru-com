@@ -57,7 +57,7 @@ const WorkforceWorkStatus = () => {
         <label className="text-xs flex items-center gap-2"><input type="checkbox" checked={showTest} onChange={(e) => setShowTest(e.target.checked)} /> Próbatervek is</label>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-px bg-border border border-border">
-        {([["Valós terv", shown.length], ["Kész terv", shown.filter((p) => p.status === "done").length], ["Lejárt", overdue], ["Elkészült lépés", `${done} / ${all.length}`], ["Haladás", `${pct}%`]] as [string, string | number][]).map(([l, v]) =>
+        {([[showTest ? "Összes terv" : "Valós terv", shown.length], ["Kész terv", shown.filter((p) => p.status === "done").length], ["Lejárt", overdue], ["Elkészült lépés", `${done} / ${all.length}`], ["Haladás", `${pct}%`]] as [string, string | number][]).map(([l, v]) =>
           <div key={l} className="bg-background p-3"><p className="text-[11px] text-muted-foreground">{l}</p><p className={`text-xl ${l === "Lejárt" && overdue ? "text-destructive" : ""}`}>{v}</p></div>)}
       </div>
       <div className="h-2 bg-muted"><div className="h-2 bg-accent" style={{ width: `${pct}%` }} /></div>
