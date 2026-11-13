@@ -6,6 +6,7 @@
 //   import { aiChat } from "../_shared/ai-router.ts";
 //   const { content, source } = await aiChat({ system, user, jsonMode: true });
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { assertAiBudget, recordAiUsage } from "./ai-usage.ts";
 
 export interface AiChatOptions {
   system: string;
