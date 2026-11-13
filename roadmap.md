@@ -32,3 +32,9 @@
 
 - Az online fizetéshez aktív partneri fizetési kapcsolat szükséges.
 - A teljes éles rendelési teszthez valódi fizetés és külső kézbesítés szükséges.
+## Új kérések (2026-11-13)
+- [ ] AI-költségkeret a CONTROL panelen + előzetes figyelmeztetés
+- [ ] Minden AI-hívás mennyiségének és költségének rögzítése
+- [ ] AI-költség panel ellenőrzése, 30 napos hívás/keret összesítés
+- [ ] Partnerrendelések befolyt bevétele az Üzleti intelligenciában
+- [ ] Következő fázis: szállítási és visszaküldési folyamat
