@@ -127,6 +127,13 @@
       "when": 1794598237854,
       "tag": "0017_workforce_aegis_server",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794598392897,
+      "tag": "0018_aegis_events",
+      "breakpoints": true
     }
   ]
 }
