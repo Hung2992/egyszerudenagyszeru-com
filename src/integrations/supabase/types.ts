@@ -14092,6 +14092,152 @@ export type Database = {
         }
         Relationships: []
       }
+      workforce_audit: {
+        Row: {
+          action: string
+          actor: string | null
+          created_at: string
+          detail: Json
+          id: string
+          plan_id: string
+          step_id: string | null
+        }
+        Insert: {
+          action: string
+          actor?: string | null
+          created_at?: string
+          detail?: Json
+          id?: string
+          plan_id: string
+          step_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor?: string | null
+          created_at?: string
+          detail?: Json
+          id?: string
+          plan_id?: string
+          step_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workforce_audit_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "workforce_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workforce_audit_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "workforce_plan_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workforce_plan_steps: {
+        Row: {
+          due_date: string | null
+          evidence: string
+          executed_at: string | null
+          executed_by: string | null
+          id: string
+          idx: number
+          owner: string
+          phase: string
+          plan_id: string
+          result: string | null
+          reviewer: string
+          status: string
+          task: string
+        }
+        Insert: {
+          due_date?: string | null
+          evidence: string
+          executed_at?: string | null
+          executed_by?: string | null
+          id?: string
+          idx: number
+          owner: string
+          phase: string
+          plan_id: string
+          result?: string | null
+          reviewer: string
+          status?: string
+          task: string
+        }
+        Update: {
+          due_date?: string | null
+          evidence?: string
+          executed_at?: string | null
+          executed_by?: string | null
+          id?: string
+          idx?: number
+          owner?: string
+          phase?: string
+          plan_id?: string
+          result?: string | null
+          reviewer?: string
+          status?: string
+          task?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workforce_plan_steps_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "workforce_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workforce_plans: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string
+          due_date: string | null
+          goal: string
+          id: string
+          owner: string
+          plan: Json
+          risk: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string
+          due_date?: string | null
+          goal: string
+          id?: string
+          owner: string
+          plan?: Json
+          risk: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string
+          due_date?: string | null
+          goal?: string
+          id?: string
+          owner?: string
+          plan?: Json
+          risk?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       drop_performance_stats: {
@@ -15234,6 +15380,30 @@ export type Database = {
       }
       welcome20_eligible: { Args: { _user_id: string }; Returns: boolean }
       welcome20_status: { Args: { _user_id: string }; Returns: Json }
+      workforce_execute_step: {
+        Args: {
+          _confirmed: boolean
+          _ok: boolean
+          _result: string
+          _step: string
+        }
+        Returns: string
+      }
+      workforce_save_plan: {
+        Args: {
+          _due: string
+          _goal: string
+          _owner: string
+          _plan: Json
+          _risk: string
+          _steps: Json
+        }
+        Returns: string
+      }
+      workforce_set_status: {
+        Args: { _note?: string; _plan: string; _status: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role:
