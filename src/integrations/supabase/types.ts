@@ -14887,6 +14887,7 @@ export type Database = {
         }[]
       }
       aegis_agent_allowed: { Args: { _agent: string }; Returns: string }
+      aegis_full_stop: { Args: { _reason: string }; Returns: Json }
       aegis_has_card: { Args: { _t: string }; Returns: boolean }
       aegis_policy: { Args: { _agent: string }; Returns: Json }
       aegis_resolve_incident: {

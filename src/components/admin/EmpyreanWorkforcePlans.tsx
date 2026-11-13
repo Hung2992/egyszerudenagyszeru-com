@@ -11,7 +11,7 @@ type Step = { id: string; plan_id: string; idx: number; phase: string; owner: st
 type Audit = { id: string; plan_id: string; action: string; detail: Record<string, unknown>; created_at: string };
 
 const statusLabel: Record<string, string> = { draft: "Tervezet", approved: "Jóváhagyva", in_progress: "Folyamatban", done: "Kész", cancelled: "Megszakítva", pending: "Vár", failed: "Hibás" };
-const actionLabel: Record<string, string> = { created: "Mentve", approved: "Jóváhagyva", cancelled: "Megszakítva", step_done: "Lépés kész", step_failed: "Lépés hibás", done: "Terv kész", aegis_blocked: "AEGIS blokkolta", reapproved: "Jóváhagyás megújítva", aegis_weak_evidence: "AEGIS: gyenge bizonyíték — elutasítva", aegis_tamper: "AEGIS: a tartalom eltért a jóváhagyottól — terv leállítva" };
+const actionLabel: Record<string, string> = { created: "Mentve", approved: "Jóváhagyva", cancelled: "Megszakítva", step_done: "Lépés kész", step_failed: "Lépés hibás", done: "Terv kész", aegis_blocked: "AEGIS blokkolta", reapproved: "Jóváhagyás megújítva", aegis_weak_evidence: "AEGIS: gyenge bizonyíték — elutasítva", aegis_full_stop: "AEGIS: teljes vészleállítás — terv leállítva", aegis_tamper: "AEGIS: a tartalom eltért a jóváhagyottól — terv leállítva" };
 
 export default function EmpyreanWorkforcePlans({ reloadKey }: { reloadKey: number }) {
   const [plans, setPlans] = useState<Plan[]>([]);

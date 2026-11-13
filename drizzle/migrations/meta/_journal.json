@@ -204,6 +204,13 @@
       "when": 1794603727015,
       "tag": "0028_aegis_ledger_seq",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1794603857761,
+      "tag": "0029_aegis_full_stop",
+      "breakpoints": true
     }
   ]
 }
