@@ -71,6 +71,13 @@
       "when": 1794591568375,
       "tag": "0009_ai_budget_and_usage_recording",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794591780216,
+      "tag": "0010_ai_usage_daily_ledger",
+      "breakpoints": true
     }
   ]
 }
