@@ -8,6 +8,20 @@
       "when": 1794512047796,
       "tag": "0000_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794560364168,
+      "tag": "0001_empyrean_foundation_governance",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794560463470,
+      "tag": "0002_scope_partner_media_public_read",
+      "breakpoints": true
     }
   ]
 }

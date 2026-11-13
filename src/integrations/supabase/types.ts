@@ -4599,6 +4599,258 @@ export type Database = {
         }
         Relationships: []
       }
+      empyrean_actions: {
+        Row: {
+          agent_slug: string | null
+          base_state: Json
+          base_version: string
+          capability: string
+          created_at: string
+          created_by: string
+          id: string
+          idempotency_key: string | null
+          payload: Json
+          payload_hash: string
+          policy_decision: Json | null
+          state: string
+          target_id: string
+          target_table: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          agent_slug?: string | null
+          base_state: Json
+          base_version: string
+          capability: string
+          created_at?: string
+          created_by: string
+          id?: string
+          idempotency_key?: string | null
+          payload: Json
+          payload_hash: string
+          policy_decision?: Json | null
+          state?: string
+          target_id: string
+          target_table: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agent_slug?: string | null
+          base_state?: Json
+          base_version?: string
+          capability?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          idempotency_key?: string | null
+          payload?: Json
+          payload_hash?: string
+          policy_decision?: Json | null
+          state?: string
+          target_id?: string
+          target_table?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "empyrean_actions_capability_fkey"
+            columns: ["capability"]
+            isOneToOne: false
+            referencedRelation: "empyrean_capabilities"
+            referencedColumns: ["capability"]
+          },
+        ]
+      }
+      empyrean_approvals: {
+        Row: {
+          action_id: string
+          approved_by: string
+          decided_at: string
+          decision: string
+          expires_at: string
+          id: string
+          payload_hash: string
+          target_version: string
+        }
+        Insert: {
+          action_id: string
+          approved_by: string
+          decided_at?: string
+          decision?: string
+          expires_at: string
+          id?: string
+          payload_hash: string
+          target_version: string
+        }
+        Update: {
+          action_id?: string
+          approved_by?: string
+          decided_at?: string
+          decision?: string
+          expires_at?: string
+          id?: string
+          payload_hash?: string
+          target_version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "empyrean_approvals_action_id_fkey"
+            columns: ["action_id"]
+            isOneToOne: true
+            referencedRelation: "empyrean_actions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      empyrean_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          agent_slug: string | null
+          at: string
+          detail: Json | null
+          id: number
+          target: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          agent_slug?: string | null
+          at?: string
+          detail?: Json | null
+          id?: never
+          target?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          agent_slug?: string | null
+          at?: string
+          detail?: Json | null
+          id?: never
+          target?: string | null
+        }
+        Relationships: []
+      }
+      empyrean_capabilities: {
+        Row: {
+          allowed_fields: string[]
+          capability: string
+          description: string | null
+          enabled: boolean
+          max_payload_bytes: number
+          requires_approval: boolean
+          risk_level: string
+          target_table: string
+          updated_at: string
+        }
+        Insert: {
+          allowed_fields?: string[]
+          capability: string
+          description?: string | null
+          enabled?: boolean
+          max_payload_bytes?: number
+          requires_approval?: boolean
+          risk_level?: string
+          target_table: string
+          updated_at?: string
+        }
+        Update: {
+          allowed_fields?: string[]
+          capability?: string
+          description?: string | null
+          enabled?: boolean
+          max_payload_bytes?: number
+          requires_approval?: boolean
+          risk_level?: string
+          target_table?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      empyrean_emergency_controls: {
+        Row: {
+          paused: boolean
+          read_only: boolean
+          reason: string | null
+          scope: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          paused?: boolean
+          read_only?: boolean
+          reason?: string | null
+          scope: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          paused?: boolean
+          read_only?: boolean
+          reason?: string | null
+          scope?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      empyrean_execution_receipts: {
+        Row: {
+          action_id: string
+          error: string | null
+          evidence_id: string | null
+          executed_at: string
+          executor_id: string
+          id: string
+          result: Json | null
+          rollback_ref: Json | null
+          status: string
+          verification: Json | null
+          verified_at: string | null
+          verifier_id: string | null
+        }
+        Insert: {
+          action_id: string
+          error?: string | null
+          evidence_id?: string | null
+          executed_at?: string
+          executor_id: string
+          id?: string
+          result?: Json | null
+          rollback_ref?: Json | null
+          status?: string
+          verification?: Json | null
+          verified_at?: string | null
+          verifier_id?: string | null
+        }
+        Update: {
+          action_id?: string
+          error?: string | null
+          evidence_id?: string | null
+          executed_at?: string
+          executor_id?: string
+          id?: string
+          result?: Json | null
+          rollback_ref?: Json | null
+          status?: string
+          verification?: Json | null
+          verified_at?: string | null
+          verifier_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "empyrean_execution_receipts_action_id_fkey"
+            columns: ["action_id"]
+            isOneToOne: true
+            referencedRelation: "empyrean_actions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fraud_signals: {
         Row: {
           ai_reasoning: string | null
@@ -14253,6 +14505,33 @@ export type Database = {
           winner_count: number
         }[]
       }
+      empyrean_action_snapshot: { Args: { _action_id: string }; Returns: Json }
+      empyrean_approve_action: {
+        Args: {
+          _action_id: string
+          _expires_at: string
+          _payload_hash: string
+          _target_version: string
+        }
+        Returns: boolean
+      }
+      empyrean_execute_action: { Args: { _action_id: string }; Returns: Json }
+      empyrean_hash_payload: { Args: { _payload: Json }; Returns: string }
+      empyrean_is_admin: { Args: never; Returns: boolean }
+      empyrean_propose_product_seo: {
+        Args: {
+          _idempotency_key?: string
+          _product_id: string
+          _proposal: Json
+        }
+        Returns: string
+      }
+      empyrean_rollback_action: { Args: { _action_id: string }; Returns: Json }
+      empyrean_set_pause: {
+        Args: { _paused: boolean; _reason?: string }
+        Returns: boolean
+      }
+      empyrean_verify_action: { Args: { _action_id: string }; Returns: Json }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
