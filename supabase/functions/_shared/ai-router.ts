@@ -7,6 +7,7 @@
 //   const { content, source } = await aiChat({ system, user, jsonMode: true });
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { assertAiBudget, recordAiUsage } from "./ai-usage.ts";
+import { aegisInput, aegisLog, aegisRedact } from "./aegis.ts";
 
 export interface AiChatOptions {
   system: string;
@@ -181,6 +182,9 @@ async function callCloud(opts: AiChatOptions): Promise<{ content: string; model:
 
 export async function aiChat(opts: AiChatOptions): Promise<AiChatResult> {
   const db = admin();
+  const src = opts.functionName ?? "ai-router";
+  aegisLog(db, src, "input", "flagged", aegisInput(opts.user));
+  const guard = (raw: string) => { const r = aegisRedact(raw); aegisLog(db, src, "output", "redacted", r.findings); return r.text; };
   const started = Date.now();
   let attempts = 0;
   let preferLocal = true;
@@ -222,7 +226,7 @@ export async function aiChat(opts: AiChatOptions): Promise<AiChatResult> {
           const latency = Date.now() - t0;
           db.rpc("ai_endpoint_record", { _id: ep.id, _ok: true, _latency_ms: latency, _error: null })
             .then(() => {}, () => {});
-          return { content, source: "local", provider: ep.name, latencyMs: Date.now() - started, attempts };
+          return { content: guard(content), source: "local", provider: ep.name, latencyMs: Date.now() - started, attempts };
         } catch (e) {
           const msg = safeError((e as Error).message || "unknown");
           if (attempt === retries) {
@@ -246,5 +250,5 @@ export async function aiChat(opts: AiChatOptions): Promise<AiChatResult> {
   attempts++;
   await assertAiBudget(db);
   const { content, model } = await callCloud(opts);
-  return { content, source: "cloud", provider: model, latencyMs: Date.now() - started, attempts };
+  return { content: guard(content), source: "cloud", provider: model, latencyMs: Date.now() - started, attempts };
 }
