@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { huf, netPaid, type BusinessSnapshot } from "@/lib/empyrean-bi";
 import { monthlyProfit } from "@/lib/empyrean-pnl";
-import type { AiBudget } from "@/lib/empyrean-ai-budget";
+import { effectiveAiCost, type AiBudget } from "@/lib/empyrean-ai-budget";
 
 export default function EmpyreanPnl() {
   const [b, setB] = useState<AiBudget | null>(null);
@@ -18,11 +18,12 @@ export default function EmpyreanPnl() {
   if (err) return <p role="alert" className="text-sm text-destructive">{err}</p>;
   if (!b || !s) return null;
   const rev = netPaid(s.current);
-  const cost = b.monthly_cost ?? null;
-  const profit = monthlyProfit(rev, cost, b.credit_currency);
+  const ec = effectiveAiCost(b);
+  const cost = ec.amount;
+  const profit = monthlyProfit(rev, cost, ec.currency);
   const cells: [string, string, string][] = [
     ["Befolyt bevétel (nettó, e hónap)", huf(rev), `Visszatérítve: ${huf(s.current.refunded ?? 0)}`],
-    ["AI-költség (e hónap)", cost == null ? "—" : `${cost.toLocaleString("hu-HU")} ${b.credit_currency}`, cost == null ? "Nincs megadva kreditár" : `${b.used.toFixed(4)} kredit × ${b.credit_price} ${b.credit_currency}`],
+    ["AI-költség (e hónap)", cost == null ? "—" : `${cost.toLocaleString("hu-HU")} ${ec.currency}`, ec.source === "invoice" ? `Valós számla alapján (${b.invoice!.credits} kredit${b.invoice!.ref ? ` · ${b.invoice!.ref}` : ""})` : ec.source === "estimate" ? `Becslés: ${b.used.toFixed(4)} kredit × ${b.credit_price} ${b.credit_currency}` : "Nincs számla és kreditár"],
     ["Eredmény", profit == null ? "—" : huf(profit), profit == null ? (cost == null ? "Kreditár kell hozzá" : "Csak Ft-os kreditárnál számolható") : "Bevétel − AI-költség"],
   ];
   return (
