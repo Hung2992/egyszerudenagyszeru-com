@@ -10,6 +10,7 @@ import EmpyreanSecurityPosture from "./EmpyreanSecurityPosture";
 import EmpyreanOptimization from "./EmpyreanOptimization";
 import EmpyreanAiBudget from "./EmpyreanAiBudget";
 import EmpyreanReturns from "./EmpyreanReturns";
+import EmpyreanPnl from "./EmpyreanPnl";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -423,6 +424,7 @@ export default function EmpyreanControlPlane({ onOpen }: { onOpen: (destination:
       {view === "CONTROL" && (
         <div className="space-y-8">
           <EmpyreanSecurityPosture />
+          <EmpyreanPnl />
           <EmpyreanReturns />
           <EmpyreanAiBudget />
           <EmpyreanOptimization />
