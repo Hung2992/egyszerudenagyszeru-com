@@ -218,6 +218,20 @@
       "when": 1794604059164,
       "tag": "0030_aegis_temporary_privilege",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1794604414811,
+      "tag": "0031_aegis_policy_zero_trust",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1794604470350,
+      "tag": "0032_aegis_policy_eval_fix",
+      "breakpoints": true
     }
   ]
 }
