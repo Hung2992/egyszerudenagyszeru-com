@@ -1,5 +1,6 @@
 // AI VILÁG — digitális AI-munkaszervezet (Central AI → 20 terület × 10 specialista)
 // AEGIS őrrel. Csak tervez: semmit nem hajt végre (EMPYREAN foundation read-only).
+import { aegisVariants, luhn } from "../../supabase/functions/_shared/aegis";
 export type Risk = "green" | "yellow" | "red";
 export type Department = { id: string; name: string; roles: string[]; keywords: string[]; risk: Risk };
 export const departments: Department[] = [
@@ -481,18 +482,41 @@ export const departments: Department[] = [
 ];
 
 export type AegisFinding = { code: string; label: string; severity: "block" | "warn" };
+// Ugyanazok a szabályok, mint a szerveren (aegis_scan); a szerver a döntő, ez csak előzetes jelzés.
 const RULES: { code: string; label: string; severity: "block" | "warn"; re: RegExp }[] = [
-  { code: "prompt_injection", label: "Utasítás-felülírási kísérlet", severity: "block", re: /(ignore|hagyd figyelmen kívül|felejtsd el).{0,40}(instruction|utasítás|szabály)|system prompt|jailbreak|szűrők nélkül|korlátok nélkül/i },
-  { code: "credential", label: "Titok / jelszó / kulcs kérése", severity: "block", re: /(service[_ ]?role|api[_ -]?kulcs|api[_ -]?key|jelszav|password|token|secret|\.env|titkos kulcs)/i },
-  { code: "privilege", label: "Jogosultság-emelés", severity: "block", re: /(adj|tegyél|legyen).{0,30}(admin|szuperadmin|super admin)|rls.{0,20}(kikapcs|töröl|disable)|bypass/i },
-  { code: "card_data", label: "Teljes kártyaadat", severity: "block", re: /\b(?:\d[ -]?){13,19}\b|cvv|cvc/i },
-  { code: "ssrf", label: "Belső hálózati cím", severity: "block", re: /(localhost|127\.0\.0\.1|169\.254\.|metadata\.google|10\.\d+\.\d+\.\d+)/i },
-  { code: "mass_change", label: "Tömeges / visszafordíthatatlan művelet", severity: "warn", re: /(mind(en|et)|összes).{0,30}(töröl|felülír|átír)|drop table|truncate/i },
+  { code: "prompt_injection", label: "Utasítás-felülírási kísérlet", severity: "block", re: /(ignore|disregard|forget|hagyd figyelmen kívül|felejtsd el|ne vedd figyelembe).{0,40}(instruction|rules|utasítás|szabály)|jailbreak|szűrők nélkül|korlátok nélkül|developer mode|fejlesztői mód/i },
+  { code: "prompt_exfiltration", label: "Rejtett utasítások kicsalása", severity: "block", re: /system prompt|rendszerprompt|(reveal|show|print|repeat|mutasd meg|írd ki|add ki|ismételd meg).{0,40}(rejtett utasítás|hidden instruction)/i },
+  { code: "credential", label: "Titok / jelszó / kulcs kérése", severity: "block", re: /(service[_ ]?role|api[_ -]?kulcs|api[_ -]?key|jelszav|jelszó|password|secret|\.env|titkos kulcs|eyJ[A-Za-z0-9_-]{20,}|sk_(live|test)_)/i },
+  { code: "privilege", label: "Jogosultság-emelés", severity: "block", re: /(adj|tegyél|legyen|grant|make me).{0,30}(admin|szuperadmin|super admin)|rls.{0,20}(kikapcs|kapcsol\w* ki|törö?l|disable)|bypass/i },
+  { code: "self_permission", label: "Saját jogosultság módosítása", severity: "block", re: /(saját|magad|magának|önmag)\S*.{0,30}(jogosultság|jogkör|engedély|permission)|(jogosultság|jogkör|engedély|permission)\S*.{0,30}(saját magá|önmag|magadnak)/i },
+  { code: "audit_tamper", label: "Napló törlése / kikapcsolása", severity: "block", re: /(^|[^\p{L}])(napló\S*|audit\S*|logs?)(?![\p{L}]).{0,30}(törö?l|kikapcs|kapcsol\S* ki|átír|delete|disable|wipe)|(törö?l|kikapcs|kapcsol\S* ki|delete|disable|wipe)\S*.{0,30}(^|[^\p{L}])(napló\S*|audit\S*|logs?)(?![\p{L}])/iu },
+  { code: "security_bypass", label: "Biztonsági védelem kikapcsolása", severity: "block", re: /aegis.{0,30}(kikapcs|kapcsol\S* ki|megkerül|disable|bypass|gyengít)|(kikapcs|kapcsol\S* ki|megkerül|disable|gyengít)\S*.{0,30}(aegis|biztonsági|vészleállít|security)|vészleállítás.{0,20}(kikapcs|kapcsol\S* ki|felold)/i },
+  { code: "ssrf", label: "Belső hálózati cím", severity: "block", re: /(localhost|127\.0\.0\.1|169\.254\.|metadata\.google|0\.0\.0\.0|\[::1\])/i },
+  { code: "destructive_sql", label: "Romboló adatbázis-parancs", severity: "block", re: /drop\s+(table|schema|database)|truncate\s+table|delete\s+from\s+\w+\s*(;|$)/i },
+  { code: "permanent_delete", label: "Végleges törlés", severity: "warn", re: /(végleges|visszavonhatatlan|permanent)\S*.{0,20}(törö?l|delete)/i },
+  { code: "mass_change", label: "Tömeges / visszafordíthatatlan művelet", severity: "warn", re: /(mind(en|et)|összes).{0,30}(törö?l|felülír|átír)/i },
   { code: "money", label: "Pénzmozgás", severity: "warn", re: /(utal|visszatérít|kifizet|refund|ár(at|ak) (módosít|átír|emel|csökkent))/i },
+  { code: "external_comm", label: "Külső kommunikáció / publikálás", severity: "warn", re: /(küld|kiküld|publikál|élesít|send|publish)\S*.{0,30}(e-?mail|sms|hírlevel|ügyfel|vásárló|élesbe|nyilvános)/i },
 ];
+const LABEL: Record<string, string> = { card_data: "Teljes kártyaadat", obfuscation: "Álcázott támadás" };
 
 export function aegisScan(text: string): AegisFinding[] {
-  return RULES.filter((r) => r.re.test(text)).map(({ code, label, severity }) => ({ code, label, severity }));
+  const vs = aegisVariants(text);
+  const out = RULES.filter((r) => vs.some((v) => r.re.test(v))).map(({ code, label, severity }) => ({ code, label, severity }));
+  let rawBlock = RULES.some((r) => r.severity === "block" && r.re.test(text));
+  if ((text.match(/(?:\d[ -]?){13,19}/g) ?? []).some((m) => luhn(m.replace(/\D/g, ""))) || /\bcvv\b|\bcvc\b/i.test(text)) {
+    out.push({ code: "card_data", label: LABEL.card_data, severity: "block" }); rawBlock = true;
+  }
+  if (out.some((f) => f.severity === "block") && !rawBlock) out.push({ code: "obfuscation", label: LABEL.obfuscation, severity: "block" });
+  return out;
+}
+
+// Kockázati padló (WORKFORCE OS XV.): pénz és végleges törlés = 🔴, tömeges változás és külső kommunikáció legalább 🟡.
+export function riskFloor(findings: AegisFinding[], risk: Risk): Risk {
+  const has = (c: string) => findings.some((f) => f.code === c);
+  if (risk === "red" || has("money") || has("permanent_delete")) return "red";
+  if (risk === "yellow" || has("mass_change") || has("external_comm")) return "yellow";
+  return "green";
 }
 
 const order: Record<Risk, number> = { green: 0, yellow: 1, red: 2 };
@@ -518,8 +542,7 @@ export function planGoal(goal: string, max = 4): WorkPlan {
   if (assignments.length && !assignments.some((a) => a.department.id === "05"))
     assignments.push({ department: qa, score: 0, owner: qa.roles[8], reviewer: qa.roles[9] });
   let risk: Risk = assignments.reduce<Risk>((r, a) => (order[a.department.risk] > order[r] ? a.department.risk : r), "green");
-  if (findings.some((f) => f.code === "money")) risk = "red";
-  else if (findings.some((f) => f.severity === "warn") && risk === "green") risk = "yellow";
+  risk = riskFloor(findings, risk);
   if (blocked) risk = "red";
   const needsHuman = risk !== "green";
   const approval = blocked ? "AEGIS blokkolta — nem indítható"
