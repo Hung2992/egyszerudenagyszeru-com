@@ -67,7 +67,7 @@ const AiWorkforce = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-6xl p-4 md:p-8 space-y-6">
-        <Link to="/admin" className="inline-flex items-center gap-1 text-xs uppercase tracking-widest"><ArrowLeft className="h-3 w-3" /> Admin</Link>
+        <Link to="/admin" className="inline-flex items-center gap-1 text-xs uppercase tracking-widest"><ArrowLeft className="h-3 w-3" /> Admin</Link> <Link to="/admin/ai-asszisztensek" className="ml-4 inline-flex items-center gap-1 text-xs uppercase tracking-widest text-primary">AI asszisztensek →</Link>
         <header className="space-y-1">
           <p className="text-xs tracking-widest text-accent">AI INTELLIGENCE OPERATING SYSTEM · AEGIS</p>
           <h1 className="text-2xl font-medium">AI WORKFORCE · Central AI + AEGIS őr</h1>
