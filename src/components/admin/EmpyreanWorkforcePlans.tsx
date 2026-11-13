@@ -11,7 +11,7 @@ type Step = { id: string; plan_id: string; idx: number; phase: string; owner: st
 type Audit = { id: string; plan_id: string; action: string; detail: Record<string, unknown>; created_at: string };
 
 const statusLabel: Record<string, string> = { draft: "Tervezet", approved: "Jóváhagyva", in_progress: "Folyamatban", done: "Kész", cancelled: "Megszakítva", pending: "Vár", failed: "Hibás" };
-const actionLabel: Record<string, string> = { created: "Mentve", approved: "Jóváhagyva", cancelled: "Megszakítva", step_done: "Lépés kész", step_failed: "Lépés hibás", done: "Terv kész" };
+const actionLabel: Record<string, string> = { created: "Mentve", approved: "Jóváhagyva", cancelled: "Megszakítva", step_done: "Lépés kész", step_failed: "Lépés hibás", done: "Terv kész", aegis_blocked: "AEGIS blokkolta" };
 
 export default function EmpyreanWorkforcePlans({ reloadKey }: { reloadKey: number }) {
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -32,16 +32,18 @@ export default function EmpyreanWorkforcePlans({ reloadKey }: { reloadKey: numbe
   }, []);
   useEffect(() => { load(); }, [load, reloadKey]);
 
+  const [note, setNote] = useState("");
   const setStatus = async (id: string, status: string) => {
-    const { error } = await supabase.rpc("workforce_set_status", { _plan: id, _status: status });
+    const { error } = await supabase.rpc("workforce_set_status", { _plan: id, _status: status, _note: note || undefined });
     if (error) toast.error(error.message); else { toast.success(statusLabel[status]); load(); }
   };
   const execute = async () => {
     if (!run) return;
     setBusy(true);
-    const { error } = await supabase.rpc("workforce_execute_step", { _step: run.step.id, _confirmed: true, _ok: run.ok, _result: result });
+    const { data, error } = await supabase.rpc("workforce_execute_step", { _step: run.step.id, _confirmed: true, _ok: run.ok, _result: result });
     setBusy(false);
     if (error) return toast.error(error.message);
+    if (data === "aegis_blocked") { toast.error("AEGIS blokkolta: az eredmény titkot, kártyaadatot vagy tiltott utasítást tartalmaz. Naplózva."); load(); return; }
     toast.success(run.ok ? "Lépés kész, naplózva" : "Hiba naplózva");
     setRun(null); setResult(""); load();
   };
@@ -59,7 +61,7 @@ export default function EmpyreanWorkforcePlans({ reloadKey }: { reloadKey: numbe
           <div key={p.id} className="border border-border">
             <button type="button" className="w-full p-2 text-left hover:bg-muted" onClick={() => setOpen(open === p.id ? null : p.id)} aria-expanded={open === p.id}>
               <p className="text-sm font-medium break-words">{p.goal}</p>
-              <p className="text-xs text-muted-foreground">{statusLabel[p.status]} · {done}/{ps.length} lépés · felelős: {p.owner} · határidő: <span className={late ? "text-destructive" : ""}>{p.due_date ?? "nincs"}</span></p>
+              <p className="text-xs text-muted-foreground">{statusLabel[p.status]} · {p.risk === "red" ? "🔴" : p.risk === "yellow" ? "🟡" : "🟢"} · {done}/{ps.length} lépés · felelős: {p.owner} · határidő: <span className={late ? "text-destructive" : ""}>{p.due_date ?? "nincs"}</span></p>
             </button>
             {open === p.id && (
               <div className="p-2 border-t border-border space-y-2">
@@ -67,6 +69,7 @@ export default function EmpyreanWorkforcePlans({ reloadKey }: { reloadKey: numbe
                   {p.status === "draft" && <Button size="sm" className="rounded-none" onClick={() => setStatus(p.id, "approved")}>Terv jóváhagyása</Button>}
                   {["draft", "approved", "in_progress"].includes(p.status) && <Button size="sm" variant="outline" className="rounded-none" onClick={() => setStatus(p.id, "cancelled")}>Megszakítás</Button>}
                 </div>
+                {p.status === "draft" && p.risk === "red" && <Textarea value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} placeholder="AEGIS: piros kockázat — írásos indoklás a jóváhagyáshoz (min. 10 karakter)" className="rounded-none text-xs" />}
                 {p.status === "draft" && <p className="text-xs text-muted-foreground">Lépés csak a terv jóváhagyása után hajtható végre.</p>}
                 <ol className="text-xs space-y-1">
                   {ps.map((s) => (
@@ -87,7 +90,7 @@ export default function EmpyreanWorkforcePlans({ reloadKey }: { reloadKey: numbe
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">Ellenőrzési napló</p>
                   <ul className="text-xs space-y-0.5">
                     {audit.filter((a) => a.plan_id === p.id).map((a) => (
-                      <li key={a.id}>{new Date(a.created_at).toLocaleString("hu-HU")} · {actionLabel[a.action] ?? a.action}{a.detail?.phase ? ` · ${a.detail.phase}` : ""}{a.detail?.result ? ` — ${a.detail.result}` : ""}</li>
+                      <li key={a.id}>{new Date(a.created_at).toLocaleString("hu-HU")} · {actionLabel[a.action] ?? a.action}{a.detail?.phase ? ` · ${a.detail.phase}` : ""}{a.detail?.result ? ` — ${a.detail.result}` : ""}{a.detail?.note ? ` — indoklás: ${a.detail.note}` : ""}{Array.isArray(a.detail?.findings) ? ` — ${(a.detail.findings as string[]).join(", ")}` : ""}</li>
                     ))}
                   </ul>
                 </div>
