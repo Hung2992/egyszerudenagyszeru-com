@@ -57,7 +57,7 @@ export default function EmpyreanOptimization() {
         <Block title="Ügynök-értékelés">
           {s.agents.length === 0 ? <p className="text-sm text-muted-foreground">Nincs ügynökfutás az időszakban.</p> : (
             <ul className="text-xs divide-y divide-border border border-border">{s.agents.map((a) => { const sc = agentScore(a); return (
-              <li key={a.slug} className="p-2 flex justify-between gap-2"><span className="truncate">{a.slug}</span><span className={`shrink-0 ${sc != null && sc < 60 ? "text-destructive" : ""}`}>{sc ?? "—"}/100 · {a.runs} futás · {Math.round(a.avg_ms / 1000)} mp</span></li>); })}</ul>)}
+              <li key={a.slug} className="p-2 flex justify-between gap-2"><span className="truncate">{a.slug}</span><span className={`shrink-0 ${sc != null && sc < 60 ? "text-destructive" : ""}`}>{sc ?? "—"}/100 · {a.runs} futás{a.credit_blocked ? ` · ${a.credit_blocked} keret-hiány` : ""} · {Math.round(a.avg_ms / 1000)} mp</span></li>); })}</ul>)}
           <p className="text-xs text-muted-foreground">AI visszajelzés: {s.feedback.count} db, átlag {s.feedback.avg_rating ?? "—"}, negatív {s.feedback.negative}</p>
         </Block>
         <Block title="Működés">
