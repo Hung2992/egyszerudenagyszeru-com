@@ -28,7 +28,7 @@ const AiWorkforce = () => {
       supabase.from("workforce_plan_steps").select("plan_id,status"),
       supabase.from("workforce_audit").select("action,created_at").gte("created_at", since).limit(1000),
       supabase.from("aegis_events").select("action,findings,created_at").gte("created_at", since).limit(1000),
-      supabase.from("aegis_incidents").select("id", { count: "exact", head: true }).is("resolved_at", null),
+      supabase.from("aegis_incidents").select("id", { count: "exact", head: true }).eq("status", "open"),
       supabase.from("aegis_agent_controls").select("state"),
       supabase.from("empyrean_emergency_controls").select("paused"),
       supabase.from("aegis_settings").select("input_mode").maybeSingle(),
