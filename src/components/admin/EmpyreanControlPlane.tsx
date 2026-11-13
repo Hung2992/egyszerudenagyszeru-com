@@ -18,7 +18,6 @@ import EmpyreanOrderDates from "./EmpyreanOrderDates";
 import EmpyreanNewOrder from "./EmpyreanNewOrder";
 import EmpyreanAiInvoice from "./EmpyreanAiInvoice";
 import EmpyreanDelays from "./EmpyreanDelays";
-import EmpyreanAiWorld from "./EmpyreanAiWorld";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
