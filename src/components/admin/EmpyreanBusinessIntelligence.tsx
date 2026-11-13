@@ -69,6 +69,19 @@ export default function EmpyreanBusinessIntelligence() {
             ))}
           </div>
           <div>
+            <p className="text-xs text-muted-foreground mb-2">Szállítás és visszaküldés</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border border border-border text-sm">
+              {[
+                ["Szállítási díj (foglalt)", huf(c.shipping ?? 0)], ["Szállítási díj (befolyt)", huf(c.shipping_paid ?? 0)],
+                ["Feladásra vár", c.to_ship ?? 0], ["Úton", c.in_transit ?? 0],
+                ["Átvéve", c.delivered ?? 0], ["Visszaküldés", c.returns ?? 0],
+                ["Átl. kézbesítés", c.avg_delivery_days != null ? `${c.avg_delivery_days} nap` : "—"],
+              ].map(([l, v]) => (
+                <div key={String(l)} className="bg-background p-3"><p className="text-xs text-muted-foreground">{l}</p><p className="text-lg">{v}</p></div>
+              ))}
+            </div>
+          </div>
+          <div>
             <p className="text-xs text-muted-foreground mb-2">Top partnerek · foglalt bevétel</p>
             {snap.top_partners.length === 0 ? <p className="text-sm text-muted-foreground">Nincs rendelés ebben az időablakban.</p> : (
               <ul className="divide-y divide-border border-y border-border">

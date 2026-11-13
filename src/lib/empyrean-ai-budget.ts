@@ -1,5 +1,6 @@
 export interface AiBudget {
   used: number; calls: number; tokens: number; limit: number; warn_pct: number; block_at_limit: boolean;
+  credit_price: number | null; credit_currency: string; monthly_cost: number | null;
   pct: number | null; state: "ok" | "warn" | "over" | "blocked";
   by_function: { fn: string; calls: number; tokens: number; cost: number }[];
 }
