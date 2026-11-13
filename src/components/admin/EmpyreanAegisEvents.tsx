@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 type Ev = { id: string; source: string; stage: string; action: string; findings: string[]; created_at: string };
-const label: Record<string, string> = {
+export const label: Record<string, string> = {
   prompt_injection: "Szabály-felülírás", privilege: "Jogosultság-emelés", ssrf: "Belső cím", card_data: "Kártyaszám",
   jwt: "Hozzáférési kulcs", api_key: "API-kulcs", replay: "Ismételt webhook", paused: "Szüneteltetett ügynök", isolated: "Elkülönített ügynök", revoked: "Visszavont ügynök", killed: "Leállított ügynök", credential: "Titok/jelszó", mass_change: "Tömeges művelet", money: "Pénzmozgás", prompt_exfiltration: "Rendszerprompt-kicsalás", destructive_sql: "Romboló adatbázis-parancs", obfuscation: "Álcázott támadás", self_permission: "Saját jogosultság módosítása", audit_tamper: "Napló törlése / kikapcsolása", security_bypass: "Biztonsági védelem kikapcsolása", external_comm: "Külső kommunikáció", permanent_delete: "Végleges törlés", payload_tamper: "Jóváhagyás utáni átírás", prompt_leak: "Rejtett utasítás szivárgása (kanári)", history_smuggling: "Csempészett korábbi üzenet", indirect_injection: "Közvetett támadás (beolvasott tartalom)", private_key: "Privát kulcs",
 };

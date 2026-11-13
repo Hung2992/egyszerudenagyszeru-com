@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import EmpyreanAiWorld from "@/components/admin/EmpyreanAiWorld";
 import EmpyreanAegisKillSwitch from "@/components/admin/EmpyreanAegisKillSwitch";
 import EmpyreanAegisIncidents from "@/components/admin/EmpyreanAegisIncidents";
-import EmpyreanAegisEvents from "@/components/admin/EmpyreanAegisEvents";
+import EmpyreanAegisEvents, { label as aegisLabel } from "@/components/admin/EmpyreanAegisEvents";
 import { PIPELINE, planState, pipelineReach, failureMemory, needsHuman, type PlanLite, type StepLite } from "@/lib/aegis-os";
 import { ArrowLeft } from "lucide-react";
 
@@ -49,7 +49,7 @@ const AiWorkforce = () => {
   const restricted = d?.agents.filter((a) => a.state !== "active").length ?? 0;
   const failures = failureMemory([
     ...(d?.audit ?? []).filter((a) => failLabel[a.action]).map((a) => ({ code: failLabel[a.action], at: a.created_at })),
-    ...(d?.ev ?? []).filter((e) => e.action === "blocked").flatMap((e) => (e.findings.length ? e.findings : ["?"]).map((f) => ({ code: "AEGIS · " + f.replace(/^(block|warn|global):/, ""), at: e.created_at }))),
+    ...(d?.ev ?? []).filter((e) => e.action === "blocked").flatMap((e) => (e.findings.length ? e.findings : ["?"]).map((f) => ({ code: "AEGIS · " + (aegisLabel[f.replace(/^(block|warn|global):/, "")] ?? f), at: e.created_at }))),
   ]);
   const kpi: [string, string | number, boolean?][] = [
     ["Aktív terv", cnt("ASSIGNED") + cnt("EXECUTING")], ["Emberi döntésre vár", gate.length, gate.length > 0],
