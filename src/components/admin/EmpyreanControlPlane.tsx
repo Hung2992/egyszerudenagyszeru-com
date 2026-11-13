@@ -15,6 +15,7 @@ import EmpyreanOrderDates from "./EmpyreanOrderDates";
 import EmpyreanNewOrder from "./EmpyreanNewOrder";
 import EmpyreanAiInvoice from "./EmpyreanAiInvoice";
 import EmpyreanDelays from "./EmpyreanDelays";
+import EmpyreanAiWorld from "./EmpyreanAiWorld";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -284,6 +285,7 @@ export default function EmpyreanControlPlane({ onOpen }: { onOpen: (destination:
 
       {view === "MISSIONS" && (
         <div className="space-y-8">
+          <EmpyreanAiWorld />
           <EmpyreanAutomation onPick={(id) => { pickProduct(id); setTimeout(() => document.getElementById("empyrean-seo-editor")?.scrollIntoView({ behavior: "smooth" }), 50); }} />
           <section id="empyrean-seo-editor" className="border border-border p-4 sm:p-6 space-y-4">
             <div>
