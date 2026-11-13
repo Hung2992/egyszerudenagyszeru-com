@@ -77,6 +77,7 @@ export default function EmpyreanWorkforcePlans({ reloadKey }: { reloadKey: numbe
                 </div>
                 {p.status === "draft" && p.risk === "red" && <Textarea value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} placeholder="AEGIS: piros kockázat — írásos indoklás a jóváhagyáshoz (min. 10 karakter)" className="rounded-none text-xs" />}
                 {p.status === "approved" && p.approval_expires_at && <p className={`text-xs ${expired ? "text-destructive" : "text-muted-foreground"}`}>{expired ? "AEGIS: a jóváhagyás lejárt" : "Jóváhagyás érvényes"}: {new Date(p.approval_expires_at).toLocaleString("hu-HU")}{expired && <Button size="sm" variant="outline" className="rounded-none h-7 ml-2" onClick={() => reapprove(p.id)}>Megújítás</Button>}</p>}
+                {p.payload_hash && <p className="text-xs text-muted-foreground">AEGIS-zár: a jóváhagyott tartalom ujjlenyomata <span className="font-mono">{p.payload_hash.slice(0, 12)}</span>. Ha a terv bármely része eltér tőle, a végrehajtás leáll.</p>}
                 {p.status === "draft" && <p className="text-xs text-muted-foreground">Lépés csak a terv jóváhagyása után hajtható végre.</p>}
                 <ol className="text-xs space-y-1">
                   {ps.map((s) => (
