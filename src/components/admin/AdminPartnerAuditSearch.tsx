@@ -25,9 +25,6 @@ const ACTION_LABEL: Record<string, string> = {
 
 const fmt = (s?: string | null) => s ? new Date(s).toLocaleString("hu-HU") : "";
 
-const csvCellLocal = (v: any) => {
-  return csvCell(v);
-};
 
 const AdminPartnerAuditSearch = () => {
   const [partners, setPartners] = useState<any[]>([]);
