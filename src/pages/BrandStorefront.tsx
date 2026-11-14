@@ -13,6 +13,7 @@ import MediaImage from "@/components/partner/MediaImage";
 import StorefrontProductCard from "@/components/partner/StorefrontProductCard";
 import { Button } from "@/components/ui/button";
 import { getPartnerSlugFromHostname, resolveCustomDomainSlug } from "@/lib/partner-subdomain";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 
 const BrandStorefront = () => {
   const params = useParams<{ slug: string }>();
@@ -433,7 +434,7 @@ const BrandStorefront = () => {
           about: sf.about_html ? (
             <section className="mx-auto max-w-3xl px-4 py-16 border-t" style={{ borderColor: borderCol }}>
               <h2 className="text-2xl font-bold uppercase tracking-widest mb-6 text-center" style={headingStyle}>Rólunk</h2>
-              <div className="prose prose-invert mx-auto" dangerouslySetInnerHTML={{ __html: sf.about_html }} />
+              <div className="prose prose-invert mx-auto" dangerouslySetInnerHTML={{ __html: sanitizeHtml(sf.about_html) }} />
             </section>
           ) : null,
 

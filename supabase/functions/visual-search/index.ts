@@ -35,6 +35,12 @@ Deno.serve(async (req) => {
       const { data } = await admin.auth.getUser(authHeader.replace('Bearer ', ''));
       userId = data.user?.id ?? null;
     }
+    // Fizetős AI-hívás: csak bejelentkezett vásárló, és csak a SAJÁT feltöltött képe.
+    if (!userId) return json({ error: 'Bejelentkezés szükséges' }, 401);
+    if (body.storage_path && (!body.storage_path.startsWith(`${userId}/`) || body.storage_path.includes('..'))) {
+      return json({ error: 'Ehhez a képhez nincs hozzáférésed' }, 403);
+    }
+    if (body.image_data_url && body.image_data_url.length > 11_500_000) return json({ error: 'A kép túl nagy (max 8MB)' }, 400);
 
     // Get image bytes
     let dataUrl: string;

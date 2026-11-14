@@ -2,7 +2,7 @@
 // Két formátum: Twilio-stílusú űrlap (MessageSid/MessageStatus) és GatewayAPI-stílusú JSON DLR.
 // Publikus végpont: csak a szolgáltatói üzenetazonosító alapján frissít, más adatot nem fogad el.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
-import { rateLimit } from "../_shared/internal-auth.ts";
+import { hasValidWebhookToken, rateLimit } from "../_shared/internal-auth.ts";
 import { adminClient, enqueueWebhook, json, logEvent } from "../_shared/comm-core.ts";
 
 /** Részletes DLR állapotok (a belső státusz + a pontos kézbesítési állapot). */
@@ -55,6 +55,8 @@ Deno.serve(async (req) => {
 
   const limited = rateLimit(req, { limit: 600, windowMs: 60_000, key: "comm-status" });
   if (limited) return limited;
+  // Csak a titkos tokennel ellátott, általunk kiadott visszahívási cím fogadható el.
+  if (!hasValidWebhookToken(req, "COMM_STATUS_CALLBACK_TOKEN")) return json({ error: "unauthorized" }, 401);
 
   let reports: Report[] = [];
   try {

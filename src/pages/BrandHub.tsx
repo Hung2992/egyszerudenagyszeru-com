@@ -4,6 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { toast } from "@/hooks/use-toast";
 import { getPartnerSlugFromHostname, resolveCustomDomainSlug } from "@/lib/partner-subdomain";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 
 // Partner saját ügyfélközpontja: termékek, szolgáltatások, naptár, foglalás, hírlevél, ügyfélfiók
 // Útvonal: /b/:slug/kozpont (saját domainen: /kozpont)
@@ -377,7 +378,7 @@ const BrandHub = () => {
                     {open && (
                       <>
                         {n.body_html
-                          ? <div className="text-sm mt-3 space-y-2 [&_a]:underline" dangerouslySetInnerHTML={{ __html: n.body_html }} />
+                          ? <div className="text-sm mt-3 space-y-2 [&_a]:underline" dangerouslySetInnerHTML={{ __html: sanitizeHtml(n.body_html) }} />
                           : <p className="text-sm mt-3 opacity-70">Ehhez a hírlevélhez nincs megjeleníthető tartalom.</p>}
                         <Link to={`${base}/hirek/${n.slug}`} className="text-xs underline opacity-70 mt-3 inline-block">Megnyitás külön oldalon</Link>
                       </>

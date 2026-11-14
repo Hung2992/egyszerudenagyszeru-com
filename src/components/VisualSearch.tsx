@@ -65,7 +65,12 @@ const VisualSearch = () => {
     try {
       // Upload to storage
       const { data: sess } = await supabase.auth.getSession();
-      const uid = sess.session?.user.id ?? "anon";
+      const uid = sess.session?.user.id;
+      if (!uid) {
+        toast({ title: "Jelentkezz be", description: "A képes kereséshez bejelentkezés szükséges.", variant: "destructive" });
+        setBusy(false);
+        return;
+      }
       const sessionId =
         localStorage.getItem("visual_search_session") ||
         (() => {

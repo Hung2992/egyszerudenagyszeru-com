@@ -3,6 +3,7 @@ installAiMeter("ai-marketing-ceo");
 // AI Marketing CEO — napi/heti briefing + insights generálás
 // Actions: run_daily, run_weekly, generate_insights
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { isInternalCall } from "../_shared/internal-auth.ts";
 import { publish as busPublish } from "../_shared/agent-bus.ts";
 
 const corsHeaders = {
@@ -89,7 +90,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const url = new URL(req.url);
-    const isCron = url.searchParams.get("cron") === "1" || req.headers.get("x-cron-secret") === Deno.env.get("CRON_SECRET");
+    const isCron = await isInternalCall(req);
 
     const auth = req.headers.get("Authorization") || "";
     const sb = createClient(

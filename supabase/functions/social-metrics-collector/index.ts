@@ -1,6 +1,7 @@
 // Social Metrics Collector — publikált posztok teljesítménymérése
 // Actions: collect_all (cron), collect_one (admin)
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { isInternalCall } from "../_shared/internal-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -72,7 +73,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const url = new URL(req.url);
-    const isCron = url.searchParams.get("cron") === "1" || req.headers.get("x-cron-secret") === Deno.env.get("CRON_SECRET");
+    const isCron = await isInternalCall(req);
 
     const auth = req.headers.get("Authorization") || "";
     const sb = createClient(

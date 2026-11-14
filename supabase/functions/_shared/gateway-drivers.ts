@@ -1,3 +1,4 @@
+import { withWebhookToken } from "./internal-auth.ts";
 // APEX saját átjáró (gateway) — szolgáltató-illesztők és útvonalválasztás.
 // A partner saját fiókja elsőbbséget élvez a platform fiókjaival szemben.
 // Támogatott illesztők: apex_modem (saját GSM/LTE modem bridge), http_generic, twilio, gatewayapi.
@@ -71,7 +72,7 @@ async function sendTwilio(
   if (!sid || !token) return { status: "failed", provider: acc.label, error: "Hiányzó Twilio azonosítók" };
   const base = acc.endpoint || `https://api.twilio.com/2010-04-01/Accounts/${sid}`;
   const auth = { Authorization: `Basic ${btoa(`${sid}:${token}`)}` };
-  const statusCallback = Deno.env.get("MESSAGING_STATUS_CALLBACK_URL");
+  const statusCallback = withWebhookToken(Deno.env.get("MESSAGING_STATUS_CALLBACK_URL"), "COMM_STATUS_CALLBACK_TOKEN");
 
   const path = channel === "voice" ? "/Calls.json" : "/Messages.json";
   const form: Record<string, string> =
@@ -184,7 +185,7 @@ async function sendApexModem(
   if (!creds.modem_token) return { status: "failed", provider: acc.label, error: "Hiányzó modem token" };
 
   const base = acc.endpoint.replace(/\/+$/, "");
-  const dlrUrl = Deno.env.get("MESSAGING_STATUS_CALLBACK_URL") || null;
+  const dlrUrl = withWebhookToken(Deno.env.get("MESSAGING_STATUS_CALLBACK_URL"), "COMM_STATUS_CALLBACK_TOKEN") || null;
   const reference = crypto.randomUUID();
 
   let res: Response;

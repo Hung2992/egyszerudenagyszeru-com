@@ -2,6 +2,7 @@ import { installAiMeter } from "../_shared/ai-meter.ts";
 installAiMeter("scrape-product");
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts'
+import { safeFetch } from '../_shared/safe-url.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -41,7 +42,7 @@ async function scrapeOneUrl(url: string, LOVABLE_API_KEY: string): Promise<{ suc
     for (const tryUrl of urlsToTry) {
       for (const ua of userAgents) {
         try {
-          const pageRes = await fetch(tryUrl, {
+          const pageRes = await safeFetch(tryUrl, {
             headers: {
               'User-Agent': ua,
               'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',

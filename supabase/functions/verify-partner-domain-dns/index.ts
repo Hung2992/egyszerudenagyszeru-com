@@ -2,8 +2,9 @@
 // Modes:
 //   POST { request_id } -> { status, detail }  (single, auth required)
 //   POST { scheduled: true } -> { processed, changed } (batch, service-role or admin)
-import { createClient } from "npm:@supabase/supabase-js@2.45.0";
+import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { isInternalCall } from "../_shared/internal-auth.ts";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -85,6 +86,10 @@ Deno.serve(async (req) => {
 
   // Scheduled batch mode
   if (body?.scheduled === true) {
+    // Kötegelt mód csak igazolt belső hívónak (cron titok / service_role).
+    if (!(await isInternalCall(req))) {
+      return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
     const { data: rows } = await supabase
       .from("partner_domain_requests")
       .select("id, partner_id, requested_domain, verification_token, dns_check_status, auto_check_enabled, status")

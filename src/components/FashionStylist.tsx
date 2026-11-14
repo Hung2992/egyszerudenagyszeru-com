@@ -48,6 +48,10 @@ export default function FashionStylist({ open, onClose }: Props) {
     try {
       const { data: sess } = await supabase.auth.getSession();
       const token = sess?.session?.access_token;
+      if (!token) {
+        setError("A stílustanácsadóhoz jelentkezz be.");
+        return;
+      }
       const { data, error } = await supabase.functions.invoke("fashion-stylist", {
         body: {
           occasion,
