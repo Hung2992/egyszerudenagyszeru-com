@@ -27,6 +27,8 @@ interface Item {
   hashtags: string[];
   retry_count: number;
   max_retries: number;
+  approved_by: string | null;
+  test_only: boolean;
 }
 
 interface Settings {
@@ -49,8 +51,9 @@ function buildText(item: Item, defaults: string[]): string {
 
 const RequestSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("process_queue") }),
+  z.object({ action: z.literal("test_publish"), id: z.string().uuid() }),
   z.object({ action: z.literal("publish_now"), id: z.string().uuid() }),
-  z.object({ action: z.literal("enqueue"), platform: z.enum(["facebook", "instagram", "tiktok"]), content: z.string().trim().min(1).max(20000), media_urls: z.array(z.string().url()).max(10).default([]), media_type: z.enum(["text", "image", "video", "carousel"]).default("text"), hashtags: z.array(z.string().max(100)).max(50).default([]), scheduled_at: z.string().datetime({ offset: true }).optional(), campaign_id: z.string().uuid().optional(), source: z.string().max(100).optional(), source_ref: z.string().uuid().optional() }),
+  z.object({ action: z.literal("enqueue"), platform: z.enum(["facebook", "instagram", "tiktok"]), test_only: z.boolean().default(false), content: z.string().trim().min(1).max(20000), media_urls: z.array(z.string().url()).max(10).default([]), media_type: z.enum(["text", "image", "video", "carousel"]).default("text"), hashtags: z.array(z.string().max(100)).max(50).default([]), scheduled_at: z.string().datetime({ offset: true }).optional(), campaign_id: z.string().uuid().optional(), source: z.string().max(100).optional(), source_ref: z.string().uuid().optional() }),
 ]);
 
 // ============ FACEBOOK ============
@@ -204,6 +207,11 @@ Deno.serve(async (req) => {
     if (!parsed.success) return json({ error: "invalid_request", details: parsed.error.flatten() }, 400);
     const body = parsed.data;
     const action = body.action;
+    if (body.action === "test_publish") {
+      if (!uid || isCron) return json({ error: "human_admin_required" }, 403);
+      const { data, error } = await caller.rpc("social_test_run", { _id: body.id });
+      return error ? json({ error: error.message }, 400) : json(data);
+    }
     const { data: settings, error: settingsError } = await sb.from("social_auto_publish_settings").select("*").limit(1).maybeSingle();
     if (settingsError || !settings) return json({ error: "settings_unavailable" }, 503);
     const s: Settings = settings;
@@ -213,7 +221,7 @@ Deno.serve(async (req) => {
       const safety = aegisRedact(body.content);
       if (safety.findings.length || aegisInput(body.content).length) return json({ error: "aegis_review_required" }, 422);
       const { data: ins, error } = await caller.from("social_publish_queue").insert({
-        platform: body.platform, content: body.content, media_urls: body.media_urls, media_type: body.media_type, hashtags: body.hashtags,
+        test_only: body.test_only, platform: body.platform, content: body.content, media_urls: body.media_urls, media_type: body.media_type, hashtags: body.hashtags,
         scheduled_at: body.scheduled_at || new Date().toISOString(), campaign_id: body.campaign_id || null,
         source: body.source || "manual", source_ref: body.source_ref || null, autopilot: false, requires_approval: true, created_by: uid,
       }).select().single();
@@ -232,12 +240,12 @@ Deno.serve(async (req) => {
       for (const raw of (items || [])) {
         let item = raw as Item;
 
-        const { data: claim, error: claimError } = await sb.rpc("social_claim", { _id: item.id });
+        const { data: claim, error: claimError } = await sb.rpc("social_dispatch_claim", { _id: item.id, _actor: uid ?? item.approved_by });
         if (claimError) { results.push({ id: item.id, ok: false, error: claimError.message }); continue; }
         if (!claim?.allowed || !claim.token) { results.push({ id: item.id, skipped: claim?.reason || "gate_unavailable" }); continue; }
         const token = claim.token;
         const preflight = async () => {
-          const { data: allowed, error } = await sb.rpc("social_preflight", { _id: item.id, _token: token });
+          const { data: allowed, error } = await sb.rpc("social_authorized_preflight", { _id: item.id, _token: token });
           if (error || allowed !== true) throw new Error("AEGIS: execution stopped before provider call");
         };
         try {
