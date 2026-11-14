@@ -1,9 +1,9 @@
 # Partner webshop 2026
 
 ## Tartalomtár és hirdetés — új kérés
-- [ ] Aktuális kérés: kiválasztható TikTok szövegváltozat és letölthető kézi videósablon; katalógus/havi terv ellenőrzése.
+- [x] TikTok: három kiválasztható tényszerű szövegváltozat és letölthető kézi videósablon; 390×630 hitelesített UI-ban aktív ApexParts termékkel letöltés igazolva, nincs overflow; 18 teszt és build OK.
 - [ ] 93 decemberi approval — pontos tartalom és emberi review szükséges; üres helyek nem jóváhagyhatók.
-- [x] Magyarországi partnerkeresési kutatás: mentett, visszaellenőrzött jelentés, 4 Shoprenter Meta-kártya, saját/UNAS/Shoprenter oldalak, Semrush hu minta. Google UNAS példa nem igazolt; közönségjavaslat még döntésre vár.
+- [x] Magyarországi partnerkeresési kutatás: mentett, visszaellenőrzött jelentés, 4 Shoprenter Meta-kártya, saját/UNAS/Shoprenter oldalak, Semrush hu minta. Google UNAS példa nem igazolt; termékes magyar kisvállalkozók és meglévő főoldal elfogadva.
 - [x] TikTok scope újraellenőrizve: grantable scope nincs, reconnect nem adhat video.publish jogot. Kézi TikTok feltöltés megnyitása és platformszöveg másolása valós partnertermékkel igazolva.
 - [ ] TikTok API-publikálás — a kapcsolaton a posztolási scope nem támogatható; megfelelő szolgáltatói engedély kell.
 - [x] Admin-only katalógus meglévő forrásokból: 22 tétel, bolti eredet, teszt/inaktív források tiltva, platformterv és decemberi kiválasztó. Partnertermék/partnerkampány/mentett oldal hozzáadva; blogként nincs tévesen megjelölve.
