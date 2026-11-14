@@ -123,7 +123,9 @@ const BrandStorefront = () => {
   useEffect(() => {
     if (!isEditorPreview) return;
     const handler = (e: MessageEvent) => {
-      if (e.data?.type === "storefront-preview-update" && e.data.draft) {
+      // Only the same-origin editor window (our parent) may push draft previews.
+      if (e.origin !== window.location.origin || e.source !== window.parent) return;
+      if (e.data?.type === "storefront-preview-update" && e.data.draft && typeof e.data.draft === "object") {
         setSf((prev: any) => ({ ...(prev || {}), ...e.data.draft }));
       }
     };
