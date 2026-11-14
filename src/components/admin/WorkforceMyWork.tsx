@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { departments, type Department } from "@/lib/ai-world";
 import { buildWorkOrder, evidenceOk } from "@/lib/ai-workforce";
-import { ownsPlan, openPlans, planOverdue, proposalGoal, type RolePlan } from "@/lib/workforce-roles";
+import { ownsPlan, openPlans, planOverdue, planStage, proposalGoal, type RolePlan } from "@/lib/workforce-roles";
 
 type GatePlan = RolePlan & { risk?: string };
 type Step = { id: string; plan_id: string; idx: number; status: string; task: string | null; due_date: string | null };
@@ -92,7 +92,7 @@ export function WorkforceMyWork({ dept, onChange }: { dept: Department; onChange
         return (
           <div key={p.id} className={`border p-3 space-y-2 ${late ? "border-destructive" : "border-border"}`}>
             <div className="text-sm break-words">{p.goal}</div>
-            <div className="text-xs text-muted-foreground">{label[p.status] ?? p.status} · határidő: {p.due_date ?? "nincs"}{late && <span className="text-destructive"> · LEJÁRT</span>} · {done}/{st.length} lépés</div>
+            <div className="text-xs text-muted-foreground">{planStage(p, done)} · határidő: {p.due_date ?? "nincs"}{late && <span className="text-destructive"> · LEJÁRT</span>} · {done}/{st.length} lépés</div>
             <div className="h-1 bg-muted"><div className="h-1 bg-primary" style={{ width: `${st.length ? (done / st.length) * 100 : 0}%` }} /></div>
             {p.status === "draft" && <div className="space-y-2 border-t border-border pt-2">
               <div className="text-[11px] text-muted-foreground">HUMAN GATE · kockázat: {(p as GatePlan).risk ?? "?"}</div>
