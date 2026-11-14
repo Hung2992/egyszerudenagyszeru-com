@@ -161,3 +161,28 @@ export async function isInternalCall(req: Request): Promise<boolean> {
   const expected = await cronSecret();
   return !!expected && safeEqual(headerSecret, expected);
 }
+
+/**
+ * Szolgáltatói visszahívás (webhook) URL-token ellenőrzése.
+ * Ha a token nincs beállítva, a végpont ZÁRVA marad (fail-closed).
+ */
+export function hasValidWebhookToken(req: Request, envName: string): boolean {
+  const expected = Deno.env.get(envName) || "";
+  if (!expected) return false;
+  const given = new URL(req.url).searchParams.get("token") || req.headers.get("x-webhook-token") || "";
+  return safeEqual(given, expected);
+}
+
+/** A beállított visszahívási címhez hozzáfűzi a titkos tokent (ha van). */
+export function withWebhookToken(url: string | undefined | null, envName: string): string | undefined {
+  if (!url) return undefined;
+  const token = Deno.env.get(envName);
+  if (!token) return url;
+  try {
+    const u = new URL(url);
+    u.searchParams.set("token", token);
+    return u.toString();
+  } catch {
+    return url;
+  }
+}

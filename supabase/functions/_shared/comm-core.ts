@@ -1,3 +1,4 @@
+import { withWebhookToken } from "./internal-auth.ts";
 // APEX Communication Platform — közös mag.
 // Szolgáltató-független kézbesítés, API-kulcs hitelesítés, események, felhasználás, webhookok.
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
@@ -192,7 +193,7 @@ async function deliverLegacy(channel: Channel, to: string, body: string): Promis
   const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
   const FROM_SMS = Deno.env.get("MESSAGING_FROM_NUMBER");
   const FROM_WA = Deno.env.get("MESSAGING_WHATSAPP_FROM");
-  const STATUS_CALLBACK = Deno.env.get("MESSAGING_STATUS_CALLBACK_URL");
+  const STATUS_CALLBACK = withWebhookToken(Deno.env.get("MESSAGING_STATUS_CALLBACK_URL"), "COMM_STATUS_CALLBACK_TOKEN");
 
   if (channel === "email") {
     return { status: "no_provider", provider: null, error: "Az e-mail a tranzakciós rendszeren megy" };

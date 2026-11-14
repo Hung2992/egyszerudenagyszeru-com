@@ -4,7 +4,7 @@
 // esemény + partner webhook továbbítás. Nyilvános végpont, de csak validált
 // mezőket dolgoz fel, és semmi bizalmas adatot nem ad vissza.
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
-import { rateLimit } from "../_shared/internal-auth.ts";
+import { hasValidWebhookToken, rateLimit } from "../_shared/internal-auth.ts";
 import {
   adminClient,
   enqueueWebhook,
@@ -47,6 +47,8 @@ Deno.serve(async (req) => {
 
   const limited = rateLimit(req, { limit: 300, windowMs: 60_000, key: "comm-inbound" });
   if (limited) return limited;
+  // Bejövő üzenet (és STOP/START) csak a szolgáltatónak kiadott titkos tokennel fogadható el.
+  if (!hasValidWebhookToken(req, "COMM_INBOUND_TOKEN")) return json({ error: "unauthorized" }, 401);
 
   const inbound = await parseInbound(req);
   if (!inbound) return json({ error: "invalid_body" }, 400);
