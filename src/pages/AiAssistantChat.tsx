@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
-import { ArrowLeft, Mic, MicOff, Send, Volume2, VolumeX, Trash2, Network, Share2 } from "lucide-react";
+import { ArrowLeft, ListChecks, Mic, MicOff, Send, Volume2, VolumeX, Trash2, Network, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WorkforceTeamPanel } from "@/components/admin/WorkforceTeamPanel";
+import { WorkforceMyWork } from "@/components/admin/WorkforceMyWork";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
 import { departments } from "@/lib/ai-world";
@@ -25,6 +26,7 @@ const AssistantConversation = () => {
   const [listening, setListening] = useState(false);
   const [speak, setSpeak] = useState(false);
   const [teamOpen, setTeamOpen] = useState(false);
+  const [workOpen, setWorkOpen] = useState(true);
   const [shareDraft, setShareDraft] = useState("");
   const ta = useRef<HTMLTextAreaElement>(null);
   const end = useRef<HTMLDivElement>(null);
@@ -39,8 +41,16 @@ const AssistantConversation = () => {
 
   const say = (t: string) => {
     if (!speak || !("speechSynthesis" in window)) return;
-    const u = new SpeechSynthesisUtterance(t.replace(/[#*_`>|-]/g, " ")); u.lang = "hu-HU";
-    speechSynthesis.cancel(); speechSynthesis.speak(u);
+    const u = new SpeechSynthesisUtterance(t.replace(/[#*_`>|]/g, " ").slice(0, 3000)); u.lang = "hu-HU";
+    const hu = speechSynthesis.getVoices().find(v => v.lang?.toLowerCase().startsWith("hu")); if (hu) u.voice = hu;
+    u.onerror = (e) => { if (e.error !== "interrupted" && e.error !== "canceled") setErr("A felolvasás nem indult el ezen az eszközön."); };
+    speechSynthesis.cancel(); speechSynthesis.resume(); speechSynthesis.speak(u);
+  };
+  // Mobilon (iOS/Android) a felolvasást felhasználói érintés oldja fel: egy rövid, csendes hanggal.
+  const toggleSpeak = () => {
+    if (!("speechSynthesis" in window)) { setErr("Ez a böngésző nem tud felolvasni."); return; }
+    const on = !speak; setSpeak(on); speechSynthesis.cancel();
+    if (on) { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; u.lang = "hu-HU"; speechSynthesis.speak(u); }
   };
 
   const send = async (text: string) => {
@@ -77,12 +87,17 @@ const AssistantConversation = () => {
 
   const toggleMic = () => {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) { setErr("Ez a böngésző nem támogatja a hangfelismerést."); return; }
+    if (!SR) { setErr("Ez a böngésző nem támogatja a hangfelismerést. Telefonon Chrome-ot vagy Safarit használj."); return; }
     if (listening) { rec.current?.stop(); return; }
-    const r = new SR(); r.lang = "hu-HU"; r.interimResults = false;
-    r.onresult = (e: any) => { setSpeak(true); send(e.results[0][0].transcript); };
+    setErr("");
+    // Felolvasás feloldása ugyanabban az érintésben, hogy a hangos kérdésre hangos válasz jöjjön.
+    if (!speak && "speechSynthesis" in window) { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); setSpeak(true); }
+    const r = new SR(); r.lang = "hu-HU"; r.interimResults = false; r.continuous = false; r.maxAlternatives = 1;
+    r.onresult = (e: any) => { const t = e.results?.[0]?.[0]?.transcript; if (t) send(t); };
+    r.onerror = (e: any) => setErr(e.error === "not-allowed" || e.error === "service-not-allowed" ? "Engedélyezd a mikrofont a böngésző beállításaiban." : e.error === "no-speech" ? "Nem hallottam semmit, próbáld újra." : "A hangfelismerés hibát jelzett, próbáld újra.");
     r.onend = () => setListening(false);
-    rec.current = r; r.start(); setListening(true);
+    rec.current = r;
+    try { r.start(); setListening(true); } catch { setErr("A mikrofon nem indult el, próbáld újra."); setListening(false); }
   };
 
   return (
@@ -94,11 +109,13 @@ const AssistantConversation = () => {
           <div className="font-display">{dept.name} asszisztens</div>
           <div className="text-[11px] text-muted-foreground truncate">{dept.roles.join(" · ")}</div>
         </div>
-        <Button size="icon" variant="ghost" onClick={() => { setSpeak(!speak); window.speechSynthesis?.cancel(); }} aria-label="Felolvasás" title="Felolvasás">{speak ? <Volume2 className="h-4 w-4 text-primary" /> : <VolumeX className="h-4 w-4" />}</Button>
+        <Button size="icon" variant="ghost" onClick={toggleSpeak} aria-pressed={speak} aria-label="Felolvasás" title="Felolvasás">{speak ? <Volume2 className="h-4 w-4 text-primary" /> : <VolumeX className="h-4 w-4" />}</Button>
         <Button size="icon" variant="ghost" onClick={() => setMsgs([])} aria-label="Új beszélgetés" title="Új beszélgetés"><Trash2 className="h-4 w-4" /></Button>
       </header>
       <Button variant="secondary" className="rounded-none justify-start shrink-0" onClick={() => setTeamOpen(!teamOpen)} aria-expanded={teamOpen}><Network />{teamOpen ? "Beszélgetéshez vissza" : "Csapat · közös adatok és átadások"}</Button>
+      <Button variant="ghost" className="rounded-none justify-start shrink-0 border-b border-border" onClick={() => setWorkOpen(!workOpen)} aria-expanded={workOpen}><ListChecks />{workOpen ? "Saját munkák elrejtése" : "Saját munkák, lépések, határidők"}</Button>
       <div className="flex-1 overflow-y-auto min-h-0">
+      {workOpen && <WorkforceMyWork dept={dept} />}
       {teamOpen && <WorkforceTeamPanel departmentId={dept.id} draft={shareDraft} />}
       <div className="p-4 space-y-4">
         {!msgs.length && <p className="text-sm text-muted-foreground">{dept.name} · munkák, csapatadatok, átadások</p>}
