@@ -14,6 +14,7 @@ import {
   CalendarClock, FileText, Landmark, Scale, Flame, Award, Gauge, LineChart,
   Printer, Search, Database,
 } from "lucide-react";
+import { csvCell } from "@/lib/csv";
 
 type Msg = { role: "user" | "assistant"; content: string; ts: number };
 type Period = "today" | "week" | "month" | "quarter" | "year" | "all";
@@ -266,7 +267,7 @@ const AdminAiBookkeeperTab = () => {
       `Visszamondott/visszatérített;${Math.round(snapshot.cancelled)}`,
       "",
       "Top termékek;Mennyiség;Bevétel",
-      ...snapshot.topProducts.map(p => `${p.name};${p.qty};${Math.round(p.revenue)}`),
+      ...snapshot.topProducts.map(p => [p.name, p.qty, Math.round(p.revenue)].map(csvCell).join(";")),
     ];
     const blob = new Blob(["\uFEFF" + rows.join("\n")], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);

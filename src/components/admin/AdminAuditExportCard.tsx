@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { Download, Loader2, FileText, FileSpreadsheet } from "lucide-react";
+import { csvCell } from "@/lib/csv";
 
 const today = new Date();
 const defaultMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
@@ -36,7 +37,7 @@ const AdminAuditExportCard = () => {
       new Date(r.created_at).toLocaleString("hu-HU"),
       r.user_email ?? "", r.user_id ?? "", r.action ?? "", r.resource ?? "",
       r.ip_address ?? "", r.user_agent ?? "", JSON.stringify(r.metadata ?? {}),
-    ])].map(r => r.map((c: any) => `"${String(c).replace(/"/g, '""')}"`).join(";")).join("\n");
+    ])].map(r => r.map((c: any) => csvCell(c)).join(";")).join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

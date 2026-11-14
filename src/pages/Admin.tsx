@@ -181,6 +181,7 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 // ─── Types ───
 import { CATEGORIES, createEmptyProductDraft, type ShopProduct } from "@/types/admin-shop-product";
+import { csvCell } from "@/lib/csv";
 
 
 interface Order {
@@ -975,12 +976,7 @@ const Admin = () => {
     const headers = Object.keys(data[0]);
     const csv = [
       headers.join(";"),
-      ...data.map(row => headers.map(h => {
-        const val = row[h];
-        if (val === null || val === undefined) return "";
-        if (typeof val === "object") return JSON.stringify(val).replace(/;/g, ",");
-        return String(val).replace(/;/g, ",");
-      }).join(";"))
+      ...data.map(row => headers.map(h => csvCell(row[h])).join(";"))
     ].join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");

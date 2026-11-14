@@ -14,6 +14,7 @@ import { toast } from "@/hooks/use-toast";
 import { Truck, RefreshCw, Search, Download } from "lucide-react";
 
 import OrderFulfillmentPlan from "./OrderFulfillmentPlan";
+import { csvCell } from "@/lib/csv";
 
 interface Props { partnerId: string }
 
@@ -163,7 +164,7 @@ const PartnerOrdersTab = ({ partnerId }: Props) => {
         String(o.total_huf || 0), String(o.partner_payout_huf || 0), o.status || "", o.tracking_number || "",
       ]),
     ];
-    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(";")).join("\n");
+    const csv = rows.map((r) => r.map((c) => csvCell(c)).join(";")).join("\n");
     const url = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" }));
     const a = document.createElement("a");
     a.href = url; a.download = `rendelesek-${new Date().toISOString().slice(0, 10)}.csv`; a.click();

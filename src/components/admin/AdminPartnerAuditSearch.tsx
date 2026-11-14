@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Download, Search } from "lucide-react";
+import { csvCell } from "@/lib/csv";
 
 const ACTION_LABEL: Record<string, string> = {
   update: "Szerkesztés",
@@ -24,9 +25,8 @@ const ACTION_LABEL: Record<string, string> = {
 
 const fmt = (s?: string | null) => s ? new Date(s).toLocaleString("hu-HU") : "";
 
-const csvCell = (v: any) => {
-  const s = v == null ? "" : typeof v === "string" ? v : JSON.stringify(v);
-  return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+const csvCellLocal = (v: any) => {
+  return csvCell(v);
 };
 
 const AdminPartnerAuditSearch = () => {

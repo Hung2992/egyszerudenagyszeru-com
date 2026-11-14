@@ -11,6 +11,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
 import { Activity, Download, RefreshCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { csvCell } from "@/lib/csv";
 
 type Evt = {
   id: string; storefront_id: string | null; partner_id: string;
@@ -98,7 +99,7 @@ const AdminPartnerButtonAnalyticsTab = () => {
       ["created_at", "event_type", "url_type", "partner_id", "storefront_id", "url"],
       ...events.map(e => [e.created_at, e.event_type, e.url_type ?? "", e.partner_id, e.storefront_id ?? "", e.url ?? ""]),
     ];
-    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const csv = rows.map(r => r.map(c => csvCell(c)).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = `partner-button-events-${from}_${to}.csv`; a.click();

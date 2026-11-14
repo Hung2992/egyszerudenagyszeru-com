@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import AccountantTotpGate from "@/components/accountant/AccountantTotpGate";
 import AccountantSecurityCard from "@/components/accountant/AccountantSecurityCard";
+import { csvCell } from "@/lib/csv";
 
 type Tab = "overview" | "invoices" | "refunds" | "expenses" | "vat" | "export" | "settings";
 
@@ -117,7 +118,7 @@ const AccountantPortal = () => {
         i.status ?? "",
       ]),
     ];
-    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(";")).join("\n");
+    const csv = rows.map(r => r.map(c => csvCell(c)).join(";")).join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
