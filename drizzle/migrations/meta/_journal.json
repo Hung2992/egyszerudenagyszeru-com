@@ -295,6 +295,13 @@
       "when": 1794637060085,
       "tag": "0041_revoke_anon_can_manage_drops",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1794646789817,
+      "tag": "0042_social_aegis_approval",
+      "breakpoints": true
     }
   ]
 }
