@@ -1,0 +1,3 @@
+CREATE OR REPLACE FUNCTION public.social_execution_payload(_id uuid,_token uuid) RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$ SELECT jsonb_build_object('item',to_jsonb(q),'settings',to_jsonb(s)) FROM public.social_publish_queue q CROSS JOIN public.social_auto_publish_settings s WHERE q.id=_id AND q.execution_token=_token AND public.social_preflight(_id,_token) LIMIT 1 $$;
+REVOKE ALL ON FUNCTION public.social_execution_payload(uuid,uuid) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.social_execution_payload(uuid,uuid) TO service_role;

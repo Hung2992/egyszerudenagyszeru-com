@@ -12357,6 +12357,8 @@ export type Database = {
       social_publish_queue: {
         Row: {
           ai_score: number | null
+          approval_expires_at: string | null
+          approval_hash: string | null
           approved_at: string | null
           approved_by: string | null
           autopilot: boolean
@@ -12365,6 +12367,8 @@ export type Database = {
           created_at: string
           created_by: string | null
           error_message: string | null
+          execution_started_at: string | null
+          execution_token: string | null
           external_permalink: string | null
           external_post_id: string | null
           hashtags: string[]
@@ -12391,6 +12395,8 @@ export type Database = {
         }
         Insert: {
           ai_score?: number | null
+          approval_expires_at?: string | null
+          approval_hash?: string | null
           approved_at?: string | null
           approved_by?: string | null
           autopilot?: boolean
@@ -12399,6 +12405,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           error_message?: string | null
+          execution_started_at?: string | null
+          execution_token?: string | null
           external_permalink?: string | null
           external_post_id?: string | null
           hashtags?: string[]
@@ -12425,6 +12433,8 @@ export type Database = {
         }
         Update: {
           ai_score?: number | null
+          approval_expires_at?: string | null
+          approval_hash?: string | null
           approved_at?: string | null
           approved_by?: string | null
           autopilot?: boolean
@@ -12433,6 +12443,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           error_message?: string | null
+          execution_started_at?: string | null
+          execution_token?: string | null
           external_permalink?: string | null
           external_post_id?: string | null
           hashtags?: string[]
@@ -15990,6 +16002,37 @@ export type Database = {
         Args: { _password: string }
         Returns: boolean
       }
+      social_approve:
+        | { Args: { _id: string }; Returns: Json }
+        | { Args: { _expected_hash: string; _id: string }; Returns: Json }
+      social_cancel: { Args: { _id: string }; Returns: undefined }
+      social_claim: { Args: { _id: string }; Returns: Json }
+      social_execution_payload: {
+        Args: { _id: string; _token: string }
+        Returns: Json
+      }
+      social_finish: {
+        Args: {
+          _error?: string
+          _external_id?: string
+          _id: string
+          _permalink?: string
+          _state: string
+          _token: string
+        }
+        Returns: undefined
+      }
+      social_payload_hash: {
+        Args: {
+          _q: Database["public"]["Tables"]["social_publish_queue"]["Row"]
+        }
+        Returns: string
+      }
+      social_preflight: {
+        Args: { _id: string; _token: string }
+        Returns: boolean
+      }
+      social_review: { Args: { _id: string }; Returns: Json }
       track_campaign_event: {
         Args: { _amount?: number; _kind: string; _plan_id: string }
         Returns: undefined

@@ -2,6 +2,9 @@
 
 ## AI Marketing Command OS — egységes tervezés
 - [x] A hét új marketingterv összevonása, meglévő kód kapcsolódási pontjainak ellenőrzése, AEGIS-források visszaolvasása és kapukhoz kötött megvalósítási terv elkészítése; megvalósítás külön jóváhagyás után.
+- [x] 1. szakasz alapjai: közös AEGIS kapu, pontos review-hashhez kötött 72 órás approval, service-only atomikus claim/preflight/receipt, csak-hozzáírható audit, bizonytalan eredménynél nincs újraküldés; 38 teszt és hitelesített jóváhagyás nélküli tiltási próba sikeres. Teszttervezetek visszavonva, napló megőrizve.
+- [ ] 1. szakasz teljes biztonsági minősítése — élő párhuzamos claim/lejárat/stop próbák és szolgáltatói befejezés-visszaolvasás még szükséges; addig további automatizálás nem indul.
+- [ ] 1. szakasz külső sikerbizonyítéka — kijelölt tesztfiók és külön publikálási engedély szükséges; a további szakaszok az első kapu után indulnak.
 
 ## Social AI külön oldal
 - [x] Külön adminoldal a feltöltött social tervhez: meglévő tartalomstúdiók, valós közös sor, elemzések, Marketing és AEGIS hivatkozások; további tervrészek külön jelölve.

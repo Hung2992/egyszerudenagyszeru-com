@@ -158,8 +158,9 @@ export default function AdminSocialAutoPublish() {
   };
 
   const removeItem = async (id: string) => {
-    if (!confirm("Biztosan törlöd?")) return;
-    await supabase.from("social_publish_queue").delete().eq("id", id);
+    if (!confirm("Visszavonod ezt a publikálást? A napló megmarad.")) return;
+    const { error } = await supabase.rpc("social_cancel", { _id: id });
+    if (error) { toast.error(error.message); return; }
     load();
   };
 

@@ -295,6 +295,34 @@
       "when": 1794637060085,
       "tag": "0041_revoke_anon_can_manage_drops",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1794646789817,
+      "tag": "0042_social_aegis_approval",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1794646811234,
+      "tag": "0043_social_aegis_atomic_execution",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1794646881629,
+      "tag": "0044_social_execution_payload_snapshot",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1794646943856,
+      "tag": "0045_social_review_exact_payload",
+      "breakpoints": true
     }
   ]
 }

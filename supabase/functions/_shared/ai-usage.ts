@@ -27,6 +27,6 @@ export async function recordAiUsage(db: any, fn: string, model: string, usage: a
 // deno-lint-ignore no-explicit-any
 export async function assertAiBudget(db: any): Promise<void> {
   const { data, error } = await db.rpc("ai_budget_state");
-  if (error) { console.warn("ai budget check failed:", error.message); return; }
+  if (error || !data) throw new Error("ai_budget_unavailable");
   if (data?.state === "blocked") throw new Error("ai_budget_exhausted");
 }
