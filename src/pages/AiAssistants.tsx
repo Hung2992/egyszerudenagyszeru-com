@@ -23,7 +23,7 @@ const AiAssistants = () => {
     Promise.all([
       supabase.from("workforce_plans").select("id,goal,status,owner,due_date,plan").order("created_at", { ascending: false }).limit(200),
       supabase.from("workforce_plan_steps").select("plan_id,status").limit(2000),
-      supabase.from("ai_agent_bus_events").select("id,source_agent,target_agent,payload,created_at").eq("event_type", "workforce.team_share").order("created_at", { ascending: false }).limit(8),
+      supabase.from("ai_agent_bus_events").select("id,source_agent,target_agent,payload,created_at").eq("event_type", "workforce.team.shared").order("created_at", { ascending: false }).limit(8),
     ]).then(([p, s, e]) => { setPlans((p.data ?? []) as RolePlan[]); setSteps((s.data ?? []) as Step[]); setEvents((e.data ?? []) as Ev[]); });
   }, [isAdmin]);
   if (loading || !isAdmin) return null;
@@ -33,7 +33,7 @@ const AiAssistants = () => {
   const waiting = plans.filter(p => p.status === "draft").length;
   const done = steps.filter(s => s.status === "done").length;
   const pct = steps.length ? Math.round((done / steps.length) * 100) : 0;
-  const name = (id: string | null) => departments.find(d => d.id === id || d.id === id?.replace(/^workforce-/, ""))?.name ?? id ?? "mindenki";
+  const name = (id: string | null) => departments.find(d => d.id === id || d.id === id?.replace(/^workforce:/, ""))?.name ?? id ?? "mindenki";
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
