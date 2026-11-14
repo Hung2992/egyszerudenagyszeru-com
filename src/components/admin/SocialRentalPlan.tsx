@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/untyped-client";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Users, ExternalLink, Copy } from "lucide-react";
 import RentalJourney from "@/components/social/RentalJourney";
+import SocialVideoDraft from "./SocialVideoDraft";
 import { pairWeekly, rentalTopics, tiktokRentalVariants } from "@/lib/social-rental-plan";
 import { periodKey } from "@/lib/social-periods";
 import { toast } from "sonner";
@@ -48,8 +49,8 @@ export default function SocialRentalPlan() {
     </div>
     <div className="border-t border-border pt-5 space-y-3"><h3 className="font-display text-xl">TikTok-szöveggeneráló</h3>
       <select aria-label="Bérlési téma" className="w-full border border-border bg-background p-2 text-sm" value={topic} onChange={e => setTopic(e.target.value)}>{rentalTopics.map(t => <option key={t}>{t}</option>)}</select>
-      {tiktokRentalVariants(topic).map((text, i) => <div key={i} className="border border-border p-3 space-y-2"><p className="text-sm whitespace-pre-wrap break-words">{text}</p><Button size="sm" variant="outline" onClick={async () => { try { await navigator.clipboard.writeText(text); toast.success("Szöveg másolva"); } catch { toast.error("Jelöld ki és másold a szöveget."); } }}><Copy className="mr-2 h-3 w-3" />Másolás</Button></div>)}
-      <p className="text-xs text-muted-foreground">Kézi feltöltéshez; TikTok API-posztolás nincs engedélyezve.</p>
+      {tiktokRentalVariants(topic).map((text, i) => <div key={i} className="border border-border p-3 space-y-2"><p className="text-sm whitespace-pre-wrap break-words">{text}</p><Button size="sm" variant="outline" onClick={async () => { try { await navigator.clipboard.writeText(text); toast.success("Szöveg másolva"); } catch { toast.error("Jelöld ki és másold a szöveget."); } }}><Copy className="mr-2 h-3 w-3" />Másolás</Button><SocialVideoDraft topic={topic} text={text} /></div>)}
+      <p className="text-xs text-muted-foreground">Kézi feltöltéshez; a videó AI-tervezet, közzététel nem történik. TikTok API-posztolás nincs engedélyezve.</p>
     </div>
   </section>;
 }
