@@ -33,8 +33,8 @@
 - Az online fizetéshez aktív partneri fizetési kapcsolat szükséges.
 - A teljes éles rendelési teszthez valódi fizetés és külső kézbesítés szükséges.
 ## Új kérések (2026-11-13)
-- [ ] Munkatársi teljesítmény: kész lépések, teljesítési arány és részesedés az összes kész lépésből.
-- [ ] Új Webshop AI-tervjavaslat mentése és ellenőrzése a HUMAN GATE, dashboard és státusz nézeteken.
+- [x] Munkatársi teljesítmény: kész lépések, teljesítési arány és részesedés az összes kész lépésből; 24 teszt sikeres.
+- [x] Új Webshop AI-tervjavaslat mentése és ellenőrzése a HUMAN GATE, dashboard és státusz nézeteken; 5 lépés, jóváhagyásra vár.
 - [ ] Valódi munkatársak és e-mail értesítések — blokkoló: még nincsenek munkatársak/címzettek; app-email küldődomain nincs konfigurálva.
 - [x] Összekapcsolt AI-munkatársak: közös fontos adatok, címzett átadások, élő tervkapcsolat; admin átadás + címzetti AI-válasz és mobil nézet ellenőrizve. Megjelölt ellenőrző adat a naplóban megőrizve.
 - [x] AI-költségkeret a CONTROL panelen + előzetes figyelmeztetés (admin értesítés, leállítás a keretnél)
