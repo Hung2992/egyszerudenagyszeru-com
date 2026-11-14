@@ -94,6 +94,7 @@ const BrandCustomerAccount = lazy(lazyRetry(() => import("./pages/BrandCustomerA
 const BrandCheckout = lazy(lazyRetry(() => import("./pages/BrandCheckout.tsx")));
 const AiWorkforce = lazy(lazyRetry(() => import("./pages/AiWorkforce.tsx")));
 const AiAssistants = lazy(lazyRetry(() => import("./pages/AiAssistants.tsx")));
+const AiAssistantChat = lazy(lazyRetry(() => import("./pages/AiAssistantChat.tsx")));
 const PartnerApprovals = lazy(lazyRetry(() => import("./pages/PartnerApprovals.tsx")));
 const PartnerLanding = lazy(lazyRetry(() => import("./pages/PartnerLanding.tsx")));
 const PartnerShareRedirect = lazy(lazyRetry(() => import("./pages/PartnerShareRedirect.tsx")));
@@ -143,7 +144,7 @@ const App = () => (
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/ai-workforce" element={<AiWorkforce />} />
             <Route path="/admin/ai-asszisztensek" element={<AiAssistants />} />
-            <Route path="/admin/ai-asszisztensek/:deptId" element={<AiAssistants />} />
+            <Route path="/admin/ai-asszisztensek/:deptId" element={<AiAssistantChat />} />
             <Route path="/admin/partner-approvals" element={<PartnerApprovals />} />
             <Route path="/konyvelo" element={<AccountantPortal />} />
             <Route path="/partner" element={<PartnerPortal />} />
