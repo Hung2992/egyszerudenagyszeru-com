@@ -1,5 +1,11 @@
 # Partner webshop 2026
 
+## Tartalomtár és hirdetés — új kérés
+- [ ] TikTok scope ellenőrzés és kézi közzétételi csomag, API-korlát megkerülése nélkül.
+- [ ] Valós termék/kampány/blog tartalomforrás közös kiválasztó és platformterv.
+- [ ] Facebook fizetési állapot, kampánybrief és valós költség/teljesítmény ellenőrzés; indítás csak konkrét költési jóváhagyással.
+- [ ] Hitelesített tartalomtár és decemberi terv ellenőrzés.
+
 ## Most kért Social AI fejlesztés
 - [x] Facebook kapcsolati és hirdetési beállítások, fizetés/hirdetéskezelő megnyitása; fiók olvasható. Hirdetésindítás: aktív Meta-fizetés hiányzik.
 - [x] Meglévő TikTok kapcsolat igazolva; termék/kampány kiválasztásból jóváhagyási tervezet előkészítése és fail-closed adapter, ellenőrzött célfiókkal.
