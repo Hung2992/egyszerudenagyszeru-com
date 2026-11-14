@@ -48,3 +48,16 @@ export function planStage(p: Pick<RolePlan, "status" | "plan">, doneSteps = 0): 
 
 export type Staff = { dept_id: string; full_name: string; title: string; area: string; tools: string[]; duties: string };
 export const staffLabel = (s: Staff | undefined, fallback: string) => s ? `${s.full_name}${s.title ? " · " + s.title : ""}` : fallback;
+
+// Plan responsibility is the attribution source, not inferred human attendance.
+export function workforcePerformance(plans: RolePlan[], steps: RoleStep[]) {
+  const validIds = new Set(plans.filter(p => p.status !== "cancelled").map(p => p.id));
+  const mine = steps.filter(s => validIds.has(s.plan_id));
+  const completed = mine.filter(s => s.status === "done").length;
+  const allCompleted = steps.filter(s => s.status === "done").length;
+  return {
+    completed, total: mine.length,
+    completionPercent: mine.length ? Math.round(completed / mine.length * 100) : 0,
+    participationPercent: allCompleted ? Math.round(completed / allCompleted * 100) : 0,
+  };
+}

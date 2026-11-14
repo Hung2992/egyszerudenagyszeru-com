@@ -9,6 +9,7 @@ import { useWorkforceStaff } from "@/hooks/useWorkforceStaff";
 import { ownsPlan, openPlans, deptStatus, planOverdue, planStage, staffLabel, type RolePlan } from "@/lib/workforce-roles";
 import { deptDefaults } from "@/lib/workforce-defaults";
 import { WorkforceTeamPanel } from "@/components/admin/WorkforceTeamPanel";
+import { WorkforcePerformance } from "@/components/admin/WorkforcePerformance";
 import { WorkforceMyWork, saveProposal } from "@/components/admin/WorkforceMyWork";
 import { toast } from "sonner";
 import { huVoices, getVoicePref, setVoicePref, pickVoice } from "@/lib/hu-voice";
@@ -94,6 +95,7 @@ const AiAssistants = () => {
               <div className="text-[11px] font-display truncate"><span className="text-primary">{d.id}</span> {d.name}</div>
               {staff[d.id] && <div className="text-[10px] truncate">{staff[d.id].full_name}</div>}<div className="flex items-center gap-1 text-[10px] text-muted-foreground"><span className={`h-1.5 w-1.5 ${dot[st]}`} />{st}</div>
               {late > 0 && <div className="text-[10px] text-destructive">LEJÁRT {late}</div>}
+              <WorkforcePerformance plans={mine} steps={steps} />
             </div>);
           return (
             <Link key={d.id} to={`/admin/ai-asszisztensek/${d.id}`} onClick={(e) => { e.preventDefault(); setSel(d.id); if (!window.matchMedia("(min-width: 1024px)").matches) setTimeout(() => document.getElementById("wf-selected")?.scrollIntoView({ behavior: "smooth" }), 50); }} className={`bg-background p-3 hover:bg-muted space-y-2 min-w-0 ${sel === d.id ? "outline outline-1 outline-primary -outline-offset-1" : ""}`}>
@@ -101,6 +103,7 @@ const AiAssistants = () => {
               <div className="text-[11px] text-muted-foreground truncate">{staffLabel(staff[d.id], d.roles[0])}</div>
               <div className="text-[11px] truncate">{openPlans(mine)[0]?.goal ?? "Nincs saját terv"}</div>
               <div className="text-[10px] text-muted-foreground truncate">{(staff[d.id]?.tools?.length ? staff[d.id].tools : deptDefaults[d.id]?.tools ?? []).join(" · ")}</div>
+              <WorkforcePerformance plans={mine} steps={steps} />
               <div className="flex items-center justify-between text-[11px]"><span className="flex items-center gap-1"><span className={`h-2 w-2 ${dot[st]}`} />{st}</span><span className={late ? "text-destructive" : "text-muted-foreground"}>{late ? `LEJÁRT ${late}` : `${openPlans(mine).length} munka`}</span></div>
             </Link>
           );

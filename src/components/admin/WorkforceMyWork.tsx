@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { WorkforcePerformance } from "./WorkforcePerformance";
 import { supabase } from "@/integrations/supabase/client";
 import { departments, type Department } from "@/lib/ai-world";
 import { buildWorkOrder, evidenceOk } from "@/lib/ai-workforce";
@@ -113,6 +114,7 @@ export function WorkforceMyWork({ dept, onChange }: { dept: Department; onChange
           <div className="bg-background p-2 min-w-0"><div className="text-muted-foreground">Aktuális lépés</div><div className="truncate">{cur?.s ? `${cur.s.idx + 1}. ${cur.s.task}` : "—"}</div></div>
         </div>; })()}
       <div className="flex items-baseline justify-between"><h3 className="font-display text-sm">Saját munkák · {dept.name}</h3><span className="text-xs text-muted-foreground">{active.length} nyitott / {plans.length}</span></div>
+      <WorkforcePerformance plans={plans} steps={steps} />
       {plans.filter(p => p.status !== "cancelled").map(p => {
         const st = steps.filter(s => s.plan_id === p.id); const done = st.filter(s => s.status === "done").length;
         const late = planOverdue(p);

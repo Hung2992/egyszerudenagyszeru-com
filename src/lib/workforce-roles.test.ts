@@ -34,6 +34,22 @@ describe("dashboard határidő = Munka állapot határidő", () => {
 });
 
 import { planStage } from "./workforce-roles";
+import { workforcePerformance } from "./workforce-roles";
+describe("munkatársi teljesítmény", () => {
+  it("kész lépésekből számol teljesítést és csapatszintű részesedést", () => {
+    const p = { ...base, owner: null, status: "approved" };
+    expect(workforcePerformance([p], [
+      { plan_id: "a", status: "done" }, { plan_id: "a", status: "pending" },
+      { plan_id: "b", status: "done" }, { plan_id: "b", status: "done" },
+    ])).toEqual({ completed: 1, total: 2, completionPercent: 50, participationPercent: 33 });
+  });
+  it("nincs lépés: nulla, nem becsült teljesítmény", () => {
+    expect(workforcePerformance([], [])).toEqual({ completed: 0, total: 0, completionPercent: 0, participationPercent: 0 });
+  });
+  it("visszavont terv nem növeli a munkatárs teljesítményét", () => {
+    expect(workforcePerformance([{ ...base, owner: null, status: "cancelled" }], [{ plan_id: "a", status: "done" }]).completed).toBe(0);
+  });
+});
 describe("átmeneti állapotok", () => {
   it("más által javasolt tervezet → javaslat benyújtva", () => expect(planStage({ status: "draft", plan: { proposedBy: "dashboard" } })).toBe("javaslat benyújtva"));
   it("saját tervezet → jóváhagyásra vár", () => expect(planStage({ status: "draft", plan: {} })).toBe("jóváhagyásra vár"));
