@@ -1,5 +1,5 @@
 import { installAiMeter } from "../_shared/ai-meter.ts";
-import { sanitizeChatMessages } from '../_shared/chat-input.ts'
+import { sanitizeChatMessages, filterSafe } from '../_shared/chat-input.ts'
 installAiMeter("shopping-assistant");
 // AI Shopping Assistant - természetes nyelvű termékkeresés
 // Cache (1h) + napi kvóta (50/user) + monitoring integrálva
@@ -73,8 +73,9 @@ const TOOLS = [
 async function searchProducts(supabase: any, args: any) {
   let q = supabase.from('shop_products')
     .select('id, name, description, price, original_price, category, sizes, colors, image_url, stock')
-    .eq('is_active', true).limit(args.limit || 5)
-  if (args.query) q = q.or(`name.ilike.%${args.query}%,description.ilike.%${args.query}%,category.ilike.%${args.query}%`)
+    .eq('is_active', true).limit(Math.min(Math.max(Number(args.limit) || 5, 1), 20))
+  const sq = filterSafe(args.query)
+  if (sq) q = q.or(`name.ilike.%${sq}%,description.ilike.%${sq}%,category.ilike.%${sq}%`)
   if (args.category) q = q.ilike('category', `%${args.category}%`)
   if (args.color) q = q.contains('colors', [args.color])
   if (args.size) q = q.contains('sizes', [args.size])

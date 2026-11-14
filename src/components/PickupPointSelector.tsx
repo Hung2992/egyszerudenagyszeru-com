@@ -48,7 +48,8 @@ const PickupPointSelector = ({ carrierCode, value, onChange }: Props) => {
         .eq("active", true).eq("carrier_code", carrier)
         .limit(50);
       if (q.trim()) {
-        const term = `%${q.trim()}%`;
+        const safe = q.replace(/[,()*%\\:."']/g, " ").trim().slice(0, 60);
+        const term = `%${safe}%`;
         query = query.or(`name.ilike.${term},city.ilike.${term},zip.ilike.${term},address.ilike.${term}`);
       }
       const { data } = await query;

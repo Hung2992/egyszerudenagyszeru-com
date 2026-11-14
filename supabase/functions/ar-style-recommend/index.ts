@@ -1,4 +1,5 @@
 import { installAiMeter } from "../_shared/ai-meter.ts";
+import { filterSafe } from '../_shared/chat-input.ts';
 installAiMeter("ar-style-recommend");
 // Sprint B — AI stílus ajánló
 // POST { product_id, product_name, product_category?, product_colors?, occasion? }
@@ -81,7 +82,7 @@ Adj 3 komplementer darab javaslatot.`;
     // Match suggestions to real products
     const matched: any[] = [];
     for (const s of (parsed.suggestions || []).slice(0, 3)) {
-      const kw = (s.keywords || [])[0];
+      const kw = filterSafe((s.keywords || [])[0], 40);
       if (!kw) continue;
       const { data: prods } = await supabase.from('shop_products')
         .select('id, name, price, category, image_url')

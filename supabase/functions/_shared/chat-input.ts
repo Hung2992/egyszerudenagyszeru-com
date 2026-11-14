@@ -13,3 +13,8 @@ export function sanitizeChatMessages(
     .filter((m) => m.content.trim().length > 0)
     .slice(-maxMessages);
 }
+
+/** Makes free text safe to interpolate into a PostgREST `.or()` / ilike filter. */
+export function filterSafe(raw: unknown, max = 80): string {
+  return String(raw ?? "").replace(/[,()*%\\:."']/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
+}
