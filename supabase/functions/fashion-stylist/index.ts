@@ -42,6 +42,8 @@ Deno.serve(async (req) => {
       const { data } = await supabase.auth.getUser(token);
       userId = data.user?.id ?? null;
     }
+    // Fizetős AI-hívás: csak bejelentkezett felhasználó.
+    if (!userId) return json({ error: 'login_required' }, 401);
 
     const body = await req.json().catch(() => ({}));
     const { occasion, style, budget_max, gender, size, user_prompt, session_id } = body;
