@@ -302,6 +302,13 @@
       "when": 1794646789817,
       "tag": "0042_social_aegis_approval",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1794646811234,
+      "tag": "0043_social_aegis_atomic_execution",
+      "breakpoints": true
     }
   ]
 }

@@ -16004,11 +16004,27 @@ export type Database = {
       }
       social_approve: { Args: { _id: string }; Returns: Json }
       social_cancel: { Args: { _id: string }; Returns: undefined }
+      social_claim: { Args: { _id: string }; Returns: Json }
+      social_finish: {
+        Args: {
+          _error?: string
+          _external_id?: string
+          _id: string
+          _permalink?: string
+          _state: string
+          _token: string
+        }
+        Returns: undefined
+      }
       social_payload_hash: {
         Args: {
           _q: Database["public"]["Tables"]["social_publish_queue"]["Row"]
         }
         Returns: string
+      }
+      social_preflight: {
+        Args: { _id: string; _token: string }
+        Returns: boolean
       }
       track_campaign_event: {
         Args: { _amount?: number; _kind: string; _plan_id: string }
