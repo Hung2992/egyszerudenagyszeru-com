@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
         .select("id,title,price_huf,stock_qty,status,view_count,sales_count")
         .eq("partner_id", partnerId).limit(500),
       supabase.from("partner_storefronts")
-        .select("id,store_name,is_published,custom_domain,custom_domain_status,seo_title,seo_description")
+        .select("id,store_name:display_name,is_published,custom_domain,custom_domain_status,seo_title:meta_title,seo_description:meta_description")
         .eq("partner_id", partnerId).maybeSingle(),
       supabase.from("partner_shipping_methods").select("id").eq("partner_id", partnerId).eq("is_active", true),
     ]);
@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
     const storefrontId = (sfRes.data as any)?.id;
     if (storefrontId) {
       const { count } = await supabase.from("storefront_customers")
-        .select("id", { count: "exact", head: true }).eq("storefront_id", storefrontId);
+        .select("id", { count: "exact", head: true }).eq("partner_id", partnerId);
       customerCount = count || 0;
     }
 

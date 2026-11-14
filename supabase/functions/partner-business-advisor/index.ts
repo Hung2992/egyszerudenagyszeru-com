@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
         .eq("partner_id", partnerId).gte("created_at", since).limit(500),
       supabase.from("partner_products").select("title,price_huf,compare_price_huf,stock_qty,status,category,brand,product_type,view_count,sales_count")
         .eq("partner_id", partnerId).limit(200),
-      supabase.from("partner_storefronts").select("slug,is_published,store_name,tagline,custom_domain,custom_domain_status")
+      supabase.from("partner_storefronts").select("slug,is_published,store_name:display_name,tagline,custom_domain,custom_domain_status")
         .eq("partner_id", partnerId).maybeSingle(),
     ]);
 
