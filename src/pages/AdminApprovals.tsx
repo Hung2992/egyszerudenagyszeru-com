@@ -22,10 +22,19 @@ export default function AdminApprovals() {
   const [busy, setBusy] = useState(true);
   const [acting, setActing] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [uid, setUid] = useState<string | null>(null);
+  const [perms, setPerms] = useState<{ live: boolean; test: boolean } | null>(null);
 
   const load = useCallback(async () => {
     setBusy(true);
     setError("");
+    const { data: auth } = await supabase.auth.getUser();
+    const me = auth.user?.id ?? null;
+    setUid(me);
+    if (me) {
+      const pr = await supabase.from("social_publish_permissions").select("mode,revoked_at").eq("user_id", me);
+      if (!pr.error) setPerms({ live: pr.data?.some(p => p.mode === "live" && !p.revoked_at) ?? false, test: pr.data?.some(p => p.mode === "test" && !p.revoked_at) ?? false });
+    }
     const [queue, workforce] = await Promise.all([
       supabase.from("social_publish_queue").select("id,platform,content,status,requires_approval,scheduled_at,approval_hash,approval_expires_at,test_only,media_urls,media_type").eq("status", "pending").eq("requires_approval", true).order("scheduled_at", { ascending: true }).limit(100),
       supabase.from("workforce_plans").select("id,goal,status,risk,approval_expires_at").order("created_at", { ascending: false }).limit(100),
@@ -56,6 +65,15 @@ export default function AdminApprovals() {
     setActing(null);
     if (approveError) { toast.error(approveError.message.includes("publication_permission_required") ? `Nincs ${post.test_only ? "teszt" : "éles"} publikálási engedélyed. Add meg a Social AI központ „Engedélyek és napló” fülön, majd próbáld újra.` : approveError.message, { duration: 10000 }); return; }
     toast.success("Tartalom jóváhagyva · 72 óráig érvényes");
+    void load();
+  };
+  const grantLive = async () => {
+    if (!uid || !window.confirm("Megadod a saját éles publikálási engedélyedet? Ezután a jóváhagyott posztok az ütemezett időben megjelenhetnek.")) return;
+    setActing("perm");
+    const { error: permError } = await supabase.rpc("social_set_permission", { _user: uid, _mode: "live", _enabled: true });
+    setActing(null);
+    if (permError) { toast.error(permError.message); return; }
+    toast.success("Éles engedély megadva · most már jóváhagyhatod a posztokat");
     void load();
   };
   const reject = async (post: Post) => {
@@ -93,6 +111,10 @@ export default function AdminApprovals() {
       </div>
     </header>
     <main className="mx-auto max-w-3xl px-4 py-6 md:px-8 space-y-10">
+      {perms && <div className={`border p-4 space-y-3 ${perms.live ? "border-border" : "border-destructive"}`}>
+        <p className="text-sm"><strong>Éles publikálási engedély:</strong> {perms.live ? "megadva ✓" : "nincs megadva — enélkül a posztok jóváhagyása nem sikerül."}</p>
+        {!perms.live && <Button size="sm" disabled={acting === "perm"} onClick={() => void grantLive()}>{acting === "perm" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}Éles engedély megadása</Button>}
+      </div>}
       {error && <div role="alert" className="border border-destructive p-3 text-sm text-destructive break-words">{error}</div>}
 
       <section className="space-y-4">
