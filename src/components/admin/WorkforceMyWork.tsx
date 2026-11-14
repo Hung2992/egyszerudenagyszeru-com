@@ -1,3 +1,4 @@
+import { useWorkforceLive } from "@/hooks/useWorkforceLive";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -7,6 +8,7 @@ import { departments, type Department } from "@/lib/ai-world";
 import { buildWorkOrder } from "@/lib/ai-workforce";
 import { ownsPlan, openPlans, isOverdue, proposalGoal, type RolePlan } from "@/lib/workforce-roles";
 
+type GatePlan = RolePlan & { risk?: string };
 type Step = { id: string; plan_id: string; idx: number; status: string; task: string | null; due_date: string | null };
 const label: Record<string, string> = { draft: "Jóváhagyásra vár", approved: "Jóváhagyva", in_progress: "Folyamatban", done: "Kész", cancelled: "Megszakítva" };
 
@@ -17,14 +19,26 @@ export function WorkforceMyWork({ dept, onChange }: { dept: Department; onChange
   const [busy, setBusy] = useState(false);
   const load = useCallback(async () => {
     const [p, s] = await Promise.all([
-      supabase.from("workforce_plans").select("id,goal,status,owner,due_date,plan").order("created_at", { ascending: false }).limit(200),
+      supabase.from("workforce_plans").select("id,goal,status,owner,due_date,plan,risk").order("created_at", { ascending: false }).limit(200),
       supabase.from("workforce_plan_steps").select("id,plan_id,idx,status,task,due_date").order("idx").limit(2000),
     ]);
     setPlans(((p.data ?? []) as RolePlan[]).filter(x => ownsPlan(dept, x)));
     setSteps((s.data ?? []) as Step[]);
   }, [dept]);
   useEffect(() => { load(); }, [load]);
+  useWorkforceLive(load);
 
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  // HUMAN GATE döntés a dashboardról: ugyanaz az RPC, mint a HUMAN GATE fülön (egyszeres, szerveroldali napló).
+  const decide = async (p: GatePlan, approve: boolean) => {
+    const n = (notes[p.id] ?? "").trim();
+    if (approve && p.risk === "red" && n.length < 10) return toast.error("Piros tervhez legalább 10 karakteres indoklás kell");
+    setBusy(true);
+    const { error } = await supabase.rpc("workforce_set_status", { _plan: p.id, _status: approve ? "approved" : "cancelled", _note: n || undefined });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success(approve ? "Jóváhagyva" : "Elutasítva"); load(); onChange?.();
+  };
   const [target, setTarget] = useState("");
   const [handGoal, setHandGoal] = useState("");
   // Tervjavaslat mentése egy munkatársnak (saját magának vagy átadva). Mindig HUMAN GATE-re kerül.
@@ -59,7 +73,7 @@ export function WorkforceMyWork({ dept, onChange }: { dept: Department; onChange
   return (
     <section className="p-4 space-y-3 border-b border-border" aria-label="Saját munkák">
       <div className="flex items-baseline justify-between"><h3 className="font-display text-sm">Saját munkák · {dept.name}</h3><span className="text-xs text-muted-foreground">{active.length} nyitott / {plans.length}</span></div>
-      {plans.map(p => {
+      {plans.filter(p => p.status !== "cancelled").map(p => {
         const st = steps.filter(s => s.plan_id === p.id); const done = st.filter(s => s.status === "done").length;
         const late = p.status !== "done" && p.status !== "cancelled" && isOverdue(p.due_date);
         return (
@@ -67,6 +81,11 @@ export function WorkforceMyWork({ dept, onChange }: { dept: Department; onChange
             <div className="text-sm break-words">{p.goal}</div>
             <div className="text-xs text-muted-foreground">{label[p.status] ?? p.status} · határidő: {p.due_date ?? "nincs"}{late && <span className="text-destructive"> · LEJÁRT</span>} · {done}/{st.length} lépés</div>
             <div className="h-1 bg-muted"><div className="h-1 bg-primary" style={{ width: `${st.length ? (done / st.length) * 100 : 0}%` }} /></div>
+            {p.status === "draft" && <div className="space-y-2 border-t border-border pt-2">
+              <div className="text-[11px] text-muted-foreground">HUMAN GATE · kockázat: {(p as GatePlan).risk ?? "?"}</div>
+              <input aria-label="Döntés indoklása" placeholder={(p as GatePlan).risk === "red" ? "Indoklás (min. 10 karakter)" : "Megjegyzés (nem kötelező)"} value={notes[p.id] ?? ""} onChange={e => setNotes({ ...notes, [p.id]: e.target.value })} className="w-full bg-muted px-2 py-1 text-xs" />
+              <div className="flex gap-2"><Button size="sm" className="rounded-none" disabled={busy} onClick={() => decide(p as GatePlan, true)}>Jóváhagyás</Button><Button size="sm" variant="outline" className="rounded-none" disabled={busy} onClick={() => decide(p as GatePlan, false)}>Elutasítás</Button></div>
+            </div>}
             <ol className="text-xs space-y-1">{st.map(s => <li key={s.id} className={s.status === "done" ? "text-muted-foreground line-through" : s.status === "failed" ? "text-destructive" : ""}>{s.idx + 1}. {s.task}</li>)}</ol>
           </div>
         );

@@ -1,3 +1,4 @@
+import { useWorkforceLive } from "@/hooks/useWorkforceLive";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ export default function EmpyreanWorkforcePlans({ reloadKey }: { reloadKey: numbe
     setPlans((p.data ?? []) as Plan[]); setSteps((s.data ?? []) as Step[]); setAudit((a.data ?? []) as Audit[]);
   }, []);
   useEffect(() => { load(); }, [load, reloadKey]);
+  useWorkforceLive(load);
 
   const [note, setNote] = useState("");
   const setStatus = async (id: string, status: string) => {

@@ -1,3 +1,4 @@
+import { useWorkforceLive } from "@/hooks/useWorkforceLive";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -19,6 +20,7 @@ const dur = (ms: number) => { const m = Math.round(ms / 60000); return m < 60 ? 
 const WorkforceWorkStatus = () => {
   const [plans, setPlans] = useState<Plan[]>([]); const [steps, setSteps] = useState<Step[]>([]); const [imgs, setImgs] = useState<Img[]>([]);
   const [showTest, setShowTest] = useState(false); const [open, setOpen] = useState<string | null>(null); const [r, setR] = useState(0); const [led, setLed] = useState<Record<string, number>>({});
+  useWorkforceLive(() => setR(x => x + 1));
   useEffect(() => { (async () => {
     const [p, s, i] = await Promise.all([
       supabase.from("workforce_plans").select("id,goal,status,risk,owner,due_date,created_at").order("created_at", { ascending: false }).limit(200),

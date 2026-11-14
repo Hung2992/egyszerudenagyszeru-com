@@ -1,3 +1,4 @@
+import { useWorkforceLive } from "@/hooks/useWorkforceLive";
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
@@ -22,6 +23,7 @@ const AiWorkforce = () => {
   const { isAdmin, loading } = useAdminCheck();
   const navigate = useNavigate();
   const [reload, setReload] = useState(0);
+  useWorkforceLive(() => setReload(r => r + 1));
   const [tab, setTab] = useState<(typeof TABS)[number]>(new URLSearchParams(window.location.search).get("tab") === "munka" ? "MUNKA ÁLLAPOT" : "COMMAND CENTER");
   useEffect(() => { const h = () => setTab("MUNKA ÁLLAPOT"); window.addEventListener("wf-tab-munka", h); return () => window.removeEventListener("wf-tab-munka", h); }, []);
   const [d, setD] = useState<{ plans: Plan[]; steps: Step[]; audit: { action: string; created_at: string }[]; ev: { action: string; findings: string[]; created_at: string }[]; inc: number; agents: { state: string }[]; paused: boolean; mode: string; ledger: { ok: boolean; checked: number } | null } | null>(null);
