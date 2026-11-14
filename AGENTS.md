@@ -6,6 +6,7 @@
 - Monthly social plans store idempotent daily slots linked to the existing queue; a plan never grants publication approval, and period grouping uses Budapest dates with Monday-start weeks.
 - Social content catalog reads authoritative sources through an admin-only RPC and preserves store provenance; inactive/test sources cannot create publishable slots, and manual TikTok preparation never claims API publication.
 - The Social AI center uses a dedicated recruitment draft library instead of the commerce catalog; monthly drafts use the existing manual-source approval path to avoid mixing recruitment with merchant product promotion.
+- The public Social partner entry reuses the existing registration and contract lifecycle; the admin rental view reads existing partner records without treating them as attributed ad conversions or exposing the social queue to partners.
 
 - EMPYREAN is a control plane over existing domain systems, not a duplicate commerce database; authoritative records remain in their existing domains.
 - Keep shared governance schemas in `src/lib/empyrean-contracts.ts`; client validation is advisory and must be re-enforced by the backend before privileged execution.

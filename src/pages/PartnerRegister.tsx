@@ -127,13 +127,13 @@ const PartnerRegister = () => {
     <div className="min-h-screen bg-background text-foreground">
       <Helmet>
         <title>Partner regisztráció | Egyszerű de Nagyszerű</title>
-        <meta name="description" content="Hozd létre partnerfiókodat, és indítsd el saját webshopodat, szolgáltatásaidat és időpontfoglalásaidat." />
+        <meta name="description" content="Partnerjelentkezés az Egyszerű de Nagyszerű teljes üzleti szoftverének szerződéses bérlésére." />
       </Helmet>
 
       <div className="max-w-xl mx-auto px-4 py-10 space-y-6">
         <h1 className="text-3xl font-bold uppercase tracking-tight">Partner regisztráció</h1>
         <p className="text-sm text-muted-foreground">
-          Készítsd el a fiókod, és küldd be a jelentkezésed. Jóváhagyás után saját webshopot, szolgáltatásokat, naptárat és hírleveleket kezelhetsz.
+          Jelentkezz az Egyszerű de Nagyszerű teljes üzleti szoftverének szerződéses bérlésére. A hozzáféréshez partneri jóváhagyás és aláírt szerződés szükséges.
         </p>
 
         {checking ? (

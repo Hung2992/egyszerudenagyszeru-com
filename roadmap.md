@@ -1,10 +1,12 @@
 # Partner webshop 2026
 
 ## Szerződéses bérlés — most kért feladatok
-- [ ] Social AI: szerződéses bérlési terv, platformposztok és meglévő partnerjelentkezések közös nézete.
-- [ ] Partnerbelépés: meglévő regisztráció és szerződésfolyamat bekötése; új profiladatokról felhasználói döntés szükséges.
-- [ ] TikTok: jogosultság újraellenőrzése és szerződéses bérléshez letölthető kézi sablon.
-- [ ] Facebook: fizetés és valós teljesítmény ellenőrzése; indítás csak aktív fizetés, kreatív, mérés és pontos költési jóváhagyás után.
+- [x] Social AI: szerződéses bérlési terv, hét ismétlődő havi témával és meglévő partnerjelentkezések közös nézetével; 6 valós partneradat megjelent, hirdetési attribúció nélkül.
+- [x] Partnerbelépés: /social-partner nyilvános bérlési terv és meglévő regisztráció/szerződésfolyamat bekötve; felhasználó a meglévő adatok használatát kérte. Új auth-rendszer nem készült; új signup és szerződésaláírás nem tesztelve.
+- [x] TikTok: aktuális konfigurációban available_scopes=none, video.publish nincs; reconnect nem adhat új scope-ot. Szerkesztett bérlési szövegből kézi videósablon letöltése 390×630 hitelesített UI-ban igazolva; nincs API-posztolás.
+- [x] Facebook: Meta inspect szerint fizetés inaktív; 2026-10-16–11-14 Insights sikeres és üres, HUF/Phoenix. Valós teljesítmény panel továbbra is elérhető.
+- [ ] Facebook-indítás — aktív fizetés, végleges kreatív, jelentkezésmérés, deklarációk és pontos költési jóváhagyás szükséges; kampány nem indult.
+- [x] Ellenőrzés: 16 teszt sikeres, build OK; telefonos nyilvános belépési nézet, hitelesített jelentkezési lista és TikTok-letöltés, nincs oldal-túlnyúlás vagy runtime hiba.
 
 ## Tartalomtár és hirdetés — új kérés
 - [x] Célkorrekció: Social AI kizárólag teljes szoftver szerződéses bérléséhez keres partnereket; saját webshop nincs. Dedikált platformszövegek és havi manuális partnertervezet, régi adatok/napló megőrizve; 15 teszt, mobilos hitelesített ellenőrzés és build OK.
