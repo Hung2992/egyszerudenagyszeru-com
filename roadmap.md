@@ -34,7 +34,10 @@
 - A teljes éles rendelési teszthez valódi fizetés és külső kézbesítés szükséges.
 ## Rendszeraudit (2026-11-14)
 - [x] Harmadik kör: 5 szerverfunkció mezőhibája javítva, 5 veszélyes adatbázisművelet lezárva; 37 admin beállítólap + ~35 további hiányzó mező, hiányzó értékelési tárhely, fizetési kliensbeállítás és webhook feltárva (v3).
-- [ ] Mélyvizsgálat 20 súlyos találatának javítása — következő kör, felhasználói döntés a sorrendről.
+- [x] Negyedik kör: 13 súlyos találat javítva és támadás-szimulációval ellenőrizve; 2 nem induló funkció javítva; dupla hibás ütemezés törölve (v4).
+- [ ] Értékelési képek tárhelye — blokkoló: a munkatér tiltja a nyilvános tárhelyet (felhasználói beállítás).
+- [ ] Partner SMS/hírlevél címzett-ellenőrzés — blokkoló: termékdöntés (dupla megerősítés, korlát).
+- [ ] 37 admin beállítólap hiányzó mezői + CSV/naplózási figyelmeztetések — következő kör.
 - [x] Részletes második kör: hat hitelesített belső oldal; 32 hiányzó táblahivatkozás, egy hiányzó RPC; kedvencek 404 reprodukálva; rendelési küldődomain eltérés; 21/21 készlépés naplója egyezik. Részletes v2 jelentés átadva, nem ellenőrzött folyamatok külön jelölve.
 - [x] Gyors biztonsági ellenőrzés, függőségi vizsgálat, kulcsnevek összevetése, hiányzó üzleti adatok ellenőrzése, 280 teszt és négy nyilvános oldal indulásának ellenőrzése; részletes hibajegyzék átadva.
 - [x] Mély biztonsági vizsgálat lefutott (v3 jelentés).
