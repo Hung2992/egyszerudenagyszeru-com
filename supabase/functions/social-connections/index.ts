@@ -29,8 +29,20 @@ Deno.serve(async req => {
   if (!guard.ok) return guard.response;
   if (guard.caller !== "admin") return json({ error: "human_admin_required" }, 403);
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
-  if (!z.object({ action: z.literal("inspect") }).safeParse(await req.json().catch(() => ({}))).success) return json({ error: "invalid_request" }, 400);
+  const parsed = z.discriminatedUnion("action", [z.object({ action: z.literal("inspect") }), z.object({ action: z.literal("ads_report"), since: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), until: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) })]).safeParse(await req.json().catch(() => ({})));
+  if (!parsed.success) return json({ error: "invalid_request" }, 400);
   try {
+    if (parsed.data.action === "ads_report") {
+      const { since, until } = parsed.data;
+      const start = Date.parse(since), end = Date.parse(until);
+      if (!Number.isFinite(start) || !Number.isFinite(end) || start > end || end - start > 93 * 86400000) return json({ error: "invalid_date_range" }, 400);
+      const account = await read("meta_ads", "META_ADS_API_KEY", "v26.0/act_1752502632475982?fields=name,currency,timezone_name");
+      if (!account.ok) return json(account, account.status);
+      const params = new URLSearchParams({ fields: "spend,impressions,clicks,inline_link_clicks", time_range: JSON.stringify({ since, until }) });
+      const report = await read("meta_ads", "META_ADS_API_KEY", `v26.0/act_1752502632475982/insights?${params}`);
+      if (!report.ok) return json(report, report.status);
+      return json({ account: account.data, rows: report.data.data ?? [], since, until, checked_at: new Date().toISOString() });
+    }
     const [facebook, tiktok, tiktokPosting, linkedin] = await Promise.all([
       read("meta_ads", "META_ADS_API_KEY", "v26.0/act_1752502632475982?fields=id,name,account_status,disable_reason,funding_source_details"),
       read("tiktok", "TIKTOK_API_KEY", "user/info/?fields=open_id,display_name"),

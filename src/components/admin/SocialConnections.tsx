@@ -4,6 +4,7 @@ import { FunctionsHttpError } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, ExternalLink, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
+import SocialAdsReport from "./SocialAdsReport";
 type Result = { ok: boolean; status: number; details?: string; data?: { name?: string; account_status?: number; funding_source_details?: unknown; data?: { user?: { display_name?: string } } }; name?: string };
 type Connections = { facebook: Result & { billing_link: string; account_link: string }; tiktok: Result; tiktokPosting: Result; linkedin: Result; inspected_at: string };
 export default function SocialConnections() {
@@ -23,5 +24,6 @@ export default function SocialConnections() {
       <article className="min-w-0 border border-border p-4 space-y-3 break-words"><h3 className="font-display">TikTok</h3><p className="text-sm">{result?.tiktok.data?.data?.user?.display_name ?? "zoltan.horvath2002"}</p><p className="text-xs text-muted-foreground">{result?.tiktokPosting.ok ? "Posztolási előkészítés elérhető · éles eredmény még nincs igazolva" : "Kapcsolódva · olvasás elérhető · posztolási engedély hiányzik"}</p>{result?.tiktokPosting.details && <p className="text-xs text-destructive break-all">{result.tiktokPosting.status}: {result.tiktokPosting.details}</p>}<Button asChild size="sm" variant="outline"><a href="https://developers.tiktok.com/apps/" target="_blank" rel="noopener noreferrer"><ExternalLink className="mr-2 h-3 w-3" />TikTok alkalmazások</a></Button></article>
       <article className="min-w-0 border border-border p-4 space-y-3 break-words"><h3 className="font-display">LinkedIn</h3><p className="text-sm">{result?.linkedin.name ?? "Zoltan Horvath"}</p><p className="text-xs text-muted-foreground">{result && !result.linkedin.ok ? "Kapcsolat ellenőrzése sikertelen" : "Kapcsolódva · személyes bejegyzésküldési engedély megadva"}</p><p className="text-xs text-muted-foreground flex items-center gap-2"><ShieldCheck className="h-4 w-4 shrink-0" />Minden poszt AEGIS-jóváhagyással.</p></article>
     </div>{result && <p className="text-xs text-muted-foreground">Ellenőrizve: {new Date(result.inspected_at).toLocaleString("hu-HU", { timeZone: "Europe/Budapest" })}</p>}
+    <SocialAdsReport />
   </section>;
 }
