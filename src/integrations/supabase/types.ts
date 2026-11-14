@@ -16002,7 +16002,9 @@ export type Database = {
         Args: { _password: string }
         Returns: boolean
       }
-      social_approve: { Args: { _id: string }; Returns: Json }
+      social_approve:
+        | { Args: { _id: string }; Returns: Json }
+        | { Args: { _expected_hash: string; _id: string }; Returns: Json }
       social_cancel: { Args: { _id: string }; Returns: undefined }
       social_claim: { Args: { _id: string }; Returns: Json }
       social_execution_payload: {
@@ -16030,6 +16032,7 @@ export type Database = {
         Args: { _id: string; _token: string }
         Returns: boolean
       }
+      social_review: { Args: { _id: string }; Returns: Json }
       track_campaign_event: {
         Args: { _amount?: number; _kind: string; _plan_id: string }
         Returns: undefined
