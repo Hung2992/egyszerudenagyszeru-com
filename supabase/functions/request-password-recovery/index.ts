@@ -1,32 +1,14 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { appOrigin } from "../_shared/app-origin.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const EMAIL_LIMIT_PER_HOUR = 3;
-const DEFAULT_REDIRECT = "https://egyszerudenagyszeru.com/reset-password";
-
 // Only allow reset links that return to this app's own sites.
 function safeRedirect(raw: unknown): string {
-  if (typeof raw !== "string") return DEFAULT_REDIRECT;
-  try {
-    const u = new URL(raw);
-    const host = u.hostname.toLowerCase();
-    const ok = u.protocol === "https:" && (
-      host === "egyszerudenagyszeru.com" || host === "www.egyszerudenagyszeru.com" ||
-      host === "egyszerudenagyszeru-com.lovable.app" ||
-      host.includes("25064323-c063-4c5b-978a-bc7256077fc1")
-    );
-    if (!ok || u.pathname !== "/reset-password") return DEFAULT_REDIRECT;
-    return `${u.origin}/reset-password`;
-  } catch { return DEFAULT_REDIRECT; }
-}
-const IP_LIMIT_PER_HOUR = 10;
-
-async function sha256(input: string): Promise<string> {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input.toLowerCase().trim()));
-  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  return `${appOrigin(raw)}/reset-password`;
 }
 
 Deno.serve(async (req) => {
