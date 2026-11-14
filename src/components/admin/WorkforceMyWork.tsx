@@ -73,7 +73,7 @@ export function WorkforceMyWork({ dept, onChange }: { dept: Department; onChange
   return (
     <section className="p-4 space-y-3 border-b border-border" aria-label="Saját munkák">
       <div className="flex items-baseline justify-between"><h3 className="font-display text-sm">Saját munkák · {dept.name}</h3><span className="text-xs text-muted-foreground">{active.length} nyitott / {plans.length}</span></div>
-      {plans.map(p => {
+      {plans.filter(p => p.status !== "cancelled").map(p => {
         const st = steps.filter(s => s.plan_id === p.id); const done = st.filter(s => s.status === "done").length;
         const late = p.status !== "done" && p.status !== "cancelled" && isOverdue(p.due_date);
         return (
