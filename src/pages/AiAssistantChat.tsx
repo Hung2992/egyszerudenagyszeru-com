@@ -12,7 +12,7 @@ type Msg = { role: "user" | "assistant"; content: string };
 const KEY = (id: string) => `wf-assistant-${id}`;
 const load = (id: string): Msg[] => { try { return JSON.parse(localStorage.getItem(KEY(id)) || "[]"); } catch { return []; } };
 
-const AiAssistantChat = () => {
+const AssistantConversation = () => {
   const { isAdmin, loading } = useAdminCheck();
   const navigate = useNavigate();
   const { deptId } = useParams();
@@ -121,4 +121,8 @@ const AiAssistantChat = () => {
   );
 };
 
+const AiAssistantChat = () => {
+  const { deptId } = useParams();
+  return <AssistantConversation key={deptId} />;
+};
 export default AiAssistantChat;
