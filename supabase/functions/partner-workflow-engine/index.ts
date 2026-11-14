@@ -4,6 +4,7 @@ installAiMeter("partner-workflow-engine");
 // + A/B variáns generálás és kiértékelés.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { publish } from "../_shared/agent-bus.ts";
+import { safeFetch } from "../_shared/safe-url.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -134,7 +135,7 @@ async function runStep(admin: any, wf: any, step: any, payload: Record<string, u
     }
     case "webhook": {
       try {
-        const r = await fetch(String(cfg.url), {
+        const r = await safeFetch(String(cfg.url), {
           method: cfg.method ?? "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(cfg.body ?? payload),

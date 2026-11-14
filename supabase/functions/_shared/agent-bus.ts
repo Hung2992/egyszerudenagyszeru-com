@@ -1,3 +1,4 @@
+import { safeFetch } from "./safe-url.ts";
 // AI Agent Bus — közös context store + event bus helper
 // Bármelyik edge function importálhatja: import { publish, setContext, getContext, listRecentEvents } from "../_shared/agent-bus.ts"
 
@@ -54,7 +55,7 @@ async function dispatchToSubscribers(supabase: SupabaseLike, ev: { id: string; s
         // külső URL-re SOHA nem küldünk titkot.
         const selfBase = Deno.env.get("SUPABASE_URL") || "";
         const isInternalTarget = !!selfBase && String(s.webhook_url).startsWith(selfBase);
-        const r = await fetch(s.webhook_url, {
+        const r = await safeFetch(s.webhook_url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

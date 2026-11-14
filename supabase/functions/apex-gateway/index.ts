@@ -5,6 +5,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { adminClient, json, logEvent } from "../_shared/comm-core.ts";
 import { decryptCredentials, encryptCredentials, gatewaySend, type GatewayChannel } from "../_shared/gateway-drivers.ts";
 import { requireInternalOrAdmin } from "../_shared/internal-auth.ts";
+import { safeFetch } from "../_shared/safe-url.ts";
 
 const CHANNELS: GatewayChannel[] = ["sms", "whatsapp", "voice"];
 const DRIVERS = ["twilio", "gatewayapi", "http_generic"];
@@ -202,7 +203,7 @@ Deno.serve(async (req) => {
               const headers: Record<string, string> = {};
               if (creds.auth_header && creds.auth_value) headers[creds.auth_header] = creds.auth_value;
               else if (creds.bearer_token) headers.Authorization = `Bearer ${creds.bearer_token}`;
-              const res = await fetch(url, { method: "GET", headers });
+              const res = await safeFetch(url, { method: "GET", headers });
               ok = res.status < 500;
               detail = `${res.status}`;
             }
