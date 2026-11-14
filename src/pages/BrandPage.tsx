@@ -5,6 +5,7 @@ import { storePageUrl } from "@/lib/storefrontSeo";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { ArrowLeft } from "lucide-react";
 import { getPartnerSlugFromHostname, resolveCustomDomainSlug } from "@/lib/partner-subdomain";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 
 // AI-val generált partner aloldal publikus megjelenítése: /b/:slug/oldal/:pageSlug
 const BrandPage = () => {
@@ -113,7 +114,7 @@ const BrandPage = () => {
         <article
           className="prose prose-invert max-w-none leading-relaxed space-y-4 [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:mt-10 [&_h2]:mb-4 [&_h3]:text-xl [&_h3]:font-bold [&_h3]:mt-8 [&_h3]:mb-3 [&_p]:mb-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-2 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:opacity-80"
           style={{ ["--tw-prose-links" as any]: accent }}
-          dangerouslySetInnerHTML={{ __html: page.content_html }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(page.content_html) }}
         />
       </main>
 
