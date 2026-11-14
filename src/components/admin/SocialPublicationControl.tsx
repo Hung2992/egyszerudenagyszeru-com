@@ -6,7 +6,7 @@ import { ShieldCheck, FlaskConical, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 type Event = { id: string; event_type: string; created_at: string; platform: string; payload: { content?: string; rendered_content?: string; executor?: string; result?: string; reason?: string; test_only?: boolean; external_calls?: number } };
-const labels: Record<string, string> = { approved: "Jóváhagyva", publication_attempt: "Publikálási kísérlet", test_publication_attempt: "Tesztpublikálási kísérlet", cancelled: "Visszavonva", provider_confirmed: "Szolgáltató visszaigazolta", provider_accepted: "Szolgáltató átvette", execution_claimed: "Végrehajtás lefoglalva" };
+const labels: Record<string, string> = { draft_created: "Tervezet létrehozva", approved: "Jóváhagyva", publication_attempt: "Publikálási kísérlet", test_publication_attempt: "Tesztpublikálási kísérlet", cancelled: "Visszavonva", provider_confirmed: "Szolgáltató visszaigazolta", provider_accepted: "Szolgáltató átvette", execution_claimed: "Végrehajtás lefoglalva" };
 
 export default function SocialPublicationControl({ onCreated }: { onCreated: () => void }) {
   const [uid, setUid] = useState<string | null>(null);
@@ -49,7 +49,7 @@ export default function SocialPublicationControl({ onCreated }: { onCreated: () 
     <section className="border-b border-border pb-5 space-y-3">
       <h2 className="font-display text-xl flex items-center gap-2"><ShieldCheck className="h-5 w-5" />Publikálási engedélyek</h2>
       <p className="text-sm text-muted-foreground">Saját fiók · Teszt: {testPermission ? "engedélyezve" : "tiltva"} · Éles: {livePermission ? "engedélyezve" : "tiltva"}</p>
-      <div className="flex flex-wrap gap-2"><Button disabled={busy} variant="outline" onClick={() => void permission("test", !testPermission)}>Tesztengedély {testPermission ? "visszavonása" : "megadása"}</Button><Button disabled={busy} variant="outline" onClick={() => void permission("live", !livePermission)}>Éles engedély {livePermission ? "visszavonása" : "megadása"}</Button></div>
+      <div className="flex flex-wrap gap-2"><Button disabled={busy || !uid} variant="outline" onClick={() => void permission("test", !testPermission)}>Tesztengedély {testPermission ? "visszavonása" : "megadása"}</Button><Button disabled={busy || !uid} variant="outline" onClick={() => void permission("live", !livePermission)}>Éles engedély {livePermission ? "visszavonása" : "megadása"}</Button></div>
     </section>
     <section className="space-y-3"><h2 className="font-display text-xl flex items-center gap-2"><FlaskConical className="h-5 w-5" />Közzététel nélküli teszt</h2><Textarea aria-label="Tesztbejegyzés tartalma" value={content} onChange={e => setContent(e.target.value)} /><Button disabled={busy || !content.trim()} onClick={() => void create()}>Teszttervezet létrehozása</Button></section>
     <section className="space-y-3"><div className="flex justify-between gap-2 items-center"><h2 className="font-display text-xl">Jóváhagyási és publikálási napló</h2><Button variant="ghost" size="icon" title="Napló frissítése" aria-label="Napló frissítése" onClick={() => void load()}><RefreshCw className="h-4 w-4" /></Button></div>

@@ -10,7 +10,7 @@ import { publish as busPublish } from "../_shared/agent-bus.ts";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { z } from "npm:zod@3";
 import { aegisRedact, aegisInput } from "../_shared/aegis.ts";
-import { providerOutcome } from "../_shared/social-governance.ts";
+import { providerOutcome, canCallProvider } from "../_shared/social-governance.ts";
 
 const json = (d: unknown, s = 200) =>
   new Response(JSON.stringify(d), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -252,6 +252,8 @@ Deno.serve(async (req) => {
           const { data: snapshot, error: snapshotError } = await sb.rpc("social_execution_payload", { _id: item.id, _token: token });
           if (snapshotError || !snapshot?.item || !snapshot.settings) throw new Error("AEGIS: approved snapshot unavailable");
           item = snapshot.item as Item;
+          const { data: permission, error: permissionError } = await sb.rpc("social_has_permission", { _user: uid ?? item.approved_by, _mode: "live" });
+          if (permissionError || !canCallProvider(item.test_only, permission === true)) throw new Error("publication_permission_required");
           const approvedSettings = snapshot.settings as Settings;
           const text = buildText(item, approvedSettings.default_hashtags || []);
           if (aegisRedact(text).findings.length || aegisInput(text).length) throw new Error("AEGIS: output review required");

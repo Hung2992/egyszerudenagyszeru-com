@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { approvalIsCurrent, budapestHour, inQuietHours, providerOutcome } from "../../supabase/functions/_shared/social-governance";
+import { approvalIsCurrent, budapestHour, inQuietHours, providerOutcome, canCallProvider } from "../../supabase/functions/_shared/social-governance";
 
 const now = Date.parse("2026-11-14T09:00:00Z");
 const approved = { status: "pending", approved_by: "admin", approved_at: "2026-11-14T08:00:00Z", approval_expires_at: "2026-11-17T08:00:00Z", approval_hash: "exact-payload" };
 describe("social execution governance", () => {
+  it("test-only drafts never call a provider even with live permission", () => expect(canCallProvider(true, true)).toBe(false));
+  it("live publication requires a separate live capability", () => expect(canCallProvider(false, false)).toBe(false));
+  it("only a live draft with live capability can call a provider", () => expect(canCallProvider(false, true)).toBe(true));
   it("rejects expired approvals", () => expect(approvalIsCurrent({ ...approved, approval_expires_at: "2026-11-14T09:00:00Z" }, now)).toBe(false));
   it("requires a payload-bound approval", () => expect(approvalIsCurrent({ ...approved, approval_hash: null }, now)).toBe(false));
   it("accepts a current pending approval", () => expect(approvalIsCurrent(approved, now)).toBe(true));
