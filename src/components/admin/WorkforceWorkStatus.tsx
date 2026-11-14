@@ -1,3 +1,4 @@
+import { planStage } from "@/lib/workforce-roles";
 import { useWorkforceLive } from "@/hooks/useWorkforceLive";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,7 +24,7 @@ const WorkforceWorkStatus = () => {
   useWorkforceLive(() => setR(x => x + 1));
   useEffect(() => { (async () => {
     const [p, s, i] = await Promise.all([
-      supabase.from("workforce_plans").select("id,goal,status,risk,owner,due_date,created_at").order("created_at", { ascending: false }).limit(200),
+      supabase.from("workforce_plans").select("id,goal,status,risk,owner,due_date,created_at,plan").order("created_at", { ascending: false }).limit(200),
       supabase.from("workforce_plan_steps").select("id,plan_id,idx,phase,task,owner,status,due_date,executed_at,result").order("idx"),
       supabase.from("workforce_plan_images").select("id,plan_id,path").order("created_at"),
     ]);
@@ -96,7 +97,7 @@ const WorkforceWorkStatus = () => {
             <li key={p.id} className={`border p-3 space-y-2 ${late ? "border-destructive" : "border-border"}`}>
               <button className="w-full text-left flex justify-between gap-2" onClick={() => setOpen(open === p.id ? null : p.id)}>
                 <span className="font-medium">{p.goal}</span>
-                <span className={`shrink-0 ${late ? "text-destructive font-medium" : "text-muted-foreground"}`}>{late ? "LEJÁRT" : statusHu[p.status] ?? p.status}</span>
+                <span className={`shrink-0 ${late ? "text-destructive font-medium" : "text-muted-foreground"}`}>{late ? "LEJÁRT" : planStage(p as never, ok)}</span>
               </button>
               <div className="h-1.5 bg-muted"><div className="h-1.5 bg-accent" style={{ width: `${pp}%` }} /></div>
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
