@@ -15,7 +15,8 @@ function safeRedirect(raw: unknown): string {
     const host = u.hostname.toLowerCase();
     const ok = u.protocol === "https:" && (
       host === "egyszerudenagyszeru.com" || host === "www.egyszerudenagyszeru.com" ||
-      host.endsWith(".lovable.app") || host.endsWith(".lovableproject.com")
+      host === "egyszerudenagyszeru-com.lovable.app" ||
+      host.includes("25064323-c063-4c5b-978a-bc7256077fc1")
     );
     if (!ok || u.pathname !== "/reset-password") return DEFAULT_REDIRECT;
     return `${u.origin}/reset-password`;
