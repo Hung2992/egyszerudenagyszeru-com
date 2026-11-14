@@ -1,6 +1,7 @@
 # Partner webshop 2026
 
 ## Tartalomtár és hirdetés — új kérés
+- [x] Magyarországi partnerkeresési kutatás: mentett, visszaellenőrzött jelentés, 4 Shoprenter Meta-kártya, saját/UNAS/Shoprenter oldalak, Semrush hu minta. Google UNAS példa nem igazolt; közönségjavaslat még döntésre vár.
 - [x] TikTok scope újraellenőrizve: grantable scope nincs, reconnect nem adhat video.publish jogot. Kézi TikTok feltöltés megnyitása és platformszöveg másolása valós partnertermékkel igazolva.
 - [ ] TikTok API-publikálás — a kapcsolaton a posztolási scope nem támogatható; megfelelő szolgáltatói engedély kell.
 - [x] Admin-only katalógus meglévő forrásokból: 22 tétel, bolti eredet, teszt/inaktív források tiltva, platformterv és decemberi kiválasztó. Partnertermék/partnerkampány/mentett oldal hozzáadva; blogként nincs tévesen megjelölve.
