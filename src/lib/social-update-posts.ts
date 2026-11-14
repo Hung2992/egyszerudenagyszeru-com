@@ -12,9 +12,9 @@ export function updatePosts(n: UpdateNote): Record<"facebook" | "tiktok" | "link
   };
 }
 type Slot = { id: string; day: string; platform: string; queue_id: string | null };
-/** Platformonként a legkorábbi szabad, nem múltbeli poszthely. */
+/** Platformonként a legkorábbi szabad, holnaptól induló poszthely. */
 export function nextFreeSlots(slots: Slot[], today: string): Partial<Record<string, Slot>> {
   const out: Partial<Record<string, Slot>> = {};
-  for (const s of [...slots].sort((a, b) => a.day.localeCompare(b.day))) if (!s.queue_id && s.day >= today && !out[s.platform]) out[s.platform] = s;
+  for (const s of [...slots].sort((a, b) => a.day.localeCompare(b.day))) if (!s.queue_id && s.day > today && !out[s.platform]) out[s.platform] = s;
   return out;
 }

@@ -20,7 +20,7 @@ export default function SocialUpdatePosts({ onChanged }: { onChanged: () => void
   const save = async () => {
     if (!window.confirm("A frissítésről szóló posztokat a következő szabad helyekre mented jóváhagyásra? Közzététel nem történik.")) return;
     setBusy(true);
-    const { data, error } = await supabase.from("social_plan_slots").select("id,day,platform,queue_id").gte("day", today).order("day").limit(200);
+    const { data, error } = await supabase.from("social_plan_slots").select("id,day,platform,queue_id").gt("day", today).order("day").limit(200);
     if (error) { setBusy(false); toast.error(error.message); return; }
     const free = nextFreeSlots(data ?? [], today); const done: string[] = []; const skipped: string[] = [];
     for (const platform of ["facebook", "tiktok", "linkedin"] as const) {
