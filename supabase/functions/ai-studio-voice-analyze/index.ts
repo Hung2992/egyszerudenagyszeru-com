@@ -34,6 +34,21 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Hitelesítés: csak bejelentkezett admin frissíthet hangmintát.
+    const { data: userRes } = await supabase.auth.getUser(authHeader.replace(/^Bearer\s+/i, ""));
+    const uid = userRes?.user?.id;
+    if (!uid) {
+      return new Response(JSON.stringify({ error: "unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: uid, _role: "admin" });
+    if (!isAdmin) {
+      return new Response(JSON.stringify({ error: "forbidden" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { error } = await supabase
       .from("ai_studio_voice_samples")
       .update({
