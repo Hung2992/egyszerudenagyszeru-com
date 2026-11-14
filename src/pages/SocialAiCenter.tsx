@@ -9,9 +9,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import MarketingStudioRouter from "@/components/admin/MarketingStudioRouter";
 import { lazyRetry } from "@/lib/lazy-retry";
 import { toast } from "sonner";
+import SocialPublicationControl from "@/components/admin/SocialPublicationControl";
 
 const ContentStudio = lazy(lazyRetry(() => import("@/components/admin/AdminAiMarketingStudio")));
-type Post = { id: string; platform: string; content: string; status: string; requires_approval: boolean; scheduled_at: string; error_message: string | null; approval_hash: string | null; approval_expires_at: string | null };
+type Post = { id: string; platform: string; content: string; status: string; requires_approval: boolean; scheduled_at: string; error_message: string | null; approval_hash: string | null; approval_expires_at: string | null; test_only: boolean };
 type Insight = { id: string; title: string; insight: string; platform: string | null };
 const platforms = [{ id: "fb_studio", label: "Facebook" }, { id: "tt_studio", label: "TikTok" }, { id: "li_studio", label: "LinkedIn" }];
 const statusNames: Record<string, string> = { pending: "Ütemezésre vár", processing: "Feldolgozás", published: "Publikálva", failed: "Hiba", cancelled: "Visszavonva", skipped: "Kihagyva" };
@@ -32,7 +33,7 @@ export default function SocialAiCenter() {
     setError("");
     try {
       const [queue, analysis] = await Promise.all([
-        supabase.from("social_publish_queue").select("id,platform,content,status,requires_approval,scheduled_at,error_message,approval_hash,approval_expires_at").order("scheduled_at", { ascending: false }).limit(100),
+        supabase.from("social_publish_queue").select("id,platform,content,status,requires_approval,scheduled_at,error_message,approval_hash,approval_expires_at,test_only").order("scheduled_at", { ascending: false }).limit(100),
         supabase.from("ai_marketing_insights").select("id,title,insight,platform").eq("status", "active").order("created_at", { ascending: false }).limit(12),
       ]);
       if (queue.error || analysis.error) setError([queue.error?.message, analysis.error?.message].filter(Boolean).join(" · "));
@@ -45,12 +46,19 @@ export default function SocialAiCenter() {
     }
   }, []);
   const approve = async () => {
-    if (!selected || !review || !window.confirm("Jóváhagyod ezt a pontos tartalmat és az ütemezett publikálását?")) return;
+    if (!selected || !review || !window.confirm(selected.test_only ? "Jóváhagyod ezt a teszttartalmat? Nem kerül közzétételre." : "Jóváhagyod ezt a pontos tartalmat és az ütemezett publikálását?")) return;
     const { error } = await supabase.rpc("social_approve", { _id: selected.id, _expected_hash: review.hash });
     if (error) { toast.error(error.message); return; }
     toast.success("Tartalom jóváhagyva · 72 óráig érvényes");
     setSelected(null);
     void load();
+  };
+  const testPublish = async () => {
+    if (!selected?.test_only) return;
+    const { data, error } = await supabase.functions.invoke("social-publisher", { body: { action: "test_publish", id: selected.id } });
+    if (error) toast.error(error.message);
+    else if (!data?.ok) toast.error(data?.result ?? "Teszt sikertelen");
+    else toast.success("Teszt sikeres · 0 külső hívás");
   };
   useEffect(() => {
     setReview(null);
@@ -92,7 +100,7 @@ export default function SocialAiCenter() {
       {error && <div role="alert" className="border border-destructive p-3 mb-5 text-sm text-destructive break-words">{error}</div>}
       <Tabs defaultValue="command" className="space-y-6">
         <div className="overflow-x-auto"><TabsList className="h-auto justify-start bg-transparent gap-1">
-          <TabsTrigger value="command">Központ</TabsTrigger><TabsTrigger value="content">Tartalomgyár</TabsTrigger><TabsTrigger value="platforms">Platformok</TabsTrigger><TabsTrigger value="video">Videóműhely</TabsTrigger><TabsTrigger value="insights">Elemzések</TabsTrigger><TabsTrigger value="team">Csapat és AEGIS</TabsTrigger>
+          <TabsTrigger value="command">Központ</TabsTrigger><TabsTrigger value="control">Engedélyek és napló</TabsTrigger><TabsTrigger value="content">Tartalomgyár</TabsTrigger><TabsTrigger value="platforms">Platformok</TabsTrigger><TabsTrigger value="video">Videóműhely</TabsTrigger><TabsTrigger value="insights">Elemzések</TabsTrigger><TabsTrigger value="team">Csapat és AEGIS</TabsTrigger>
         </TabsList></div>
         <TabsContent value="command" className="space-y-6">
           <div className="flex flex-wrap justify-between gap-3 items-center"><h2 className="font-display text-xl">Közös tartalomnaptár</h2><div className="flex flex-wrap gap-1">{["all", "facebook", "tiktok", "linkedin"].map(p => <Button key={p} size="sm" variant={filter === p ? "secondary" : "ghost"} aria-pressed={filter === p} onClick={() => setFilter(p)}>{p === "all" ? "Mind" : p === "facebook" ? "Facebook" : p === "tiktok" ? "TikTok" : "LinkedIn"}</Button>)}</div></div>
@@ -101,6 +109,7 @@ export default function SocialAiCenter() {
           {!busy && !posts.filter(p => filter === "all" || p.platform === filter).length && <p className="py-8 text-sm text-muted-foreground text-center">Nincs tartalom ebben a listában.</p>}
           <div className="border-t border-border pt-5 flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-display">SOCIAL AI DIRECTOR</h3><p className="text-xs text-muted-foreground mt-1">Marketing munkatárs · saját tervek és átadások</p></div><Button asChild variant="outline"><Link to="/admin/ai-asszisztensek/10"><Users className="mr-2 h-4 w-4" />Marketing munkatárs</Link></Button></div>
         </TabsContent>
+        <TabsContent value="control"><SocialPublicationControl onCreated={() => void load()} /></TabsContent>
         <TabsContent value="content"><Suspense fallback={<Loader2 className="h-6 w-6 animate-spin" />}><ContentStudio /></Suspense></TabsContent>
         <TabsContent value="platforms" className="space-y-6"><div className="flex flex-wrap gap-2">{platforms.map(p => <Button key={p.id} variant={platform === p.id ? "secondary" : "outline"} aria-pressed={platform === p.id} onClick={() => setPlatform(p.id)}>{p.label}</Button>)}</div><MarketingStudioRouter tab={platform} /></TabsContent>
         <TabsContent value="video" className="space-y-5"><h2 className="font-display text-xl flex items-center gap-2"><Film className="h-5 w-5 text-accent" />Videóműhely</h2><MarketingStudioRouter tab="ai_studio_recorder" /></TabsContent>
@@ -108,6 +117,7 @@ export default function SocialAiCenter() {
         <TabsContent value="team" className="space-y-6"><h2 className="font-display text-xl">Csapat és biztonsági kapu</h2><div className="flex flex-wrap gap-3"><Button asChild variant="outline"><Link to="/admin/ai-asszisztensek/10"><Users className="mr-2 h-4 w-4" />Marketing</Link></Button><Button asChild variant="outline"><Link to="/admin/ai-asszisztensek">AI munkatársak</Link></Button><Button asChild variant="outline"><Link to="/admin/ai-workforce"><ShieldCheck className="mr-2 h-4 w-4" />AEGIS · HUMAN GATE</Link></Button></div><h3 className="font-display">A feltöltött terv további munkaterületei</h3><div className="divide-y divide-border">{["Social AI-szakértők önálló koordinálása", "Teljes videógyártás és platformváltozatok", "Kommentek és közösségi moderáció", "Profiladatok központi módosítása", "Automatikus tanulás és optimalizálás", "Social-tartalmak teljes AEGIS-jóváhagyási lánca"].map(t => <div key={t} className="py-3 flex justify-between gap-4 text-sm"><span>{t}</span><span className="text-xs text-muted-foreground shrink-0">Tervezett</span></div>)}</div></TabsContent>
       </Tabs>
     </main>
+    {selected?.test_only && <div className="sr-only">Teszttervezet · éles közzététel tiltva</div>}
     <Dialog open={!!selected} onOpenChange={open => { if (!open) setSelected(null); }}><DialogContent className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>Tartalom · {selected?.platform}</DialogTitle></DialogHeader><p className="text-sm whitespace-pre-wrap break-words">{selected?.content}</p>{selected?.error_message && <p className="text-sm text-destructive break-words">{selected.error_message}</p>}{review && <div className="space-y-2 text-xs text-muted-foreground"><p>Fiók: {selected?.platform === "facebook" ? review.target.facebook ?? "Nincs megadva" : selected?.platform === "instagram" ? review.target.instagram ?? "Nincs megadva" : "TikTok kapcsolat"}</p><p>Időpont: {selected?.scheduled_at ? new Date(selected.scheduled_at).toLocaleString("hu-HU") : "—"} · Verzió: {review.item.version}</p><p>Hashtagek: {[...review.item.hashtags, ...review.target.hashtags].join(" ") || "—"}</p>{review.item.media_urls.map(url => <a className="block break-all underline" key={url} href={url} target="_blank" rel="noopener noreferrer">{url}</a>)}</div>}{selected?.approval_expires_at && <p className="text-xs text-muted-foreground">Jóváhagyás lejárata: {new Date(selected.approval_expires_at).toLocaleString("hu-HU")}</p>}{selected?.status === "pending" && <Button disabled={!review} onClick={() => void approve()}><ShieldCheck className="mr-2 h-4 w-4" />Tartalom jóváhagyása</Button>}</DialogContent></Dialog>
   </div>;
 }

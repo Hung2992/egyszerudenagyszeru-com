@@ -2,6 +2,7 @@
 
 - The dedicated Social AI center reuses existing marketing studios and reads the existing social queue; planned orchestration is explicitly distinguished from implemented workflows to avoid duplicate data and false capability claims.
 - Social publication uses payload-bound expiring human approval and service-only transactional claim/preflight/receipt RPCs on every path; uncertain provider outcomes never trigger automatic resends, preventing duplicate external effects.
+- Social test/live publication capabilities are stored separately from admin roles; test-only drafts never reach provider adapters, and each approval/attempt captures immutable content and verified actor identity.
 
 - EMPYREAN is a control plane over existing domain systems, not a duplicate commerce database; authoritative records remain in their existing domains.
 - Keep shared governance schemas in `src/lib/empyrean-contracts.ts`; client validation is advisory and must be re-enforced by the backend before privileged execution.
