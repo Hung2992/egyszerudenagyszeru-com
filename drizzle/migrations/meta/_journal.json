@@ -260,6 +260,13 @@
       "when": 1794619800179,
       "tag": "0036_workforce_realtime",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1794620713265,
+      "tag": "0037_workforce_staff",
+      "breakpoints": true
     }
   ]
 }
