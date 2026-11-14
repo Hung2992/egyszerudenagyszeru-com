@@ -1,5 +1,8 @@
 # Partner webshop 2026
 
+## AI Marketing Command OS — egységes tervezés
+- [x] A hét új marketingterv összevonása, meglévő kód kapcsolódási pontjainak ellenőrzése, AEGIS-források visszaolvasása és kapukhoz kötött megvalósítási terv elkészítése; megvalósítás külön jóváhagyás után.
+
 ## Social AI külön oldal
 - [x] Külön adminoldal a feltöltött social tervhez: meglévő tartalomstúdiók, valós közös sor, elemzések, Marketing és AEGIS hivatkozások; további tervrészek külön jelölve.
 
