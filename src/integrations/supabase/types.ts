@@ -16005,6 +16005,10 @@ export type Database = {
       social_approve: { Args: { _id: string }; Returns: Json }
       social_cancel: { Args: { _id: string }; Returns: undefined }
       social_claim: { Args: { _id: string }; Returns: Json }
+      social_execution_payload: {
+        Args: { _id: string; _token: string }
+        Returns: Json
+      }
       social_finish: {
         Args: {
           _error?: string
