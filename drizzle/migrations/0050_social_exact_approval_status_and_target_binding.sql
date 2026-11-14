@@ -1,0 +1,8 @@
+CREATE OR REPLACE FUNCTION public.social_approval_states(_ids uuid[]) RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=public AS $$ BEGIN IF NOT public.empyrean_is_admin() OR coalesce(cardinality(_ids),0)>1000 THEN RAISE EXCEPTION 'forbidden'; END IF; RETURN coalesce((SELECT jsonb_object_agg(q.id::text,coalesce(q.approval_hash=public.social_payload_hash(q) AND q.approval_expires_at>now() AND public.social_has_permission(q.approved_by,CASE WHEN q.test_only THEN 'test' ELSE 'live' END),false)) FROM public.social_publish_queue q WHERE q.id=ANY(_ids)),'{}'::jsonb); END $$;
+REVOKE ALL ON FUNCTION public.social_approval_states(uuid[]) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.social_approval_states(uuid[]) TO authenticated;
+CREATE OR REPLACE FUNCTION public.social_bind_targets(_facebook text,_tiktok text,_linkedin text) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN IF NOT public.empyrean_is_admin() OR _facebook IS NULL OR _facebook !~ '^[0-9]{1,30}$' OR _tiktok IS NULL OR length(_tiktok) NOT BETWEEN 5 AND 200 OR _linkedin IS NULL OR length(_linkedin) NOT BETWEEN 3 AND 100 THEN RAISE EXCEPTION 'invalid_targets'; END IF;
+UPDATE public.social_auto_publish_settings SET facebook_page_id=_facebook,tiktok_open_id=_tiktok,linkedin_member_id=_linkedin,updated_by=auth.uid(),updated_at=now();
+INSERT INTO public.empyrean_audit_log(actor_id,agent_slug,action,target,detail) VALUES(auth.uid(),'social-publisher','bind_verified_targets','social',jsonb_build_object('facebook',_facebook,'tiktok',_tiktok,'linkedin',_linkedin)); END $$;
+REVOKE ALL ON FUNCTION public.social_bind_targets(text,text,text) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.social_bind_targets(text,text,text) TO authenticated;

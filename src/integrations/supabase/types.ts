@@ -16107,12 +16107,17 @@ export type Database = {
         Args: { _password: string }
         Returns: boolean
       }
+      social_approval_states: { Args: { _ids: string[] }; Returns: Json }
       social_approve:
         | { Args: { _id: string }; Returns: Json }
         | { Args: { _expected_hash: string; _id: string }; Returns: Json }
       social_authorized_preflight: {
         Args: { _id: string; _token: string }
         Returns: boolean
+      }
+      social_bind_targets: {
+        Args: { _facebook: string; _linkedin: string; _tiktok: string }
+        Returns: undefined
       }
       social_cancel: { Args: { _id: string }; Returns: undefined }
       social_claim: { Args: { _id: string }; Returns: Json }
