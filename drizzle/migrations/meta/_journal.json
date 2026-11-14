@@ -372,6 +372,13 @@
       "when": 1794649655141,
       "tag": "0052_social_content_catalog_provenance",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1794649906195,
+      "tag": "0053_social_catalog_enum_normalization",
+      "breakpoints": true
     }
   ]
 }
