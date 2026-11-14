@@ -12150,6 +12150,7 @@ export type Database = {
           created_at: string
           daily_limit_facebook: number
           daily_limit_instagram: number
+          daily_limit_linkedin: number
           daily_limit_tiktok: number
           default_hashtags: string[]
           facebook_enabled: boolean
@@ -12157,10 +12158,13 @@ export type Database = {
           id: string
           instagram_business_id: string | null
           instagram_enabled: boolean
+          linkedin_enabled: boolean
+          linkedin_member_id: string | null
           quiet_hours_end: number
           quiet_hours_start: number
           singleton: boolean
           tiktok_enabled: boolean
+          tiktok_open_id: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -12169,6 +12173,7 @@ export type Database = {
           created_at?: string
           daily_limit_facebook?: number
           daily_limit_instagram?: number
+          daily_limit_linkedin?: number
           daily_limit_tiktok?: number
           default_hashtags?: string[]
           facebook_enabled?: boolean
@@ -12176,10 +12181,13 @@ export type Database = {
           id?: string
           instagram_business_id?: string | null
           instagram_enabled?: boolean
+          linkedin_enabled?: boolean
+          linkedin_member_id?: string | null
           quiet_hours_end?: number
           quiet_hours_start?: number
           singleton?: boolean
           tiktok_enabled?: boolean
+          tiktok_open_id?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -12188,6 +12196,7 @@ export type Database = {
           created_at?: string
           daily_limit_facebook?: number
           daily_limit_instagram?: number
+          daily_limit_linkedin?: number
           daily_limit_tiktok?: number
           default_hashtags?: string[]
           facebook_enabled?: boolean
@@ -12195,14 +12204,80 @@ export type Database = {
           id?: string
           instagram_business_id?: string | null
           instagram_enabled?: boolean
+          linkedin_enabled?: boolean
+          linkedin_member_id?: string | null
           quiet_hours_end?: number
           quiet_hours_start?: number
           singleton?: boolean
           tiktok_enabled?: boolean
+          tiktok_open_id?: string | null
           updated_at?: string
           updated_by?: string | null
         }
         Relationships: []
+      }
+      social_month_plans: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          month: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          month: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          month?: string
+        }
+        Relationships: []
+      }
+      social_plan_slots: {
+        Row: {
+          day: string
+          id: string
+          plan_id: string
+          platform: string
+          queue_id: string | null
+          topic: string
+        }
+        Insert: {
+          day: string
+          id?: string
+          plan_id: string
+          platform: string
+          queue_id?: string | null
+          topic: string
+        }
+        Update: {
+          day?: string
+          id?: string
+          plan_id?: string
+          platform?: string
+          queue_id?: string | null
+          topic?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_plan_slots_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "social_month_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_plan_slots_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: true
+            referencedRelation: "social_publish_queue"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       social_post_approvals: {
         Row: {
@@ -16041,6 +16116,7 @@ export type Database = {
       }
       social_cancel: { Args: { _id: string }; Returns: undefined }
       social_claim: { Args: { _id: string }; Returns: Json }
+      social_create_month: { Args: { _month: string }; Returns: string }
       social_dispatch_claim: {
         Args: { _actor: string; _id: string }
         Returns: Json
@@ -16073,6 +16149,16 @@ export type Database = {
       social_preflight: {
         Args: { _id: string; _token: string }
         Returns: boolean
+      }
+      social_prepare_slot: {
+        Args: {
+          _content: string
+          _ref: string
+          _slot: string
+          _source: string
+          _video?: string
+        }
+        Returns: string
       }
       social_review: { Args: { _id: string }; Returns: Json }
       social_set_permission: {
