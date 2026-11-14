@@ -30,3 +30,7 @@ export function isOverdue(due: string | null, now = new Date()): boolean {
 
 export const proposalGoal = (dept: Pick<Department, "name" | "roles">) =>
   `${dept.name}: heti munkaterv (${dept.roles.slice(0, 2).join(", ")})`;
+
+// Ugyanaz a szabály, mint a Munka állapot menüben: a határidő a nap végéig érvényes, kész terv nem lejárt.
+export const planOverdue = (p: Pick<RolePlan, "due_date" | "status">, now = new Date()) =>
+  p.status !== "done" && isOverdue(p.due_date, now);
