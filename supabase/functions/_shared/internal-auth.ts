@@ -147,3 +147,17 @@ export async function rateLimitDb(
     return rateLimit(req, { limit: opts.limit, windowMs: opts.windowSeconds * 1000, key: opts.key });
   }
 }
+
+/**
+ * Igaz, ha a hívás igazoltan belső (service_role kulcs vagy érvényes cron titok).
+ * Query paraméter vagy hiányzó titok SOHA nem elég.
+ */
+export async function isInternalCall(req: Request): Promise<boolean> {
+  const bearer = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  if (bearer && serviceKey && safeEqual(bearer, serviceKey)) return true;
+  const headerSecret = req.headers.get("x-cron-secret") || "";
+  if (!headerSecret) return false;
+  const expected = await cronSecret();
+  return !!expected && safeEqual(headerSecret, expected);
+}
