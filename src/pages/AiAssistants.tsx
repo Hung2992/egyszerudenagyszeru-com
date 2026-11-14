@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { departments } from "@/lib/ai-world";
+import { WorkforceTeamPanel } from "@/components/admin/WorkforceTeamPanel";
 
 const AiAssistants = () => {
   const { isAdmin, loading } = useAdminCheck();
@@ -15,8 +16,9 @@ const AiAssistants = () => {
       <header className="p-4 border-b border-border">
         <Link to="/admin/ai-workforce" className="flex items-center gap-2 text-xs text-muted-foreground"><ArrowLeft className="h-3 w-3" /> AI WORKFORCE</Link>
         <h1 className="mt-2 font-display text-lg">AI asszisztensek</h1>
-        <p className="text-xs text-muted-foreground">{departments.length} sziget · AEGIS őr alatt · minden munkatársnak saját oldala van</p>
+        <p className="text-xs text-muted-foreground">{departments.length} munkatárs · közös munkák és fontos adatok · AEGIS</p>
       </header>
+      <WorkforceTeamPanel />
       <main className="grid gap-px bg-border sm:grid-cols-2 lg:grid-cols-3">
         {departments.map((d) => (
           <Link key={d.id} to={`/admin/ai-asszisztensek/${d.id}`}
