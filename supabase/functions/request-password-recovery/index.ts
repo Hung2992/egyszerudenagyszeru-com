@@ -5,6 +5,22 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const EMAIL_LIMIT_PER_HOUR = 3;
+const DEFAULT_REDIRECT = "https://egyszerudenagyszeru.com/reset-password";
+
+// Only allow reset links that return to this app's own sites.
+function safeRedirect(raw: unknown): string {
+  if (typeof raw !== "string") return DEFAULT_REDIRECT;
+  try {
+    const u = new URL(raw);
+    const host = u.hostname.toLowerCase();
+    const ok = u.protocol === "https:" && (
+      host === "egyszerudenagyszeru.com" || host === "www.egyszerudenagyszeru.com" ||
+      host.endsWith(".lovable.app") || host.endsWith(".lovableproject.com")
+    );
+    if (!ok || u.pathname !== "/reset-password") return DEFAULT_REDIRECT;
+    return `${u.origin}/reset-password`;
+  } catch { return DEFAULT_REDIRECT; }
+}
 const IP_LIMIT_PER_HOUR = 10;
 
 async function sha256(input: string): Promise<string> {
@@ -65,7 +81,7 @@ Deno.serve(async (req) => {
     }
 
     const { error } = await admin.auth.resetPasswordForEmail(email, {
-      redirectTo: redirectTo || `${new URL(req.url).origin}/reset-password`,
+      redirectTo: safeRedirect(redirectTo),
     });
 
     await admin.from("password_recovery_requests").insert({
@@ -81,7 +97,8 @@ Deno.serve(async (req) => {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), {
+    console.error("password recovery failed", e);
+    return new Response(JSON.stringify({ error: "server_error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
