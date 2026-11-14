@@ -230,7 +230,7 @@ Deno.serve(async (req) => {
       const results: any[] = [];
 
       for (const raw of (items || [])) {
-        const item = raw as Item;
+        let item = raw as Item;
 
         const { data: claim, error: claimError } = await sb.rpc("social_claim", { _id: item.id });
         if (claimError) { results.push({ id: item.id, ok: false, error: claimError.message }); continue; }
@@ -241,10 +241,15 @@ Deno.serve(async (req) => {
           if (error || allowed !== true) throw new Error("AEGIS: execution stopped before provider call");
         };
         try {
-          const text = buildText(item, s.default_hashtags || []);
+          const { data: snapshot, error: snapshotError } = await sb.rpc("social_execution_payload", { _id: item.id, _token: token });
+          if (snapshotError || !snapshot?.item || !snapshot.settings) throw new Error("AEGIS: approved snapshot unavailable");
+          item = snapshot.item as Item;
+          const approvedSettings = snapshot.settings as Settings;
+          const text = buildText(item, approvedSettings.default_hashtags || []);
+          if (aegisRedact(text).findings.length || aegisInput(text).length) throw new Error("AEGIS: output review required");
           let out: { id: string; permalink: string | null };
-          if (item.platform === "facebook") out = await publishFacebook(item, s, text, preflight);
-          else if (item.platform === "instagram") out = await publishInstagram(item, s, text, preflight);
+          if (item.platform === "facebook") out = await publishFacebook(item, approvedSettings, text, preflight);
+          else if (item.platform === "instagram") out = await publishInstagram(item, approvedSettings, text, preflight);
           else if (item.platform === "tiktok") out = await publishTikTok(item, text, preflight);
           else throw new Error(`unknown platform: ${item.platform}`);
 
