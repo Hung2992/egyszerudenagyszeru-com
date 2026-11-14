@@ -101,6 +101,30 @@ Deno.serve(async (req) => {
       return json({ error: "invalid_phone" }, 400);
     }
 
+    // API keys may only message the partner's own customers (phone/email seen in
+    // their orders), never opted-out addresses, and at most 200 messages per day.
+    {
+      const norm = (v: unknown) => String(v || "").replace(/\D/g, "").slice(-9);
+      if (channel === "email") {
+        const email = to.toLowerCase();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "invalid_recipient" }, 400);
+        const { count } = await db.from("partner_orders").select("id", { count: "exact", head: true })
+          .eq("partner_id", ctx.partnerId).ilike("customer_email", email.replace(/[%_\\]/g, "\\$&"));
+        if (!count) return json({ error: "recipient_not_customer" }, 403);
+      } else {
+        const digits = norm(to.replace(/^whatsapp:/, ""));
+        const { data: own } = await db.from("partner_orders").select("customer_phone")
+          .eq("partner_id", ctx.partnerId).not("customer_phone", "is", null).limit(5000);
+        if (!(own || []).some((o: { customer_phone: string | null }) => norm(o.customer_phone) === digits)) {
+          return json({ error: "recipient_not_customer" }, 403);
+        }
+      }
+      const since = new Date(Date.now() - 86400000).toISOString();
+      const { count: sent } = await db.from("messaging_outbox").select("id", { count: "exact", head: true })
+        .eq("partner_id", ctx.partnerId).gte("created_at", since);
+      if ((sent ?? 0) >= 200) return json({ error: "daily_limit_reached" }, 429);
+    }
+
     const idempotencyKey =
       typeof payload.idempotencyKey === "string" && payload.idempotencyKey.length <= 120
         ? payload.idempotencyKey
