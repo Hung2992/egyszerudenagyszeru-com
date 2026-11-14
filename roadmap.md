@@ -1,10 +1,13 @@
 # Partner webshop 2026
 
 ## Tartalomtár és hirdetés — új kérés
-- [ ] TikTok scope ellenőrzés és kézi közzétételi csomag, API-korlát megkerülése nélkül.
-- [ ] Valós termék/kampány/blog tartalomforrás közös kiválasztó és platformterv.
-- [ ] Facebook fizetési állapot, kampánybrief és valós költség/teljesítmény ellenőrzés; indítás csak konkrét költési jóváhagyással.
-- [ ] Hitelesített tartalomtár és decemberi terv ellenőrzés.
+- [x] TikTok scope újraellenőrizve: grantable scope nincs, reconnect nem adhat video.publish jogot. Kézi TikTok feltöltés megnyitása és platformszöveg másolása valós partnertermékkel igazolva.
+- [ ] TikTok API-publikálás — a kapcsolaton a posztolási scope nem támogatható; megfelelő szolgáltatói engedély kell.
+- [x] Admin-only katalógus meglévő forrásokból: 22 tétel, bolti eredet, teszt/inaktív források tiltva, platformterv és decemberi kiválasztó. Partnertermék/partnerkampány/mentett oldal hozzáadva; blogként nincs tévesen megjelölve.
+- [ ] Valódi blogtartalom — mentett blogbejegyzés-forrás nincs; felhasználói tartalom szükséges.
+- [x] Meta inspect: fizetés továbbra is inaktív. Brief elmentve a Decemberi Facebook kampány gyűjteménybe; 30 napos szolgáltatói Insights üres. HUF/Phoenix valós jelentés bekerült a központba, hitelesített UI-val igazolva.
+- [ ] Hirdetésindítás — aktív fizetés, termék/céloldal, célcsoport, keret, deklarációk, kreatív/szöveg és költés jóváhagyása hiányzik.
+- [x] 390×630 UI: partner motorolaj forrás és szöveg másolása, december 1-i Facebook slot mentése és pontos review visszaolvasása; nincs approval/publikálás. 17 teszt és build OK; nincs pageerror vagy overflow.
 
 ## Most kért Social AI fejlesztés
 - [x] Facebook kapcsolati és hirdetési beállítások, fizetés/hirdetéskezelő megnyitása; fiók olvasható. Hirdetésindítás: aktív Meta-fizetés hiányzik.
