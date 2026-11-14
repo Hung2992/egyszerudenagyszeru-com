@@ -12237,6 +12237,41 @@ export type Database = {
         }
         Relationships: []
       }
+      social_partner_followups: {
+        Row: {
+          interest: string
+          next_contact_on: string | null
+          note: string | null
+          partner_id: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          interest?: string
+          next_contact_on?: string | null
+          note?: string | null
+          partner_id: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Update: {
+          interest?: string
+          next_contact_on?: string | null
+          note?: string | null
+          partner_id?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_partner_followups_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: true
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_plan_slots: {
         Row: {
           day: string
