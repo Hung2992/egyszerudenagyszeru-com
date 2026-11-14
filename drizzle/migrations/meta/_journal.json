@@ -379,6 +379,13 @@
       "when": 1794649906195,
       "tag": "0053_social_catalog_enum_normalization",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1794654009729,
+      "tag": "0054_migration",
+      "breakpoints": true
     }
   ]
 }
