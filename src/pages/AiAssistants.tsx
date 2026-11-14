@@ -68,6 +68,7 @@ const AiAssistants = () => {
       <header className="p-4 border-b border-border space-y-3">
         <div className="flex justify-between"><Link to="/admin/ai-workforce" className="flex items-center gap-2 text-xs text-muted-foreground"><ArrowLeft className="h-3 w-3" /> AI WORKFORCE</Link><Link to="/admin/ai-munkatars-statusz" className="text-xs underline">Munkatárs-státusz →</Link></div>
         <div><h1 className="font-display text-lg">AI munkatársak</h1><p className="text-xs text-muted-foreground">Central AI + AEGIS őr · {departments.length} szerep, saját munkákkal</p></div>
+        <Button asChild variant="outline" size="sm"><Link to="/admin/social-ai">Social AI Command Center →</Link></Button>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border">
           {[["Munkatárs", departments.length], ["Nyitott munka", open], ["Jóváhagyásra vár", waiting], ["Lépés kész", `${pct}%`]].map(([l, v]) => (
             <div key={l} className="bg-background p-3"><div className="text-[11px] text-muted-foreground">{l}</div><div className="font-display text-xl text-primary">{v}</div></div>

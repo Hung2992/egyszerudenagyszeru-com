@@ -1,5 +1,8 @@
 # Partner webshop 2026
 
+## Social AI külön oldal
+- [x] Külön adminoldal a feltöltött social tervhez: meglévő tartalomstúdiók, valós közös sor, elemzések, Marketing és AEGIS hivatkozások; további tervrészek külön jelölve.
+
 ## EMPYREAN ∞ — BLACK CROWN
 
 - [x] Forráskódbeli admin-, AI-, adat- és jogosultsági rétegek feltérképezése; nem ellenőrzött éles működés külön jelölve.

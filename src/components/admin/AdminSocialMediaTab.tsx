@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/untyped-client";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,7 @@ const AdminSocialMediaTab = () => {
 
   return (
     <div className="space-y-6">
+      <Button asChild variant="outline"><Link to="/admin/social-ai"><Share2 className="mr-2 h-4 w-4" />Social AI Command Center →</Link></Button>
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold uppercase tracking-wider">Közösségi média integráció</h2>
         <Button size="sm" className="rounded-none uppercase tracking-wider text-xs" onClick={save} disabled={saving}>
