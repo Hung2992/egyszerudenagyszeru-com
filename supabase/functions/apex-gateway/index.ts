@@ -243,6 +243,30 @@ Deno.serve(async (req) => {
         const body = String(payload.body || "").trim();
         if (!body || body.length > 1600) return json({ error: "invalid_body" }, 400);
 
+        // Partners may only text their own customers (or themselves for tests),
+        // never opted-out numbers, and at most 200 messages per day.
+        if (!isInternal) {
+          const digits = to.replace(/^whatsapp:/, "").replace(/\D/g, "").slice(-9);
+          const norm = (v: unknown) => String(v || "").replace(/\D/g, "").slice(-9);
+          if (action === "test") {
+            const { data: me } = await db.from("partners").select("phone").eq("id", p).maybeSingle();
+            if (!me?.phone || norm(me.phone) !== digits) return json({ error: "test_only_to_own_phone" }, 403);
+          } else {
+            const { data: own } = await db.from("partner_orders").select("customer_phone")
+              .eq("partner_id", p).not("customer_phone", "is", null).limit(5000);
+            if (!(own || []).some((o: any) => norm(o.customer_phone) === digits)) {
+              return json({ error: "recipient_not_customer" }, 403);
+            }
+          }
+          const { data: opted } = await db.from("comm_opt_outs").select("address")
+            .or(`partner_id.eq.${p},partner_id.is.null`).limit(5000);
+          if ((opted || []).some((o: any) => norm(o.address) === digits)) return json({ error: "recipient_opted_out" }, 403);
+          const since = new Date(Date.now() - 86400000).toISOString();
+          const { count } = await db.from("messaging_outbox").select("id", { count: "exact", head: true })
+            .eq("partner_id", p).gte("created_at", since);
+          if ((count ?? 0) >= 200) return json({ error: "daily_limit_reached" }, 429);
+        }
+
         const { data: logRow } = await db
           .from("messaging_outbox")
           .insert({
