@@ -1,5 +1,6 @@
 // Publikált kampányoldal a partner webshopon belül: /b/:slug/kampany/:campaignSlug
 // A tartalom a jóváhagyott kampánytervből jön, a megtekintést és a kattintást mérjük.
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -91,7 +92,7 @@ const BrandCampaign = () => {
 
         <article
           className="prose prose-sm mt-8 max-w-none opacity-90 [&_p]:mb-4"
-          dangerouslySetInnerHTML={{ __html: body }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(body) }}
         />
 
         <Link

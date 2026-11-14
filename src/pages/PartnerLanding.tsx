@@ -1,3 +1,4 @@
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/untyped-client";
@@ -114,7 +115,7 @@ const PartnerLanding = () => {
           </div>
         )}
 
-        {landing.body_html && <div className="prose prose-invert max-w-none my-8" dangerouslySetInnerHTML={{ __html: landing.body_html }} />}
+        {landing.body_html && <div className="prose prose-invert max-w-none my-8" dangerouslySetInnerHTML={{ __html: sanitizeHtml(landing.body_html) }} />}
 
         {landing.cta_url && (
           <Button asChild size="lg" className="rounded-none uppercase tracking-widest text-base px-8 py-6" style={{ backgroundColor: landing.theme_color }}>
