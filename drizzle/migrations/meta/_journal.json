@@ -274,6 +274,20 @@
       "when": 1794635006196,
       "tag": "0038_lock_down_privileged_rpcs",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1794636440750,
+      "tag": "0039_harden_drops_and_email_queue_functions",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1794636550575,
+      "tag": "0040_store_settings_missing_admin_fields",
+      "breakpoints": true
     }
   ]
 }

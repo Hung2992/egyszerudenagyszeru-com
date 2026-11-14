@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import { Megaphone, Send, Loader2, RefreshCw, Download, RotateCw } from "lucide-react";
+import { csvCell } from "@/lib/csv";
 
 interface Recipient {
   user_id: string;
@@ -51,7 +52,7 @@ const AdminWelcome20Blast = () => {
 
   const exportCsv = () => {
     const header = ["timestamp", "email", "status", "reason", "error"];
-    const escape = (v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const escape = (v: any) => csvCell(v);
     const rows = log.map((l) => [l.created_at, l.email, l.status, l.reason || "", l.error || ""].map(escape).join(","));
     const csv = [header.join(","), ...rows].join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });

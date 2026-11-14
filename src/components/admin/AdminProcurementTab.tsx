@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import ProcurementStats from "./ProcurementStats";
 import ProcurementAiChat from "./ProcurementAiChat";
+import { csvCell } from "@/lib/csv";
 
 interface ProcurementOrder {
   id: string;
@@ -451,7 +452,7 @@ const AdminProcurementTab = () => {
       o.currency,
       new Date(o.created_at).toLocaleDateString("hu-HU"),
     ]);
-    const csv = [headers.join(";"), ...rows.map(r => r.join(";"))].join("\n");
+    const csv = [headers.join(";"), ...rows.map(r => r.map(csvCell).join(";"))].join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

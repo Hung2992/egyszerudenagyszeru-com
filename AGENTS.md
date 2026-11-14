@@ -9,3 +9,6 @@
 - Render any partner/user-authored HTML only through `sanitizeHtml` (`src/lib/sanitize-html.ts`); stored HTML is untrusted.
 - Server functions fetch caller- or partner-chosen URLs only via `safeFetch` (`_shared/safe-url.ts`) to block internal-network access.
 - Scheduled/internal function paths are trusted only via `isInternalCall`/`requireInternalOrAdmin` (cron secret header or service key), never a query flag; provider callbacks require a URL token and fail closed when it is unset.
+
+- Spreadsheet exports build cells only via `csvCell`/`toCsv` (`src/lib/csv.ts`) so stored text can never run as a formula.
+- Caller-supplied chat history passes through `sanitizeChatMessages` and free text in PostgREST filters through `filterSafe` (`_shared/chat-input.ts`); redirects/returns use `appOrigin` (`_shared/app-origin.ts`); log emails only via `maskEmail`.

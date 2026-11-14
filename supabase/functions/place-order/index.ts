@@ -95,7 +95,7 @@ serve(async (req) => {
 
     const { data: products, error: prodErr } = await supabase
       .from("shop_products")
-      .select("id, price, stock, is_active")
+      .select("id, name, price, stock, is_active")
       .in("id", productIds);
 
     if (prodErr || !products) {
@@ -115,7 +115,16 @@ serve(async (req) => {
         return json({ error: `Nincs elegendő készlet: ${item.name}` }, 400);
       }
       serverTotal += product.price * qty;
-      validatedItems.push({ ...item, price: product.price, quantity: qty });
+      // Store only known fields; name comes from the catalogue, not the caller.
+      const str = (v: unknown) => (typeof v === "string" ? v.slice(0, 40) : undefined);
+      validatedItems.push({
+        productId: product.id,
+        name: String(product.name ?? item.name ?? "").slice(0, 200),
+        price: product.price,
+        size: str(item.size),
+        color: str(item.color),
+        quantity: qty,
+      });
     }
 
     // ── 3. Validate gift wrap from DB (not from client price) ───────

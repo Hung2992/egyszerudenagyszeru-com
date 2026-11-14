@@ -11,6 +11,7 @@ import {
   Zap, BarChart3, Shield, History, Copy, ChevronDown, ChevronUp, Plus,
   ArrowUp, Bell, Layers, Receipt, Loader2, Wifi, WifiOff, Info
 } from "lucide-react";
+import { csvCell } from "@/lib/csv";
 
 interface OrderDetails {
   total_amount: number;
@@ -768,7 +769,7 @@ const AdminReturnsTab = () => {
         processingDays,
       ];
     });
-    const csv = [headers.join(";"), ...rows.map(r => r.join(";"))].join("\n");
+    const csv = [headers.join(";"), ...rows.map(r => r.map(csvCell).join(";"))].join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

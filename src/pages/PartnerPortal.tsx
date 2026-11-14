@@ -43,6 +43,7 @@ import MobilePartnerNavigation from "@/components/partner/MobilePartnerNavigatio
 import AiStudioPromptLauncher from "@/components/partner/AiStudioPromptLauncher";
 import CommandCenter from "@/components/partner/CommandCenter";
 import { isKnownTab } from "@/components/partner/partner-navigation";
+import { csvCell } from "@/lib/csv";
 
 
 
@@ -214,7 +215,7 @@ const PartnerPortal = () => {
     setExporting(true);
     try {
       const headers = ["Datum","Rendeles_ID","Kupon_kod","Rendeles_osszeg_Ft","Jutalek_Ft","Statusz"];
-      const escape = (v: string) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+      const escape = (v: string) => csvCell(v);
 
       // Nagy mennyiség esetén chunk-okban építjük + microtask-yield → ne fagyjon a UI.
       const total = filteredReferrals.length;

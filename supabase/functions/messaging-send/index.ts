@@ -90,7 +90,7 @@ async function deliverLegacy(channel: Channel, to: string, body: string) {
       const res = await post("/Calls.json", {
         To: to,
         From: FROM_SMS || "",
-        Twiml: `<Response><Say language="hu-HU">${body.slice(0, 500)}</Say></Response>`,
+        Twiml: `<Response><Say language="hu-HU">${body.slice(0, 500).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</Say></Response>`,
       });
       const txt = await res.text();
       if (!res.ok) return { status: "failed", provider, error: `${res.status}: ${txt.slice(0, 300)}` };

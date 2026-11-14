@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { appOrigin } from "../_shared/app-origin.ts";
 import { type StripeEnv, createStripeClient } from "../_shared/stripe.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
@@ -307,7 +308,7 @@ serve(async (req) => {
       customer_email: normalizedEmail ?? undefined,
       line_items: lineItems,
       discounts: discounts.length > 0 ? discounts : undefined,
-      return_url: `${returnUrl}/checkout/return?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
+      return_url: `${appOrigin(returnUrl)}/checkout/return?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`,
       metadata: {
         order_id: order.id,
         customer_email: normalizedEmail,

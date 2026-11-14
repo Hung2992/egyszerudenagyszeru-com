@@ -25,7 +25,8 @@ var search_products_default = defineTool({
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ query, limit }) => {
     const supabase = supabaseAnon();
-    const { data, error } = await supabase.from("shop_products").select("id,name,slug,brand,price,currency,stock_quantity,description,image_url").or(`name.ilike.%${query}%,brand.ilike.%${query}%,description.ilike.%${query}%`).eq("is_active", true).limit(limit);
+    const q = String(query).replace(/[,()*%\\:."']/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) || "_";
+    const { data, error } = await supabase.from("shop_products").select("id,name,slug,brand,price,currency,stock_quantity,description,image_url").or(`name.ilike.%${q}%,brand.ilike.%${q}%,description.ilike.%${q}%`).eq("is_active", true).limit(limit);
     if (error) {
       return { content: [{ type: "text", text: error.message }], isError: true };
     }

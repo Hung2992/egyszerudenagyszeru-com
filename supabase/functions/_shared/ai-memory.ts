@@ -84,7 +84,8 @@ export async function querySignals(supabase: any, opts: QuerySignalsOpts = {}): 
     if (opts.activeOnly !== false) q = q.eq("is_active", true);
     if (opts.signalTypes?.length) q = q.in("signal_type", opts.signalTypes);
     if (opts.projectType) {
-      q = q.or(`context->>project_type.eq.${opts.projectType},context->>project_type.is.null`);
+      const pt = String(opts.projectType).toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 40);
+      if (pt) q = q.or(`context->>project_type.eq.${pt},context->>project_type.is.null`);
     }
     if (typeof opts.minConfidence === "number") q = q.gte("confidence", opts.minConfidence);
     q = q.order("success_score", { ascending: false }).order("sample_count", { ascending: false });

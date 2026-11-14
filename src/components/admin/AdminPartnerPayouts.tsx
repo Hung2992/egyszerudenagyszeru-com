@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Banknote, CheckCircle2, XCircle, RefreshCw, Download, Wallet } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { csvCell } from "@/lib/csv";
 
 interface Payout {
   id: string;
@@ -43,10 +44,10 @@ const exportCsv = (rows: Payout[]) => {
   const lines = [header.join(";")];
   rows.forEach((r) => {
     lines.push([
-      r.id, `"${(r.partner_name || "").replace(/"/g, '""')}"`, r.partner_email || "",
+      r.id, r.partner_name || "", r.partner_email || "",
       Math.round(r.amount), r.status, fmtDate(r.requested_at), fmtDate(r.approved_at),
-      fmtDate(r.paid_at), r.payment_reference || "", `"${(r.admin_notes || "").replace(/"/g, '""')}"`,
-    ].join(";"));
+      fmtDate(r.paid_at), r.payment_reference || "", r.admin_notes || "",
+    ].map(csvCell).join(";"));
   });
   const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);

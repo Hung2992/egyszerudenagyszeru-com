@@ -1,6 +1,7 @@
 // Launch automation: státuszváltás, early access kódgenerálás + email,
 // FOMO frissítés. Fut 5 percenként pg_cron-on keresztül.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { maskEmail } from "../_shared/redact.ts";
 import { requireInternalOrAdmin } from "../_shared/internal-auth.ts";
 
 const corsHeaders = {
@@ -21,7 +22,7 @@ async function sendEmail(supa: any, recipient: string, subject: string, html: st
       body: { to: recipient, subject, html, template_name: template },
     });
   } catch (e) {
-    console.error("email_fail", recipient, e);
+    console.error("email_fail", maskEmail(recipient), e);
   }
 }
 

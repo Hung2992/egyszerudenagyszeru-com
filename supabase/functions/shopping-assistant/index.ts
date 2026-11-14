@@ -1,4 +1,5 @@
 import { installAiMeter } from "../_shared/ai-meter.ts";
+import { sanitizeChatMessages, filterSafe } from '../_shared/chat-input.ts'
 installAiMeter("shopping-assistant");
 // AI Shopping Assistant - természetes nyelvű termékkeresés
 // Cache (1h) + napi kvóta (50/user) + monitoring integrálva
@@ -72,8 +73,9 @@ const TOOLS = [
 async function searchProducts(supabase: any, args: any) {
   let q = supabase.from('shop_products')
     .select('id, name, description, price, original_price, category, sizes, colors, image_url, stock')
-    .eq('is_active', true).limit(args.limit || 5)
-  if (args.query) q = q.or(`name.ilike.%${args.query}%,description.ilike.%${args.query}%,category.ilike.%${args.query}%`)
+    .eq('is_active', true).limit(Math.min(Math.max(Number(args.limit) || 5, 1), 20))
+  const sq = filterSafe(args.query)
+  if (sq) q = q.or(`name.ilike.%${sq}%,description.ilike.%${sq}%,category.ilike.%${sq}%`)
   if (args.category) q = q.ilike('category', `%${args.category}%`)
   if (args.color) q = q.contains('colors', [args.color])
   if (args.size) q = q.contains('sizes', [args.size])
@@ -184,6 +186,9 @@ Deno.serve(async (req) => {
   // 🛡️ IP alapú rate limit (vendég vásárlóknak is nyitott végpont)
   const limited = await rateLimitDb(req, { limit: 15, windowSeconds: 60, key: 'shopping-assistant' })
   if (limited) return limited
+  // Daily per-visitor ceiling so a single client cannot drain the AI budget.
+  const dailyLimited = await rateLimitDb(req, { limit: 150, windowSeconds: 86400, key: 'shopping-assistant-day' })
+  if (dailyLimited) return dailyLimited
 
   try {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')
@@ -198,7 +203,7 @@ Deno.serve(async (req) => {
     )
 
     const body = await req.json()
-    const userMessages = Array.isArray(body?.messages) ? body.messages : []
+    const userMessages = sanitizeChatMessages(body?.messages, { maxMessages: 16, maxChars: 1500 })
     if (userMessages.length === 0) {
       return new Response(JSON.stringify({ error: 'Nincs üzenet' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })

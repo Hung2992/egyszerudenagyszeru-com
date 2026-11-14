@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Trophy, Download, RefreshCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { csvCell } from "@/lib/csv";
 
 interface TopPartner {
   partner_id: string;
@@ -23,14 +24,14 @@ const downloadCsv = (rows: TopPartner[]) => {
   const lines = [header.join(";")];
   rows.forEach((r) => {
     lines.push([
-      `"${(r.partner_name || "").replace(/"/g, '""')}"`,
+      r.partner_name || "",
       r.coupon_code || "",
       r.orders_count,
       Math.round(r.total_revenue),
       Math.round(r.total_commission),
       Math.round(r.pending_commission),
       Math.round(r.paid_commission),
-    ].join(";"));
+    ].map(csvCell).join(";"));
   });
   const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);

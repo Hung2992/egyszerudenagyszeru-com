@@ -1,15 +1,14 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { appOrigin } from "../_shared/app-origin.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const EMAIL_LIMIT_PER_HOUR = 3;
-const IP_LIMIT_PER_HOUR = 10;
-
-async function sha256(input: string): Promise<string> {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input.toLowerCase().trim()));
-  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+// Only allow reset links that return to this app's own sites.
+function safeRedirect(raw: unknown): string {
+  return `${appOrigin(raw)}/reset-password`;
 }
 
 Deno.serve(async (req) => {
@@ -65,7 +64,7 @@ Deno.serve(async (req) => {
     }
 
     const { error } = await admin.auth.resetPasswordForEmail(email, {
-      redirectTo: redirectTo || `${new URL(req.url).origin}/reset-password`,
+      redirectTo: safeRedirect(redirectTo),
     });
 
     await admin.from("password_recovery_requests").insert({
@@ -81,7 +80,8 @@ Deno.serve(async (req) => {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), {
+    console.error("password recovery failed", e);
+    return new Response(JSON.stringify({ error: "server_error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

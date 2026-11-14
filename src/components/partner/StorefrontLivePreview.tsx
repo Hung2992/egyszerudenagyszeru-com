@@ -37,7 +37,7 @@ const StorefrontLivePreview = ({ storefrontId, slug, draft, refreshKey = 0, show
     const win = iframeRef.current?.contentWindow;
     if (!win) return;
     try {
-      win.postMessage({ type: "storefront-preview-update", draft }, "*");
+      win.postMessage({ type: "storefront-preview-update", draft }, window.location.origin);
     } catch { /* ignore */ }
   }, [draft]);
 

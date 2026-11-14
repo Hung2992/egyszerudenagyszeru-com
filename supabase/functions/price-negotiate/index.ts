@@ -4,6 +4,7 @@ installAiMeter("price-negotiate");
 // Vásárló áralku kérése -> AI javasol -> Rules Engine engedélyez -> Ajánlat
 // SOHA nem enged a szabálymotor felett. Minden kérést auditlogol.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.104.1'
+import { rateLimitDb } from '../_shared/internal-auth.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -66,6 +67,12 @@ function json(body: unknown, status = 200) {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
+
+  // Public endpoint with a metered AI call: cap per visitor per minute and per day.
+  const limited = await rateLimitDb(req, { limit: 6, windowSeconds: 60, key: 'price-negotiate' })
+  if (limited) return limited
+  const dailyLimited = await rateLimitDb(req, { limit: 40, windowSeconds: 86400, key: 'price-negotiate-day' })
+  if (dailyLimited) return dailyLimited
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
