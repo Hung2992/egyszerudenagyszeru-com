@@ -12473,6 +12473,8 @@ export type Database = {
           accounting_export_format: string | null
           accounting_invoice_prefix: string | null
           accounting_vat_rate: number | null
+          ai_product_tagging_enabled: boolean
+          ai_product_tagging_settings: Json
           analytics_custom_body_code: string | null
           analytics_custom_head_code: string | null
           analytics_enabled: boolean | null
@@ -12498,6 +12500,8 @@ export type Database = {
           auto_procurement_use_velocity: boolean | null
           auto_procurement_velocity_days: number | null
           auto_reply_message: string | null
+          bundle_deals_mgmt_enabled: boolean
+          bundle_deals_mgmt_settings: Json
           business_hours: Json | null
           checkout_enable_gift_wrap: boolean | null
           checkout_enable_notes: boolean | null
@@ -12518,6 +12522,7 @@ export type Database = {
           cookie_banner_enabled: boolean | null
           cookie_banner_position: string | null
           cookie_banner_text: string | null
+          cookie_consent_enabled: boolean
           cookie_expiry_days: number | null
           cookie_functional_enabled: boolean | null
           cookie_marketing_enabled: boolean | null
@@ -12527,9 +12532,19 @@ export type Database = {
           coupon_first_order_discount: boolean | null
           coupon_first_order_value: number | null
           coupon_max_per_user: number | null
+          coupon_rules_enabled: boolean
+          coupon_rules_settings: Json
           coupon_stackable: boolean | null
+          crosssell_upsell_enabled: boolean
+          crosssell_upsell_settings: Json
+          csat_enabled: boolean
+          csat_settings: Json
           currency: string
           custom_order_statuses: Json | null
+          customer_surveys_enabled: boolean
+          customer_surveys_settings: Json
+          data_retention_days: number
+          default_language: string
           discount_auto_enabled: boolean | null
           discount_auto_min_amount: number | null
           discount_auto_type: string | null
@@ -12538,16 +12553,23 @@ export type Database = {
           discount_quantity_rules: Json | null
           discount_vip_enabled: boolean | null
           discount_vip_tiers: Json | null
+          dynamic_price_automation_enabled: boolean
+          dynamic_price_automation_settings: Json
           email_abandoned_cart_delay_hours: number | null
           email_abandoned_cart_enabled: boolean | null
           email_coupon_notification: boolean | null
           email_order_confirmation: boolean | null
           email_review_request_delay_days: number | null
           email_review_request_enabled: boolean | null
+          email_sequences_enabled: boolean
+          email_sequences_settings: Json
           email_shipping_notification: boolean | null
           email_welcome_body: string | null
           email_welcome_enabled: boolean | null
           email_welcome_subject: string | null
+          facebook_pixel_id: string | null
+          feedback_campaigns_enabled: boolean
+          feedback_campaigns_settings: Json
           fraud_auto_block_threshold: number | null
           fraud_detection_enabled: boolean | null
           free_shipping_above: number | null
@@ -12556,18 +12578,27 @@ export type Database = {
           giftcard_expiry_months: number | null
           giftcard_max_amount: number | null
           giftcard_min_amount: number | null
+          giftcard_system_enabled: boolean
+          giftcard_system_settings: Json
+          google_analytics_id: string | null
           i18n_auto_translate: boolean | null
           i18n_default_language: string | null
           i18n_show_switcher: boolean | null
           i18n_supported_languages: string[] | null
           id: string
           imprint: string | null
+          installment_payment_enabled: boolean
+          installment_payment_settings: Json
+          inventory_movement_log_enabled: boolean
+          inventory_movement_log_settings: Json
           invoice_address: string | null
           invoice_auto_generate: boolean | null
           invoice_bank_account: string | null
           invoice_company_name: string | null
           invoice_default_tax_rate: number | null
           invoice_footer_text: string | null
+          invoice_generator_enabled: boolean
+          invoice_generator_settings: Json
           invoice_header_text: string | null
           invoice_number_counter: number | null
           invoice_number_prefix: string | null
@@ -12594,13 +12625,21 @@ export type Database = {
           legal_version: string | null
           logo_url: string | null
           low_stock_threshold: number | null
+          loyalty_automation_enabled: boolean
+          loyalty_automation_settings: Json
+          loyalty_dashboard_enabled: boolean
+          loyalty_dashboard_settings: Json
           loyalty_discount_per_points: number | null
           loyalty_enabled: boolean | null
           loyalty_expiry_months: number | null
           loyalty_levels: string[] | null
           loyalty_min_redeem: number | null
           loyalty_points_per_currency: number | null
+          loyalty_points_rules_enabled: boolean
+          loyalty_points_rules_settings: Json
           loyalty_redemption_rate: number | null
+          loyalty_rewards_enabled: boolean
+          loyalty_rewards_settings: Json
           maintenance_banner_text: string | null
           maintenance_enabled: boolean | null
           maintenance_ip_whitelist: string | null
@@ -12608,6 +12647,11 @@ export type Database = {
           maintenance_password: string | null
           maintenance_password_hash: string | null
           maintenance_return_date: string | null
+          margin_management_enabled: boolean
+          margin_management_settings: Json
+          meta_robots: string
+          multi_warehouse_enabled: boolean
+          multi_warehouse_settings: Json
           notif_order_status_sms: boolean | null
           notif_promo_push: boolean | null
           notif_push_enabled: boolean | null
@@ -12621,13 +12665,18 @@ export type Database = {
           notification_new_review: boolean | null
           notification_new_user: boolean | null
           notification_slack_webhook: string | null
+          og_image_url: string | null
           order_auto_cancel_hours: number | null
           order_auto_confirm: boolean | null
+          order_consolidation_enabled: boolean
+          order_consolidation_settings: Json
           order_payment_retry_enabled: boolean | null
           order_payment_retry_hours: number | null
           order_reminder_after_hours: number | null
           order_reminder_enabled: boolean | null
           order_require_payment_proof: boolean | null
+          order_workflow_enabled: boolean
+          order_workflow_settings: Json
           order_workflow_steps: Json | null
           partner_platform_fee_pct: number
           payment_card_enabled: boolean | null
@@ -12639,6 +12688,8 @@ export type Database = {
           payment_transfer_bank_name: string | null
           payment_transfer_enabled: boolean | null
           payment_transfer_iban: string | null
+          personalized_recommendations_enabled: boolean
+          personalized_recommendations_settings: Json
           popup_exit_enabled: boolean | null
           popup_exit_text: string | null
           popup_exit_title: string | null
@@ -12651,6 +12702,7 @@ export type Database = {
           popup_promo_text: string | null
           popup_promo_title: string | null
           price_display_mode: string
+          privacy_banner_text: string | null
           privacy_policy: string | null
           procurement_address_city: string | null
           procurement_address_country: string | null
@@ -12658,6 +12710,10 @@ export type Database = {
           procurement_address_phone: string | null
           procurement_address_street: string | null
           procurement_address_zip: string | null
+          product_badges_enabled: boolean
+          product_badges_settings: Json
+          product_compare_enabled: boolean
+          product_compare_settings: Json
           product_default_sort: string | null
           product_default_view: string | null
           product_filter_by_color: boolean | null
@@ -12667,6 +12723,12 @@ export type Database = {
           product_grid_columns: number | null
           product_items_per_page: number | null
           product_quick_view_enabled: boolean | null
+          product_ranking_enabled: boolean
+          product_ranking_settings: Json
+          product_recall_enabled: boolean
+          product_recall_settings: Json
+          product_seo_manager_enabled: boolean
+          product_seo_manager_settings: Json
           product_show_discount_badge: boolean | null
           product_show_stock_badge: boolean | null
           product_tags: Json | null
@@ -12676,6 +12738,8 @@ export type Database = {
           reg_social_login_enabled: boolean | null
           reg_terms_required: boolean | null
           reg_welcome_message: string | null
+          remarketing_automation_enabled: boolean
+          remarketing_automation_settings: Json
           reply_to_email: string | null
           return_auto_approve: boolean | null
           return_deadline_days: number | null
@@ -12683,8 +12747,12 @@ export type Database = {
           return_reasons: string[] | null
           return_refund_method: string | null
           reverse_charge_enabled: boolean
+          review_moderation_enabled: boolean
+          review_moderation_settings: Json
           reviews_enabled: boolean | null
           reviews_require_approval: boolean | null
+          satisfaction_automation_enabled: boolean
+          satisfaction_automation_settings: Json
           sender_name: string | null
           seo_canonical_url: string | null
           seo_description: string | null
@@ -12699,12 +12767,17 @@ export type Database = {
           seo_sitemap_enabled: boolean | null
           seo_structured_data_enabled: boolean | null
           seo_title: string | null
+          shipping_cost_rules_enabled: boolean
+          shipping_cost_rules_settings: Json
           shipping_default_cost: number | null
           shipping_fee: number
           shipping_free_limit: number | null
           shipping_methods: Json | null
           shipping_policy: string | null
           shipping_zones: Json | null
+          shipping_zones_mgmt_enabled: boolean
+          shipping_zones_mgmt_settings: Json
+          sitemap_enabled: boolean
           size_chart_template: string | null
           social_facebook: string | null
           social_instagram: string | null
@@ -12712,6 +12785,8 @@ export type Database = {
           social_tiktok: string | null
           social_twitter: string | null
           social_youtube: string | null
+          stock_alert_auto_enabled: boolean
+          stock_alert_auto_settings: Json
           stock_alert_email: string | null
           stock_alert_enabled: boolean | null
           stock_alert_threshold: number | null
@@ -12721,6 +12796,7 @@ export type Database = {
           stock_show_availability_text: boolean | null
           stock_show_remaining_count: boolean | null
           store_name: string
+          supported_languages: string[]
           terms_and_conditions: string | null
           theme_accent_color: string | null
           theme_bg_color: string | null
@@ -12748,6 +12824,8 @@ export type Database = {
           accounting_export_format?: string | null
           accounting_invoice_prefix?: string | null
           accounting_vat_rate?: number | null
+          ai_product_tagging_enabled?: boolean
+          ai_product_tagging_settings?: Json
           analytics_custom_body_code?: string | null
           analytics_custom_head_code?: string | null
           analytics_enabled?: boolean | null
@@ -12773,6 +12851,8 @@ export type Database = {
           auto_procurement_use_velocity?: boolean | null
           auto_procurement_velocity_days?: number | null
           auto_reply_message?: string | null
+          bundle_deals_mgmt_enabled?: boolean
+          bundle_deals_mgmt_settings?: Json
           business_hours?: Json | null
           checkout_enable_gift_wrap?: boolean | null
           checkout_enable_notes?: boolean | null
@@ -12793,6 +12873,7 @@ export type Database = {
           cookie_banner_enabled?: boolean | null
           cookie_banner_position?: string | null
           cookie_banner_text?: string | null
+          cookie_consent_enabled?: boolean
           cookie_expiry_days?: number | null
           cookie_functional_enabled?: boolean | null
           cookie_marketing_enabled?: boolean | null
@@ -12802,9 +12883,19 @@ export type Database = {
           coupon_first_order_discount?: boolean | null
           coupon_first_order_value?: number | null
           coupon_max_per_user?: number | null
+          coupon_rules_enabled?: boolean
+          coupon_rules_settings?: Json
           coupon_stackable?: boolean | null
+          crosssell_upsell_enabled?: boolean
+          crosssell_upsell_settings?: Json
+          csat_enabled?: boolean
+          csat_settings?: Json
           currency?: string
           custom_order_statuses?: Json | null
+          customer_surveys_enabled?: boolean
+          customer_surveys_settings?: Json
+          data_retention_days?: number
+          default_language?: string
           discount_auto_enabled?: boolean | null
           discount_auto_min_amount?: number | null
           discount_auto_type?: string | null
@@ -12813,16 +12904,23 @@ export type Database = {
           discount_quantity_rules?: Json | null
           discount_vip_enabled?: boolean | null
           discount_vip_tiers?: Json | null
+          dynamic_price_automation_enabled?: boolean
+          dynamic_price_automation_settings?: Json
           email_abandoned_cart_delay_hours?: number | null
           email_abandoned_cart_enabled?: boolean | null
           email_coupon_notification?: boolean | null
           email_order_confirmation?: boolean | null
           email_review_request_delay_days?: number | null
           email_review_request_enabled?: boolean | null
+          email_sequences_enabled?: boolean
+          email_sequences_settings?: Json
           email_shipping_notification?: boolean | null
           email_welcome_body?: string | null
           email_welcome_enabled?: boolean | null
           email_welcome_subject?: string | null
+          facebook_pixel_id?: string | null
+          feedback_campaigns_enabled?: boolean
+          feedback_campaigns_settings?: Json
           fraud_auto_block_threshold?: number | null
           fraud_detection_enabled?: boolean | null
           free_shipping_above?: number | null
@@ -12831,18 +12929,27 @@ export type Database = {
           giftcard_expiry_months?: number | null
           giftcard_max_amount?: number | null
           giftcard_min_amount?: number | null
+          giftcard_system_enabled?: boolean
+          giftcard_system_settings?: Json
+          google_analytics_id?: string | null
           i18n_auto_translate?: boolean | null
           i18n_default_language?: string | null
           i18n_show_switcher?: boolean | null
           i18n_supported_languages?: string[] | null
           id?: string
           imprint?: string | null
+          installment_payment_enabled?: boolean
+          installment_payment_settings?: Json
+          inventory_movement_log_enabled?: boolean
+          inventory_movement_log_settings?: Json
           invoice_address?: string | null
           invoice_auto_generate?: boolean | null
           invoice_bank_account?: string | null
           invoice_company_name?: string | null
           invoice_default_tax_rate?: number | null
           invoice_footer_text?: string | null
+          invoice_generator_enabled?: boolean
+          invoice_generator_settings?: Json
           invoice_header_text?: string | null
           invoice_number_counter?: number | null
           invoice_number_prefix?: string | null
@@ -12869,13 +12976,21 @@ export type Database = {
           legal_version?: string | null
           logo_url?: string | null
           low_stock_threshold?: number | null
+          loyalty_automation_enabled?: boolean
+          loyalty_automation_settings?: Json
+          loyalty_dashboard_enabled?: boolean
+          loyalty_dashboard_settings?: Json
           loyalty_discount_per_points?: number | null
           loyalty_enabled?: boolean | null
           loyalty_expiry_months?: number | null
           loyalty_levels?: string[] | null
           loyalty_min_redeem?: number | null
           loyalty_points_per_currency?: number | null
+          loyalty_points_rules_enabled?: boolean
+          loyalty_points_rules_settings?: Json
           loyalty_redemption_rate?: number | null
+          loyalty_rewards_enabled?: boolean
+          loyalty_rewards_settings?: Json
           maintenance_banner_text?: string | null
           maintenance_enabled?: boolean | null
           maintenance_ip_whitelist?: string | null
@@ -12883,6 +12998,11 @@ export type Database = {
           maintenance_password?: string | null
           maintenance_password_hash?: string | null
           maintenance_return_date?: string | null
+          margin_management_enabled?: boolean
+          margin_management_settings?: Json
+          meta_robots?: string
+          multi_warehouse_enabled?: boolean
+          multi_warehouse_settings?: Json
           notif_order_status_sms?: boolean | null
           notif_promo_push?: boolean | null
           notif_push_enabled?: boolean | null
@@ -12896,13 +13016,18 @@ export type Database = {
           notification_new_review?: boolean | null
           notification_new_user?: boolean | null
           notification_slack_webhook?: string | null
+          og_image_url?: string | null
           order_auto_cancel_hours?: number | null
           order_auto_confirm?: boolean | null
+          order_consolidation_enabled?: boolean
+          order_consolidation_settings?: Json
           order_payment_retry_enabled?: boolean | null
           order_payment_retry_hours?: number | null
           order_reminder_after_hours?: number | null
           order_reminder_enabled?: boolean | null
           order_require_payment_proof?: boolean | null
+          order_workflow_enabled?: boolean
+          order_workflow_settings?: Json
           order_workflow_steps?: Json | null
           partner_platform_fee_pct?: number
           payment_card_enabled?: boolean | null
@@ -12914,6 +13039,8 @@ export type Database = {
           payment_transfer_bank_name?: string | null
           payment_transfer_enabled?: boolean | null
           payment_transfer_iban?: string | null
+          personalized_recommendations_enabled?: boolean
+          personalized_recommendations_settings?: Json
           popup_exit_enabled?: boolean | null
           popup_exit_text?: string | null
           popup_exit_title?: string | null
@@ -12926,6 +13053,7 @@ export type Database = {
           popup_promo_text?: string | null
           popup_promo_title?: string | null
           price_display_mode?: string
+          privacy_banner_text?: string | null
           privacy_policy?: string | null
           procurement_address_city?: string | null
           procurement_address_country?: string | null
@@ -12933,6 +13061,10 @@ export type Database = {
           procurement_address_phone?: string | null
           procurement_address_street?: string | null
           procurement_address_zip?: string | null
+          product_badges_enabled?: boolean
+          product_badges_settings?: Json
+          product_compare_enabled?: boolean
+          product_compare_settings?: Json
           product_default_sort?: string | null
           product_default_view?: string | null
           product_filter_by_color?: boolean | null
@@ -12942,6 +13074,12 @@ export type Database = {
           product_grid_columns?: number | null
           product_items_per_page?: number | null
           product_quick_view_enabled?: boolean | null
+          product_ranking_enabled?: boolean
+          product_ranking_settings?: Json
+          product_recall_enabled?: boolean
+          product_recall_settings?: Json
+          product_seo_manager_enabled?: boolean
+          product_seo_manager_settings?: Json
           product_show_discount_badge?: boolean | null
           product_show_stock_badge?: boolean | null
           product_tags?: Json | null
@@ -12951,6 +13089,8 @@ export type Database = {
           reg_social_login_enabled?: boolean | null
           reg_terms_required?: boolean | null
           reg_welcome_message?: string | null
+          remarketing_automation_enabled?: boolean
+          remarketing_automation_settings?: Json
           reply_to_email?: string | null
           return_auto_approve?: boolean | null
           return_deadline_days?: number | null
@@ -12958,8 +13098,12 @@ export type Database = {
           return_reasons?: string[] | null
           return_refund_method?: string | null
           reverse_charge_enabled?: boolean
+          review_moderation_enabled?: boolean
+          review_moderation_settings?: Json
           reviews_enabled?: boolean | null
           reviews_require_approval?: boolean | null
+          satisfaction_automation_enabled?: boolean
+          satisfaction_automation_settings?: Json
           sender_name?: string | null
           seo_canonical_url?: string | null
           seo_description?: string | null
@@ -12974,12 +13118,17 @@ export type Database = {
           seo_sitemap_enabled?: boolean | null
           seo_structured_data_enabled?: boolean | null
           seo_title?: string | null
+          shipping_cost_rules_enabled?: boolean
+          shipping_cost_rules_settings?: Json
           shipping_default_cost?: number | null
           shipping_fee?: number
           shipping_free_limit?: number | null
           shipping_methods?: Json | null
           shipping_policy?: string | null
           shipping_zones?: Json | null
+          shipping_zones_mgmt_enabled?: boolean
+          shipping_zones_mgmt_settings?: Json
+          sitemap_enabled?: boolean
           size_chart_template?: string | null
           social_facebook?: string | null
           social_instagram?: string | null
@@ -12987,6 +13136,8 @@ export type Database = {
           social_tiktok?: string | null
           social_twitter?: string | null
           social_youtube?: string | null
+          stock_alert_auto_enabled?: boolean
+          stock_alert_auto_settings?: Json
           stock_alert_email?: string | null
           stock_alert_enabled?: boolean | null
           stock_alert_threshold?: number | null
@@ -12996,6 +13147,7 @@ export type Database = {
           stock_show_availability_text?: boolean | null
           stock_show_remaining_count?: boolean | null
           store_name?: string
+          supported_languages?: string[]
           terms_and_conditions?: string | null
           theme_accent_color?: string | null
           theme_bg_color?: string | null
@@ -13023,6 +13175,8 @@ export type Database = {
           accounting_export_format?: string | null
           accounting_invoice_prefix?: string | null
           accounting_vat_rate?: number | null
+          ai_product_tagging_enabled?: boolean
+          ai_product_tagging_settings?: Json
           analytics_custom_body_code?: string | null
           analytics_custom_head_code?: string | null
           analytics_enabled?: boolean | null
@@ -13048,6 +13202,8 @@ export type Database = {
           auto_procurement_use_velocity?: boolean | null
           auto_procurement_velocity_days?: number | null
           auto_reply_message?: string | null
+          bundle_deals_mgmt_enabled?: boolean
+          bundle_deals_mgmt_settings?: Json
           business_hours?: Json | null
           checkout_enable_gift_wrap?: boolean | null
           checkout_enable_notes?: boolean | null
@@ -13068,6 +13224,7 @@ export type Database = {
           cookie_banner_enabled?: boolean | null
           cookie_banner_position?: string | null
           cookie_banner_text?: string | null
+          cookie_consent_enabled?: boolean
           cookie_expiry_days?: number | null
           cookie_functional_enabled?: boolean | null
           cookie_marketing_enabled?: boolean | null
@@ -13077,9 +13234,19 @@ export type Database = {
           coupon_first_order_discount?: boolean | null
           coupon_first_order_value?: number | null
           coupon_max_per_user?: number | null
+          coupon_rules_enabled?: boolean
+          coupon_rules_settings?: Json
           coupon_stackable?: boolean | null
+          crosssell_upsell_enabled?: boolean
+          crosssell_upsell_settings?: Json
+          csat_enabled?: boolean
+          csat_settings?: Json
           currency?: string
           custom_order_statuses?: Json | null
+          customer_surveys_enabled?: boolean
+          customer_surveys_settings?: Json
+          data_retention_days?: number
+          default_language?: string
           discount_auto_enabled?: boolean | null
           discount_auto_min_amount?: number | null
           discount_auto_type?: string | null
@@ -13088,16 +13255,23 @@ export type Database = {
           discount_quantity_rules?: Json | null
           discount_vip_enabled?: boolean | null
           discount_vip_tiers?: Json | null
+          dynamic_price_automation_enabled?: boolean
+          dynamic_price_automation_settings?: Json
           email_abandoned_cart_delay_hours?: number | null
           email_abandoned_cart_enabled?: boolean | null
           email_coupon_notification?: boolean | null
           email_order_confirmation?: boolean | null
           email_review_request_delay_days?: number | null
           email_review_request_enabled?: boolean | null
+          email_sequences_enabled?: boolean
+          email_sequences_settings?: Json
           email_shipping_notification?: boolean | null
           email_welcome_body?: string | null
           email_welcome_enabled?: boolean | null
           email_welcome_subject?: string | null
+          facebook_pixel_id?: string | null
+          feedback_campaigns_enabled?: boolean
+          feedback_campaigns_settings?: Json
           fraud_auto_block_threshold?: number | null
           fraud_detection_enabled?: boolean | null
           free_shipping_above?: number | null
@@ -13106,18 +13280,27 @@ export type Database = {
           giftcard_expiry_months?: number | null
           giftcard_max_amount?: number | null
           giftcard_min_amount?: number | null
+          giftcard_system_enabled?: boolean
+          giftcard_system_settings?: Json
+          google_analytics_id?: string | null
           i18n_auto_translate?: boolean | null
           i18n_default_language?: string | null
           i18n_show_switcher?: boolean | null
           i18n_supported_languages?: string[] | null
           id?: string
           imprint?: string | null
+          installment_payment_enabled?: boolean
+          installment_payment_settings?: Json
+          inventory_movement_log_enabled?: boolean
+          inventory_movement_log_settings?: Json
           invoice_address?: string | null
           invoice_auto_generate?: boolean | null
           invoice_bank_account?: string | null
           invoice_company_name?: string | null
           invoice_default_tax_rate?: number | null
           invoice_footer_text?: string | null
+          invoice_generator_enabled?: boolean
+          invoice_generator_settings?: Json
           invoice_header_text?: string | null
           invoice_number_counter?: number | null
           invoice_number_prefix?: string | null
@@ -13144,13 +13327,21 @@ export type Database = {
           legal_version?: string | null
           logo_url?: string | null
           low_stock_threshold?: number | null
+          loyalty_automation_enabled?: boolean
+          loyalty_automation_settings?: Json
+          loyalty_dashboard_enabled?: boolean
+          loyalty_dashboard_settings?: Json
           loyalty_discount_per_points?: number | null
           loyalty_enabled?: boolean | null
           loyalty_expiry_months?: number | null
           loyalty_levels?: string[] | null
           loyalty_min_redeem?: number | null
           loyalty_points_per_currency?: number | null
+          loyalty_points_rules_enabled?: boolean
+          loyalty_points_rules_settings?: Json
           loyalty_redemption_rate?: number | null
+          loyalty_rewards_enabled?: boolean
+          loyalty_rewards_settings?: Json
           maintenance_banner_text?: string | null
           maintenance_enabled?: boolean | null
           maintenance_ip_whitelist?: string | null
@@ -13158,6 +13349,11 @@ export type Database = {
           maintenance_password?: string | null
           maintenance_password_hash?: string | null
           maintenance_return_date?: string | null
+          margin_management_enabled?: boolean
+          margin_management_settings?: Json
+          meta_robots?: string
+          multi_warehouse_enabled?: boolean
+          multi_warehouse_settings?: Json
           notif_order_status_sms?: boolean | null
           notif_promo_push?: boolean | null
           notif_push_enabled?: boolean | null
@@ -13171,13 +13367,18 @@ export type Database = {
           notification_new_review?: boolean | null
           notification_new_user?: boolean | null
           notification_slack_webhook?: string | null
+          og_image_url?: string | null
           order_auto_cancel_hours?: number | null
           order_auto_confirm?: boolean | null
+          order_consolidation_enabled?: boolean
+          order_consolidation_settings?: Json
           order_payment_retry_enabled?: boolean | null
           order_payment_retry_hours?: number | null
           order_reminder_after_hours?: number | null
           order_reminder_enabled?: boolean | null
           order_require_payment_proof?: boolean | null
+          order_workflow_enabled?: boolean
+          order_workflow_settings?: Json
           order_workflow_steps?: Json | null
           partner_platform_fee_pct?: number
           payment_card_enabled?: boolean | null
@@ -13189,6 +13390,8 @@ export type Database = {
           payment_transfer_bank_name?: string | null
           payment_transfer_enabled?: boolean | null
           payment_transfer_iban?: string | null
+          personalized_recommendations_enabled?: boolean
+          personalized_recommendations_settings?: Json
           popup_exit_enabled?: boolean | null
           popup_exit_text?: string | null
           popup_exit_title?: string | null
@@ -13201,6 +13404,7 @@ export type Database = {
           popup_promo_text?: string | null
           popup_promo_title?: string | null
           price_display_mode?: string
+          privacy_banner_text?: string | null
           privacy_policy?: string | null
           procurement_address_city?: string | null
           procurement_address_country?: string | null
@@ -13208,6 +13412,10 @@ export type Database = {
           procurement_address_phone?: string | null
           procurement_address_street?: string | null
           procurement_address_zip?: string | null
+          product_badges_enabled?: boolean
+          product_badges_settings?: Json
+          product_compare_enabled?: boolean
+          product_compare_settings?: Json
           product_default_sort?: string | null
           product_default_view?: string | null
           product_filter_by_color?: boolean | null
@@ -13217,6 +13425,12 @@ export type Database = {
           product_grid_columns?: number | null
           product_items_per_page?: number | null
           product_quick_view_enabled?: boolean | null
+          product_ranking_enabled?: boolean
+          product_ranking_settings?: Json
+          product_recall_enabled?: boolean
+          product_recall_settings?: Json
+          product_seo_manager_enabled?: boolean
+          product_seo_manager_settings?: Json
           product_show_discount_badge?: boolean | null
           product_show_stock_badge?: boolean | null
           product_tags?: Json | null
@@ -13226,6 +13440,8 @@ export type Database = {
           reg_social_login_enabled?: boolean | null
           reg_terms_required?: boolean | null
           reg_welcome_message?: string | null
+          remarketing_automation_enabled?: boolean
+          remarketing_automation_settings?: Json
           reply_to_email?: string | null
           return_auto_approve?: boolean | null
           return_deadline_days?: number | null
@@ -13233,8 +13449,12 @@ export type Database = {
           return_reasons?: string[] | null
           return_refund_method?: string | null
           reverse_charge_enabled?: boolean
+          review_moderation_enabled?: boolean
+          review_moderation_settings?: Json
           reviews_enabled?: boolean | null
           reviews_require_approval?: boolean | null
+          satisfaction_automation_enabled?: boolean
+          satisfaction_automation_settings?: Json
           sender_name?: string | null
           seo_canonical_url?: string | null
           seo_description?: string | null
@@ -13249,12 +13469,17 @@ export type Database = {
           seo_sitemap_enabled?: boolean | null
           seo_structured_data_enabled?: boolean | null
           seo_title?: string | null
+          shipping_cost_rules_enabled?: boolean
+          shipping_cost_rules_settings?: Json
           shipping_default_cost?: number | null
           shipping_fee?: number
           shipping_free_limit?: number | null
           shipping_methods?: Json | null
           shipping_policy?: string | null
           shipping_zones?: Json | null
+          shipping_zones_mgmt_enabled?: boolean
+          shipping_zones_mgmt_settings?: Json
+          sitemap_enabled?: boolean
           size_chart_template?: string | null
           social_facebook?: string | null
           social_instagram?: string | null
@@ -13262,6 +13487,8 @@ export type Database = {
           social_tiktok?: string | null
           social_twitter?: string | null
           social_youtube?: string | null
+          stock_alert_auto_enabled?: boolean
+          stock_alert_auto_settings?: Json
           stock_alert_email?: string | null
           stock_alert_enabled?: boolean | null
           stock_alert_threshold?: number | null
@@ -13271,6 +13498,7 @@ export type Database = {
           stock_show_availability_text?: boolean | null
           stock_show_remaining_count?: boolean | null
           store_name?: string
+          supported_languages?: string[]
           terms_and_conditions?: string | null
           theme_accent_color?: string | null
           theme_bg_color?: string | null
