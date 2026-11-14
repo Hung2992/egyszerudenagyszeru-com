@@ -34,3 +34,17 @@ export const proposalGoal = (dept: Pick<Department, "name" | "roles">) =>
 // Ugyanaz a szabály, mint a Munka állapot menüben: a határidő a nap végéig érvényes, kész terv nem lejárt.
 export const planOverdue = (p: Pick<RolePlan, "due_date" | "status">, now = new Date()) =>
   p.status !== "done" && isOverdue(p.due_date, now);
+
+// Átmeneti állapotok (dashboard, Munkatárs-státusz, Munka állapot egységesen).
+export type PlanStage = "javaslat benyújtva" | "jóváhagyásra vár" | "jóváhagyva" | "elkezdődött" | "kész" | "megszakítva";
+export function planStage(p: Pick<RolePlan, "status" | "plan">, doneSteps = 0): PlanStage {
+  const proposed = !!(p.plan && typeof p.plan === "object" && (p.plan as Record<string, unknown>).proposedBy);
+  if (p.status === "cancelled") return "megszakítva";
+  if (p.status === "done") return "kész";
+  if (p.status === "draft") return proposed ? "javaslat benyújtva" : "jóváhagyásra vár";
+  if (p.status === "in_progress" || doneSteps > 0) return "elkezdődött";
+  return "jóváhagyva";
+}
+
+export type Staff = { dept_id: string; full_name: string; title: string; area: string; tools: string[]; duties: string };
+export const staffLabel = (s: Staff | undefined, fallback: string) => s ? `${s.full_name}${s.title ? " · " + s.title : ""}` : fallback;
