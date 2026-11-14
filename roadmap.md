@@ -56,4 +56,4 @@
 - [ ] Szállítási dátumok az 5 függő rendelésre — valós feladási adat kell a felhasználótól
 - [x] AI kredit számlázási ár beállítható, havi költség pénzben
 - [ ] Tényleges kredit ár megadása — a felhasználótól vár
-- [ ] TikTok-posztolás: webshop termékek és kampányok a bekötött fiókra (posztolási engedély kell)
+- [ ] TikTok-posztolás — BLOKKOLVA: a TikTok-kapcsolat nem ad posztolási engedélyt (video.publish nem kérhető)
