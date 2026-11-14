@@ -330,6 +330,13 @@
       "when": 1794647441247,
       "tag": "0046_social_scoped_permissions_and_test_audit",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1794647514310,
+      "tag": "0047_social_test_draft_and_audit_safety",
+      "breakpoints": true
     }
   ]
 }
