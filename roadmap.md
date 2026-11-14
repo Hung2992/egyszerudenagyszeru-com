@@ -37,7 +37,7 @@
 - [x] Negyedik kör: 13 súlyos találat javítva és támadás-szimulációval ellenőrizve; 2 nem induló funkció javítva; dupla hibás ütemezés törölve (v4).
 - [ ] Értékelési képek tárhelye — blokkoló: a munkatér tiltja a nyilvános tárhelyet (felhasználói beállítás).
 - [ ] Partner SMS/hírlevél címzett-ellenőrzés — blokkoló: termékdöntés (dupla megerősítés, korlát).
-- [ ] 37 admin beállítólap hiányzó mezői + CSV/naplózási figyelmeztetések — következő kör.
+- [x] Ötödik kör: 37 admin beállítólap 76 hiányzó mezője pótolva (mentés élesben igazolva); 14 táblázat-export képletvédelem; e-mail címek kitakarása a naplókban; jelszó-visszaállítás és fizetés visszatérési cím rögzítve; csevegő-utasítás felülírás tiltva; keresőszűrő-trükkök, hanghívás-injekció, belső hálózati SMS-végpontok, sorsolás és szerepkör-lekérdezés lezárva; napi korlátok a fizetős nyilvános AI-ra és vendégrendelésre.
 - [x] Részletes második kör: hat hitelesített belső oldal; 32 hiányzó táblahivatkozás, egy hiányzó RPC; kedvencek 404 reprodukálva; rendelési küldődomain eltérés; 21/21 készlépés naplója egyezik. Részletes v2 jelentés átadva, nem ellenőrzött folyamatok külön jelölve.
 - [x] Gyors biztonsági ellenőrzés, függőségi vizsgálat, kulcsnevek összevetése, hiányzó üzleti adatok ellenőrzése, 280 teszt és négy nyilvános oldal indulásának ellenőrzése; részletes hibajegyzék átadva.
 - [x] Mély biztonsági vizsgálat lefutott (v3 jelentés).
