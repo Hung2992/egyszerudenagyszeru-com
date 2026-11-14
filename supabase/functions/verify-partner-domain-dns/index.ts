@@ -2,7 +2,7 @@
 // Modes:
 //   POST { request_id } -> { status, detail }  (single, auth required)
 //   POST { scheduled: true } -> { processed, changed } (batch, service-role or admin)
-import { createClient } from "npm:@supabase/supabase-js@2.45.0";
+import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { isInternalCall } from "../_shared/internal-auth.ts";
 
