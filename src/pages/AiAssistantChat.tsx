@@ -39,9 +39,9 @@ const AssistantConversation = () => {
 
   if (loading || !isAdmin || !dept) return null;
 
-  const say = (t: string) => {
-    if (!speak || !("speechSynthesis" in window)) return;
-    const u = new SpeechSynthesisUtterance(t.replace(/[#*_`>|]/g, " ").slice(0, 3000)); u.lang = "hu-HU";
+  const say = (t: string, force = false) => {
+    if ((!speak && !force) || !("speechSynthesis" in window)) return;
+    const u = new SpeechSynthesisUtterance(t.replace(/[#*_`>|]/g, " ").slice(0, 12000)); u.lang = "hu-HU";
     const hu = speechSynthesis.getVoices().find(v => v.lang?.toLowerCase().startsWith("hu")); if (hu) u.voice = hu;
     u.onerror = (e) => { if (e.error !== "interrupted" && e.error !== "canceled") setErr("A felolvasás nem indult el ezen az eszközön."); };
     speechSynthesis.cancel(); speechSynthesis.resume(); speechSynthesis.speak(u);
@@ -110,6 +110,7 @@ const AssistantConversation = () => {
           <div className="text-[11px] text-muted-foreground truncate">{dept.roles.join(" · ")}</div>
         </div>
         <Button size="icon" variant="ghost" onClick={toggleSpeak} aria-pressed={speak} aria-label="Felolvasás" title="Felolvasás">{speak ? <Volume2 className="h-4 w-4 text-primary" /> : <VolumeX className="h-4 w-4" />}</Button>
+        <Button size="sm" variant="ghost" className="rounded-none px-2 text-[11px]" disabled={!msgs.length} onClick={() => { setSpeak(true); say(msgs.map(m => (m.role === "user" ? "Te: " : `${dept.name}: `) + m.content).join(". \n"), true); }} aria-label="Teljes beszélgetés felolvasása">Mind ▶</Button>
         <Button size="icon" variant="ghost" onClick={() => setMsgs([])} aria-label="Új beszélgetés" title="Új beszélgetés"><Trash2 className="h-4 w-4" /></Button>
       </header>
       <Button variant="secondary" className="rounded-none justify-start shrink-0" onClick={() => setTeamOpen(!teamOpen)} aria-expanded={teamOpen}><Network />{teamOpen ? "Beszélgetéshez vissza" : "Csapat · közös adatok és átadások"}</Button>
