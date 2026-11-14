@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
-import { ArrowLeft, Mic, MicOff, Send, Volume2, VolumeX, Trash2 } from "lucide-react";
+import { ArrowLeft, Mic, MicOff, Send, Volume2, VolumeX, Trash2, Network, Share2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { WorkforceTeamPanel } from "@/components/admin/WorkforceTeamPanel";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
 import { departments } from "@/lib/ai-world";
@@ -22,6 +24,8 @@ const AiAssistantChat = () => {
   const [err, setErr] = useState("");
   const [listening, setListening] = useState(false);
   const [speak, setSpeak] = useState(false);
+  const [teamOpen, setTeamOpen] = useState(false);
+  const [shareDraft, setShareDraft] = useState("");
   const ta = useRef<HTMLTextAreaElement>(null);
   const end = useRef<HTMLDivElement>(null);
   const rec = useRef<any>(null);
@@ -48,7 +52,7 @@ const AiAssistantChat = () => {
       const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/workforce-assistant`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${s.session?.access_token}`, apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
-        body: JSON.stringify({ department: dept.name, roles: dept.roles, messages: next }),
+        body: JSON.stringify({ departmentId: dept.id, department: dept.name, roles: dept.roles, messages: next.filter(m => m.content.trim()).slice(-30) }),
       });
       if (!r.ok || !r.body) throw new Error((await r.json().catch(() => ({}))).error || "Hiba történt");
       const reader = r.body.getReader(); const dec = new TextDecoder();
@@ -60,7 +64,10 @@ const AiAssistantChat = () => {
         const lines = buf.split("\n"); buf = lines.pop() || "";
         for (const l of lines) {
           if (!l.startsWith("data: ") || l.includes("[DONE]")) continue;
-          try { const d = JSON.parse(l.slice(6)).choices?.[0]?.delta?.content; if (d) { out += d; setMsgs([...next, { role: "assistant", content: out }]); } } catch { /* partial */ }
+          let frame;
+          try { frame = JSON.parse(l.slice(6)); } catch { continue; }
+          if (frame.error) throw new Error("Az AI válasza megszakadt. Próbáld újra később.");
+          const d = frame.choices?.[0]?.delta?.content; if (d) { out += d; setMsgs([...next, { role: "assistant", content: out }]); }
         }
       }
       say(out);
@@ -87,24 +94,28 @@ const AiAssistantChat = () => {
           <div className="font-display">{dept.name} asszisztens</div>
           <div className="text-[11px] text-muted-foreground truncate">{dept.roles.join(" · ")}</div>
         </div>
-        <button onClick={() => { setSpeak(!speak); speechSynthesis?.cancel(); }} aria-label="Felolvasás" className="p-2 hover:bg-muted">{speak ? <Volume2 className="h-4 w-4 text-primary" /> : <VolumeX className="h-4 w-4" />}</button>
-        <button onClick={() => setMsgs([])} aria-label="Új beszélgetés" className="p-2 hover:bg-muted"><Trash2 className="h-4 w-4" /></button>
+        <Button size="icon" variant="ghost" onClick={() => { setSpeak(!speak); window.speechSynthesis?.cancel(); }} aria-label="Felolvasás" title="Felolvasás">{speak ? <Volume2 className="h-4 w-4 text-primary" /> : <VolumeX className="h-4 w-4" />}</Button>
+        <Button size="icon" variant="ghost" onClick={() => setMsgs([])} aria-label="Új beszélgetés" title="Új beszélgetés"><Trash2 className="h-4 w-4" /></Button>
       </header>
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {!msgs.length && <p className="text-sm text-muted-foreground">Kérdezd a {dept.name.toLowerCase()} munkáiról, lépéseiről, határidőkről. Írhatsz vagy beszélhetsz is (mikrofon gomb).</p>}
+      <Button variant="secondary" className="rounded-none justify-start shrink-0" onClick={() => setTeamOpen(!teamOpen)} aria-expanded={teamOpen}><Network />{teamOpen ? "Beszélgetéshez vissza" : "Csapat · közös adatok és átadások"}</Button>
+      <div className="flex-1 overflow-y-auto min-h-0">
+      {teamOpen && <WorkforceTeamPanel departmentId={dept.id} draft={shareDraft} />}
+      <div className="p-4 space-y-4">
+        {!msgs.length && <p className="text-sm text-muted-foreground">{dept.name} · munkák, csapatadatok, átadások</p>}
         {msgs.map((m, i) => m.role === "user"
           ? <div key={i} className="ml-auto max-w-[85%] w-fit bg-primary text-primary-foreground px-3 py-2 text-sm whitespace-pre-wrap">{m.content}</div>
-          : <div key={i} className="prose prose-sm prose-invert max-w-none text-sm"><ReactMarkdown>{m.content || "…"}</ReactMarkdown></div>)}
+          : <div key={i} className="space-y-2"><div className="prose prose-sm prose-invert max-w-none text-sm break-words"><ReactMarkdown>{m.content || "…"}</ReactMarkdown></div>{m.content && !busy && <Button size="sm" variant="ghost" className="rounded-none" onClick={() => { setShareDraft(m.content); setTeamOpen(true); }}><Share2 />Átadás / közös adat</Button>}</div>)}
         {busy && msgs[msgs.length - 1]?.role === "user" && <div className="text-sm text-muted-foreground animate-pulse">gépel…</div>}
         {err && <div className="text-sm text-destructive">{err}</div>}
         <div ref={end} />
       </div>
+      </div>
       <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="flex gap-2 p-3 pr-20 border-t border-border">
-        <button type="button" onClick={toggleMic} aria-label="Mikrofon" className={`p-3 border border-border ${listening ? "bg-destructive text-destructive-foreground" : ""}`}>{listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}</button>
+        <Button type="button" size="icon" variant={listening ? "destructive" : "outline"} onClick={toggleMic} aria-label="Mikrofon" className="rounded-none shrink-0">{listening ? <MicOff /> : <Mic />}</Button>
         <textarea ref={ta} value={input} onChange={(e) => setInput(e.target.value)} rows={1} placeholder="Írj üzenetet…"
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
-          className="flex-1 resize-none bg-muted px-3 py-2 text-sm outline-none" />
-        <button type="submit" disabled={busy || !input.trim()} aria-label="Küldés" className="p-3 bg-primary text-primary-foreground disabled:opacity-40"><Send className="h-4 w-4" /></button>
+          className="flex-1 min-w-0 resize-none bg-muted px-3 py-2 text-sm outline-none" />
+        <Button size="icon" type="submit" disabled={busy || !input.trim()} aria-label="Küldés" className="rounded-none shrink-0"><Send /></Button>
       </form>
     </div>
   );
