@@ -58,7 +58,7 @@ const AiAssistants = () => {
         {per.map(({ d, mine }) => {
           const st = deptStatus(openPlans(mine));
           return (
-            <Link key={d.id} to={`/admin/ai-asszisztensek/${d.id}`} onClick={(e) => { if (window.matchMedia("(min-width: 1024px)").matches) { e.preventDefault(); setSel(d.id); } }} className={`bg-background p-3 hover:bg-muted space-y-2 min-w-0 ${sel === d.id ? "lg:outline lg:outline-1 lg:outline-primary lg:-outline-offset-1" : ""}`}>
+            <Link key={d.id} to={`/admin/ai-asszisztensek/${d.id}`} onClick={(e) => { e.preventDefault(); setSel(d.id); if (!window.matchMedia("(min-width: 1024px)").matches) setTimeout(() => document.getElementById("wf-selected")?.scrollIntoView({ behavior: "smooth" }), 50); }} className={`bg-background p-3 hover:bg-muted space-y-2 min-w-0 ${sel === d.id ? "outline outline-1 outline-primary -outline-offset-1" : ""}`}>
               <div className="text-sm font-display truncate"><span className="text-primary">{d.id}</span> · {d.name}</div>
               <div className="text-[11px] text-muted-foreground truncate">{d.roles[0]}</div>
               <div className="flex items-center justify-between text-[11px]"><span className="flex items-center gap-1"><span className={`h-2 w-2 ${dot[st]}`} />{st}</span><span className="text-muted-foreground">{openPlans(mine).length} munka</span></div>
@@ -66,7 +66,7 @@ const AiAssistants = () => {
           );
         })}
       </main>
-      {selDept && <aside className="hidden lg:block border-l border-border max-h-[calc(100dvh-180px)] overflow-y-auto" aria-label="Kiválasztott munkatárs">
+      {selDept && <aside id="wf-selected" className="scroll-mt-2 border-t lg:border-t-0 lg:border-l border-border lg:max-h-[calc(100dvh-180px)] lg:overflow-y-auto" aria-label="Kiválasztott munkatárs">
         <div className="flex items-center justify-between p-4 border-b border-border"><div><div className="font-display text-primary">{selDept.id} · {selDept.name}</div><div className="text-[11px] text-muted-foreground">{selDept.roles.slice(0, 3).join(" · ")}</div></div><Button size="sm" className="rounded-none" asChild><Link to={`/admin/ai-asszisztensek/${selDept.id}`}>Beszélgetés →</Link></Button></div>
         <WorkforceMyWork key={selDept.id} dept={selDept} onChange={() => setTick(t => t + 1)} />
       </aside>}
