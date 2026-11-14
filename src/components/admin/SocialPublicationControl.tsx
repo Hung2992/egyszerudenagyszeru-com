@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ShieldCheck, FlaskConical, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import { periodKey, budapestDay, type SocialPeriod } from "@/lib/social-periods";
+import { periodKey, periodRange, budapestDay, type SocialPeriod } from "@/lib/social-periods";
 import SocialConnections from "./SocialConnections";
 
 type Event = { id: string; event_type: string; created_at: string; platform: string; payload: { content?: string; rendered_content?: string; executor?: string; result?: string; reason?: string; test_only?: boolean; external_calls?: number } };
@@ -26,15 +26,16 @@ export default function SocialPublicationControl({ onCreated }: { onCreated: () 
     const id = auth.user?.id;
     if (!id) return;
     setUid(id);
+    const range = periodRange(date, period);
     const [permissions, log] = await Promise.all([
       supabase.from("social_publish_permissions").select("mode,revoked_at").eq("user_id", id),
-      supabase.from("social_publish_events").select("id,event_type,created_at,platform,payload").gte("created_at", `${date.slice(0, 7)}-01T00:00:00+01:00`).lt("created_at", new Date(Date.UTC(Number(date.slice(0, 4)), Number(date.slice(5, 7)), 2)).toISOString()).order("created_at", { ascending: false }).limit(1000),
+      supabase.from("social_publish_events").select("id,event_type,created_at,platform,payload").gte("created_at", range.start).lt("created_at", range.end).order("created_at", { ascending: false }).limit(1000),
     ]);
     if (permissions.error || log.error) { toast.error(permissions.error?.message ?? log.error?.message); return; }
     setTestPermission(permissions.data?.some(p => p.mode === "test" && !p.revoked_at) ?? false);
     setLivePermission(permissions.data?.some(p => p.mode === "live" && !p.revoked_at) ?? false);
     setEvents(log.data ?? []);
-  }, [date]);
+  }, [date, period]);
   useEffect(() => { void load(); const timer = window.setInterval(() => void load(), 30000); return () => window.clearInterval(timer); }, [load]);
   const permission = async (mode: "test" | "live", enabled: boolean) => {
     if (!uid || !window.confirm(`${enabled ? "Engedélyezed" : "Visszavonod"} a saját ${mode === "test" ? "teszt" : "éles"} publikálási jogosultságodat?`)) return;
