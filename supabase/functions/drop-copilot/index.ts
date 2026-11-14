@@ -1,4 +1,5 @@
 import { installAiMeter } from "../_shared/ai-meter.ts";
+import { sanitizeChatMessages } from '../_shared/chat-input.ts';
 installAiMeter("drop-copilot");
 // 🤖 Sprint A.4 — AI Drop Copilot
 // Admin conversational asszisztens drop-tervezéshez.
@@ -68,7 +69,7 @@ Deno.serve(async (req) => {
     if (!canManage) return dropJson({ error: 'forbidden' }, 403);
 
     const body = await req.json().catch(() => ({}));
-    const messages = Array.isArray(body?.messages) ? body.messages : [];
+    const messages = sanitizeChatMessages(body?.messages, { maxMessages: 30, maxChars: 4000 });
     if (messages.length === 0) return dropJson({ error: 'messages_required' }, 400);
 
     const context = await gatherContext(admin, body?.focus_drop_id);

@@ -1,4 +1,5 @@
 import { installAiMeter } from "../_shared/ai-meter.ts";
+import { sanitizeChatMessages } from '../_shared/chat-input.ts'
 installAiMeter("shopping-assistant");
 // AI Shopping Assistant - természetes nyelvű termékkeresés
 // Cache (1h) + napi kvóta (50/user) + monitoring integrálva
@@ -184,6 +185,9 @@ Deno.serve(async (req) => {
   // 🛡️ IP alapú rate limit (vendég vásárlóknak is nyitott végpont)
   const limited = await rateLimitDb(req, { limit: 15, windowSeconds: 60, key: 'shopping-assistant' })
   if (limited) return limited
+  // Daily per-visitor ceiling so a single client cannot drain the AI budget.
+  const dailyLimited = await rateLimitDb(req, { limit: 150, windowSeconds: 86400, key: 'shopping-assistant-day' })
+  if (dailyLimited) return dailyLimited
 
   try {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')
@@ -198,7 +202,7 @@ Deno.serve(async (req) => {
     )
 
     const body = await req.json()
-    const userMessages = Array.isArray(body?.messages) ? body.messages : []
+    const userMessages = sanitizeChatMessages(body?.messages, { maxMessages: 16, maxChars: 1500 })
     if (userMessages.length === 0) {
       return new Response(JSON.stringify({ error: 'Nincs üzenet' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
