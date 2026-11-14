@@ -69,10 +69,11 @@ ${ctx}`;
       // Egy, a munkatárs valódi munkájára igazított tervjavaslat JSON-ban. Csak javaslat: a mentés és a jóváhagyás emberi.
       const g = await generateChatCompletion({ model: "openai/gpt-6-astra", messages: [{ role: "system", content: system + `
 
-FELADAT: Javasolj EGY konkrét, a munkatárs profiljára, eszközeire, egyedi feladataira és a meglévő tervekre épülő új tervet, ami NEM ismétli a meglévő terveket és nem általános. Csak JSON-t adj vissza: {"goal":"max 200 karakter","why":"1 mondat, miért pont ez","steps":["3-6 konkrét lépés, mindegyik max 140 karakter, mérhető eredménnyel"]}` }, ...body.messages] });
+FELADAT: Javasolj EGY konkrét, a munkatárs profiljára, eszközeire, egyedi feladataira és a meglévő tervekre épülő új tervet, ami NEM ismétli a meglévő terveket és nem általános. Csak JSON-t adj vissza: {"goal":"max 200 karakter","why":"1 mondat, miért pont ez","steps":["3-6 konkrét lépés, mindegyik max 140 karakter, mérhető eredménnyel"]} A lépések csak a munka tartalmi lépései legyenek; mentésről, jóváhagyásról, HUMAN GATE-ről ne írj lépést.` }, ...body.messages] });
       const txt = String((g as any).choices?.[0]?.message?.content ?? "");
       const m = txt.match(/\{[\s\S]*\}/);
       const out = z.object({ goal: z.string().min(5).max(220), why: z.string().max(400).default(""), steps: z.array(z.string().min(3).max(200)).min(2).max(8) }).safeParse(m ? JSON.parse(m[0]) : null);
+      if (out.success) out.data.steps = out.data.steps.filter(t => !/HUMAN GATE|WORKFORCE fül|végrehajtást innen/i.test(t));
       if (!out.success) return j({ error: "Az AI nem adott használható tervet, próbáld újra." }, 502);
       return j(out.data);
     }
