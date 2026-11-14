@@ -56,7 +56,7 @@ export default function SocialAiCenter() {
   const approve = async () => {
     if (!selected || !review || !window.confirm(selected.test_only ? "Jóváhagyod ezt a teszttartalmat? Nem kerül közzétételre." : "Jóváhagyod ezt a pontos tartalmat és az ütemezett publikálását?")) return;
     const { error } = await supabase.rpc("social_approve", { _id: selected.id, _expected_hash: review.hash });
-    if (error) { toast.error(error.message.includes("publication_permission_required") ? `Nincs ${selected.test_only ? "teszt" : "éles"} publikálási engedélyed. Add meg a Publikálás fülön („${selected.test_only ? "Tesztengedély" : "Éles engedély"} megadása”), majd próbáld újra.` : error.message, { duration: 10000 }); return; }
+    if (error) { toast.error(error.message.includes("publication_permission_required") ? `Nincs ${selected.test_only ? "teszt" : "éles"} publikálási engedélyed. Add meg az „Engedélyek és napló” fülön („${selected.test_only ? "Tesztengedély" : "Éles engedély"} megadása”), majd próbáld újra.` : error.message, { duration: 10000 }); return; }
     toast.success("Tartalom jóváhagyva · 72 óráig érvényes");
     setSelected(null);
     void load();
