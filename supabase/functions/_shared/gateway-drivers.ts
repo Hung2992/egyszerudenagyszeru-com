@@ -1,4 +1,5 @@
 import { withWebhookToken } from "./internal-auth.ts";
+import { safeFetch } from "./safe-url.ts";
 // APEX saját átjáró (gateway) — szolgáltató-illesztők és útvonalválasztás.
 // A partner saját fiókja elsőbbséget élvez a platform fiókjaival szemben.
 // Támogatott illesztők: apex_modem (saját GSM/LTE modem bridge), http_generic, twilio, gatewayapi.
@@ -77,7 +78,7 @@ async function sendTwilio(
   const path = channel === "voice" ? "/Calls.json" : "/Messages.json";
   const form: Record<string, string> =
     channel === "voice"
-      ? { To: to, From: sender, Twiml: `<Response><Say language="hu-HU">${body.slice(0, 500)}</Say></Response>` }
+      ? { To: to, From: sender, Twiml: `<Response><Say language="hu-HU">${xmlEscape(body.slice(0, 500))}</Say></Response>` }
       : {
           To: channel === "whatsapp" ? `whatsapp:${to.replace(/^whatsapp:/, "")}` : to,
           From: channel === "whatsapp" ? `whatsapp:${sender.replace(/^whatsapp:/, "")}` : sender,
@@ -147,7 +148,7 @@ async function sendHttpGeneric(
     headers.Authorization = `Basic ${btoa(`${creds.basic_user}:${creds.basic_pass}`)}`;
   }
 
-  const res = await fetch(acc.endpoint, {
+  const res = await safeFetch(acc.endpoint, {
     method: "POST",
     headers,
     body: JSON.stringify({ channel, to, from: sender, message: body }),
@@ -190,7 +191,7 @@ async function sendApexModem(
 
   let res: Response;
   try {
-    res = await fetch(`${base}/send`, {
+    res = await safeFetch(`${base}/send`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -413,4 +414,9 @@ export async function gatewaySend(
   }
 
   return { status: "failed", provider: null, error: lastError || "Minden szolgáltató sikertelen", country };
+}
+
+// Escape text placed inside TwiML so message content cannot add call instructions.
+function xmlEscape(t: string): string {
+  return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
 }
