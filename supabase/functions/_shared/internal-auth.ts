@@ -23,6 +23,14 @@ function serviceClient() {
   );
 }
 
+/** Kezelt Lovable időzítés titka (aktuális vagy előző). */
+function isManagedCron(bearer: string): boolean {
+  if (!bearer) return false;
+  const cur = Deno.env.get("LOVABLE_CRON_SECRET") || "";
+  const prev = Deno.env.get("LOVABLE_CRON_SECRET_PREVIOUS") || "";
+  return (!!cur && safeEqual(bearer, cur)) || (!!prev && safeEqual(bearer, prev));
+}
+
 /** Konstans idejű összehasonlítás */
 function safeEqual(a: string, b: string): boolean {
   if (!a || !b || a.length !== b.length) return false;
@@ -58,6 +66,9 @@ export async function requireInternalOrAdmin(req: Request): Promise<GuardResult>
   if (bearer && serviceKey && safeEqual(bearer, serviceKey)) {
     return { ok: true, caller: "service" };
   }
+
+  // 1b) kezelt Lovable időzítés
+  if (isManagedCron(bearer)) return { ok: true, caller: "cron" };
 
   // 2) cron megosztott titok
   const headerSecret = req.headers.get("x-cron-secret") || req.headers.get("X-Cron-Secret") || "";
@@ -156,6 +167,7 @@ export async function isInternalCall(req: Request): Promise<boolean> {
   const bearer = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
   if (bearer && serviceKey && safeEqual(bearer, serviceKey)) return true;
+  if (isManagedCron(bearer)) return true;
   const headerSecret = req.headers.get("x-cron-secret") || "";
   if (!headerSecret) return false;
   const expected = await cronSecret();
