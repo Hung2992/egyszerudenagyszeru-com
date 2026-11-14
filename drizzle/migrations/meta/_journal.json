@@ -288,6 +288,13 @@
       "when": 1794636550575,
       "tag": "0040_store_settings_missing_admin_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1794637060085,
+      "tag": "0041_revoke_anon_can_manage_drops",
+      "breakpoints": true
     }
   ]
 }
