@@ -280,6 +280,7 @@ JSON: {"name":"...","target_field":"hero_title","variant_a":{"value":"...","rati
     if (action === "ab_evaluate") {
       const { data: t } = await admin.from("partner_ab_tests").select("*").eq("id", body.test_id).maybeSingle();
       if (!t) return json({ error: "teszt nem található" }, 404);
+      if (!ownsPartner(t.partner_id)) return json({ error: "Nincs jogosultság ehhez a teszthez" }, 403);
       const nA = t.variant_a_impressions || t.variant_a_clicks || 0;
       const nB = t.variant_b_impressions || t.variant_b_clicks || 0;
       const cA = t.variant_a_conversions || 0, cB = t.variant_b_conversions || 0;
