@@ -8,16 +8,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { CalendarDays, Plus } from "lucide-react";
 import { approvalLabel, budapestDay } from "@/lib/social-periods";
 import { toast } from "sonner";
-import { catalogDraft, type CatalogItem } from "@/lib/social-catalog";
 type Slot = { id: string; day: string; platform: string; topic: string; queue_id: string | null };
 type Post = { id: string; content: string; status: string; approval_hash: string | null; approval_expires_at: string | null; test_only: boolean; requires_approval: boolean; platform: string; scheduled_at: string; error_message: string | null; approval_current?: boolean };
 export default function SocialMonthlyPlan({ onOpen, onChanged }: { onOpen: (post: Post) => void; onChanged: () => void }) {
   const [month, setMonth] = useState(budapestDay(new Date()).slice(0, 7));
   const [slots, setSlots] = useState<Slot[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
-  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [selected, setSelected] = useState<Slot | null>(null);
-  const [source, setSource] = useState("product");
+  const [source] = useState("manual");
   const [ref, setRef] = useState("");
   const [content, setContent] = useState("");
   const [video, setVideo] = useState("");
@@ -39,18 +37,12 @@ export default function SocialMonthlyPlan({ onOpen, onChanged }: { onOpen: (post
     }
   }, [month]);
   useEffect(() => { void load(); const timer = window.setInterval(() => void load(), 30000); return () => window.clearInterval(timer); }, [load]);
-  useEffect(() => { void supabase.rpc("social_content_catalog").then(({ data, error }) => { if (error) toast.error(error.message); else setCatalog(data ?? []); }); }, []);
   const create = async () => {
     if (!window.confirm(`${month}: napi 1 poszthely Facebookra, TikTokra és LinkedInre? Ez nem engedélyez közzétételt.`)) return;
     setBusy(true);
     const { error } = await supabase.rpc("social_create_month", { _month: `${month}-01` });
     setBusy(false);
     if (error) toast.error(error.message); else { await load(); toast.success("Havi terv létrehozva · tartalomra és jóváhagyásra vár"); }
-  };
-  const chooseSource = (id: string) => {
-    setRef(id);
-    const item = catalog.find(p => p.id === id && p.source === source);
-    if (item) setContent(catalogDraft(item, selected?.platform ?? "facebook"));
   };
   const prepare = async () => {
     if (!selected || !window.confirm("Ezt a pontos tartalmat a közös sorba mented jóváhagyásra? Közzététel nem történik.")) return;
