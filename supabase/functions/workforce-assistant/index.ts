@@ -8,6 +8,7 @@ import { streamChatCompletion, GatewayError } from "npm:@lovable.dev/ai-gateway@
 import { z } from "npm:zod@3";
 import type {} from "../_shared/generated-gateway/models.d.ts";
 import { visibleTeamRecords } from "../_shared/workforce-team.ts";
+import { deptDefaults } from "./defaults.ts";
 
 const cors = corsHeaders;
 const j = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
@@ -47,7 +48,7 @@ Deno.serve(async (req) => {
     // Szerep-szűrés: csak a saját terület tervei (plan.department vagy felelős neve) kerülnek a kontextusba.
     const myPlans = (plans ?? []).filter((p: any) => { const d = p.plan?.department; return d ? d === body.departmentId : mine(p.owner); });
     const { data: staffRow } = await db.from("workforce_staff").select("full_name,title,area,tools,duties").eq("dept_id", body.departmentId).maybeSingle();
-    const profile = staffRow ? JSON.stringify(staffRow) : "nincs megadva valódi munkatárs";
+    const profile = staffRow ? JSON.stringify(staffRow) : `nincs megadva valódi munkatárs; alapértelmezett eszközök/feladatok: ${JSON.stringify(deptDefaults[body.departmentId] ?? {})}`;
     const ctx = myPlans.map((p: any) => {
       const st = (steps ?? []).filter((s: any) => s.plan_id === p.id);
       return `- "${p.goal}" | állapot: ${p.status} | kockázat: ${p.risk} | határidő: ${p.due_date ?? "nincs"} | lépések: ${st.filter((s: any) => s.status === "done").length}/${st.length} kész\n` +
