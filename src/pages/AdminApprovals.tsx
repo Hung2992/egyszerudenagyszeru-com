@@ -108,6 +108,11 @@ export default function AdminApprovals() {
               <span className="text-destructive">{approvalLabel(post)}</span>
             </div>
             <p className="text-sm whitespace-pre-wrap break-words">{post.content}</p>
+            {(post.media_urls ?? []).length > 0 && <div className="space-y-2">
+              {post.media_urls!.map((url, i) => post.media_type === "video" || /\.(mp4|mov|webm)(\?|$)/i.test(url)
+                ? <video key={i} src={url} controls playsInline preload="metadata" className="w-full max-h-[70vh] border border-border bg-black" />
+                : <img key={i} src={url} alt="Poszt képe" loading="lazy" className="w-full border border-border" />)}
+            </div>}
             <div className="flex flex-wrap gap-2">
               <Button size="sm" disabled={acting === post.id} onClick={() => void approve(post)}>{acting === post.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}Jóváhagyom</Button>
               <Button size="sm" variant="outline" disabled={acting === post.id} onClick={() => void reject(post)}><X className="mr-2 h-4 w-4" />Elutasítom</Button>
