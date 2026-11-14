@@ -14567,6 +14567,39 @@ export type Database = {
         }
         Relationships: []
       }
+      workforce_staff: {
+        Row: {
+          area: string
+          dept_id: string
+          duties: string
+          full_name: string
+          title: string
+          tools: string[]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          area?: string
+          dept_id: string
+          duties?: string
+          full_name: string
+          title?: string
+          tools?: string[]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          area?: string
+          dept_id?: string
+          duties?: string
+          full_name?: string
+          title?: string
+          tools?: string[]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       drop_performance_stats: {

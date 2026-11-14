@@ -32,3 +32,12 @@ describe("dashboard határidő = Munka állapot határidő", () => {
   for (const [due, status] of [["2026-11-13", "approved"], ["2026-11-13", "done"], ["2026-11-14", "draft"], [null, "approved"]] as const)
     it(`${due} / ${status}`, () => expect(planOverdue({ due_date: due, status }, now)).toBe(statusOverdue(due, status === "done", now)));
 });
+
+import { planStage } from "./workforce-roles";
+describe("átmeneti állapotok", () => {
+  it("más által javasolt tervezet → javaslat benyújtva", () => expect(planStage({ status: "draft", plan: { proposedBy: "dashboard" } })).toBe("javaslat benyújtva"));
+  it("saját tervezet → jóváhagyásra vár", () => expect(planStage({ status: "draft", plan: {} })).toBe("jóváhagyásra vár"));
+  it("jóváhagyott, kész lépés nélkül → jóváhagyva", () => expect(planStage({ status: "approved" }, 0)).toBe("jóváhagyva"));
+  it("jóváhagyott, 1 kész lépéssel → elkezdődött", () => expect(planStage({ status: "approved" }, 1)).toBe("elkezdődött"));
+  it("kész", () => expect(planStage({ status: "done" }, 6)).toBe("kész"));
+});

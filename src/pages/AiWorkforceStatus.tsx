@@ -5,10 +5,10 @@ import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { useWorkforceLive } from "@/hooks/useWorkforceLive";
 import { supabase } from "@/integrations/supabase/client";
 import { departments } from "@/lib/ai-world";
-import { ownsPlan, openPlans, deptStatus, planOverdue, type RolePlan, type DeptStatus } from "@/lib/workforce-roles";
+import { useWorkforceStaff } from "@/hooks/useWorkforceStaff";
+import { ownsPlan, openPlans, deptStatus, planOverdue, planStage, staffLabel, type RolePlan, type DeptStatus } from "@/lib/workforce-roles";
 
 type Step = { plan_id: string; status: string };
-const hu: Record<string, string> = { draft: "vár jóváhagyásra", approved: "jóváhagyva", in_progress: "folyamatban", done: "kész" };
 const order: DeptStatus[] = ["dolgozik", "vár", "aktív", "nincs munka"];
 
 // Munkatárs-státusz: ki dolgozik, ki vár jóváhagyásra, kinek nincs munkája, és milyen tervet kapott. Élőben frissül.
@@ -17,6 +17,7 @@ const AiWorkforceStatus = () => {
   const navigate = useNavigate();
   const [plans, setPlans] = useState<RolePlan[]>([]);
   const [steps, setSteps] = useState<Step[]>([]);
+  const { staff } = useWorkforceStaff();
   const [filter, setFilter] = useState<DeptStatus | "">("");
   const load = useCallback(async () => {
     const [p, s] = await Promise.all([
@@ -50,13 +51,13 @@ const AiWorkforceStatus = () => {
         {rows.filter(r => !filter || r.st === filter).map(({ d, mine, st }) => (
           <section key={d.id} className="p-4 space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <Link to={`/admin/ai-asszisztensek/${d.id}`} className="font-display text-sm truncate"><span className="text-primary">{d.id}</span> · {d.name}</Link>
+              <Link to={`/admin/ai-asszisztensek/${d.id}`} className="font-display text-sm truncate"><span className="text-primary">{d.id}</span> · {d.name}<span className="block text-[11px] text-muted-foreground font-sans">{staffLabel(staff[d.id], "Nincs megadott munkatárs")}</span></Link>
               <span className={`text-[11px] px-2 py-0.5 border ${st === "dolgozik" ? "border-primary text-primary" : st === "nincs munka" ? "border-border text-muted-foreground" : "border-foreground"}`}>{st}</span>
             </div>
             {!mine.length && <p className="text-xs text-muted-foreground">Nincs kapott terv.</p>}
             {mine.map(p => { const s = steps.filter(x => x.plan_id === p.id); const done = s.filter(x => x.status === "done").length; const late = planOverdue(p); return (
               <div key={p.id} className="text-xs flex gap-2"><span className="flex-1 min-w-0 break-words">{p.goal}</span>
-                <span className={`shrink-0 ${late ? "text-destructive" : "text-muted-foreground"}`}>{late ? "LEJÁRT" : hu[p.status] ?? p.status} · {done}/{s.length}</span></div>); })}
+                <span className={`shrink-0 ${late ? "text-destructive" : "text-muted-foreground"}`}>{late ? "LEJÁRT" : planStage(p, done)} · {done}/{s.length}</span></div>); })}
           </section>))}
       </main>
     </div>

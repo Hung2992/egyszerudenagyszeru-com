@@ -4,6 +4,8 @@ import ReactMarkdown from "react-markdown";
 import { ArrowLeft, ListChecks, Mic, MicOff, Send, Volume2, VolumeX, Trash2, Network, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WorkforceTeamPanel } from "@/components/admin/WorkforceTeamPanel";
+import { WorkforceProfile } from "@/components/admin/WorkforceProfile";
+import { useWorkforceStaff } from "@/hooks/useWorkforceStaff";
 import { WorkforceMyWork } from "@/components/admin/WorkforceMyWork";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +30,7 @@ const AssistantConversation = () => {
   const [speak, setSpeak] = useState(false);
   const [teamOpen, setTeamOpen] = useState(false);
   const [workOpen, setWorkOpen] = useState(true);
+  const { staff } = useWorkforceStaff();
   const [shareDraft, setShareDraft] = useState("");
   const ta = useRef<HTMLTextAreaElement>(null);
   const end = useRef<HTMLDivElement>(null);
@@ -107,7 +110,7 @@ const AssistantConversation = () => {
         <Link to="/admin/ai-asszisztensek" aria-label="Vissza"><ArrowLeft className="h-4 w-4" /></Link>
         <div className="h-9 w-9 flex items-center justify-center bg-primary text-primary-foreground font-mono text-sm">{dept.id}</div>
         <div className="flex-1 min-w-0">
-          <div className="font-display">{dept.name} asszisztens</div>
+          <div className="font-display">{staff[dept.id]?.full_name ? `${staff[dept.id].full_name} asszisztense` : `${dept.name} asszisztens`}</div>
           <div className="text-[11px] text-muted-foreground truncate">{dept.roles.join(" · ")}</div>
         </div>
         <Button size="icon" variant="ghost" onClick={toggleSpeak} aria-pressed={speak} aria-label="Felolvasás" title="Felolvasás">{speak ? <Volume2 className="h-4 w-4 text-primary" /> : <VolumeX className="h-4 w-4" />}</Button>
@@ -117,6 +120,7 @@ const AssistantConversation = () => {
       <Button variant="secondary" className="rounded-none justify-start shrink-0" onClick={() => setTeamOpen(!teamOpen)} aria-expanded={teamOpen}><Network />{teamOpen ? "Beszélgetéshez vissza" : "Csapat · közös adatok és átadások"}</Button>
       <Button variant="ghost" className="rounded-none justify-start shrink-0 border-b border-border" onClick={() => setWorkOpen(!workOpen)} aria-expanded={workOpen}><ListChecks />{workOpen ? "Saját munkák elrejtése" : "Saját munkák, lépések, határidők"}</Button>
       <div className="flex-1 overflow-y-auto min-h-0">
+      {workOpen && <WorkforceProfile dept={dept} staff={staff[dept.id]} />}
       {workOpen && <WorkforceMyWork dept={dept} />}
       {teamOpen && <WorkforceTeamPanel departmentId={dept.id} draft={shareDraft} />}
       <div className="p-4 space-y-4">

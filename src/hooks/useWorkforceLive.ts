@@ -12,6 +12,7 @@ export function useWorkforceLive(onChange: () => void) {
       .on("postgres_changes", { event: "*", schema: "public", table: "workforce_plans" }, fire)
       .on("postgres_changes", { event: "*", schema: "public", table: "workforce_plan_steps" }, fire)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "ai_agent_bus_events" }, fire)
+      .on("postgres_changes", { event: "*", schema: "public", table: "workforce_staff" }, fire)
       .subscribe();
     return () => { clearTimeout(t); supabase.removeChannel(ch); };
   }, []);
