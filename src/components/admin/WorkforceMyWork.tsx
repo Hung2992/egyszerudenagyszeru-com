@@ -5,11 +5,20 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { departments, type Department } from "@/lib/ai-world";
-import { buildWorkOrder } from "@/lib/ai-workforce";
-import { ownsPlan, openPlans, isOverdue, proposalGoal, type RolePlan } from "@/lib/workforce-roles";
+import { buildWorkOrder, evidenceOk } from "@/lib/ai-workforce";
+import { ownsPlan, openPlans, planOverdue, proposalGoal, type RolePlan } from "@/lib/workforce-roles";
 
 type GatePlan = RolePlan & { risk?: string };
 type Step = { id: string; plan_id: string; idx: number; status: string; task: string | null; due_date: string | null };
+// Tervjavaslat mentése egy munkatársnak: mindig tervezet, a HUMAN GATE-en vár jóváhagyásra.
+export function saveProposal(to: Department, goal: string, fromId: string) {
+  const w = buildWorkOrder(goal);
+  return supabase.rpc("workforce_save_plan", {
+    _goal: goal, _risk: w.risk, _owner: `${to.name} asszisztens`, _due: null,
+    _plan: { department: to.id, proposedBy: fromId, assignments: w.assignments.map(a => ({ dept: a.department.name, owner: a.owner, reviewer: a.reviewer })), missing: w.missing, decisions: w.decisions, done: w.done } as never,
+    _steps: w.steps as never,
+  });
+}
 const label: Record<string, string> = { draft: "Jóváhagyásra vár", approved: "Jóváhagyva", in_progress: "Folyamatban", done: "Kész", cancelled: "Megszakítva" };
 
 export function WorkforceMyWork({ dept, onChange }: { dept: Department; onChange?: () => void }) {
@@ -29,6 +38,17 @@ export function WorkforceMyWork({ dept, onChange }: { dept: Department; onChange
   useWorkforceLive(load);
 
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [results, setResults] = useState<Record<string, string>>({});
+  // Lépés rögzítése megerősítéssel: a szerver írja a védett naplót (egyszer), a nézetek élőben frissülnek.
+  const recordStep = async (stepId: string) => {
+    const r = (results[stepId] ?? "").trim();
+    if (!window.confirm("Rögzíted a lépést elvégzettként? A védett naplóba kerül, utólag nem módosítható.")) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("workforce_execute_step", { _step: stepId, _confirmed: true, _ok: true, _result: r });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Lépés rögzítve"); setResults({ ...results, [stepId]: "" }); load(); onChange?.();
+  };
   // HUMAN GATE döntés a dashboardról: ugyanaz az RPC, mint a HUMAN GATE fülön (egyszeres, szerveroldali napló).
   const decide = async (p: GatePlan, approve: boolean) => {
     const n = (notes[p.id] ?? "").trim();
@@ -42,15 +62,7 @@ export function WorkforceMyWork({ dept, onChange }: { dept: Department; onChange
   const [target, setTarget] = useState("");
   const [handGoal, setHandGoal] = useState("");
   // Tervjavaslat mentése egy munkatársnak (saját magának vagy átadva). Mindig HUMAN GATE-re kerül.
-  const savePlan = async (to: Department, t: string) => {
-    const w = buildWorkOrder(t);
-    const owner = `${to.name} asszisztens`;
-    return supabase.rpc("workforce_save_plan", {
-      _goal: t, _risk: w.risk, _owner: owner, _due: null,
-      _plan: { department: to.id, proposedBy: dept.id, assignments: w.assignments.map(a => ({ dept: a.department.name, owner: a.owner, reviewer: a.reviewer })), missing: w.missing, decisions: w.decisions, done: w.done } as never,
-      _steps: w.steps as never,
-    });
-  };
+  const savePlan = (to: Department, t: string) => saveProposal(to, t, dept.id);
   const propose = async () => {
     const t = goal.trim(); if (t.length < 5) return;
     setBusy(true); const { error } = await savePlan(dept, t); setBusy(false);
@@ -75,7 +87,8 @@ export function WorkforceMyWork({ dept, onChange }: { dept: Department; onChange
       <div className="flex items-baseline justify-between"><h3 className="font-display text-sm">Saját munkák · {dept.name}</h3><span className="text-xs text-muted-foreground">{active.length} nyitott / {plans.length}</span></div>
       {plans.filter(p => p.status !== "cancelled").map(p => {
         const st = steps.filter(s => s.plan_id === p.id); const done = st.filter(s => s.status === "done").length;
-        const late = p.status !== "done" && p.status !== "cancelled" && isOverdue(p.due_date);
+        const late = planOverdue(p);
+        const next = (p.status === "approved" || p.status === "in_progress") ? st.find(s => s.status !== "done") : undefined;
         return (
           <div key={p.id} className={`border p-3 space-y-2 ${late ? "border-destructive" : "border-border"}`}>
             <div className="text-sm break-words">{p.goal}</div>
@@ -85,6 +98,11 @@ export function WorkforceMyWork({ dept, onChange }: { dept: Department; onChange
               <div className="text-[11px] text-muted-foreground">HUMAN GATE · kockázat: {(p as GatePlan).risk ?? "?"}</div>
               <input aria-label="Döntés indoklása" placeholder={(p as GatePlan).risk === "red" ? "Indoklás (min. 10 karakter)" : "Megjegyzés (nem kötelező)"} value={notes[p.id] ?? ""} onChange={e => setNotes({ ...notes, [p.id]: e.target.value })} className="w-full bg-muted px-2 py-1 text-xs" />
               <div className="flex gap-2"><Button size="sm" className="rounded-none" disabled={busy} onClick={() => decide(p as GatePlan, true)}>Jóváhagyás</Button><Button size="sm" variant="outline" className="rounded-none" disabled={busy} onClick={() => decide(p as GatePlan, false)}>Elutasítás</Button></div>
+            </div>}
+            {next && <div className="space-y-2 border-t border-border pt-2">
+              <div className="text-[11px]">▶ Következő lépés: {next.idx + 1}. {next.task}</div>
+              <textarea aria-label="Lépés eredménye" rows={2} placeholder="Eredmény/bizonyíték (min. 20 karakter, szám, link vagy 5+ szó)" value={results[next.id] ?? ""} onChange={e => setResults({ ...results, [next.id]: e.target.value })} className="w-full bg-muted px-2 py-1 text-xs" />
+              <Button size="sm" className="rounded-none" disabled={busy || !evidenceOk(results[next.id] ?? "")} onClick={() => recordStep(next.id)}>Lépés kész · rögzítés</Button>
             </div>}
             <ol className="text-xs space-y-1">{st.map(s => <li key={s.id} className={s.status === "done" ? "text-muted-foreground line-through" : s.status === "failed" ? "text-destructive" : ""}>{s.idx + 1}. {s.task}</li>)}</ol>
           </div>

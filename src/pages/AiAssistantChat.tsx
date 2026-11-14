@@ -8,6 +8,7 @@ import { WorkforceMyWork } from "@/components/admin/WorkforceMyWork";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
 import { departments } from "@/lib/ai-world";
+import { pickVoice } from "@/lib/hu-voice";
 
 type Msg = { role: "user" | "assistant"; content: string };
 const KEY = (id: string) => `wf-assistant-${id}`;
@@ -42,7 +43,7 @@ const AssistantConversation = () => {
   const say = (t: string, force = false) => {
     if ((!speak && !force) || !("speechSynthesis" in window)) return;
     const u = new SpeechSynthesisUtterance(t.replace(/[#*_`>|]/g, " ").slice(0, 12000)); u.lang = "hu-HU";
-    const hu = speechSynthesis.getVoices().find(v => v.lang?.toLowerCase().startsWith("hu")); if (hu) u.voice = hu;
+    const hu = pickVoice(); if (hu) u.voice = hu; else setErr("Nincs magyar hang a telefonon — a felolvasás más akcentussal szólhat. Telepítsd a beállításokban.");
     u.onerror = (e) => { if (e.error !== "interrupted" && e.error !== "canceled") setErr("A felolvasás nem indult el ezen az eszközön."); };
     speechSynthesis.cancel(); speechSynthesis.resume(); speechSynthesis.speak(u);
   };
