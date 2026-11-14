@@ -8,16 +8,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { CalendarDays, Plus } from "lucide-react";
 import { approvalLabel, budapestDay } from "@/lib/social-periods";
 import { toast } from "sonner";
+import { catalogDraft, type CatalogItem } from "@/lib/social-catalog";
 type Slot = { id: string; day: string; platform: string; topic: string; queue_id: string | null };
 type Post = { id: string; content: string; status: string; approval_hash: string | null; approval_expires_at: string | null; test_only: boolean; requires_approval: boolean; platform: string; scheduled_at: string; error_message: string | null; approval_current?: boolean };
-type Product = { id: string; name: string; price: number; description: string | null };
-type Campaign = { id: string; name: string; content: string | null };
 export default function SocialMonthlyPlan({ onOpen, onChanged }: { onOpen: (post: Post) => void; onChanged: () => void }) {
   const [month, setMonth] = useState(budapestDay(new Date()).slice(0, 7));
   const [slots, setSlots] = useState<Slot[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [selected, setSelected] = useState<Slot | null>(null);
   const [source, setSource] = useState("product");
   const [ref, setRef] = useState("");
@@ -41,7 +39,7 @@ export default function SocialMonthlyPlan({ onOpen, onChanged }: { onOpen: (post
     }
   }, [month]);
   useEffect(() => { void load(); const timer = window.setInterval(() => void load(), 30000); return () => window.clearInterval(timer); }, [load]);
-  useEffect(() => { void Promise.all([supabase.from("shop_products").select("id,name,price,description").eq("is_active", true).order("name"), supabase.from("marketing_campaigns").select("id,name,content").order("created_at", { ascending: false }).limit(100)]).then(([p, c]) => { setProducts(p.data ?? []); setCampaigns(c.data ?? []); if (p.error || c.error) toast.error(p.error?.message ?? c.error?.message); }); }, []);
+  useEffect(() => { void supabase.rpc("social_content_catalog").then(({ data, error }) => { if (error) toast.error(error.message); else setCatalog(data ?? []); }); }, []);
   const create = async () => {
     if (!window.confirm(`${month}: napi 1 poszthely Facebookra, TikTokra és LinkedInre? Ez nem engedélyez közzétételt.`)) return;
     setBusy(true);
@@ -51,10 +49,8 @@ export default function SocialMonthlyPlan({ onOpen, onChanged }: { onOpen: (post
   };
   const chooseSource = (id: string) => {
     setRef(id);
-    const product = products.find(p => p.id === id);
-    const campaign = campaigns.find(c => c.id === id);
-    if (source === "product" && product) setContent(`${product.name}\n${Number(product.price).toLocaleString("hu-HU")} Ft\n${product.description ?? ""}\nhttps://egyszerudenagyszeru.com/product/${product.id}`);
-    if (source === "campaign" && campaign) setContent(`${campaign.name}\n${campaign.content ?? ""}`);
+    const item = catalog.find(p => p.id === id && p.source === source);
+    if (item) setContent(catalogDraft(item, selected?.platform ?? "facebook"));
   };
   const prepare = async () => {
     if (!selected || !window.confirm("Ezt a pontos tartalmat a közös sorba mented jóváhagyásra? Közzététel nem történik.")) return;
@@ -70,6 +66,6 @@ export default function SocialMonthlyPlan({ onOpen, onChanged }: { onOpen: (post
     <p className="text-xs text-muted-foreground">A témák javaslatok. TikTokhoz valódi videó szükséges. Jóváhagyás: pontos tartalom, 72 órás érvényesség; a hónap nem hagyható jóvá egyben.</p>
     {!slots.length && <p className="py-6 text-sm text-muted-foreground">Ebben a hónapban még nincs terv.</p>}
     <div className="overflow-x-auto border-y border-border"><table className="w-full min-w-[680px] text-sm"><thead><tr className="text-left text-xs text-muted-foreground">{["Nap", "Platform", "Téma / tartalom", "Jóváhagyás", ""].map((h, i) => <th key={i} className="p-3 font-normal">{h}</th>)}</tr></thead><tbody className="divide-y divide-border">{slots.map(slot => { const post = posts.find(p => p.id === slot.queue_id); return <tr key={slot.id}><td className="p-3 whitespace-nowrap">{slot.day}</td><td className="p-3 capitalize">{slot.platform}</td><td className="p-3 max-w-xs"><p className="line-clamp-2 break-words">{post?.content ?? slot.topic}</p></td><td className={`p-3 text-xs ${approvalLabel(post) === "Jóváhagyva" ? "text-accent" : "text-muted-foreground"}`}>{approvalLabel(post)}</td><td className="p-3"><Button size="sm" variant="outline" disabled={!post && slot.day < budapestDay(new Date())} onClick={() => { if (post) onOpen(post); else { setSelected(slot); setContent(""); setRef(""); setVideo(""); } }}>{post ? "Megnyitás" : "Tartalom készítése"}</Button></td></tr>; })}</tbody></table></div>
-    <Dialog open={Boolean(selected)} onOpenChange={open => { if (!open) setSelected(null); }}><DialogContent className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>{selected?.platform} · {selected?.day}</DialogTitle></DialogHeader><Select value={source} onValueChange={v => { setSource(v); setRef(""); setContent(""); }}><SelectTrigger aria-label="Tartalom forrása"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="product">Webshop terméke</SelectItem><SelectItem value="campaign">Kampány</SelectItem><SelectItem value="manual">Saját szöveg</SelectItem></SelectContent></Select>{source !== "manual" && <Select value={ref} onValueChange={chooseSource}><SelectTrigger aria-label="Termék vagy kampány"><SelectValue placeholder="Kiválasztás" /></SelectTrigger><SelectContent>{(source === "product" ? products : campaigns).map(item => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}</SelectContent></Select>}<Textarea aria-label="Poszt pontos szövege" rows={6} value={content} onChange={e => setContent(e.target.value)} /><Input aria-label="Videó HTTPS címe" placeholder="Videó HTTPS címe" value={video} onChange={e => setVideo(e.target.value)} /><Button disabled={busy || !content.trim() || (source !== "manual" && !ref) || (selected?.platform === "tiktok" && !video)} onClick={() => void prepare()}>Mentés jóváhagyásra</Button></DialogContent></Dialog>
+    <Dialog open={Boolean(selected)} onOpenChange={open => { if (!open) setSelected(null); }}><DialogContent className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>{selected?.platform} · {selected?.day}</DialogTitle></DialogHeader><Select value={source} onValueChange={v => { setSource(v); setRef(""); setContent(""); }}><SelectTrigger aria-label="Tartalom forrása"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="product">Webshop terméke</SelectItem><SelectItem value="campaign">Kampány</SelectItem><SelectItem value="partner_product">Partnertermék</SelectItem><SelectItem value="partner_campaign">Partnerkampány</SelectItem><SelectItem value="page">Webshopoldal / cikk</SelectItem><SelectItem value="manual">Saját szöveg</SelectItem></SelectContent></Select>{source !== "manual" && <Select value={ref} onValueChange={chooseSource}><SelectTrigger aria-label="Termék vagy kampány"><SelectValue placeholder="Kiválasztás" /></SelectTrigger><SelectContent>{catalog.filter(item => item.source === source && item.eligible).map(item => <SelectItem key={item.id} value={item.id}>{item.store} · {item.title}</SelectItem>)}</SelectContent></Select>}<Textarea aria-label="Poszt pontos szövege" rows={6} value={content} onChange={e => setContent(e.target.value)} /><Input aria-label="Videó HTTPS címe" placeholder="Videó HTTPS címe" value={video} onChange={e => setVideo(e.target.value)} /><Button disabled={busy || !content.trim() || (source !== "manual" && !ref) || (selected?.platform === "tiktok" && !video)} onClick={() => void prepare()}>Mentés jóváhagyásra</Button></DialogContent></Dialog>
   </section>;
 }
