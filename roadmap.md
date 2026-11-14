@@ -32,10 +32,14 @@
 
 - Az online fizetéshez aktív partneri fizetési kapcsolat szükséges.
 - A teljes éles rendelési teszthez valódi fizetés és külső kézbesítés szükséges.
+## Rendszeraudit (2026-11-14)
+- [x] Gyors biztonsági ellenőrzés, függőségi vizsgálat, kulcsnevek összevetése, hiányzó üzleti adatok ellenőrzése, 280 teszt és négy nyilvános oldal indulásának ellenőrzése; részletes hibajegyzék átadva.
+- [ ] Mély biztonsági vizsgálat eredménye — blokkoló: a külső vizsgálat még fut.
+- [ ] Külső szolgáltatások teljes működési próbája — blokkoló: hiányzó szolgáltatói kapcsolatok és valódi fizetési/kézbesítési bizonyítékok.
 ## Új kérések (2026-11-13)
 - [x] Munkatársi teljesítmény: kész lépések, teljesítési arány és részesedés az összes kész lépésből; 24 teszt sikeres.
 - [x] Új Webshop AI-tervjavaslat mentése és ellenőrzése a HUMAN GATE, dashboard és státusz nézeteken; 5 lépés, jóváhagyásra vár.
-- [ ] Valódi munkatársak és e-mail értesítések — blokkoló: még nincsenek munkatársak/címzettek; app-email küldődomain nincs konfigurálva.
+- [ ] Valódi munkatársak és e-mail értesítések — blokkoló: még nincsenek munkatársak/címzettek; a küldődomain infrastruktúrája már beállítva.
 - [x] Összekapcsolt AI-munkatársak: közös fontos adatok, címzett átadások, élő tervkapcsolat; admin átadás + címzetti AI-válasz és mobil nézet ellenőrizve. Megjelölt ellenőrző adat a naplóban megőrizve.
 - [x] AI-költségkeret a CONTROL panelen + előzetes figyelmeztetés (admin értesítés, leállítás a keretnél)
 - [x] AI-hívás rögzítés: segédek + közös AI útvonal (8 funkció). [x] Maradék 39 közvetlen hívó funkció bekötése (közös mérő, élesben igazolva)

@@ -15239,6 +15239,7 @@ export type Database = {
           winner_count: number
         }[]
       }
+      email_queue_dispatch: { Args: never; Returns: undefined }
       empyrean_action_snapshot: { Args: { _action_id: string }; Returns: Json }
       empyrean_ai_budget: { Args: never; Returns: Json }
       empyrean_approve_action: {
