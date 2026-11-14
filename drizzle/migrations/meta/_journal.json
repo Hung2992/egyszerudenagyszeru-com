@@ -267,6 +267,13 @@
       "when": 1794620713265,
       "tag": "0037_workforce_staff",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1794635006196,
+      "tag": "0038_lock_down_privileged_rpcs",
+      "breakpoints": true
     }
   ]
 }

@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
 
     // 4) SOCIAL METRICS: legutóbbi teljesítmény
     const { data: metrics } = await supabase
-      .from("social_post_metrics").select("platform,impressions,reach,engagement,collected_at")
+      .from("social_post_metrics").select("platform,impressions,reach,engagement:engagement_rate,collected_at")
       .gte("collected_at", new Date(Date.now() - 24*3600_000).toISOString())
       .order("collected_at", { ascending: false }).limit(50);
     const byPlatform: Record<string, {impr:number;reach:number;eng:number;n:number}> = {};
@@ -135,8 +135,8 @@ Deno.serve(async (req) => {
 
     // 7) AI META: aktív stratégiák
     const { data: strategies } = await supabase
-      .from("ai_response_strategies").select("name,is_active,success_rate,total_uses")
-      .eq("is_active", true).order("success_rate", { ascending: false }).limit(10);
+      .from("ai_response_strategies").select("name,is_active,success_rate:win_rate,total_uses:usage_count")
+      .eq("is_active", true).order("win_rate", { ascending: false, nullsFirst: false }).limit(10);
     await setContext(supabase, {
       namespace: "meta", key: "top_strategies",
       value: { strategies: strategies ?? [] },

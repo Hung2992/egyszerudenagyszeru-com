@@ -59,7 +59,7 @@ async function buildContext(sb: any, partnerId: string) {
   const [ordersRes, prodRes, sfRes, campRes] = await Promise.all([
     sb.from("partner_orders").select("total_huf,partner_payout_huf,status,created_at").eq("partner_id", partnerId).gte("created_at", prev).limit(1000),
     sb.from("partner_products").select("id,title,price_huf,compare_price_huf,stock_qty,status,view_count,sales_count,description").eq("partner_id", partnerId).limit(200),
-    sb.from("partner_storefronts").select("id,slug,is_published,store_name,tagline,seo_title,seo_description").eq("partner_id", partnerId).maybeSingle(),
+    sb.from("partner_storefronts").select("id,slug,is_published,store_name:display_name,tagline,seo_title:meta_title,seo_description:meta_description").eq("partner_id", partnerId).maybeSingle(),
     sb.from("partner_marketing_campaigns").select("id,platform,status,created_at").eq("partner_id", partnerId).gte("created_at", prev).limit(200),
   ]);
   const orders = ordersRes.data || [];
@@ -173,8 +173,9 @@ async function runIntegrityCheck(sb: any, partnerId: string, attempted: any[], s
 
   // 3. QA: webshop minőségi pontszám nem romlott-e
   const { data: sf } = await sb.from("partner_storefronts")
-    .select("id,quality_score").eq("partner_id", partnerId).maybeSingle();
-  const score = sf?.quality_score ?? null;
+    .select("id,last_quality_report").eq("partner_id", partnerId).maybeSingle();
+  const rawScore = (sf?.last_quality_report as { total?: unknown } | null)?.total;
+  const score = typeof rawScore === "number" ? rawScore : null;
   checks.push({
     key: "qa", label: "Webshop minőségi pontszám",
     ok: score == null || Number(score) >= 60,
