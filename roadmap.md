@@ -7,6 +7,8 @@
 - [x] Facebook: Meta inspect szerint fizetés inaktív; 2026-10-16–11-14 Insights sikeres és üres, HUF/Phoenix. Valós teljesítmény panel továbbra is elérhető.
 - [ ] Facebook-indítás — aktív fizetés, végleges kreatív, jelentkezésmérés, deklarációk és pontos költési jóváhagyás szükséges; kampány nem indult.
 - [x] Ellenőrzés: 16 teszt sikeres, build OK; telefonos nyilvános belépési nézet, hitelesített jelentkezési lista és TikTok-letöltés, nincs oldal-túlnyúlás vagy runtime hiba.
+- [x] Heti párosítás (posztok ↔ jelentkezések, Budapest/hétfő, együttjárás, nem attribúció) és TikTok-szöveggeneráló 3 változattal; 390×630 hitelesített UI, 8 teszt, build OK.
+- [ ] Havi terv posztjainak jóváhagyása — tartalmanként emberi jóváhagyás szükséges a Havi terv fülön; egyben nem hagyható jóvá.
 
 ## Tartalomtár és hirdetés — új kérés
 - [x] Célkorrekció: Social AI kizárólag teljes szoftver szerződéses bérléséhez keres partnereket; saját webshop nincs. Dedikált platformszövegek és havi manuális partnertervezet, régi adatok/napló megőrizve; 15 teszt, mobilos hitelesített ellenőrzés és build OK.
