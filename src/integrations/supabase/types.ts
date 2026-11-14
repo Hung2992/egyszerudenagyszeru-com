@@ -16121,6 +16121,7 @@ export type Database = {
       }
       social_cancel: { Args: { _id: string }; Returns: undefined }
       social_claim: { Args: { _id: string }; Returns: Json }
+      social_content_catalog: { Args: never; Returns: Json }
       social_create_month: { Args: { _month: string }; Returns: string }
       social_dispatch_claim: {
         Args: { _actor: string; _id: string }
