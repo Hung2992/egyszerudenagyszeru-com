@@ -269,7 +269,7 @@ const PartnerProductsTab = ({ partnerId }: Props) => {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl w-[calc(100vw-1.5rem)] rounded-none max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl w-[calc(100vw-1.5rem)] rounded-none max-h-[90vh] overflow-y-auto overflow-x-hidden [&>*]:min-w-0 [&_.grid>*]:min-w-0 [&_input]:min-w-0">
           <DialogHeader><DialogTitle>{editing ? "Termék szerkesztése" : "Új termék"}</DialogTitle></DialogHeader>
           <div className="space-y-3">
             {/* Mit adsz el? */}
