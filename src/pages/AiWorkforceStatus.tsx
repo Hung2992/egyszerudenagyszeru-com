@@ -6,6 +6,7 @@ import { useWorkforceLive } from "@/hooks/useWorkforceLive";
 import { supabase } from "@/integrations/supabase/client";
 import { departments } from "@/lib/ai-world";
 import { useWorkforceStaff } from "@/hooks/useWorkforceStaff";
+import { WorkforcePerformance } from "@/components/admin/WorkforcePerformance";
 import { ownsPlan, openPlans, deptStatus, planOverdue, planStage, staffLabel, type RolePlan, type DeptStatus } from "@/lib/workforce-roles";
 
 type Step = { plan_id: string; status: string };
@@ -55,6 +56,7 @@ const AiWorkforceStatus = () => {
               <span className={`text-[11px] px-2 py-0.5 border ${st === "dolgozik" ? "border-primary text-primary" : st === "nincs munka" ? "border-border text-muted-foreground" : "border-foreground"}`}>{st}</span>
             </div>
             {!mine.length && <p className="text-xs text-muted-foreground">Nincs kapott terv.</p>}
+            <WorkforcePerformance plans={plans.filter(p => ownsPlan(d, p))} steps={steps} />
             {mine.map(p => { const s = steps.filter(x => x.plan_id === p.id); const done = s.filter(x => x.status === "done").length; const late = planOverdue(p); return (
               <div key={p.id} className="text-xs flex gap-2"><span className="flex-1 min-w-0 break-words">{p.goal}</span>
                 <span className={`shrink-0 ${late ? "text-destructive" : "text-muted-foreground"}`}>{late ? "LEJÁRT" : planStage(p, done)} · {done}/{s.length}</span></div>); })}
