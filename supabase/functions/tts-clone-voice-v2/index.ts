@@ -137,6 +137,15 @@ Deno.serve(async (req) => {
     };
     const mime = mimeMap[ext] || "audio/mpeg";
     const buf = new Uint8Array(await file.arrayBuffer());
+    // Content must really be audio (magic bytes), not just carry an audio name/type.
+    const head = (n: number, len: number) => String.fromCharCode(...buf.slice(n, n + len));
+    const isAudio =
+      (head(0, 4) === "RIFF" && head(8, 4) === "WAVE") ||
+      head(0, 3) === "ID3" || (buf[0] === 0xff && (buf[1] & 0xe0) === 0xe0) ||
+      head(0, 4) === "OggS" || head(0, 4) === "fLaC" ||
+      head(4, 4) === "ftyp" ||
+      (buf[0] === 0x1a && buf[1] === 0x45 && buf[2] === 0xdf && buf[3] === 0xa3);
+    if (!isAudio) throw new Error("A fájl tartalma nem hangfájl");
 
     // Becsült hossz (durva: bitráta alapján — kb. 128kbps)
     const estDuration = file.size / 16000; // ~128kbps audio
