@@ -96,6 +96,7 @@ const AiWorkforce = lazy(lazyRetry(() => import("./pages/AiWorkforce.tsx")));
 const AiWorkforceStatus = lazy(lazyRetry(() => import("./pages/AiWorkforceStatus.tsx")));
 const AiAssistants = lazy(lazyRetry(() => import("./pages/AiAssistants.tsx")));
 const SocialAiCenter = lazy(lazyRetry(() => import("./pages/SocialAiCenter.tsx")));
+const AdminApprovals = lazy(lazyRetry(() => import("./pages/AdminApprovals.tsx")));
 const SocialPartner = lazy(lazyRetry(() => import("./pages/SocialPartner.tsx")));
 const AiAssistantChat = lazy(lazyRetry(() => import("./pages/AiAssistantChat.tsx")));
 const PartnerApprovals = lazy(lazyRetry(() => import("./pages/PartnerApprovals.tsx")));
@@ -149,6 +150,7 @@ const App = () => (
             <Route path="/admin/ai-munkatars-statusz" element={<AiWorkforceStatus />} />
             <Route path="/admin/ai-asszisztensek" element={<AiAssistants />} />
             <Route path="/admin/social-ai" element={<SocialAiCenter />} />
+            <Route path="/admin/jovahagyasok" element={<AdminApprovals />} />
             <Route path="/social-partner" element={<SocialPartner />} />
             <Route path="/admin/ai-asszisztensek/:deptId" element={<AiAssistantChat />} />
             <Route path="/admin/partner-approvals" element={<PartnerApprovals />} />
