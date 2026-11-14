@@ -16,6 +16,9 @@ Deno.serve(async (req) => {
 
   const limited = await rateLimitDb(req, { limit: 10, windowSeconds: 600, key: "storefront-order" });
   if (limited) return limited;
+  // Unpaid orders hold stock: cap guest orders per visitor per day.
+  const dailyLimited = await rateLimitDb(req, { limit: 25, windowSeconds: 86400, key: "storefront-order-day" });
+  if (dailyLimited) return dailyLimited;
 
   let body: Record<string, unknown>;
   try {
