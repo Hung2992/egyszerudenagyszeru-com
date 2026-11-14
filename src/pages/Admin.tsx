@@ -1610,6 +1610,14 @@ const Admin = () => {
           <Button variant="ghost" size="icon" title="EMPYREAN központ" aria-label="EMPYREAN központ" onClick={() => setTab("empyrean")}><Shield className="h-4 w-4" /></Button>
           <Button
             size="sm"
+            variant="outline"
+            onClick={() => navigate("/admin/jovahagyasok")}
+            className="h-9 rounded-none px-3 text-[10px] font-black uppercase tracking-wider"
+          >
+            <Check className="mr-1 h-3.5 w-3.5" /> Jóváhagyások
+          </Button>
+          <Button
+            size="sm"
             onClick={() => openMarketingStudio()}
             className="h-9 rounded-none px-3 text-[10px] font-black uppercase tracking-wider"
           >
