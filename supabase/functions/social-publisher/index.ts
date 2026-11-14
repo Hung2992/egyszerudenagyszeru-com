@@ -7,12 +7,11 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { isInternalCall } from "../_shared/internal-auth.ts";
 import { publish as busPublish } from "../_shared/agent-bus.ts";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { z } from "npm:zod@3";
+import { aegisRedact, aegisInput } from "../_shared/aegis.ts";
+import { providerOutcome } from "../_shared/social-governance.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
 const json = (d: unknown, s = 200) =>
   new Response(JSON.stringify(d), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
@@ -48,13 +47,14 @@ function buildText(item: Item, defaults: string[]): string {
   return `${item.content}${tagLine}`.slice(0, 2200);
 }
 
-async function logEvent(sb: any, queue_id: string, event_type: string, platform: string | null, payload: any) {
-  try { await sb.from("social_publish_events").insert({ queue_id, event_type, platform, payload }); }
-  catch (e) { console.warn("event log fail", e); }
-}
+const RequestSchema = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("process_queue") }),
+  z.object({ action: z.literal("publish_now"), id: z.string().uuid() }),
+  z.object({ action: z.literal("enqueue"), platform: z.enum(["facebook", "instagram", "tiktok"]), content: z.string().trim().min(1).max(20000), media_urls: z.array(z.string().url()).max(10).default([]), media_type: z.enum(["text", "image", "video", "carousel"]).default("text"), hashtags: z.array(z.string().max(100)).max(50).default([]), scheduled_at: z.string().datetime({ offset: true }).optional(), campaign_id: z.string().uuid().optional(), source: z.string().max(100).optional(), source_ref: z.string().uuid().optional() }),
+]);
 
 // ============ FACEBOOK ============
-async function publishFacebook(item: Item, s: Settings, text: string): Promise<{ id: string; permalink: string | null }> {
+async function publishFacebook(item: Item, s: Settings, text: string, preflight: () => Promise<void>): Promise<{ id: string; permalink: string | null }> {
   const token = Deno.env.get("META_PAGE_ACCESS_TOKEN");
   if (!token) throw new Error("META_PAGE_ACCESS_TOKEN missing");
   if (!s.facebook_page_id) throw new Error("facebook_page_id not configured");
@@ -68,6 +68,7 @@ async function publishFacebook(item: Item, s: Settings, text: string): Promise<{
   if (hasImage) { body.url = item.media_urls[0]; body.caption = text; }
   else { body.message = text; }
 
+  await preflight();
   const res = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -80,7 +81,7 @@ async function publishFacebook(item: Item, s: Settings, text: string): Promise<{
 }
 
 // ============ INSTAGRAM ============
-async function publishInstagram(item: Item, s: Settings, text: string): Promise<{ id: string; permalink: string | null }> {
+async function publishInstagram(item: Item, s: Settings, text: string, preflight: () => Promise<void>): Promise<{ id: string; permalink: string | null }> {
   const token = Deno.env.get("META_PAGE_ACCESS_TOKEN");
   if (!token) throw new Error("META_PAGE_ACCESS_TOKEN missing");
   const igId = s.instagram_business_id;
@@ -96,6 +97,7 @@ async function publishInstagram(item: Item, s: Settings, text: string): Promise<
   else { mediaParams.image_url = item.media_urls[0]; }
 
   // Step 1: create container
+  await preflight();
   const cr = await fetch(`${META_GRAPH}/${igId}/media`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -117,6 +119,7 @@ async function publishInstagram(item: Item, s: Settings, text: string): Promise<
   }
 
   // Step 2: publish
+  await preflight();
   const pr = await fetch(`${META_GRAPH}/${igId}/media_publish`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -136,12 +139,13 @@ async function publishInstagram(item: Item, s: Settings, text: string): Promise<
 }
 
 // ============ TIKTOK ============
-async function publishTikTok(item: Item, text: string): Promise<{ id: string; permalink: string | null }> {
+async function publishTikTok(item: Item, text: string, preflight: () => Promise<void>): Promise<{ id: string; permalink: string | null }> {
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
   const tkKey = Deno.env.get("TIKTOK_API_KEY");
   if (!lovableKey || !tkKey) throw new Error("TikTok connector not configured");
   if (!item.media_urls.length || item.media_type !== "video") throw new Error("TikTok requires a video URL");
 
+  await preflight();
   const initRes = await fetch(`${TIKTOK_GW}/post/publish/video/init/`, {
     method: "POST",
     headers: {
@@ -175,45 +179,43 @@ async function publishTikTok(item: Item, text: string): Promise<{ id: string; pe
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const url = new URL(req.url);
     const isCron = await isInternalCall(req);
 
     const auth = req.headers.get("Authorization") || "";
-    const sb = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SUPABASE_ANON_KEY")!,
-      isCron ? {} : { global: { headers: { Authorization: auth } } },
-    );
+    const backendUrl = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    if (!backendUrl || !serviceKey || !anonKey) return json({ error: "configuration_missing" }, 503);
+    const sb = createClient(backendUrl, serviceKey);
+    const caller = createClient(backendUrl, anonKey, { global: { headers: { Authorization: auth } } });
 
     let uid: string | null = null;
     if (!isCron) {
       if (!auth.startsWith("Bearer ")) return json({ error: "unauthorized" }, 401);
-      const { data: u } = await sb.auth.getUser();
+      const { data: u } = await caller.auth.getUser();
       uid = u?.user?.id || null;
       if (!uid) return json({ error: "unauthorized" }, 401);
-      const { data: isAdmin } = await sb.rpc("has_role", { _user_id: uid, _role: "admin" });
+      const { data: isAdmin } = await caller.rpc("has_role", { _user_id: uid, _role: "admin" });
       if (!isAdmin) return json({ error: "admin_required" }, 403);
     }
 
-    const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
-    const action = String(body?.action || (isCron ? "process_queue" : ""));
+    if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+    const parsed = RequestSchema.safeParse(await req.json().catch(() => ({})));
+    if (!parsed.success) return json({ error: "invalid_request", details: parsed.error.flatten() }, 400);
+    const body = parsed.data;
+    const action = body.action;
+    const { data: settings, error: settingsError } = await sb.from("social_auto_publish_settings").select("*").limit(1).maybeSingle();
+    if (settingsError || !settings) return json({ error: "settings_unavailable" }, 503);
+    const s: Settings = settings;
 
-    const { data: settings } = await sb.from("social_auto_publish_settings").select("*").limit(1).maybeSingle();
-    const s: Settings = settings || {} as Settings;
-
-    // ---- ENQUEUE ----
-    if (action === "enqueue") {
-      const { platform, content, media_urls = [], media_type = "image", hashtags = [], scheduled_at, campaign_id, source, source_ref, autopilot } = body;
-      if (!platform || !content) return json({ error: "platform+content required" }, 400);
-      const { data: ins, error } = await sb.from("social_publish_queue").insert({
-        platform, content, media_urls, media_type, hashtags,
-        scheduled_at: scheduled_at || new Date().toISOString(),
-        campaign_id: campaign_id || null,
-        source: source || "manual", source_ref: source_ref || null,
-        autopilot: !!autopilot,
-        approved_by: autopilot ? uid : null,
-        approved_at: autopilot ? new Date().toISOString() : null,
-        created_by: uid,
+    if (body.action === "enqueue") {
+      if (isCron || !uid) return json({ error: "human_admin_required" }, 403);
+      const safety = aegisRedact(body.content);
+      if (safety.findings.length || aegisInput(body.content).length) return json({ error: "aegis_review_required" }, 422);
+      const { data: ins, error } = await caller.from("social_publish_queue").insert({
+        platform: body.platform, content: body.content, media_urls: body.media_urls, media_type: body.media_type, hashtags: body.hashtags,
+        scheduled_at: body.scheduled_at || new Date().toISOString(), campaign_id: body.campaign_id || null,
+        source: body.source || "manual", source_ref: body.source_ref || null, autopilot: false, requires_approval: true, created_by: uid,
       }).select().single();
       if (error) return json({ error: error.message }, 500);
       return json({ ok: true, item: ins });
@@ -222,7 +224,7 @@ Deno.serve(async (req) => {
     // ---- PROCESS QUEUE ----
     if (action === "process_queue" || action === "publish_now") {
       let query = sb.from("social_publish_queue").select("*").eq("status", "pending").lte("scheduled_at", new Date().toISOString());
-      if (action === "publish_now" && body.id) query = sb.from("social_publish_queue").select("*").eq("id", body.id);
+      if (action === "publish_now" && body.action === "publish_now") query = sb.from("social_publish_queue").select("*").eq("id", body.action === "publish_now" ? body.id : "").eq("status", "pending");
 
       const { data: items } = await query.order("scheduled_at", { ascending: true }).limit(20);
       const results: any[] = [];
@@ -230,62 +232,39 @@ Deno.serve(async (req) => {
       for (const raw of (items || [])) {
         const item = raw as Item;
 
-        // Platform gate
-        if (action === "process_queue") {
-          if (item.platform === "facebook" && !s.facebook_enabled) { results.push({ id: item.id, skipped: "fb_disabled" }); continue; }
-          if (item.platform === "instagram" && !s.instagram_enabled) { results.push({ id: item.id, skipped: "ig_disabled" }); continue; }
-          if (item.platform === "tiktok" && !s.tiktok_enabled) { results.push({ id: item.id, skipped: "tt_disabled" }); continue; }
-          // Quiet hours (Europe/Budapest ~ UTC+1/2, cron-safe: use UTC hour + 1)
-          const hr = (new Date().getUTCHours() + 1) % 24;
-          const qs = s.quiet_hours_start, qe = s.quiet_hours_end;
-          const inQuiet = qs < qe ? (hr >= qs && hr < qe) : (hr >= qs || hr < qe);
-          if (inQuiet) { results.push({ id: item.id, skipped: "quiet_hours" }); continue; }
-        }
-
-        await sb.from("social_publish_queue").update({ status: "processing" }).eq("id", item.id);
-        await logEvent(sb, item.id, "processing_started", item.platform, {});
-
+        const { data: claim, error: claimError } = await sb.rpc("social_claim", { _id: item.id });
+        if (claimError) { results.push({ id: item.id, ok: false, error: claimError.message }); continue; }
+        if (!claim?.allowed || !claim.token) { results.push({ id: item.id, skipped: claim?.reason || "gate_unavailable" }); continue; }
+        const token = claim.token;
+        const preflight = async () => {
+          const { data: allowed, error } = await sb.rpc("social_preflight", { _id: item.id, _token: token });
+          if (error || allowed !== true) throw new Error("AEGIS: execution stopped before provider call");
+        };
         try {
           const text = buildText(item, s.default_hashtags || []);
           let out: { id: string; permalink: string | null };
-          if (item.platform === "facebook") out = await publishFacebook(item, s, text);
-          else if (item.platform === "instagram") out = await publishInstagram(item, s, text);
-          else if (item.platform === "tiktok") out = await publishTikTok(item, text);
+          if (item.platform === "facebook") out = await publishFacebook(item, s, text, preflight);
+          else if (item.platform === "instagram") out = await publishInstagram(item, s, text, preflight);
+          else if (item.platform === "tiktok") out = await publishTikTok(item, text, preflight);
           else throw new Error(`unknown platform: ${item.platform}`);
 
-          await sb.from("social_publish_queue").update({
-            status: "published",
-            external_post_id: out.id,
-            external_permalink: out.permalink,
-            published_at: new Date().toISOString(),
-            error_message: null,
-          }).eq("id", item.id);
-          await logEvent(sb, item.id, "published", item.platform, out);
+          if (!out.id) throw new Error("Provider receipt missing; manual reconciliation required");
+          const state = providerOutcome(item.platform);
+          const { error: receiptError } = await sb.rpc("social_finish", { _id: item.id, _token: token, _state: state, _external_id: out.id, _permalink: out.permalink });
+          if (receiptError) throw new Error("Receipt persistence failed; manual reconciliation required");
           await busPublish(sb, {
             source: "social-publisher",
-            eventType: `social.published.${item.platform}`,
+            eventType: `social.${state === "published" ? "published" : "accepted"}.${item.platform}`,
             payload: { queue_id: item.id, external_id: out.id, permalink: out.permalink, platform: item.platform },
             severity: "info",
           });
-          results.push({ id: item.id, ok: true, external_id: out.id });
+          results.push({ id: item.id, ok: true, state, external_id: out.id });
         } catch (e: any) {
           const msg = e?.message || String(e);
-          const nextRetry = item.retry_count + 1;
-          const failed = nextRetry >= item.max_retries;
-          await sb.from("social_publish_queue").update({
-            status: failed ? "failed" : "pending",
-            retry_count: nextRetry,
-            error_message: msg,
-            scheduled_at: failed ? undefined : new Date(Date.now() + Math.pow(2, nextRetry) * 60_000).toISOString(),
-          }).eq("id", item.id);
-          await logEvent(sb, item.id, failed ? "failed" : "retry_scheduled", item.platform, { error: msg, retry: nextRetry });
-          await busPublish(sb, {
-            source: "social-publisher",
-            eventType: failed ? `social.failed.${item.platform}` : `social.retry.${item.platform}`,
-            payload: { queue_id: item.id, error: msg, retry: nextRetry, platform: item.platform },
-            severity: failed ? "error" : "warning",
-          });
-          results.push({ id: item.id, ok: false, error: msg });
+          const safeError = aegisRedact(msg).text;
+          const { error: finishError } = await sb.rpc("social_finish", { _id: item.id, _token: token, _state: "failed", _error: safeError });
+          if (finishError) console.error("social receipt reconciliation required", item.id);
+          results.push({ id: item.id, ok: false, error: aegisRedact(msg).text });
         }
       }
       return json({ ok: true, processed: results.length, results });
