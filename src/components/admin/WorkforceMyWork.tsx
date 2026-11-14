@@ -106,6 +106,12 @@ export function WorkforceMyWork({ dept, onChange }: { dept: Department; onChange
   const active = openPlans(plans);
   return (
     <section className="p-4 space-y-3 border-b border-border" aria-label="Saját munkák">
+      {(() => { const cur = active.map(p => ({ p, s: steps.filter(x => x.plan_id === p.id).find(x => x.status !== "done") })).find(x => x.s); const dues = active.map(p => p.due_date).filter(Boolean).sort();
+        return <div className="grid grid-cols-3 gap-px bg-border text-[11px]" aria-label="Áttekintés">
+          <div className="bg-background p-2"><div className="text-muted-foreground">Nyitott munka</div><div className="text-lg font-display text-primary">{active.length}</div></div>
+          <div className="bg-background p-2"><div className="text-muted-foreground">Legközelebbi határidő</div><div className={active.some(p => planOverdue(p)) ? "text-destructive" : ""}>{dues[0] ?? "nincs"}</div></div>
+          <div className="bg-background p-2 min-w-0"><div className="text-muted-foreground">Aktuális lépés</div><div className="truncate">{cur?.s ? `${cur.s.idx + 1}. ${cur.s.task}` : "—"}</div></div>
+        </div>; })()}
       <div className="flex items-baseline justify-between"><h3 className="font-display text-sm">Saját munkák · {dept.name}</h3><span className="text-xs text-muted-foreground">{active.length} nyitott / {plans.length}</span></div>
       {plans.filter(p => p.status !== "cancelled").map(p => {
         const st = steps.filter(s => s.plan_id === p.id); const done = st.filter(s => s.status === "done").length;
