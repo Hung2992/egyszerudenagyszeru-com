@@ -1,6 +1,7 @@
 # Partner webshop 2026
 
 ## Tartalomtár és hirdetés — új kérés
+- [x] Célkorrekció: Social AI kizárólag teljes szoftver szerződéses bérléséhez keres partnereket; saját webshop nincs. Dedikált platformszövegek és havi manuális partnertervezet, régi adatok/napló megőrizve; 15 teszt, mobilos hitelesített ellenőrzés és build OK.
 - [x] TikTok: három kiválasztható tényszerű szövegváltozat és letölthető kézi videósablon; 390×630 hitelesített UI-ban aktív ApexParts termékkel letöltés igazolva, nincs overflow; 18 teszt és build OK.
 - [ ] 93 decemberi approval — pontos tartalom és emberi review szükséges; üres helyek nem jóváhagyhatók.
 - [x] Magyarországi partnerkeresési kutatás: mentett, visszaellenőrzött jelentés, 4 Shoprenter Meta-kártya, saját/UNAS/Shoprenter oldalak, Semrush hu minta. Google UNAS példa nem igazolt; termékes magyar kisvállalkozók és meglévő főoldal elfogadva.
