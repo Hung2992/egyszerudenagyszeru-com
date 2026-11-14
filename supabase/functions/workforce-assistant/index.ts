@@ -27,7 +27,8 @@ Deno.serve(async (req) => {
     const parsed = z.object({ departmentId: z.string().regex(/^(0[1-9]|1[0-9]|20)$/), department: z.string().min(1).max(60), roles: z.array(z.string().max(80)).max(12), messages: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().min(1).max(4000) })).min(1).max(30) }).safeParse(await req.json());
     if (!parsed.success) return j({ error: "Érvénytelen üzenet vagy munkatárs" }, 400);
     const body = parsed.data;
-    const { data: policy, error: policyError } = await db.rpc("aegis_agent_allowed", { _agent: "workforce-assistant" });
+    const controlDb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { data: policy, error: policyError } = await controlDb.rpc("aegis_agent_allowed", { _agent: "workforce-assistant" });
     if (policyError || policy !== "active") return j({ error: "AEGIS: az asszisztens jelenleg nem elérhető" }, 423);
     const dept = String(body?.department ?? "").slice(0, 60);
     const roles = Array.isArray(body?.roles) ? body.roles.slice(0, 12).map(String) : [];
