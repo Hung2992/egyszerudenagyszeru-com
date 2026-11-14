@@ -11,7 +11,7 @@ import { lazyRetry } from "@/lib/lazy-retry";
 import { toast } from "sonner";
 import SocialPublicationControl from "@/components/admin/SocialPublicationControl";
 import SocialMonthlyPlan from "@/components/admin/SocialMonthlyPlan";
-import SocialContentLibrary from "@/components/admin/SocialContentLibrary";
+import SocialPartnerLibrary from "@/components/admin/SocialPartnerLibrary";
 import { approvalLabel } from "@/lib/social-periods";
 
 const ContentStudio = lazy(lazyRetry(() => import("@/components/admin/AdminAiMarketingStudio")));
@@ -98,7 +98,7 @@ export default function SocialAiCenter() {
           <Button asChild variant="ghost" size="sm"><Link to="/admin"><ArrowLeft className="mr-2 h-4 w-4" />Admin</Link></Button>
           <Button variant="outline" size="sm" onClick={() => void load()} disabled={busy}><RefreshCw className={`mr-2 h-4 w-4 ${busy ? "animate-spin" : ""}`} />Frissítés</Button>
         </div>
-        <div className="flex items-start gap-4"><Brain className="h-9 w-9 shrink-0 text-accent" /><div className="min-w-0"><p className="text-xs uppercase tracking-widest text-accent">AI Social Department</p><h1 className="mt-1 font-display text-2xl md:text-4xl break-words">SOCIAL AI COMMAND CENTER</h1><p className="mt-2 text-sm text-muted-foreground">Egyszerű de Nagyszerű · Facebook / TikTok / LinkedIn</p></div></div>
+        <div className="flex items-start gap-4"><Brain className="h-9 w-9 shrink-0 text-accent" /><div className="min-w-0"><p className="text-xs uppercase tracking-widest text-accent">Partnerkeresés · szerződéses szoftverbérlés</p><h1 className="mt-1 font-display text-2xl md:text-4xl break-words">SOCIAL AI COMMAND CENTER</h1><p className="mt-2 text-sm text-muted-foreground">Egyszerű de Nagyszerű · a teljes üzleti szoftver bérbeadása partnereknek</p></div></div>
         <div className="grid grid-cols-2 gap-px bg-border md:grid-cols-4">{counts.map(({ label, value, icon: Icon }) => <div key={label} className="bg-background p-4"><Icon className="h-4 w-4 text-accent mb-3" /><div className="font-display text-3xl">{busy ? "—" : value}</div><p className="text-xs text-muted-foreground mt-1">{label}</p></div>)}</div>
       </div>
     </header>
@@ -117,7 +117,7 @@ export default function SocialAiCenter() {
         </TabsContent>
         <TabsContent value="control"><SocialPublicationControl onCreated={() => void load()} /></TabsContent>
         <TabsContent value="monthly"><SocialMonthlyPlan onOpen={setSelected} onChanged={() => void load()} /></TabsContent>
-        <TabsContent value="library"><SocialContentLibrary /></TabsContent>
+        <TabsContent value="library"><SocialPartnerLibrary /></TabsContent>
         <TabsContent value="content"><Suspense fallback={<Loader2 className="h-6 w-6 animate-spin" />}><ContentStudio /></Suspense></TabsContent>
         <TabsContent value="platforms" className="space-y-6"><div className="flex flex-wrap gap-2">{platforms.map(p => <Button key={p.id} variant={platform === p.id ? "secondary" : "outline"} aria-pressed={platform === p.id} onClick={() => setPlatform(p.id)}>{p.label}</Button>)}</div><MarketingStudioRouter tab={platform} /></TabsContent>
         <TabsContent value="video" className="space-y-5"><h2 className="font-display text-xl flex items-center gap-2"><Film className="h-5 w-5 text-accent" />Videóműhely</h2><MarketingStudioRouter tab="ai_studio_recorder" /></TabsContent>
