@@ -33,7 +33,7 @@
 - Az online fizetéshez aktív partneri fizetési kapcsolat szükséges.
 - A teljes éles rendelési teszthez valódi fizetés és külső kézbesítés szükséges.
 ## Rendszeraudit (2026-11-14)
-- [ ] Részletes második kör: belső oldalak élő ellenőrzése, hibás adat- és funkcióhivatkozások, e-mail és naplóegyezés vizsgálata.
+- [x] Részletes második kör: hat hitelesített belső oldal; 32 hiányzó táblahivatkozás, egy hiányzó RPC; kedvencek 404 reprodukálva; rendelési küldődomain eltérés; 21/21 készlépés naplója egyezik. Részletes v2 jelentés átadva, nem ellenőrzött folyamatok külön jelölve.
 - [x] Gyors biztonsági ellenőrzés, függőségi vizsgálat, kulcsnevek összevetése, hiányzó üzleti adatok ellenőrzése, 280 teszt és négy nyilvános oldal indulásának ellenőrzése; részletes hibajegyzék átadva.
 - [ ] Mély biztonsági vizsgálat eredménye — blokkoló: a külső vizsgálat még fut.
 - [ ] Külső szolgáltatások teljes működési próbája — blokkoló: hiányzó szolgáltatói kapcsolatok és valódi fizetési/kézbesítési bizonyítékok.
