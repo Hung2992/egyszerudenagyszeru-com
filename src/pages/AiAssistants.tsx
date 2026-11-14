@@ -1,3 +1,4 @@
+import { useWorkforceLive } from "@/hooks/useWorkforceLive";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
@@ -21,6 +22,7 @@ const AiAssistants = () => {
   const [events, setEvents] = useState<Ev[]>([]);
   const [sel, setSel] = useState("02");
   const [tick, setTick] = useState(0);
+  useWorkforceLive(() => setTick(t => t + 1));
   useEffect(() => { if (!loading && !isAdmin) navigate("/"); }, [loading, isAdmin, navigate]);
   useEffect(() => {
     if (!isAdmin) return;

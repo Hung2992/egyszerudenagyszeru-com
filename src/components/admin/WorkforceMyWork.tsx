@@ -1,3 +1,4 @@
+import { useWorkforceLive } from "@/hooks/useWorkforceLive";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -24,6 +25,7 @@ export function WorkforceMyWork({ dept, onChange }: { dept: Department; onChange
     setSteps((s.data ?? []) as Step[]);
   }, [dept]);
   useEffect(() => { load(); }, [load]);
+  useWorkforceLive(load);
 
   const [target, setTarget] = useState("");
   const [handGoal, setHandGoal] = useState("");
