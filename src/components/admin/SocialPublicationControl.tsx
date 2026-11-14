@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ShieldCheck, FlaskConical, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { periodKey, periodRange, budapestDay, type SocialPeriod } from "@/lib/social-periods";
+import SocialConnections from "./SocialConnections";
 
 type Event = { id: string; event_type: string; created_at: string; platform: string; payload: { content?: string; rendered_content?: string; executor?: string; result?: string; reason?: string; test_only?: boolean; external_calls?: number } };
 const labels: Record<string, string> = { draft_created: "Tervezet létrehozva", approved: "Jóváhagyva", publication_attempt: "Publikálási kísérlet", test_publication_attempt: "Tesztpublikálási kísérlet", cancelled: "Visszavonva", provider_confirmed: "Szolgáltató visszaigazolta", provider_accepted: "Szolgáltató átvette", execution_claimed: "Végrehajtás lefoglalva" };
@@ -15,21 +18,25 @@ export default function SocialPublicationControl({ onCreated }: { onCreated: () 
   const [events, setEvents] = useState<Event[]>([]);
   const [content, setContent] = useState("");
   const [busy, setBusy] = useState(false);
+  const [period, setPeriod] = useState<SocialPeriod>("month");
+  const [date, setDate] = useState(budapestDay(new Date()));
+  const [logPlatform, setLogPlatform] = useState("all");
   const load = useCallback(async () => {
     const { data: auth } = await supabase.auth.getUser();
     const id = auth.user?.id;
     if (!id) return;
     setUid(id);
+    const range = periodRange(date, period);
     const [permissions, log] = await Promise.all([
       supabase.from("social_publish_permissions").select("mode,revoked_at").eq("user_id", id),
-      supabase.from("social_publish_events").select("id,event_type,created_at,platform,payload").order("created_at", { ascending: false }).limit(100),
+      supabase.from("social_publish_events").select("id,event_type,created_at,platform,payload").gte("created_at", range.start).lt("created_at", range.end).order("created_at", { ascending: false }).limit(1000),
     ]);
     if (permissions.error || log.error) { toast.error(permissions.error?.message ?? log.error?.message); return; }
     setTestPermission(permissions.data?.some(p => p.mode === "test" && !p.revoked_at) ?? false);
     setLivePermission(permissions.data?.some(p => p.mode === "live" && !p.revoked_at) ?? false);
     setEvents(log.data ?? []);
-  }, []);
-  useEffect(() => { void load(); }, [load]);
+  }, [date, period]);
+  useEffect(() => { void load(); const timer = window.setInterval(() => void load(), 30000); return () => window.clearInterval(timer); }, [load]);
   const permission = async (mode: "test" | "live", enabled: boolean) => {
     if (!uid || !window.confirm(`${enabled ? "Engedélyezed" : "Visszavonod"} a saját ${mode === "test" ? "teszt" : "éles"} publikálási jogosultságodat?`)) return;
     setBusy(true);
@@ -46,6 +53,7 @@ export default function SocialPublicationControl({ onCreated }: { onCreated: () 
     setContent(""); onCreated(); await load(); toast.success("Teszttervezet létrehozva");
   };
   return <div className="space-y-6">
+    <SocialConnections />
     <section className="border-b border-border pb-5 space-y-3">
       <h2 className="font-display text-xl flex items-center gap-2"><ShieldCheck className="h-5 w-5" />Publikálási engedélyek</h2>
       <p className="text-sm text-muted-foreground">Saját fiók · Teszt: {testPermission ? "engedélyezve" : "tiltva"} · Éles: {livePermission ? "engedélyezve" : "tiltva"}</p>
@@ -53,7 +61,10 @@ export default function SocialPublicationControl({ onCreated }: { onCreated: () 
     </section>
     <section className="space-y-3"><h2 className="font-display text-xl flex items-center gap-2"><FlaskConical className="h-5 w-5" />Közzététel nélküli teszt</h2><Textarea aria-label="Tesztbejegyzés tartalma" value={content} onChange={e => setContent(e.target.value)} /><Button disabled={busy || !content.trim()} onClick={() => void create()}>Teszttervezet létrehozása</Button></section>
     <section className="space-y-3"><div className="flex justify-between gap-2 items-center"><h2 className="font-display text-xl">Jóváhagyási és publikálási napló</h2><Button variant="ghost" size="icon" title="Napló frissítése" aria-label="Napló frissítése" onClick={() => void load()}><RefreshCw className="h-4 w-4" /></Button></div>
-      {events.map(event => <article key={event.id} className="border-b border-border py-4 space-y-2"><div className="flex flex-wrap gap-2 text-xs text-muted-foreground"><time>{new Date(event.created_at).toLocaleString("hu-HU", { timeZone: "Europe/Budapest" })}</time><span>{event.platform}</span><span>{event.payload.test_only ? "TESZT" : "ÉLES"}</span></div><h3 className="font-display">{labels[event.event_type] ?? event.event_type}</h3><p className="text-sm whitespace-pre-wrap break-words">{event.payload.rendered_content ?? event.payload.content ?? "Korábbi esemény · tartalompillanatkép nem áll rendelkezésre"}</p><p className="text-xs text-muted-foreground break-all">Végrehajtó: {event.payload.executor ?? "Korábbi esemény · nincs rögzítve"}</p>{(event.payload.result || event.payload.reason) && <p className="text-xs">Eredmény: {event.payload.result ?? event.payload.reason}{event.payload.external_calls === 0 ? " · 0 külső hívás" : ""}</p>}</article>)}
+      <div className="flex flex-wrap gap-2 items-center">{(["month", "week", "day"] as SocialPeriod[]).map(p => <Button key={p} variant={period === p ? "secondary" : "outline"} size="sm" aria-pressed={period === p} onClick={() => setPeriod(p)}>{p === "month" ? "Havi" : p === "week" ? "Heti" : "Napi"}</Button>)}<Input className="w-44" type="date" aria-label="Napló időszaka" value={date} onChange={e => setDate(e.target.value)} /></div>
+      <div className="flex flex-wrap gap-1">{["all", "facebook", "tiktok", "linkedin", "instagram"].map(p => <Button key={p} variant={logPlatform === p ? "secondary" : "ghost"} size="sm" onClick={() => setLogPlatform(p)}>{p === "all" ? "Mind" : p}</Button>)}</div>
+      <p className="text-xs text-muted-foreground">Időszak kezdete: {periodKey(`${date}T12:00:00Z`, period)} · Budapest · legfeljebb 1000 esemény</p>
+      {events.filter(e => periodKey(e.created_at, period) === periodKey(`${date}T12:00:00Z`, period) && (logPlatform === "all" || e.platform === logPlatform)).map(event => <article key={event.id} className="border-b border-border py-4 space-y-2"><div className="flex flex-wrap gap-2 text-xs text-muted-foreground"><time>{new Date(event.created_at).toLocaleString("hu-HU", { timeZone: "Europe/Budapest" })}</time><span>{event.platform}</span><span>{event.payload.test_only ? "TESZT" : "ÉLES"}</span></div><h3 className="font-display">{labels[event.event_type] ?? event.event_type}</h3><p className="text-sm whitespace-pre-wrap break-words">{event.payload.rendered_content ?? event.payload.content ?? "Korábbi esemény · tartalompillanatkép nem áll rendelkezésre"}</p><p className="text-xs text-muted-foreground break-all">Végrehajtó: {event.payload.executor ?? "Korábbi esemény · nincs rögzítve"}</p>{(event.payload.result || event.payload.reason) && <p className="text-xs">Eredmény: {event.payload.result ?? event.payload.reason}{event.payload.external_calls === 0 ? " · 0 külső hívás" : ""}</p>}</article>)}
     </section>
   </div>;
 }

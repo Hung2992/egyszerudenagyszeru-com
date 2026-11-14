@@ -1,10 +1,12 @@
 # Partner webshop 2026
 
 ## Most kért Social AI fejlesztés
-- [ ] Facebook hirdetési beállítások és fizetési akadály megjelenítése.
-- [ ] TikTok kapcsolat ellenőrzése, termék/kampány tervezetek biztonságos előkészítése (publikálási scope hiányzik).
-- [ ] Saját éles engedély, havi napi 1 poszt/platform terv Facebook/TikTok/LinkedIn, tartalmonkénti approval megőrzésével.
-- [ ] Havi/heti/napi auditnézet és platformonkénti jóváhagyás, hitelesített mobilellenőrzés.
+- [x] Facebook kapcsolati és hirdetési beállítások, fizetés/hirdetéskezelő megnyitása; fiók olvasható. Hirdetésindítás: aktív Meta-fizetés hiányzik.
+- [x] Meglévő TikTok kapcsolat igazolva; termék/kampány kiválasztásból jóváhagyási tervezet előkészítése és fail-closed adapter, ellenőrzött célfiókkal.
+- [ ] TikTok éles posztolás — a kapcsolaton video.publish engedély nincs; creator-info próba scope_not_authorized. Jelenleg 0 aktív webshoptermék és 0 marketingkampány; valós tartalomgenerálás nem igazolható.
+- [x] Saját éles engedély aktív, 2026. december: 93 hely (31/platform), idempotens létrehozás, pontos/hash/72 órás approval. Célfiókok auditáltan hozzárendelve, éles poszt nem történt.
+- [ ] Háromplatformos automatikus publikálás — TikTok scope, aktív forrástartalom, teljes provider-visszaolvasás és első biztonsági kapu szükséges; új ütemezett futás nem indult.
+- [x] Havi/heti/napi auditnézet, Budapest/Monday heti határ, platformsűrő és szerverellenőrzött aktuális approval; 390×630 hitelesített UI, kapcsolatellenőrzés, 15 teszt, nincs oldal-túlnyúlás vagy pageerror.
 
 ## AI Marketing Command OS — egységes tervezés
 - [x] Közzététel nélküli tesztfolyamat saját hitelesített adminfiókkal: jóváhagyás előtt tiltva, jóváhagyás után test_passed és 0 külső hívás; éles út teszttervezetnél tiltva, engedély-visszavonás ellenőrizve. Külön test/live engedély és pontos tartalom/idő/végrehajtó napló. Tesztengedély aktív, éles engedély nincs megadva; próbatervezet visszavonva. Valódi szolgáltatói publikálás nem történt és nem lett igazolva.

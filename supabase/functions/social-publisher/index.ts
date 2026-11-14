@@ -15,12 +15,12 @@ import { providerOutcome, canCallProvider } from "../_shared/social-governance.t
 const json = (d: unknown, s = 200) =>
   new Response(JSON.stringify(d), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-const META_GRAPH = "https://graph.facebook.com/v21.0";
+const META_GRAPH = "https://connector-gateway.lovable.dev/meta_ads/v26.0";
 const TIKTOK_GW = "https://connector-gateway.lovable.dev/tiktok";
 
 interface Item {
   id: string;
-  platform: "facebook" | "instagram" | "tiktok";
+  platform: "facebook" | "instagram" | "tiktok" | "linkedin";
   content: string;
   media_urls: string[];
   media_type: string;
@@ -41,6 +41,8 @@ interface Settings {
   quiet_hours_start: number;
   quiet_hours_end: number;
   default_hashtags: string[];
+  linkedin_member_id: string | null;
+  tiktok_open_id: string | null;
 }
 
 function buildText(item: Item, defaults: string[]): string {
@@ -53,31 +55,47 @@ const RequestSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("process_queue") }),
   z.object({ action: z.literal("test_publish"), id: z.string().uuid() }),
   z.object({ action: z.literal("publish_now"), id: z.string().uuid() }),
-  z.object({ action: z.literal("enqueue"), platform: z.enum(["facebook", "instagram", "tiktok"]), test_only: z.boolean().default(false), content: z.string().trim().min(1).max(20000), media_urls: z.array(z.string().url()).max(10).default([]), media_type: z.enum(["text", "image", "video", "carousel"]).default("text"), hashtags: z.array(z.string().max(100)).max(50).default([]), scheduled_at: z.string().datetime({ offset: true }).optional(), campaign_id: z.string().uuid().optional(), source: z.string().max(100).optional(), source_ref: z.string().uuid().optional() }),
+  z.object({ action: z.literal("enqueue"), platform: z.enum(["facebook", "instagram", "tiktok", "linkedin"]), test_only: z.boolean().default(false), content: z.string().trim().min(1).max(20000), media_urls: z.array(z.string().url()).max(10).default([]), media_type: z.enum(["text", "image", "video", "carousel"]).default("text"), hashtags: z.array(z.string().max(100)).max(50).default([]), scheduled_at: z.string().datetime({ offset: true }).optional(), campaign_id: z.string().uuid().optional(), source: z.string().max(100).optional(), source_ref: z.string().uuid().optional() }),
 ]);
+
+function metaHeaders() {
+  const key = Deno.env.get("META_ADS_API_KEY");
+  const lovable = Deno.env.get("LOVABLE_API_KEY");
+  if (!key || !lovable) throw new Error("Meta connector not configured");
+  return { Authorization: `Bearer ${lovable}`, "X-Connection-Api-Key": key };
+}
+async function providerJson(response: Response) {
+  if (!response.ok) {
+    const body = aegisRedact(await response.text()).text;
+    console.error(`Provider request failed [${response.status}]: ${body}`);
+    throw new Error(`Provider [${response.status}]: ${body}`);
+  }
+  const data = await response.json();
+  if (data.error && data.error.code !== "ok") throw new Error(`Provider [${response.status}]: ${aegisRedact(JSON.stringify(data.error)).text}`);
+  return data;
+}
 
 // ============ FACEBOOK ============
 async function publishFacebook(item: Item, s: Settings, text: string, preflight: () => Promise<void>): Promise<{ id: string; permalink: string | null }> {
-  const token = Deno.env.get("META_PAGE_ACCESS_TOKEN");
-  if (!token) throw new Error("META_PAGE_ACCESS_TOKEN missing");
   if (!s.facebook_page_id) throw new Error("facebook_page_id not configured");
+  if (item.media_type === "video" || item.media_type === "carousel") throw new Error("Facebook video/carousel requires a verified adapter; not sent as a photo");
 
   const hasImage = item.media_urls.length > 0 && item.media_type !== "text";
   const endpoint = hasImage
     ? `${META_GRAPH}/${s.facebook_page_id}/photos`
     : `${META_GRAPH}/${s.facebook_page_id}/feed`;
 
-  const body: Record<string, string> = { access_token: token };
+  const body: Record<string, string> = {};
   if (hasImage) { body.url = item.media_urls[0]; body.caption = text; }
   else { body.message = text; }
 
   await preflight();
   const res = await fetch(endpoint, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers: { ...metaHeaders(), "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams(body),
   });
-  const j = await res.json();
+  const j = await providerJson(res);
   if (!res.ok || j.error) throw new Error(`FB: ${j.error?.message || res.status}`);
   const postId = j.post_id || j.id;
   return { id: postId, permalink: postId ? `https://facebook.com/${postId}` : null };
@@ -85,15 +103,12 @@ async function publishFacebook(item: Item, s: Settings, text: string, preflight:
 
 // ============ INSTAGRAM ============
 async function publishInstagram(item: Item, s: Settings, text: string, preflight: () => Promise<void>): Promise<{ id: string; permalink: string | null }> {
-  const token = Deno.env.get("META_PAGE_ACCESS_TOKEN");
-  if (!token) throw new Error("META_PAGE_ACCESS_TOKEN missing");
   const igId = s.instagram_business_id;
   if (!igId) throw new Error("instagram_business_id not configured");
   if (!item.media_urls.length) throw new Error("Instagram requires media");
 
   const isVideo = item.media_type === "video";
   const mediaParams: Record<string, string> = {
-    access_token: token,
     caption: text,
   };
   if (isVideo) { mediaParams.video_url = item.media_urls[0]; mediaParams.media_type = "REELS"; }
@@ -103,10 +118,10 @@ async function publishInstagram(item: Item, s: Settings, text: string, preflight
   await preflight();
   const cr = await fetch(`${META_GRAPH}/${igId}/media`, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers: { ...metaHeaders(), "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams(mediaParams),
   });
-  const cj = await cr.json();
+  const cj = await providerJson(cr);
   if (!cr.ok || cj.error) throw new Error(`IG container: ${cj.error?.message || cr.status}`);
   const containerId = cj.id;
 
@@ -114,8 +129,9 @@ async function publishInstagram(item: Item, s: Settings, text: string, preflight
   if (isVideo) {
     for (let i = 0; i < 20; i++) {
       await new Promise(r => setTimeout(r, 3000));
-      const sr = await fetch(`${META_GRAPH}/${containerId}?fields=status_code&access_token=${token}`);
-      const sj = await sr.json();
+      await preflight();
+      const sr = await fetch(`${META_GRAPH}/${containerId}?fields=status_code`, { headers: metaHeaders() });
+      const sj = await providerJson(sr);
       if (sj.status_code === "FINISHED") break;
       if (sj.status_code === "ERROR") throw new Error("IG video processing failed");
     }
@@ -125,16 +141,17 @@ async function publishInstagram(item: Item, s: Settings, text: string, preflight
   await preflight();
   const pr = await fetch(`${META_GRAPH}/${igId}/media_publish`, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ access_token: token, creation_id: containerId }),
+    headers: { ...metaHeaders(), "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ creation_id: containerId }),
   });
-  const pj = await pr.json();
+  const pj = await providerJson(pr);
   if (!pr.ok || pj.error) throw new Error(`IG publish: ${pj.error?.message || pr.status}`);
 
   // fetch permalink
   let permalink: string | null = null;
   try {
-    const lr = await fetch(`${META_GRAPH}/${pj.id}?fields=permalink&access_token=${token}`);
+    await preflight();
+    const lr = await fetch(`${META_GRAPH}/${pj.id}?fields=permalink`, { headers: metaHeaders() });
     const lj = await lr.json();
     permalink = lj.permalink || null;
   } catch {/* ignore */}
@@ -142,11 +159,19 @@ async function publishInstagram(item: Item, s: Settings, text: string, preflight
 }
 
 // ============ TIKTOK ============
-async function publishTikTok(item: Item, text: string, preflight: () => Promise<void>): Promise<{ id: string; permalink: string | null }> {
+async function publishTikTok(item: Item, text: string, s: Settings, preflight: () => Promise<void>): Promise<{ id: string; permalink: string | null }> {
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
   const tkKey = Deno.env.get("TIKTOK_API_KEY");
   if (!lovableKey || !tkKey) throw new Error("TikTok connector not configured");
   if (!item.media_urls.length || item.media_type !== "video") throw new Error("TikTok requires a video URL");
+  if (!s.tiktok_open_id) throw new Error("TikTok target identity not configured");
+  const headers = { Authorization: `Bearer ${lovableKey}`, "X-Connection-Api-Key": tkKey, "Content-Type": "application/json" };
+  await preflight();
+  const profile = await providerJson(await fetch(`${TIKTOK_GW}/user/info/?fields=open_id`, { headers }));
+  if (profile.data?.user?.open_id !== s.tiktok_open_id) throw new Error("TikTok approved target changed");
+  await preflight();
+  const creator = await providerJson(await fetch(`${TIKTOK_GW}/post/publish/creator_info/query/`, { method: "POST", headers, body: "{}" }));
+  if (!creator.data?.privacy_level_options?.includes("PUBLIC_TO_EVERYONE")) throw new Error("TikTok public posting unavailable; no private fallback");
 
   await preflight();
   const initRes = await fetch(`${TIKTOK_GW}/post/publish/video/init/`, {
@@ -170,12 +195,29 @@ async function publishTikTok(item: Item, text: string, preflight: () => Promise<
       },
     }),
   });
-  const initJson = await initRes.json();
+  const initJson = await providerJson(initRes);
   if (!initRes.ok || initJson.error?.code !== "ok") {
     throw new Error(`TikTok init: ${initJson.error?.message || initRes.status}`);
   }
   const publishId = initJson.data?.publish_id;
   return { id: publishId, permalink: null };
+}
+
+async function publishLinkedIn(item: Item, s: Settings, text: string, preflight: () => Promise<void>) {
+  const key = Deno.env.get("LINKEDIN_API_KEY");
+  const lovable = Deno.env.get("LOVABLE_API_KEY");
+  if (!key || !lovable || !s.linkedin_member_id) throw new Error("LinkedIn target not configured");
+  if (item.media_type !== "text" || item.media_urls.length) throw new Error("LinkedIn media requires a verified upload adapter");
+  const headers = { Authorization: `Bearer ${lovable}`, "X-Connection-Api-Key": key, "Content-Type": "application/json", "X-Restli-Protocol-Version": "2.0.0" };
+  await preflight();
+  const profile = await providerJson(await fetch("https://connector-gateway.lovable.dev/linkedin/v2/userinfo", { headers }));
+  if (profile.sub !== s.linkedin_member_id) throw new Error("LinkedIn approved target changed");
+  await preflight();
+  const response = await fetch("https://connector-gateway.lovable.dev/linkedin/v2/ugcPosts", { method: "POST", headers, body: JSON.stringify({ author: `urn:li:person:${s.linkedin_member_id}`, lifecycleState: "PUBLISHED", specificContent: { "com.linkedin.ugc.ShareContent": { shareCommentary: { text }, shareMediaCategory: "NONE" } }, visibility: { "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC" } }) });
+  const result = await providerJson(response);
+  const id = result.id || response.headers.get("x-restli-id");
+  if (!id) throw new Error("LinkedIn receipt missing; manual reconciliation required");
+  return { id, permalink: null };
 }
 
 // ============ MAIN ============
@@ -260,7 +302,8 @@ Deno.serve(async (req) => {
           let out: { id: string; permalink: string | null };
           if (item.platform === "facebook") out = await publishFacebook(item, approvedSettings, text, preflight);
           else if (item.platform === "instagram") out = await publishInstagram(item, approvedSettings, text, preflight);
-          else if (item.platform === "tiktok") out = await publishTikTok(item, text, preflight);
+          else if (item.platform === "tiktok") out = await publishTikTok(item, text, approvedSettings, preflight);
+          else if (item.platform === "linkedin") out = await publishLinkedIn(item, approvedSettings, text, preflight);
           else throw new Error(`unknown platform: ${item.platform}`);
 
           if (!out.id) throw new Error("Provider receipt missing; manual reconciliation required");
