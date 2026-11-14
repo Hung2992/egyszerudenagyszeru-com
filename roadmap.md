@@ -1,5 +1,11 @@
 # Partner webshop 2026
 
+## Most kért Social AI fejlesztés
+- [ ] Facebook hirdetési beállítások és fizetési akadály megjelenítése.
+- [ ] TikTok kapcsolat ellenőrzése, termék/kampány tervezetek biztonságos előkészítése (publikálási scope hiányzik).
+- [ ] Saját éles engedély, havi napi 1 poszt/platform terv Facebook/TikTok/LinkedIn, tartalmonkénti approval megőrzésével.
+- [ ] Havi/heti/napi auditnézet és platformonkénti jóváhagyás, hitelesített mobilellenőrzés.
+
 ## AI Marketing Command OS — egységes tervezés
 - [x] Közzététel nélküli tesztfolyamat saját hitelesített adminfiókkal: jóváhagyás előtt tiltva, jóváhagyás után test_passed és 0 külső hívás; éles út teszttervezetnél tiltva, engedély-visszavonás ellenőrizve. Külön test/live engedély és pontos tartalom/idő/végrehajtó napló. Tesztengedély aktív, éles engedély nincs megadva; próbatervezet visszavonva. Valódi szolgáltatói publikálás nem történt és nem lett igazolva.
 - [x] A hét új marketingterv összevonása, meglévő kód kapcsolódási pontjainak ellenőrzése, AEGIS-források visszaolvasása és kapukhoz kötött megvalósítási terv elkészítése; megvalósítás külön jóváhagyás után.
