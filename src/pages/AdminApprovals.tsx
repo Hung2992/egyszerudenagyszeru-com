@@ -63,7 +63,7 @@ export default function AdminApprovals() {
     if (review.error) { setActing(null); toast.error(review.error.message); return; }
     const { error: approveError } = await supabase.rpc("social_approve", { _id: post.id, _expected_hash: review.data.hash });
     setActing(null);
-    if (approveError) { toast.error(approveError.message.includes("publication_permission_required") ? `Nincs ${post.test_only ? "teszt" : "éles"} publikálási engedélyed. Add meg a Social AI központ „Engedélyek és napló” fülön, majd próbáld újra.` : approveError.message, { duration: 10000 }); return; }
+    if (approveError) { toast.error(approveError.message.includes("publication_permission_required") ? `Nincs ${post.test_only ? "teszt" : "éles"} publikálási engedélyed. Nyomd meg fent az „Éles engedély megadása” gombot, majd próbáld újra.` : approveError.message, { duration: 10000 }); return; }
     toast.success("Tartalom jóváhagyva · 72 óráig érvényes");
     void load();
   };
