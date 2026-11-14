@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { Department } from "@/lib/ai-world";
 import type { Staff } from "@/lib/workforce-roles";
+import { deptDefaults } from "@/lib/workforce-defaults";
 
 // Valódi munkatárs profilja: név, beosztás, terület, eszközök, egyedi feladatok. Az AI-asszisztens ebből dolgozik.
 export function WorkforceProfile({ dept, staff }: { dept: Department; staff?: Staff }) {
   const [edit, setEdit] = useState(false);
   const [f, setF] = useState({ full_name: "", title: "", area: "", tools: "", duties: "" });
-  useEffect(() => { setF({ full_name: staff?.full_name ?? "", title: staff?.title ?? "", area: staff?.area ?? dept.name, tools: (staff?.tools ?? []).join(", "), duties: staff?.duties ?? "" }); }, [staff, dept.name]);
+  useEffect(() => { setF({ full_name: staff?.full_name ?? "", title: staff?.title ?? "", area: staff?.area ?? dept.name, tools: (staff?.tools ?? deptDefaults[dept.id]?.tools ?? []).join(", "), duties: staff?.duties ?? (deptDefaults[dept.id]?.duties ?? []).join("\n") }); }, [staff, dept.name]);
   const save = async () => {
     if (f.full_name.trim().length < 2) return toast.error("Add meg a munkatárs nevét");
     const { data: u } = await supabase.auth.getUser();
@@ -27,7 +28,12 @@ export function WorkforceProfile({ dept, staff }: { dept: Department; staff?: St
         <div>Szerep: {dept.roles.slice(0, 4).join(", ")}</div>
         {!!staff.tools.length && <div className="flex flex-wrap gap-1">{staff.tools.map(t => <span key={t} className="border border-border px-1.5 py-0.5">{t}</span>)}</div>}
         {staff.duties && <div className="whitespace-pre-wrap border-l-2 border-primary pl-2">{staff.duties}</div>}
-      </div> : <p className="text-xs text-muted-foreground">Nincs megadva valódi munkatárs. Szerep: {dept.roles.slice(0, 4).join(", ")}.</p>)}
+      </div> : <div className="text-xs space-y-1">
+        <p className="text-muted-foreground">Nincs megadva valódi munkatárs · alapértelmezett szerep és eszközök</p>
+        <div>Szerep: {dept.roles.slice(0, 4).join(", ")}</div>
+        <div className="flex flex-wrap gap-1">{(deptDefaults[dept.id]?.tools ?? []).map(t => <span key={t} className="border border-border px-1.5 py-0.5">{t}</span>)}</div>
+        <ul className="border-l-2 border-primary pl-2">{(deptDefaults[dept.id]?.duties ?? []).map(d => <li key={d}>{d}</li>)}</ul>
+      </div>)}
       {edit && <form className="space-y-2" onSubmit={e => { e.preventDefault(); save(); }}>
         <input aria-label="Név" placeholder="Név" maxLength={80} value={f.full_name} onChange={e => setF({ ...f, full_name: e.target.value })} className={inp} />
         <input aria-label="Beosztás" placeholder="Beosztás" maxLength={80} value={f.title} onChange={e => setF({ ...f, title: e.target.value })} className={inp} />

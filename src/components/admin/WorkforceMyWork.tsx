@@ -104,7 +104,13 @@ export function WorkforceMyWork({ dept, onChange }: { dept: Department; onChange
               <textarea aria-label="Lépés eredménye" rows={2} placeholder="Eredmény/bizonyíték (min. 20 karakter, szám, link vagy 5+ szó)" value={results[next.id] ?? ""} onChange={e => setResults({ ...results, [next.id]: e.target.value })} className="w-full bg-muted px-2 py-1 text-xs" />
               <Button size="sm" className="rounded-none" disabled={busy || !evidenceOk(results[next.id] ?? "")} onClick={() => recordStep(next.id)}>Lépés kész · rögzítés</Button>
             </div>}
-            <ol className="text-xs space-y-1">{st.map(s => <li key={s.id} className={s.status === "done" ? "text-muted-foreground line-through" : s.status === "failed" ? "text-destructive" : ""}>{s.idx + 1}. {s.task}</li>)}</ol>
+            {(() => { const ci = st.findIndex(s => s.status !== "done"); const prev = ci > 0 ? st[ci - 1] : ci < 0 ? st[st.length - 1] : undefined; const cur = ci >= 0 ? st[ci] : undefined; const nx = ci >= 0 ? st[ci + 1] : undefined;
+              return (<div className="grid grid-cols-3 gap-px bg-border text-[11px]" aria-label="Lépésfolyamat">
+                {[["Előző", prev], ["Aktuális", cur], ["Következő", nx]].map(([l, x]) => { const s2 = x as Step | undefined; return (
+                  <div key={l as string} className={`bg-background p-2 ${l === "Aktuális" && s2 ? "outline outline-1 outline-primary -outline-offset-1" : ""}`}><div className="text-muted-foreground">{l as string}</div><div className="break-words">{s2 ? `${s2.idx + 1}. ${s2.task}` : "—"}</div>{s2?.due_date && <div className="text-muted-foreground">{s2.due_date}</div>}</div>); })}
+              </div>); })()}
+            <details className="text-xs"><summary className="cursor-pointer text-muted-foreground">Teljes út ({st.length} lépés)</summary>
+            <ol className="space-y-1 mt-1">{st.map(s => <li key={s.id} className={s.status === "done" ? "text-muted-foreground line-through" : s.status === "failed" ? "text-destructive" : ""}>{s.status === "done" ? "✓" : s.status === "failed" ? "✗" : "○"} {s.idx + 1}. {s.task}{s.due_date ? ` · ${s.due_date}` : ""}</li>)}</ol></details>
           </div>
         );
       })}
