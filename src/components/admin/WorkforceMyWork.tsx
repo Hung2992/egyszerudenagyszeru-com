@@ -63,6 +63,28 @@ export function WorkforceMyWork({ dept, onChange }: { dept: Department; onChange
   const [handGoal, setHandGoal] = useState("");
   // Tervjavaslat mentése egy munkatársnak (saját magának vagy átadva). Mindig HUMAN GATE-re kerül.
   const savePlan = (to: Department, t: string) => saveProposal(to, t, dept.id);
+  const [ai, setAi] = useState<{ goal: string; why: string; steps: string[] } | null>(null);
+  // AI-asszisztens által a munkatárs valódi munkájára igazított javaslat → mentés után HUMAN GATE.
+  const askAi = async () => {
+    setBusy(true); setAi(null);
+    const { data, error } = await supabase.functions.invoke("workforce-assistant", { body: { mode: "propose", departmentId: dept.id, department: dept.name, roles: dept.roles, messages: [{ role: "user", content: "Javasolj nekem egy új, a saját munkámra igazított tervet." }] } });
+    setBusy(false);
+    if (error || !data?.goal) return toast.error((data as { error?: string })?.error ?? "Az AI javaslat nem érkezett meg");
+    setAi(data);
+  };
+  const saveAi = async () => {
+    if (!ai) return;
+    const w = buildWorkOrder(ai.goal); const owner = `${dept.name} asszisztens`;
+    setBusy(true);
+    const { error } = await supabase.rpc("workforce_save_plan", {
+      _goal: ai.goal, _risk: w.risk, _owner: owner, _due: null,
+      _plan: { department: dept.id, proposedBy: "ai-assistant", why: ai.why, assignments: w.assignments.map(a => ({ dept: a.department.name, owner: a.owner, reviewer: a.reviewer })), missing: w.missing, decisions: w.decisions, done: w.done } as never,
+      _steps: ai.steps.map((t, i) => ({ phase: "végrehajtás", level: 5, owner, reviewer: "QA és tesztelés", task: t, evidence: "Mérhető eredmény a lépés leírása szerint", idx: i })) as never,
+    });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("AI tervjavaslat a HUMAN GATE-en vár"); setAi(null); load(); onChange?.();
+  };
   const propose = async () => {
     const t = goal.trim(); if (t.length < 5) return;
     setBusy(true); const { error } = await savePlan(dept, t); setBusy(false);
@@ -114,6 +136,11 @@ export function WorkforceMyWork({ dept, onChange }: { dept: Department; onChange
           </div>
         );
       })}
+      <div className="space-y-2 border border-primary p-3" aria-label="AI tervjavaslat">
+        <Button size="sm" className="rounded-none" disabled={busy} onClick={askAi}>{busy && !ai ? "AI gondolkodik…" : "AI tervjavaslat a saját munkámra"}</Button>
+        {ai && <div className="text-xs space-y-1"><div className="text-sm">{ai.goal}</div>{ai.why && <div className="text-muted-foreground">{ai.why}</div>}<ol className="list-decimal pl-4">{ai.steps.map((t, i) => <li key={i}>{t}</li>)}</ol>
+          <div className="flex gap-2 pt-1"><Button size="sm" className="rounded-none" disabled={busy} onClick={saveAi}>Mentés · HUMAN GATE</Button><Button size="sm" variant="outline" className="rounded-none" onClick={() => setAi(null)}>Elvetés</Button></div></div>}
+      </div>
       {!active.length && (
         <div className="space-y-2 border border-primary p-3">
           <p className="text-xs">Ennek a munkatársnak nincs nyitott munkája. Kérj tervjavaslatot — a HUMAN GATE-en te hagyod jóvá.</p>
