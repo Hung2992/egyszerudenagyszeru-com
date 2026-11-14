@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     if (job?.status === "failed") return j({ id: body.id, status: "failed", error: job?.error?.message ?? "A videó nem készült el." });
     if (job?.status !== "completed") return j({ id: body.id, status: job?.status ?? "in_progress", progress: job?.progress ?? 0 });
     const bin = await downloadVideo(body.id);
-    const bytes = new Uint8Array(await bin.arrayBuffer());
+    const bytes = new Uint8Array(await (await bin.blob()).arrayBuffer());
     const up = await admin.storage.from("social-videos").upload(path, bytes, { contentType: "video/mp4", upsert: false });
     if (up.error && !/exists/i.test(up.error.message)) return j({ error: up.error.message }, 500);
     return j({ id: body.id, status: "completed", progress: 100, url: await sign() });
