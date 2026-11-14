@@ -1,6 +1,6 @@
 // Validates a partner storefront preview token and logs the access.
 // POST { token } -> { ok, storefront_id, slug } or 403/410
-import { createClient } from "npm:@supabase/supabase-js@2.45.0";
+import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 const supabase = createClient(
