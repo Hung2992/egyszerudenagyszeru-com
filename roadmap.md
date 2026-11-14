@@ -33,7 +33,7 @@
 - Az online fizetéshez aktív partneri fizetési kapcsolat szükséges.
 - A teljes éles rendelési teszthez valódi fizetés és külső kézbesítés szükséges.
 ## Új kérések (2026-11-13)
-- [ ] Összekapcsolt AI-munkatársak: közös fontos adatok, címzett átadások, élő tervkapcsolat és hitelesített ellenőrzés.
+- [x] Összekapcsolt AI-munkatársak: közös fontos adatok, címzett átadások, élő tervkapcsolat; admin átadás + címzetti AI-válasz és mobil nézet ellenőrizve. Megjelölt ellenőrző adat a naplóban megőrizve.
 - [x] AI-költségkeret a CONTROL panelen + előzetes figyelmeztetés (admin értesítés, leállítás a keretnél)
 - [x] AI-hívás rögzítés: segédek + közös AI útvonal (8 funkció). [x] Maradék 39 közvetlen hívó funkció bekötése (közös mérő, élesben igazolva)
 - [x] 30 napos összesítés: 231 hívás, 2,60 kredit, 247 109 token
