@@ -9,6 +9,9 @@
 - [x] Ellenőrzés: 16 teszt sikeres, build OK; telefonos nyilvános belépési nézet, hitelesített jelentkezési lista és TikTok-letöltés, nincs oldal-túlnyúlás vagy runtime hiba.
 - [x] Heti párosítás (posztok ↔ jelentkezések, Budapest/hétfő, együttjárás, nem attribúció) és TikTok-szöveggeneráló 3 változattal; 390×630 hitelesített UI, 8 teszt, build OK.
 - [ ] Havi terv posztjainak jóváhagyása — tartalmanként emberi jóváhagyás szükséges a Havi terv fülön; egyben nem hagyható jóvá.
+- [x] TikTok-videógeneráló: admin-only, AI-költségmérővel, privát tárhely + 7 napos link, 9:16 8 mp; valódi próbavideó elkészült (720×1280, hanggal), közzététel nélkül.
+- [ ] Ütemezett közzététel — nincs aktív időzített futás a social posztokra; jóváhagyott posztok maguktól nem jelennek meg.
+- [ ] Facebook-hirdetés képe és szövege — kreatív-kérdésekre vár; fizetést a felhasználónak kell aktiválnia.
 
 ## Tartalomtár és hirdetés — új kérés
 - [x] Célkorrekció: Social AI kizárólag teljes szoftver szerződéses bérléséhez keres partnereket; saját webshop nincs. Dedikált platformszövegek és havi manuális partnertervezet, régi adatok/napló megőrizve; 15 teszt, mobilos hitelesített ellenőrzés és build OK.
