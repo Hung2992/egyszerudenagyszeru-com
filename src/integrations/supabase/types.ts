@@ -15799,6 +15799,16 @@ export type Database = {
         Args: { _note?: string; _plan: string; _status: string }
         Returns: undefined
       }
+      workforce_team_share: {
+        Args: {
+          _content: string
+          _plan?: string
+          _source: string
+          _target: string
+          _title: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role:
