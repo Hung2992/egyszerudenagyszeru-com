@@ -110,7 +110,7 @@ const AssistantConversation = () => {
         <div ref={end} />
       </div>
       </div>
-      <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="flex gap-2 p-3 pr-20 border-t border-border">
+      <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="flex gap-2 p-3 pr-20 md:pr-44 border-t border-border">
         <Button type="button" size="icon" variant={listening ? "destructive" : "outline"} onClick={toggleMic} aria-label="Mikrofon" className="rounded-none shrink-0">{listening ? <MicOff /> : <Mic />}</Button>
         <textarea ref={ta} value={input} onChange={(e) => setInput(e.target.value)} rows={1} placeholder="Írj üzenetet…"
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); } }}
