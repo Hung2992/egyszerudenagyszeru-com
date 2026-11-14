@@ -24,3 +24,11 @@ describe("workforce roles", () => {
     expect(isOverdue("2026-11-13", new Date("2026-11-14T01:00:00"))).toBe(true);
   });
 });
+
+import { planOverdue } from "./workforce-roles";
+import { isOverdue as statusOverdue } from "@/components/admin/WorkforceWorkStatus";
+describe("dashboard határidő = Munka állapot határidő", () => {
+  const now = new Date("2026-11-14T02:00:00");
+  for (const [due, status] of [["2026-11-13", "approved"], ["2026-11-13", "done"], ["2026-11-14", "draft"], [null, "approved"]] as const)
+    it(`${due} / ${status}`, () => expect(planOverdue({ due_date: due, status }, now)).toBe(statusOverdue(due, status === "done", now)));
+});
