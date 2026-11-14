@@ -1,5 +1,7 @@
 # Architecture rules
 
+- The dedicated Social AI center reuses existing marketing studios and reads the existing social queue; planned orchestration is explicitly distinguished from implemented workflows to avoid duplicate data and false capability claims.
+
 - EMPYREAN is a control plane over existing domain systems, not a duplicate commerce database; authoritative records remain in their existing domains.
 - Keep shared governance schemas in `src/lib/empyrean-contracts.ts`; client validation is advisory and must be re-enforced by the backend before privileged execution.
 - Until durable approval, audit, emergency pause and independent verification are proven on the live backend, EMPYREAN's foundation interface may only change data through backend-enforced approved actions (propose, approve, execute, verify, rollback RPCs) and must not invoke legacy autonomous runners.
