@@ -1,5 +1,11 @@
 # Partner webshop 2026
 
+## Szerződéses bérlés — most kért feladatok
+- [ ] Social AI: szerződéses bérlési terv, platformposztok és meglévő partnerjelentkezések közös nézete.
+- [ ] Partnerbelépés: meglévő regisztráció és szerződésfolyamat bekötése; új profiladatokról felhasználói döntés szükséges.
+- [ ] TikTok: jogosultság újraellenőrzése és szerződéses bérléshez letölthető kézi sablon.
+- [ ] Facebook: fizetés és valós teljesítmény ellenőrzése; indítás csak aktív fizetés, kreatív, mérés és pontos költési jóváhagyás után.
+
 ## Tartalomtár és hirdetés — új kérés
 - [x] Célkorrekció: Social AI kizárólag teljes szoftver szerződéses bérléséhez keres partnereket; saját webshop nincs. Dedikált platformszövegek és havi manuális partnertervezet, régi adatok/napló megőrizve; 15 teszt, mobilos hitelesített ellenőrzés és build OK.
 - [x] TikTok: három kiválasztható tényszerű szövegváltozat és letölthető kézi videósablon; 390×630 hitelesített UI-ban aktív ApexParts termékkel letöltés igazolva, nincs overflow; 18 teszt és build OK.
