@@ -26,3 +26,7 @@ export function inQuietHours(hour: number, start: number, end: number): boolean 
 export function providerOutcome(platform: string): "published" | "processing" {
   return platform === "tiktok" ? "processing" : "published";
 }
+
+export function canCallProvider(testOnly: boolean, livePermission: boolean): boolean {
+  return !testOnly && livePermission;
+}

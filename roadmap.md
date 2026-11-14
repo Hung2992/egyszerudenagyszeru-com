@@ -1,6 +1,7 @@
 # Partner webshop 2026
 
 ## AI Marketing Command OS — egységes tervezés
+- [x] Közzététel nélküli tesztfolyamat saját hitelesített adminfiókkal: jóváhagyás előtt tiltva, jóváhagyás után test_passed és 0 külső hívás; éles út teszttervezetnél tiltva, engedély-visszavonás ellenőrizve. Külön test/live engedély és pontos tartalom/idő/végrehajtó napló. Tesztengedély aktív, éles engedély nincs megadva; próbatervezet visszavonva. Valódi szolgáltatói publikálás nem történt és nem lett igazolva.
 - [x] A hét új marketingterv összevonása, meglévő kód kapcsolódási pontjainak ellenőrzése, AEGIS-források visszaolvasása és kapukhoz kötött megvalósítási terv elkészítése; megvalósítás külön jóváhagyás után.
 - [x] 1. szakasz alapjai: közös AEGIS kapu, pontos review-hashhez kötött 72 órás approval, service-only atomikus claim/preflight/receipt, csak-hozzáírható audit, bizonytalan eredménynél nincs újraküldés; 38 teszt és hitelesített jóváhagyás nélküli tiltási próba sikeres. Teszttervezetek visszavonva, napló megőrizve.
 - [ ] 1. szakasz teljes biztonsági minősítése — élő párhuzamos claim/lejárat/stop próbák és szolgáltatói befejezés-visszaolvasás még szükséges; addig további automatizálás nem indul.
