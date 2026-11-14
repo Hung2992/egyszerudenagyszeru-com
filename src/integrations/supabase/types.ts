@@ -12354,6 +12354,30 @@ export type Database = {
           },
         ]
       }
+      social_publish_permissions: {
+        Row: {
+          granted_at: string
+          granted_by: string
+          mode: string
+          revoked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string
+          granted_by: string
+          mode: string
+          revoked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          granted_at?: string
+          granted_by?: string
+          mode?: string
+          revoked_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       social_publish_queue: {
         Row: {
           ai_score: number | null
@@ -12367,6 +12391,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           error_message: string | null
+          execution_actor: string | null
           execution_started_at: string | null
           execution_token: string | null
           external_permalink: string | null
@@ -12390,6 +12415,7 @@ export type Database = {
           source: string | null
           source_ref: string | null
           status: string
+          test_only: boolean
           updated_at: string
           version: number
         }
@@ -12405,6 +12431,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           error_message?: string | null
+          execution_actor?: string | null
           execution_started_at?: string | null
           execution_token?: string | null
           external_permalink?: string | null
@@ -12428,6 +12455,7 @@ export type Database = {
           source?: string | null
           source_ref?: string | null
           status?: string
+          test_only?: boolean
           updated_at?: string
           version?: number
         }
@@ -12443,6 +12471,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           error_message?: string | null
+          execution_actor?: string | null
           execution_started_at?: string | null
           execution_token?: string | null
           external_permalink?: string | null
@@ -12466,6 +12495,7 @@ export type Database = {
           source?: string | null
           source_ref?: string | null
           status?: string
+          test_only?: boolean
           updated_at?: string
           version?: number
         }
@@ -16005,8 +16035,16 @@ export type Database = {
       social_approve:
         | { Args: { _id: string }; Returns: Json }
         | { Args: { _expected_hash: string; _id: string }; Returns: Json }
+      social_authorized_preflight: {
+        Args: { _id: string; _token: string }
+        Returns: boolean
+      }
       social_cancel: { Args: { _id: string }; Returns: undefined }
       social_claim: { Args: { _id: string }; Returns: Json }
+      social_dispatch_claim: {
+        Args: { _actor: string; _id: string }
+        Returns: Json
+      }
       social_execution_payload: {
         Args: { _id: string; _token: string }
         Returns: Json
@@ -16022,6 +16060,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      social_has_permission: {
+        Args: { _mode: string; _user: string }
+        Returns: boolean
+      }
       social_payload_hash: {
         Args: {
           _q: Database["public"]["Tables"]["social_publish_queue"]["Row"]
@@ -16033,6 +16075,11 @@ export type Database = {
         Returns: boolean
       }
       social_review: { Args: { _id: string }; Returns: Json }
+      social_set_permission: {
+        Args: { _enabled: boolean; _mode: string; _user: string }
+        Returns: undefined
+      }
+      social_test_run: { Args: { _id: string }; Returns: Json }
       track_campaign_event: {
         Args: { _amount?: number; _kind: string; _plan_id: string }
         Returns: undefined
