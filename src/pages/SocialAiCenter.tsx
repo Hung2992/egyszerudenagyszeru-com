@@ -24,6 +24,7 @@ export default function SocialAiCenter() {
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<Post | null>(null);
+  const [review, setReview] = useState<{ hash: string; target: { facebook: string | null; instagram: string | null; hashtags: string[] }; item: { media_urls: string[]; hashtags: string[]; version: number } } | null>(null);
   const [platform, setPlatform] = useState("fb_studio");
   const [filter, setFilter] = useState("all");
   const load = useCallback(async () => {
@@ -44,13 +45,23 @@ export default function SocialAiCenter() {
     }
   }, []);
   const approve = async () => {
-    if (!selected || !window.confirm("Jóváhagyod ezt a pontos tartalmat és az ütemezett publikálását?")) return;
-    const { error } = await supabase.rpc("social_approve", { _id: selected.id });
+    if (!selected || !review || !window.confirm("Jóváhagyod ezt a pontos tartalmat és az ütemezett publikálását?")) return;
+    const { error } = await supabase.rpc("social_approve", { _id: selected.id, _expected_hash: review.hash });
     if (error) { toast.error(error.message); return; }
     toast.success("Tartalom jóváhagyva · 72 óráig érvényes");
     setSelected(null);
     void load();
   };
+  useEffect(() => {
+    setReview(null);
+    if (!selected) return;
+    let active = true;
+    void supabase.rpc("social_review", { _id: selected.id }).then(({ data, error }) => {
+      if (!active) return;
+      if (error) toast.error(error.message); else setReview(data);
+    });
+    return () => { active = false; };
+  }, [selected]);
   useEffect(() => { if (!loading && !isAdmin) navigate("/auth", { replace: true }); }, [loading, isAdmin, navigate]);
   useEffect(() => {
     if (!isAdmin) return;
@@ -97,6 +108,6 @@ export default function SocialAiCenter() {
         <TabsContent value="team" className="space-y-6"><h2 className="font-display text-xl">Csapat és biztonsági kapu</h2><div className="flex flex-wrap gap-3"><Button asChild variant="outline"><Link to="/admin/ai-asszisztensek/10"><Users className="mr-2 h-4 w-4" />Marketing</Link></Button><Button asChild variant="outline"><Link to="/admin/ai-asszisztensek">AI munkatársak</Link></Button><Button asChild variant="outline"><Link to="/admin/ai-workforce"><ShieldCheck className="mr-2 h-4 w-4" />AEGIS · HUMAN GATE</Link></Button></div><h3 className="font-display">A feltöltött terv további munkaterületei</h3><div className="divide-y divide-border">{["Social AI-szakértők önálló koordinálása", "Teljes videógyártás és platformváltozatok", "Kommentek és közösségi moderáció", "Profiladatok központi módosítása", "Automatikus tanulás és optimalizálás", "Social-tartalmak teljes AEGIS-jóváhagyási lánca"].map(t => <div key={t} className="py-3 flex justify-between gap-4 text-sm"><span>{t}</span><span className="text-xs text-muted-foreground shrink-0">Tervezett</span></div>)}</div></TabsContent>
       </Tabs>
     </main>
-    <Dialog open={!!selected} onOpenChange={open => { if (!open) setSelected(null); }}><DialogContent className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>Tartalom · {selected?.platform}</DialogTitle></DialogHeader><p className="text-sm whitespace-pre-wrap break-words">{selected?.content}</p>{selected?.error_message && <p className="text-sm text-destructive break-words">{selected.error_message}</p>}{selected?.approval_expires_at && <p className="text-xs text-muted-foreground">Jóváhagyás lejárata: {new Date(selected.approval_expires_at).toLocaleString("hu-HU")}</p>}{selected?.status === "pending" && <Button onClick={() => void approve()}><ShieldCheck className="mr-2 h-4 w-4" />Tartalom jóváhagyása</Button>}</DialogContent></Dialog>
+    <Dialog open={!!selected} onOpenChange={open => { if (!open) setSelected(null); }}><DialogContent className="max-h-[85dvh] overflow-y-auto"><DialogHeader><DialogTitle>Tartalom · {selected?.platform}</DialogTitle></DialogHeader><p className="text-sm whitespace-pre-wrap break-words">{selected?.content}</p>{selected?.error_message && <p className="text-sm text-destructive break-words">{selected.error_message}</p>}{review && <div className="space-y-2 text-xs text-muted-foreground"><p>Fiók: {selected?.platform === "facebook" ? review.target.facebook ?? "Nincs megadva" : selected?.platform === "instagram" ? review.target.instagram ?? "Nincs megadva" : "TikTok kapcsolat"}</p><p>Időpont: {selected?.scheduled_at ? new Date(selected.scheduled_at).toLocaleString("hu-HU") : "—"} · Verzió: {review.item.version}</p><p>Hashtagek: {[...review.item.hashtags, ...review.target.hashtags].join(" ") || "—"}</p>{review.item.media_urls.map(url => <a className="block break-all underline" key={url} href={url} target="_blank" rel="noopener noreferrer">{url}</a>)}</div>}{selected?.approval_expires_at && <p className="text-xs text-muted-foreground">Jóváhagyás lejárata: {new Date(selected.approval_expires_at).toLocaleString("hu-HU")}</p>}{selected?.status === "pending" && <Button disabled={!review} onClick={() => void approve()}><ShieldCheck className="mr-2 h-4 w-4" />Tartalom jóváhagyása</Button>}</DialogContent></Dialog>
   </div>;
 }
