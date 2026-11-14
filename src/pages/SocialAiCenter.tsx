@@ -11,6 +11,7 @@ import { lazyRetry } from "@/lib/lazy-retry";
 import { toast } from "sonner";
 import SocialPublicationControl from "@/components/admin/SocialPublicationControl";
 import SocialMonthlyPlan from "@/components/admin/SocialMonthlyPlan";
+import SocialContentLibrary from "@/components/admin/SocialContentLibrary";
 import { approvalLabel } from "@/lib/social-periods";
 
 const ContentStudio = lazy(lazyRetry(() => import("@/components/admin/AdminAiMarketingStudio")));
@@ -105,7 +106,7 @@ export default function SocialAiCenter() {
       {error && <div role="alert" className="border border-destructive p-3 mb-5 text-sm text-destructive break-words">{error}</div>}
       <Tabs defaultValue="command" className="space-y-6">
         <div className="overflow-x-auto"><TabsList className="h-auto justify-start bg-transparent gap-1">
-          <TabsTrigger value="command">Központ</TabsTrigger><TabsTrigger value="monthly">Havi terv</TabsTrigger><TabsTrigger value="control">Engedélyek és napló</TabsTrigger><TabsTrigger value="content">Tartalomgyár</TabsTrigger><TabsTrigger value="platforms">Platformok</TabsTrigger><TabsTrigger value="video">Videóműhely</TabsTrigger><TabsTrigger value="insights">Elemzések</TabsTrigger><TabsTrigger value="team">Csapat és AEGIS</TabsTrigger>
+          <TabsTrigger value="command">Központ</TabsTrigger><TabsTrigger value="monthly">Havi terv</TabsTrigger><TabsTrigger value="library">Tartalomtár</TabsTrigger><TabsTrigger value="control">Engedélyek és napló</TabsTrigger><TabsTrigger value="content">Tartalomgyár</TabsTrigger><TabsTrigger value="platforms">Platformok</TabsTrigger><TabsTrigger value="video">Videóműhely</TabsTrigger><TabsTrigger value="insights">Elemzések</TabsTrigger><TabsTrigger value="team">Csapat és AEGIS</TabsTrigger>
         </TabsList></div>
         <TabsContent value="command" className="space-y-6">
           <div className="flex flex-wrap justify-between gap-3 items-center"><h2 className="font-display text-xl">Közös tartalomnaptár</h2><div className="flex flex-wrap gap-1">{["all", "facebook", "tiktok", "linkedin"].map(p => <Button key={p} size="sm" variant={filter === p ? "secondary" : "ghost"} aria-pressed={filter === p} onClick={() => setFilter(p)}>{p === "all" ? "Mind" : p === "facebook" ? "Facebook" : p === "tiktok" ? "TikTok" : "LinkedIn"}</Button>)}</div></div>
@@ -116,6 +117,7 @@ export default function SocialAiCenter() {
         </TabsContent>
         <TabsContent value="control"><SocialPublicationControl onCreated={() => void load()} /></TabsContent>
         <TabsContent value="monthly"><SocialMonthlyPlan onOpen={setSelected} onChanged={() => void load()} /></TabsContent>
+        <TabsContent value="library"><SocialContentLibrary /></TabsContent>
         <TabsContent value="content"><Suspense fallback={<Loader2 className="h-6 w-6 animate-spin" />}><ContentStudio /></Suspense></TabsContent>
         <TabsContent value="platforms" className="space-y-6"><div className="flex flex-wrap gap-2">{platforms.map(p => <Button key={p.id} variant={platform === p.id ? "secondary" : "outline"} aria-pressed={platform === p.id} onClick={() => setPlatform(p.id)}>{p.label}</Button>)}</div><MarketingStudioRouter tab={platform} /></TabsContent>
         <TabsContent value="video" className="space-y-5"><h2 className="font-display text-xl flex items-center gap-2"><Film className="h-5 w-5 text-accent" />Videóműhely</h2><MarketingStudioRouter tab="ai_studio_recorder" /></TabsContent>
