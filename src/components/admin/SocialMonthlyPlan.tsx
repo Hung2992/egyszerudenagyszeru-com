@@ -9,7 +9,7 @@ import { CalendarDays, Plus } from "lucide-react";
 import { approvalLabel, budapestDay } from "@/lib/social-periods";
 import { toast } from "sonner";
 type Slot = { id: string; day: string; platform: string; topic: string; queue_id: string | null };
-type Post = { id: string; content: string; status: string; approval_hash: string | null; approval_expires_at: string | null; test_only: boolean; requires_approval: boolean; platform: string; scheduled_at: string; error_message: string | null };
+type Post = { id: string; content: string; status: string; approval_hash: string | null; approval_expires_at: string | null; test_only: boolean; requires_approval: boolean; platform: string; scheduled_at: string; error_message: string | null; approval_current?: boolean };
 type Product = { id: string; name: string; price: number; description: string | null };
 type Campaign = { id: string; name: string; content: string | null };
 export default function SocialMonthlyPlan({ onOpen, onChanged }: { onOpen: (post: Post) => void; onChanged: () => void }) {
@@ -34,7 +34,11 @@ export default function SocialMonthlyPlan({ onOpen, onChanged }: { onOpen: (post
     const ids = (rows.data ?? []).map(s => s.queue_id).filter((id): id is string => Boolean(id));
     if (!ids.length) { setPosts([]); return; }
     const queue = await supabase.from("social_publish_queue").select("*").in("id", ids);
-    if (queue.error) toast.error(queue.error.message); else setPosts(queue.data ?? []);
+    if (queue.error) toast.error(queue.error.message); else {
+      const states = await supabase.rpc("social_approval_states", { _ids: ids });
+      if (states.error) toast.error(states.error.message);
+      setPosts((queue.data ?? []).map(p => ({ ...p, approval_current: states.data?.[p.id] === true })));
+    }
   }, [month]);
   useEffect(() => { void load(); const timer = window.setInterval(() => void load(), 30000); return () => window.clearInterval(timer); }, [load]);
   useEffect(() => { void Promise.all([supabase.from("shop_products").select("id,name,price,description").eq("is_active", true).order("name"), supabase.from("marketing_campaigns").select("id,name,content").order("created_at", { ascending: false }).limit(100)]).then(([p, c]) => { setProducts(p.data ?? []); setCampaigns(c.data ?? []); if (p.error || c.error) toast.error(p.error?.message ?? c.error?.message); }); }, []);

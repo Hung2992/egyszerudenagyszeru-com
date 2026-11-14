@@ -14,7 +14,7 @@ import SocialMonthlyPlan from "@/components/admin/SocialMonthlyPlan";
 import { approvalLabel } from "@/lib/social-periods";
 
 const ContentStudio = lazy(lazyRetry(() => import("@/components/admin/AdminAiMarketingStudio")));
-type Post = { id: string; platform: string; content: string; status: string; requires_approval: boolean; scheduled_at: string; error_message: string | null; approval_hash: string | null; approval_expires_at: string | null; test_only: boolean };
+type Post = { id: string; platform: string; content: string; status: string; requires_approval: boolean; scheduled_at: string; error_message: string | null; approval_hash: string | null; approval_expires_at: string | null; test_only: boolean; approval_current?: boolean };
 type Insight = { id: string; title: string; insight: string; platform: string | null };
 const platforms = [{ id: "fb_studio", label: "Facebook" }, { id: "tt_studio", label: "TikTok" }, { id: "li_studio", label: "LinkedIn" }];
 const statusNames: Record<string, string> = { pending: "Ütemezésre vár", processing: "Feldolgozás", published: "Publikálva", failed: "Hiba", cancelled: "Visszavonva", skipped: "Kihagyva" };
@@ -39,7 +39,10 @@ export default function SocialAiCenter() {
         supabase.from("ai_marketing_insights").select("id,title,insight,platform").eq("status", "active").order("created_at", { ascending: false }).limit(12),
       ]);
       if (queue.error || analysis.error) setError([queue.error?.message, analysis.error?.message].filter(Boolean).join(" · "));
-      setPosts((queue.data ?? []) as Post[]);
+      const items = (queue.data ?? []) as Post[];
+      const states = items.length ? await supabase.rpc("social_approval_states", { _ids: items.map(p => p.id) }) : { data: {}, error: null };
+      if (states.error) setError(states.error.message);
+      setPosts(items.map(p => ({ ...p, approval_current: states.data?.[p.id] === true })));
       setInsights((analysis.data ?? []) as Insight[]);
     } catch {
       setError("A közösségi adatok nem tölthetők be. Próbáld újra.");

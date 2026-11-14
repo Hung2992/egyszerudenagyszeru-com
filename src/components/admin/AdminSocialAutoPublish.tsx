@@ -306,7 +306,7 @@ export default function AdminSocialAutoPublish() {
               <div className="flex items-center justify-between p-4 border rounded">
                 <div>
                   <div className="font-bold">🚀 Autopilot mód</div>
-                  <div className="text-xs text-muted-foreground">A queue-ba tett posztok jóváhagyás nélkül publikálódnak</div>
+                  <div className="text-xs text-muted-foreground">Minden poszt pontos tartalomhoz kötött, érvényes jóváhagyást és külön éles engedélyt igényel.</div>
                 </div>
                 <Switch checked={settings.autopilot_enabled}
                   onCheckedChange={(v) => setSettings({ ...settings, autopilot_enabled: v })} />
