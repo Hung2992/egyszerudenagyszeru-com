@@ -9,7 +9,7 @@ import { needsHuman, type PlanLite } from "@/lib/aegis-os";
 import AegisApprovalQueue from "@/components/admin/AegisApprovalQueue";
 import { toast } from "sonner";
 
-type Post = { id: string; platform: string; content: string; status: string; requires_approval: boolean; scheduled_at: string; approval_hash: string | null; approval_expires_at: string | null; test_only: boolean; approval_current?: boolean };
+type Post = { id: string; platform: string; content: string; status: string; requires_approval: boolean; scheduled_at: string; approval_hash: string | null; approval_expires_at: string | null; test_only: boolean; media_urls: string[] | null; media_type: string | null; approval_current?: boolean };
 type Plan = PlanLite & { id: string; goal: string; risk: string; status: string };
 const platformNames: Record<string, string> = { facebook: "Facebook", tiktok: "TikTok", linkedin: "LinkedIn" };
 
@@ -27,7 +27,7 @@ export default function AdminApprovals() {
     setBusy(true);
     setError("");
     const [queue, workforce] = await Promise.all([
-      supabase.from("social_publish_queue").select("id,platform,content,status,requires_approval,scheduled_at,approval_hash,approval_expires_at,test_only").eq("status", "pending").eq("requires_approval", true).order("scheduled_at", { ascending: true }).limit(100),
+      supabase.from("social_publish_queue").select("id,platform,content,status,requires_approval,scheduled_at,approval_hash,approval_expires_at,test_only,media_urls,media_type").eq("status", "pending").eq("requires_approval", true).order("scheduled_at", { ascending: true }).limit(100),
       supabase.from("workforce_plans").select("id,goal,status,risk,approval_expires_at").order("created_at", { ascending: false }).limit(100),
     ]);
     if (queue.error || workforce.error) setError([queue.error?.message, workforce.error?.message].filter(Boolean).join(" · "));
