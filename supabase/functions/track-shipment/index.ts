@@ -66,7 +66,8 @@ Deno.serve(async (req) => {
       carrier_code: shipment.carrier_code,
       status: shipment.status,
       service_type: shipment.service_type,
-      recipient_name: shipment.recipient_name?.split(" ")[0] ?? null, // csak keresztnév
+      // Name only when the caller proved ownership with order id + email.
+      recipient_name: tracking ? null : (shipment.recipient_name?.split(" ")[0] ?? null),
       created_at: shipment.created_at,
       estimated_delivery: shipment.estimated_delivery ?? null,
     };
@@ -76,7 +77,7 @@ Deno.serve(async (req) => {
     });
   } catch (e: any) {
     console.error("track-shipment error:", e);
-    return new Response(JSON.stringify({ error: e.message || "Internal error" }), {
+    return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
