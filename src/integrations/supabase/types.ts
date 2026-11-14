@@ -16194,6 +16194,7 @@ export type Database = {
       social_prepare_slot: {
         Args: {
           _content: string
+          _image?: string
           _ref: string
           _slot: string
           _source: string
