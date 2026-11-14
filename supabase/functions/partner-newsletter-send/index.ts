@@ -54,6 +54,8 @@ Deno.serve(async (req) => {
     .select("email, name")
     .eq("partner_id", partner.id)
     .is("unsubscribed_at", null)
+    // Only people who subscribed themselves; manually added addresses never receive blasts.
+    .or("source.is.null,source.neq.manual")
     .limit(5000);
 
   const recipients = (subs || []).filter((s) => s.email);
